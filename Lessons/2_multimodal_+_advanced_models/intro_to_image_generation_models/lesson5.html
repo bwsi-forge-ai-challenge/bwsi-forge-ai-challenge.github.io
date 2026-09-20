@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Generation: Lesson 5 - Tricks, Traps, and Six Fingers</title>
+</head>
+<body>
+
+<div class="genai-lesson-container">
+<style>
+    .genai-lesson-container {
+        line-height: 1.65; color: #1e293b; max-width: 820px; margin: 0 auto; padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 1.5em; }
+    .genai-lesson-container h2 { color: #1e3a8a; margin-top: 36px; }
+    .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+    .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .genai-lesson-container th, .genai-lesson-container td {
+        border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top;
+    }
+    .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+    .genai-lesson-container code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
+    }
+    .genai-lesson-container .callout {
+        background: #f0fdf4; border-left: 4px solid #22c55e;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container .info-box, .genai-lesson-container .quiz {
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 8px; padding: 14px 16px; margin: 18px 0;
+    }
+    .genai-lesson-container .quiz { background: #f4faf4; border-color: #bbf7d0; }
+    .genai-lesson-container .bridge {
+        background: #f1f5f9; border-radius: 8px; padding: 12px 14px;
+        margin: 20px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .roadmap {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 12px 14px; margin: 16px 0 8px; font-size: 0.9em;
+    }
+    .genai-lesson-container .roadmap ol { margin: 8px 0 0; padding-left: 1.3em; }
+    .genai-lesson-container .roadmap .here { font-weight: 700; color: #1e3a8a; }
+    .genai-lesson-container .eq-panel {
+        text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 6px; padding: 14px; margin: 16px 0;
+        font-family: Cambria, "Times New Roman", serif; font-size: 1.08em;
+    }
+    .genai-lesson-container .shape-trail {
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.88em;
+        background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 6px;
+        overflow-x: auto; margin: 12px 0;
+    }
+    .genai-lesson-container .worked {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 14px 16px; margin: 16px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .interactive-box {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 18px 20px; margin: 22px 0; box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+    }
+    .genai-lesson-container .tool-box {
+        background: #fff7ed; border: 1px solid #fed7aa;
+        border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+    }
+    .genai-lesson-container .warn-box {
+        background: #fffbeb; border-left: 4px solid #f59e0b;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container .ethics-box {
+        background: #fef2f2; border-left: 4px solid #ef4444;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container button, .genai-lesson-container .chip {
+        padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+        background: #fff; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b;
+        display: inline-block; font-size: 0.92em;
+    }
+    .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .genai-lesson-container .chip.selected {
+        background: #dbeafe; border-color: #93c5fd; color: #1e3a8a;
+    }
+    .genai-lesson-container a { color: #2563eb; }
+    .genai-lesson-container details { margin: 12px 0; }
+    .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+    .genai-lesson-container ol.guided li { margin-bottom: 8px; }
+    .genai-lesson-container .prompt-display {
+        background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 12px 14px;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.88em; margin: 12px 0;
+    }
+    .genai-lesson-container .gallery {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 16px;
+    }
+    @media (max-width: 560px) {
+        .genai-lesson-container .gallery { grid-template-columns: 1fr; }
+    }
+    .genai-lesson-container .gallery-card {
+        border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;
+        background: #f8fafc; transition: box-shadow 0.3s, transform 0.3s;
+    }
+    .genai-lesson-container .gallery-card:hover { box-shadow: 0 4px 12px rgb(0 0 0 / 0.08); }
+    .genai-lesson-container .thumb {
+        height: 120px; display: flex; align-items: center; justify-content: center;
+        font-size: 2.4em; position: relative; overflow: hidden;
+    }
+    .genai-lesson-container .thumb::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 100%);
+    }
+    .genai-lesson-container .card-body { padding: 10px 12px; font-size: 0.88em; }
+    .genai-lesson-container .card-label { font-weight: 700; color: #1e3a8a; margin-bottom: 4px; }
+    .genai-lesson-container .card-desc { color: #64748b; line-height: 1.45; }
+    .genai-lesson-container .capstone-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0;
+    }
+    @media (max-width: 560px) {
+        .genai-lesson-container .capstone-grid { grid-template-columns: 1fr; }
+    }
+    .genai-lesson-container .capstone-cell {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;
+        font-size: 0.9em;
+    }
+    .genai-lesson-container .capstone-cell strong { color: #1e3a8a; }
+</style>
+
+    <h1>Tricks, Traps, and Why Hands Have Six Fingers</h1>
+
+    <div class="roadmap">
+        <strong>Unit roadmap — Teaching Computers to See and Paint</strong>
+        <ol>
+            <li>1. Pixels &amp; latent space</li>
+            <li>2. GANs (forger vs detective)</li>
+            <li>3. Diffusion basics (denoising)</li>
+            <li>4. Text conditioning &amp; coding lab</li>
+            <li class="here">5. Control, failure modes, prompt craft ← <em>you are here</em></li>
+        </ol>
+    </div>
+
+    <p><strong>Goal:</strong> Explain why diffusion “looks smart” but fails structural logic; use ControlNet and prompt craft as partial fixes; practice in a mock prompt studio; connect the full image unit (and audio parallels); leave with a light ethics checklist.</p>
+
+    <div class="bridge">
+        <strong>From Lesson 4:</strong> Text embeddings steer denoising through cross-attention — powerful, but not a physics engine.<br>
+        <strong>This lesson:</strong> When prompts lie, anatomy breaks, and bias shows through — plus tools that help.
+    </div>
+
+    <hr>
+
+    <h2>1. Why structural logic fails</h2>
+
+    <p>Diffusion models learn <strong>local co-occurrence statistics</strong> from billions of image–caption pairs: “skin-colored blobs near rectangles often appear in portraits,” “parallel lines near wheels often mean car.” They do <em>not</em> build an internal 3D skeleton or hand anatomy graph.</p>
+
+    <table>
+        <thead><tr><th>Failure</th><th>What you see</th><th>Why it happens</th></tr></thead>
+        <tbody>
+            <tr><td>Hands &amp; fingers</td><td>6 fingers, fused digits, floating hands</td><td>Fingers are small, occluded, varied in pose — weak signal vs. faces; model stitches plausible skin patches.</td></tr>
+            <tr><td>Text in images</td><td>Garbled letters, nonsense signage</td><td>Letters need precise global layout; model predicts texture that <em>looks like</em> text from training captions, not spellings.</td></tr>
+            <tr><td>Counting</td><td>“Three apples” → four or merged blobs</td><td>No discrete counter; “three” is a language token, not three separate object slots.</td></tr>
+            <tr><td>Left/right, mirrors</td><td>Asymmetric eyes, wrong eyeglass arm</td><td>Bilateral symmetry is not enforced; reflections are learned as texture.</td></tr>
+            <tr><td>Physics</td><td>Impossible shadows, floating objects</td><td>Lighting is correlated pixels, not ray tracing.</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <strong>Key insight:</strong> High CFG (Lesson 4) can make failures <em>more visible</em> — the model commits harder to wrong structure. More prompt adjectives ≠ true reasoning.
+    </div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: six fingers</h3>
+        <p><strong>Question:</strong> Why do extra fingers appear even with a detailed prompt like “anatomically correct five-finger hand”?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">The model has no explicit finger counter or 3D rig — it paints statistically likely skin/edge textures. “Five fingers” is one token among many; local patches can still merge or duplicate digits especially at small scale.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>2. ControlNet — structural anchoring</h2>
+
+    <p><strong>ControlNet</strong> (and similar adapters) feeds extra spatial conditions into the denoiser alongside text: edge maps (Canny), human pose skeletons, depth maps, segmentation masks, scribbles. The trainable side network copies U-Net/DiT weights and learns to respect those structures while text still controls style and content.</p>
+
+    <div class="shape-trail">reference photo or drawing
+  → preprocessor (OpenPose / MiDaS / Canny / …)
+  → control map (same spatial size as latent pathway)
+  → ControlNet branch + base denoiser
+  → cross-attn to text embeddings (still!)
+  → denoise loop → decode</div>
+
+    <ul>
+        <li><strong>Pose ControlNet:</strong> lock body layout; fix “person melting into background.”</li>
+        <li><strong>Depth ControlNet:</strong> preserve foreground/background ordering.</li>
+        <li><strong>Canny edges:</strong> trace a line drawing; fill with prompt-driven texture.</li>
+    </ul>
+
+    <div class="worked">
+        <strong>When to reach for ControlNet vs. prompt only:</strong>
+        <table>
+            <tr><th>Task</th><th>Prompt only</th><th>+ ControlNet</th></tr>
+            <tr><td>“Person waving, exact pose from storyboard”</td><td>Random pose each seed</td><td>Pose map anchors limbs</td></tr>
+            <tr><td>“Room layout like this sketch”</td><td>Walls drift</td><td>Edge/depth map locks geometry</td></tr>
+            <tr><td>“Same cat, new outfit”</td><td>Identity shifts</td><td>Segmentation + inpainting helps</td></tr>
+        </table>
+    </div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: ControlNet inputs</h3>
+        <p><strong>Question:</strong> Name two control signal types ControlNet can use besides plain text.</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Examples: <strong>human pose keypoints</strong>, <strong>depth maps</strong>, <strong>Canny edges</strong>, segmentation masks, normal maps, scribbles.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>3. Dataset bias — the hidden prompt</h2>
+
+    <p>Every model carries priors from training data — often Western stock photos, anime subsets, celebrity faces, and caption noise. Your explicit prompt fights an <strong>implicit prompt</strong> baked into weights.</p>
+
+    <table>
+        <thead><tr><th>Bias pattern</th><th>Symptom</th><th>Mitigation (partial)</th></tr></thead>
+        <tbody>
+            <tr><td>Profession stereotypes</td><td>“Doctor” → older man in coat</td><td>Specific descriptors; diverse reference images + ControlNet</td></tr>
+            <tr><td>Beauty defaults</td><td>Same face shape across seeds</td><td>Varied ethnicities/features in prompt; different models</td></tr>
+            <tr><td>Landscape clichés</td><td>Mountains + lake + sunset</td><td>Negative prompts; unusual locations</td></tr>
+            <tr><td>Caption spam</td><td>Watermarks, “artstation” look</td><td>Negative prompts; finetunes without junk</td></tr>
+        </tbody>
+    </table>
+
+    <div class="warn-box">
+        Prompt engineering can <em>reduce</em> bias visibility but cannot erase training skew. Responsible use means noticing who is missing or stereotyped in outputs.
+    </div>
+
+    <hr>
+
+    <h2>4. Interactive: Prompt Engineering Studio</h2>
+
+    <p>Start from the boring base prompt <code>a car</code>. Toggle style, lighting, and framing chips — watch four mock “results” update (CSS art + emoji thumbnails, not a real API). Notice how specificity changes composition even when the subject stays “car.”</p>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Base subject:</strong> <code>a car</code> (fixed)</p>
+
+        <p><strong>Style</strong> <span style="font-size:0.85em;color:#64748b;">(pick one)</span></p>
+        <div id="pe-style"></div>
+
+        <p><strong>Lighting</strong></p>
+        <div id="pe-light"></div>
+
+        <p><strong>Framing</strong></p>
+        <div id="pe-frame"></div>
+
+        <button type="button" id="pe-reset">Reset to bare “a car”</button>
+
+        <p style="margin-top:14px;font-weight:600;">Live composed prompt:</p>
+        <div class="prompt-display" id="pe-prompt">a car</div>
+
+        <p style="font-weight:600;margin-bottom:0;">Mock gallery (4 seeds)</p>
+        <div class="gallery" id="pe-gallery"></div>
+        <p id="pe-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
+    </div>
+
+    <hr>
+
+    <h2>5. Online tools to try</h2>
+
+    <div class="tool-box">
+        <p style="margin-top:0;"><strong>ControlNet demos (Hugging Face Spaces):</strong></p>
+        <ul>
+            <li><a href="https://huggingface.co/spaces/huggingface-projects/ControlNet" target="_blank" rel="noopener">ControlNet Space</a> — upload a pose/edge/depth map and compare with vs. without control.</li>
+            <li><a href="https://huggingface.co/spaces/lllyasviel/ControlNet" target="_blank" rel="noopener">lllyasviel ControlNet demo</a> — classic multi-preprocessor playground.</li>
+        </ul>
+        <p><strong>Free prompt-engineering UIs:</strong></p>
+        <ul>
+            <li><a href="https://huggingface.co/spaces/stabilityai/stable-diffusion" target="_blank" rel="noopener">Stable Diffusion Space</a> — quick A/B prompts.</li>
+            <li><a href="https://clipdrop.co/stable-diffusion" target="_blank" rel="noopener">Clipdrop SD</a> — simple web UI for experiments.</li>
+            <li><a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> — revisit conditioning internals from Lesson 4.</li>
+        </ul>
+        <ol class="guided">
+            <li>Generate <code>a car</code> then add three adjectives — log what changed (angle, era, background).</li>
+            <li>Run the same prompt with a pose or edge ControlNet — note what text alone could not fix.</li>
+            <li>Document one bias surprise (who/what the model “defaults” to).</li>
+        </ol>
+    </div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: prompt vs. control</h3>
+        <p><strong>Question:</strong> You need a character in an exact martial-arts kick pose from a stick figure sketch. Prompt-only or ControlNet?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;"><strong>ControlNet</strong> (pose or edge) — text alone cannot reliably lock limb angles; spatial control maps anchor structure while the prompt handles costume and setting.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>6. Unit capstone — Lessons 1–5 (+ audio parallels)</h2>
+
+    <div class="capstone-grid">
+        <div class="capstone-cell"><strong>L1 Pixels &amp; latent</strong><br>Images are tensors; generate in compressed latent space then decode — like audio codecs shrinking waveforms before modeling.</div>
+        <div class="capstone-cell"><strong>L2 GANs</strong><br>Adversarial forger vs. critic invented realistic fakes; diffusion largely replaced GANs for open-ended text-to-image.</div>
+        <div class="capstone-cell"><strong>L3 Diffusion</strong><br>Iterative denoising in latent space — parallel to diffusion audio/noise models (denoise over time, not one-shot).</div>
+        <div class="capstone-cell"><strong>L4 Conditioning</strong><br>Text embeddings + cross-attention steer each step — same mechanism family as MusicGen text steering (Audio L4).</div>
+        <div class="capstone-cell"><strong>L5 Control &amp; traps</strong><br>Prompt craft + ControlNet patch structural gaps; bias and ethics remain — like voice cloning risks in Audio L5.</div>
+        <div class="capstone-cell"><strong>Cross-modal pattern</strong><br>Compress → generate in compact domain → decode → condition with embeddings → watch failure modes at the edges of statistics.</div>
+    </div>
+
+    <div class="shape-trail">AUDIO UNIT                          IMAGE UNIT
+waveform / spectrogram              RGB pixels / latent map
+codec tokens (L3)                   VAE latent (L1, L3)
+AR or diffusion in tokens           diffusion denoise in latent
+text → cross-attn (L4)              text → cross-attn (L4)
+products & ethics (L5)              ControlNet, bias, deepfakes (L5)</div>
+
+    <div class="callout">
+        <strong>Capstone project idea:</strong> Pick one subject (e.g. “school mascot robot”). Document (1) bare prompt, (2) engineered prompt from the studio pattern, (3) one ControlNet constraint, (4) one failure you still could not fix — with screenshots and a sentence on bias or consent if the subject involves real people.
+    </div>
+
+    <hr>
+
+    <h2>7. Ethics brief — paint with responsibility</h2>
+
+    <div class="ethics-box">
+        <p style="margin-top:0;"><strong>Deepfakes &amp; consent:</strong> Swapping a real person’s face or mimicking their likeness without permission can harm reputation and safety. Many jurisdictions now regulate non-consensual synthetic media.</p>
+        <p><strong>Training data:</strong> Models learn from scraped web images — artists’ work, private photos, and copyrighted characters may appear in outputs. “I typed it, I own it” is legally and ethically unsettled.</p>
+        <p><strong>Misinformation:</strong> Photorealistic fakes of events that never happened erode trust. Label AI-generated media when sharing; do not present synthetic evidence as real.</p>
+        <p style="margin-bottom:0;"><strong>Classroom norm:</strong> Do not generate images of classmates, teachers, or strangers in compromising scenarios. Prefer fictional subjects or stock you have rights to use.</p>
+    </div>
+
+    <p>Lighter touch than the audio ethics deep-dive, same principle: <em>capability ≠ permission</em>. If you would not paste someone’s face on a billboard without asking, do not do it with diffusion.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: ethics scenario</h3>
+        <p><strong>Question:</strong> A classmate asks you to generate a realistic photo of them “at a party they missed” to post online. What’s wrong, and what do you do?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Non-consensual likeness + potential misinformation. Decline; explain consent and deepfake risks; suggest a clearly labeled fictional avatar or a real photo they provide with permission.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>8. Unit wrap</h2>
+
+    <p>You can now trace a prompt from tokens to pixels, run a Diffusers pipeline, steer concepts with tags, spot structural traps, and reach for ControlNet when geometry matters. The model is a statistical painter — brilliant at texture, weak at rules — and its training data whispers even when your prompt shouts.</p>
+
+    <div class="bridge">
+        <strong>Start the unit over?</strong> <a href="lesson1.html">Lesson 1: Painting by Numbers</a><br>
+        <strong>Previous:</strong> <a href="lesson4.html">Lesson 4: Driving with Words</a><br>
+        <strong>Parallel audio unit:</strong> Intro to Audio Generation Lessons 1–5 — compare conditioning and ethics side by side.
+    </div>
+
+    <div class="callout">
+        <strong>You should now be able to:</strong> explain hand/text/counting failures; describe ControlNet’s role; engineer stronger prompts; name dataset bias symptoms; articulate basic image-generation ethics; and summarize the full L1–L5 arc in one paragraph.
+    </div>
+
+    <hr>
+    <h2>Further reading</h2>
+    <ul>
+        <li>Zhang et al., Adding Conditional Control to Text-to-Image Diffusion Models (ControlNet).</li>
+        <li>MIT Media Lab — <a href="https://www.media.mit.edu/projects/detect-fakes/overview/" target="_blank" rel="noopener">Detect Fakes</a> literacy materials.</li>
+        <li>Hugging Face — responsible AI and model cards for SD variants.</li>
+    </ul>
+
+</div>
+
+<script>
+(function () {
+    var STYLE = ['Vintage 1960s', 'Cyberpunk neon', 'Minimalist 3D render', 'Watercolor sketch'];
+    var LIGHT = ['Golden hour', 'Rainy night', 'Harsh noon sun', 'Studio softbox'];
+    var FRAME = ['Wide cinematic', 'Low angle hero shot', 'Top-down', 'Close-up detail'];
+
+    var sel = { style: null, light: null, frame: null };
+
+    var SEEDS = [
+        { id: 's0', emoji: '🚗', label: 'Seed A', angle: 'three-quarter' },
+        { id: 's1', emoji: '🏎️', label: 'Seed B', angle: 'side' },
+        { id: 's2', emoji: '🚙', label: 'Seed C', angle: 'front' },
+        { id: 's3', emoji: '🛻', label: 'Seed D', angle: 'rear' }
+    ];
+
+    var PALETTES = {
+        'Vintage 1960s': ['#c4a574', '#8b6914', '#f5e6c8'],
+        'Cyberpunk neon': ['#0f172a', '#a855f7', '#06b6d4'],
+        'Minimalist 3D render': ['#e2e8f0', '#94a3b8', '#64748b'],
+        'Watercolor sketch': ['#fef3c7', '#fca5a5', '#93c5fd']
+    };
+
+    var LIGHT_FX = {
+        'Golden hour': 'warm radial gradient',
+        'Rainy night': 'cool + wet sheen',
+        'Harsh noon sun': 'high contrast shadows',
+        'Studio softbox': 'even soft fill'
+    };
+
+    function mountChips(list, group, elId) {
+        var el = document.getElementById(elId);
+        list.forEach(function (t) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'chip';
+            b.textContent = t;
+            b.addEventListener('click', function () {
+                sel[group] = sel[group] === t ? null : t;
+                update();
+            });
+            el.appendChild(b);
+        });
+    }
+
+    function buildPrompt() {
+        var parts = ['a car'];
+        if (sel.style) parts.push(sel.style.toLowerCase());
+        if (sel.light) parts.push(sel.light.toLowerCase());
+        if (sel.frame) parts.push(sel.frame.toLowerCase());
+        return parts.join(', ');
+    }
+
+    function thumbStyle(seedIdx) {
+        var style = sel.style || 'default';
+        var pal = PALETTES[style] || ['#cbd5e1', '#64748b', '#334155'];
+        var angle = SEEDS[seedIdx].angle;
+        var rot = angle === 'low' ? '12deg' : angle === 'top-down' ? '0deg' : (seedIdx * 8 - 12) + 'deg';
+        var bg = 'linear-gradient(160deg, ' + pal[0] + ' 0%, ' + pal[1] + ' 55%, ' + pal[2] + ' 100%)';
+        if (sel.light === 'Rainy night') bg = 'linear-gradient(180deg, #0f172a 0%, ' + pal[1] + ' 100%)';
+        if (sel.light === 'Golden hour') bg = 'linear-gradient(135deg, #fbbf24 0%, ' + pal[0] + ' 40%, ' + pal[2] + ' 100%)';
+        return { background: bg, transform: 'scale(1) rotate(' + rot + ')' };
+    }
+
+    function describeCard(seedIdx) {
+        var s = SEEDS[seedIdx];
+        var bits = [];
+        bits.push(s.label + ': ' + (sel.frame ? sel.frame.toLowerCase() : 'default framing'));
+        if (sel.style) bits.push(sel.style + ' look');
+        else bits.push('generic stock-car prior');
+        if (sel.light) bits.push(LIGHT_FX[sel.light] || sel.light);
+        else bits.push('flat lighting');
+        if (!sel.style && !sel.light && !sel.frame) bits.push('boring gray sedan energy');
+        if (sel.style === 'Cyberpunk neon' && seedIdx % 2 === 0) bits.push('extra glow on edges');
+        if (sel.frame === 'Close-up detail' && seedIdx === 2) bits.push('headlight detail sharp');
+        if (sel.frame === 'Top-down' && seedIdx === 1) bits.push('roof and hood dominant');
+        return bits.join(' · ');
+    }
+
+    function renderGallery() {
+        var html = '';
+        SEEDS.forEach(function (s, i) {
+            var ts = thumbStyle(i);
+            var emoji = s.emoji;
+            if (sel.style === 'Cyberpunk neon') emoji = '🚗✨';
+            if (sel.style === 'Watercolor sketch') emoji = '🎨';
+            if (sel.frame === 'Low angle hero shot') emoji = '🚗⬆️';
+            html += '<div class="gallery-card">' +
+                '<div class="thumb" style="background:' + ts.background + '">' + emoji + '</div>' +
+                '<div class="card-body">' +
+                '<div class="card-label">' + s.label + '</div>' +
+                '<div class="card-desc">' + describeCard(i) + '</div>' +
+                '</div></div>';
+        });
+        document.getElementById('pe-gallery').innerHTML = html;
+    }
+
+    function updateChips() {
+        var groups = [
+            { g: 'style', id: 'pe-style' },
+            { g: 'light', id: 'pe-light' },
+            { g: 'frame', id: 'pe-frame' }
+        ];
+        groups.forEach(function (x) {
+            var parent = document.getElementById(x.id);
+            Array.prototype.forEach.call(parent.querySelectorAll('.chip'), function (chip) {
+                chip.classList.toggle('selected', sel[x.g] === chip.textContent);
+            });
+        });
+    }
+
+    function update() {
+        updateChips();
+        document.getElementById('pe-prompt').textContent = buildPrompt();
+        renderGallery();
+        var n = (sel.style ? 1 : 0) + (sel.light ? 1 : 0) + (sel.frame ? 1 : 0);
+        document.getElementById('pe-note').textContent = n === 0
+            ? 'Bare prompt → four similar generic cars (mock). Add chips to diverge composition and mood.'
+            : n + ' modifier(s) active → mock cards shift palette, framing language, and emoji cues. Real SD would diverge more per seed.';
+    }
+
+    mountChips(STYLE, 'style', 'pe-style');
+    mountChips(LIGHT, 'light', 'pe-light');
+    mountChips(FRAME, 'frame', 'pe-frame');
+
+    document.getElementById('pe-reset').addEventListener('click', function () {
+        sel = { style: null, light: null, frame: null };
+        update();
+    });
+
+    update();
+})();
+</script>
+
+</body>
+</html>

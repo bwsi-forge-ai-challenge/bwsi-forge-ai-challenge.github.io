@@ -1,0 +1,286 @@
+<div class="genai-lesson-container">
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .assignment-box {
+            background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+        }
+        .genai-lesson-container .deliverable-box {
+            background: #f0fdf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+        }
+        .genai-lesson-container .warning-box {
+            background: #fffbeb; border-left: 4px solid #f59e0b;
+            padding: 14px 16px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td {
+            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
+        }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
+        }
+        .genai-lesson-container pre {
+            background: #0f172a; color: #e2e8f0; padding: 14px 16px;
+            border-radius: 8px; overflow-x: auto; font-size: 0.88em; line-height: 1.5;
+        }
+        .genai-lesson-container ol.checklist { padding-left: 1.2em; }
+        .genai-lesson-container ol.checklist li { margin-bottom: 8px; }
+        .genai-lesson-container .part-header {
+            display: inline-block; background: #1e3a8a; color: #fff;
+            font-size: 0.78em; font-weight: 700; padding: 4px 10px;
+            border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.04em;
+        }
+        .genai-lesson-container .explain-box {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+        }
+        .genai-lesson-container .explain-box h3 { margin-top: 0; }
+        .genai-lesson-container a { color: #2563eb; }
+    </style>
+
+    <h1>Assignment: Download, Run, and Fine-Tune a Real Model</h1>
+
+    <p>This assignment applies everything from this unit in one hands-on workflow. You will load a small open-source model, see how a <strong>base</strong> model behaves, fine-tune it on a narrow task, log runs to <strong>Weights &amp; Biases</strong>, and compare results.</p>
+
+    <div class="explain-box">
+        <h3>What are you actually doing?</h3>
+        <p>You are <strong>not</strong> pretraining a model from scratch (that takes months and millions of dollars). You are:</p>
+        <ol>
+            <li><strong>Downloading</strong> a model someone else already trained (DistilGPT-2 from Hugging Face).</li>
+            <li><strong>Running</strong> it to see that raw models often <em>continue text</em> instead of following instructions.</li>
+            <li><strong>Fine-tuning</strong> — showing it 50+ examples of a specific task so its weights shift toward that behavior.</li>
+            <li><strong>Logging</strong> training to W&amp;B so you can compare two experiments (different learning rates) like real ML teams.</li>
+        </ol>
+        <p>The notebook walks you through every step with explanations. Read the <strong>Key terms</strong> section in the notebook before you run code.</p>
+    </div>
+
+    <div class="explain-box">
+        <h3>Key terms (quick reference)</h3>
+        <table>
+            <tr><th>Term</th><th>Meaning</th></tr>
+            <tr><td><strong>Hugging Face</strong></td><td>Website + Python library where models and tokenizers are shared. You download <code>distilgpt2</code> from here.</td></tr>
+            <tr><td><strong>Tokenizer</strong></td><td>Turns text into numbers (tokens) the model understands.</td></tr>
+            <tr><td><strong>Base model</strong></td><td>Pretrained for general text completion — not yet customized for your task.</td></tr>
+            <tr><td><strong>Fine-tuning</strong></td><td>Extra training on your examples. Small dataset, short run, small weight changes.</td></tr>
+            <tr><td><strong>Loss</strong></td><td>Training error score. Should go <strong>down</strong> over time.</td></tr>
+            <tr><td><strong>Learning rate</strong></td><td>How big each weight update is. You will try two different values and compare.</td></tr>
+            <tr><td><strong>Weights &amp; Biases (W&amp;B)</strong></td><td>Free experiment-tracking site. Records loss curves and settings for each training run. See below.</td></tr>
+        </table>
+    </div>
+
+    <div class="explain-box">
+        <h3>What is Weights &amp; Biases?</h3>
+        <p>Fine-tuning involves trial and error: change learning rate, train again, change epochs, train again. Without a log, you forget what you tried.</p>
+        <p><strong>W&amp;B</strong> is a free tool that automatically records:</p>
+        <ul>
+            <li>A <strong>loss curve</strong> (line chart showing training error over time)</li>
+            <li>The <strong>hyperparameters</strong> you used (learning rate, batch size, epochs)</li>
+            <li>Multiple <strong>runs</strong> you can overlay to see which settings worked best</li>
+        </ul>
+        <p><strong>Setup:</strong> Create an account at <a href="https://wandb.ai/" target="_blank">wandb.ai</a>, copy your API key, run <code>wandb.login()</code> in the notebook. After training, share your project link as a deliverable.</p>
+    </div>
+
+    <div class="assignment-box">
+        <strong>Suggested time:</strong> 2–3 hours, often split across two sessions<br>
+        <strong>Session 1:</strong> Parts 1–2 (setup, base model, build dataset)<br>
+        <strong>Session 2:</strong> Parts 3–4 (fine-tune, W&amp;B, evaluate, reflection)<br><br>
+        <strong>Starter notebook:</strong> <code>FORGE-AI-Challenge/1_foundations_of_genai/fine_tune_assignment.ipynb</code><br>
+        <strong>Environment:</strong> Google Colab recommended (free GPU). Local Python works if you have PyTorch + ~2 GB RAM.
+    </div>
+
+    <hr>
+
+    <h2>Before You Start</h2>
+    <ol>
+        <li>Open <code>FORGE-AI-Challenge/1_foundations_of_genai/fine_tune_assignment.ipynb</code> in Colab or locally.</li>
+        <li>Run the install cell if needed (<code>transformers</code>, <code>datasets</code>, <code>accelerate</code>, <code>wandb</code>).</li>
+        <li>Create a free account at <a href="https://wandb.ai/" target="_blank">wandb.ai</a> and copy your API key.</li>
+        <li>In Colab: <strong>Runtime → Change runtime type → GPU</strong> (T4 is enough).</li>
+        <li>Pick one narrow task and stick with it for the whole assignment.</li>
+    </ol>
+
+    <div class="warning-box">
+        <strong>Model choice:</strong> The template defaults to <code>distilgpt2</code> (~82M parameters). It trains in minutes on Colab. You may substitute another small causal LM (e.g. <code>gpt2</code>, <code>sshleifer/tiny-gpt2</code>) if your instructor approves — keep it small so two W&amp;B runs finish in class time.
+    </div>
+
+    <hr>
+
+    <h2><span class="part-header">PART 1</span><br>Download and Run a Pretrained Model</h2>
+
+    <p><strong>Goal:</strong> See what a raw model does <em>before</em> any customization. No training in this part — just download, load, and generate.</p>
+
+    <h3>Steps</h3>
+    <ol>
+        <li>Set up Python and install <code>transformers</code>, <code>datasets</code>, <code>accelerate</code>, and <code>wandb</code>.</li>
+        <li>Load a pretrained model and tokenizer from Hugging Face (default: <code>distilgpt2</code>).</li>
+        <li>Run generation on several prompts — include at least one <strong>instruction-style</strong> prompt.</li>
+        <li>Save example outputs; you will compare against your fine-tuned model later.</li>
+    </ol>
+
+    <p><strong>Suggested baseline prompts</strong> (also in the notebook):</p>
+    <pre>Once upon a time
+Question: What is the capital of France?
+Answer:
+Write a haiku about rain.</pre>
+
+    <h3>Reflection (Part 1)</h3>
+    <p>Answer in the notebook or your written report:</p>
+    <blockquote style="margin:12px 0;padding:12px 16px;background:#f8fafc;border-left:4px solid #3b82f6;">
+        Try a prompt requiring the model to follow an instruction. Does it comply, or does it just continue the text? Why might that be, based on what you learned about base models vs. fine-tuned models?
+    </blockquote>
+
+    <hr>
+
+    <h2><span class="part-header">PART 2</span><br>Prepare a Small Fine-Tuning Dataset</h2>
+
+    <p><strong>Goal:</strong> Build teaching material for the model. Each row is an <strong>input</strong> (what a user types) and an <strong>output</strong> (the answer you want). Fine-tuning learns from these pairs — the model never sees your task rules written in English, only your examples.</p>
+
+    <p>Choose a <strong>narrow, well-defined</strong> task. Examples:</p>
+    <ul>
+        <li>Completing sentences in a specific style (pirate speak, Shakespearean English)</li>
+        <li>Answering simple domain-specific questions (trivia about one topic)</li>
+        <li>Formatting text a certain way (casual → formal business English)</li>
+    </ul>
+
+    <p>Build <strong>50–200 input/output pairs</strong>. Sources:</p>
+    <ul>
+        <li>Hand-written examples (best for quality)</li>
+        <li>Small public dataset adapted to input/output pairs</li>
+        <li>Another AI tool to draft examples — then <em>you</em> review and edit for consistency</li>
+    </ul>
+
+    <p>The notebook includes ~25 starter pairs for a <strong>casual → formal business English</strong> task. You must add at least <strong>25 more</strong> (TODO in Part 2) or replace the task entirely with your own 50+ pairs.</p>
+
+    <table>
+        <thead>
+            <tr><th>Input (casual)</th><th>Output (formal)</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>hey can u send the report</td><td>Could you please send the report at your earliest convenience.</td></tr>
+            <tr><td>sry im late</td><td>I apologize for my tardiness.</td></tr>
+            <tr><td>thx for the help</td><td>Thank you for your assistance.</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2><span class="part-header">PART 3</span><br>Fine-Tune the Model</h2>
+
+    <p><strong>Goal:</strong> Run gradient descent on your examples (same core idea as Week 1) for a few minutes. The model starts from pretrained weights and nudges them toward your task. You run <strong>two experiments</strong> with different learning rates and log both to W&amp;B.</p>
+
+    <p>Training data is formatted as one string per example:</p>
+    <pre>### Input:
+{your input}
+
+### Output:
+{your target output}</pre>
+
+    <h3>Hyperparameters to set (TODO in notebook)</h3>
+    <table>
+        <thead>
+            <tr><th>Setting</th><th>Typical starting range</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Learning rate</td><td>1e-5 – 5e-4</td><td>Run <strong>two</strong> experiments with different values</td></tr>
+            <tr><td>Epochs</td><td>2 – 5</td><td>More epochs → overfit risk on tiny data</td></tr>
+            <tr><td>Batch size</td><td>4 – 8</td><td>Lower if you hit out-of-memory errors</td></tr>
+        </tbody>
+    </table>
+
+    <h3>Weights &amp; Biases requirements</h3>
+    <ol class="checklist">
+        <li>Log <strong>training loss</strong> over steps (automatic with <code>report_to="wandb"</code>).</li>
+        <li>Log hyperparameters for each run (learning rate, epochs, batch size, example count).</li>
+        <li>Complete <strong>at least two runs</strong> with different learning rates; compare loss curves in the W&amp;B UI.</li>
+        <li>Set the W&amp;B project name (template uses <code>forge-llm-finetune</code> — add your name or team).</li>
+    </ol>
+
+    <p>After training, load your best checkpoint for Part 4. The notebook saves checkpoints under <code>./finetuned-model-run1</code> (and run 2 if you train twice).</p>
+
+    <hr>
+
+    <h2><span class="part-header">PART 4</span><br>Evaluate and Reflect</h2>
+
+    <p><strong>Goal:</strong> Prove whether fine-tuning helped. Use prompts the model never saw during training. Compare base vs fine-tuned side by side, read your W&amp;B loss curves, and connect the experience to Lessons 1–4 in writing.</p>
+
+    <h3>Side-by-side evaluation</h3>
+    <p>On <strong>3–5 new prompts</strong> (not in your training set), generate outputs from:</p>
+    <ol>
+        <li>The original <strong>base</strong> model (Part 1)</li>
+        <li>Your <strong>fine-tuned</strong> model (Part 3)</li>
+    </ol>
+    <p>Record outputs in the notebook table or your written report. The notebook includes a comparison helper — fill in the results.</p>
+
+    <h3>Written reflection (one page)</h3>
+    <p>Address all of the following:</p>
+    <ol>
+        <li><strong>Did fine-tuning improve performance on your specific task?</strong> How can you tell? (Qualitative examples + any metric you tracked.)</li>
+        <li><strong>What did your W&amp;B loss curves look like?</strong> Did loss decrease smoothly? Any divergence or signs of overfitting?</li>
+        <li><strong>How long did fine-tuning take?</strong> Estimate how that compares to pretraining (Lesson 1: weeks/months, trillions of tokens, millions of dollars).</li>
+        <li><strong>Tradeoffs:</strong> What did your small model give up vs. what a frontier model (e.g. GPT-4 class) might provide instead?</li>
+    </ol>
+
+    <hr>
+
+    <h2>Deliverables</h2>
+    <div class="deliverable-box">
+        <ol class="checklist">
+            <li><strong>W&amp;B project link</strong> — shared view showing ≥2 training runs and loss curves</li>
+            <li><strong>3–5 prompt comparisons</strong> — base model vs fine-tuned model, side by side</li>
+            <li><strong>One-page reflection</strong> — answers to the Part 4 questions above</li>
+            <li><strong>(Optional)</strong> Completed notebook exported as <code>.ipynb</code> or PDF</li>
+        </ol>
+    </div>
+
+    <h3>Grading rubric (guide for self-check)</h3>
+    <table>
+        <thead>
+            <tr><th>Criterion</th><th>Meets expectations when…</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Base model exploration</td><td>Multiple prompts tested; instruction-following limitation explained</td></tr>
+            <tr><td>Dataset</td><td>≥50 consistent input/output pairs for one task</td></tr>
+            <tr><td>Training</td><td>≥2 W&amp;B runs; hyperparameters logged; loss curves visible</td></tr>
+            <tr><td>Evaluation</td><td>Clear before/after examples on held-out prompts</td></tr>
+            <tr><td>Reflection</td><td>Connects experience to Lessons 1–4 (pretrain, fine-tune, cost, context)</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>Troubleshooting</h2>
+    <table>
+        <thead>
+            <tr><th>Issue</th><th>Try this</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>CUDA out of memory</td><td>Reduce <code>batch_size</code> to 2, shorten <code>max_length</code>, use <code>distilgpt2</code></td></tr>
+            <tr><td>W&amp;B login error</td><td>Run <code>wandb.login()</code> with API key; or set <code>WANDB_MODE=disabled</code> to finish locally (still submit runs for credit if possible)</td></tr>
+            <tr><td>Loss not decreasing</td><td>Try higher LR slightly; check dataset formatting; verify labels are not all padding</td></tr>
+            <tr><td>Model ignores task after fine-tune</td><td>More epochs or examples; ensure prompt format at inference matches training format</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>Hugging Face fine-tuning tutorial:</strong> <a href="https://huggingface.co/docs/transformers/training" target="_blank">Training docs</a></li>
+        <li><strong>W&amp;B Hugging Face integration:</strong> <a href="https://docs.wandb.ai/guides/integrations/huggingface" target="_blank">Integration guide</a></li>
+        <li><strong>DistilGPT-2 model card:</strong> <a href="https://huggingface.co/distilgpt2" target="_blank">huggingface.co/distilgpt2</a></li>
+    </ul>
+</div>

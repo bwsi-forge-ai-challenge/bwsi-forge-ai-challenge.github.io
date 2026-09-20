@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BWSI F.O.R.G.E. AI Challenge</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1b1f24;
+    --muted: #5b6672;
+    --border: #dde1e6;
+    --accent: #1f5fbf;
+    --accent-soft: #e8f0fc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216;
+      --card: #171b21;
+      --text: #e6e9ed;
+      --muted: #9aa5b1;
+      --border: #2a313a;
+      --accent: #6ea8ff;
+      --accent-soft: #1c2a40;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 20px 64px; }
+  header { margin-bottom: 32px; }
+  h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.2; }
+  header p { margin: 0; color: var(--muted); max-width: 60ch; }
+  .start {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .start:hover { filter: brightness(1.1); }
+  h2.section { margin: 40px 0 16px; font-size: 1.25rem; }
+  .grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .unit {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .unit h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .unit .num {
+    display: inline-block;
+    min-width: 1.6em;
+    margin-right: 6px;
+    padding: 0 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .unit ul { margin: 10px 0 0; padding: 0; list-style: none; }
+  .unit li + li { border-top: 1px solid var(--border); }
+  .unit a {
+    display: block;
+    padding: 7px 0;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .unit a:hover { text-decoration: underline; }
+  .unit a.quiz { color: var(--muted); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>BWSI F.O.R.G.E. AI Challenge</h1>
+    <p>A 6-month program that takes you from the mathematical foundations of machine learning to building, evaluating, and deploying generative AI systems.</p>
+    <a class="start" href="Lessons/0_prerequisites/Introduction/LandingPage.html">Start with the course introduction</a>
+  </header>
+
+  <h2 class="section">Module 0: Prerequisites</h2>
+  <div class="grid">
+
+    <section class="unit">
+      <h3><span class="num">1</span>Introduction</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/Introduction/LandingPage.html">Course Introduction</a></li>
+        <li><a href="Lessons/0_prerequisites/Introduction/CourseCommunication.html">Course Communication</a></li>
+        <li><a href="Lessons/0_prerequisites/Introduction/SettingUpYourEnvironment.html">Setting Up Your Environment</a></li>
+        <li><a href="Lessons/0_prerequisites/Introduction/GradingPolicy.html">Grading Policy</a></li>
+        <li><a href="Lessons/0_prerequisites/Introduction/GenAiUsePolicy.html">Generative AI Use Policy</a></li>
+        <li><a href="Lessons/0_prerequisites/Introduction/GenAiInTheNews.html">Gen AI in the News</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">2</span>Linear Algebra</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/LinearAlgebra/Vectors.html">Vectors</a></li>
+        <li><a href="Lessons/0_prerequisites/LinearAlgebra/Matrices.html">Matrices</a></li>
+        <li><a href="Lessons/0_prerequisites/LinearAlgebra/SystemOfLinearEquations.html">Systems of Linear Equations</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/LinearAlgebra/Unit%20Quiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">3</span>Calculus</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/Calculus/TangentLinesAndLocalChange.html">Tangent Lines and Local Change</a></li>
+        <li><a href="Lessons/0_prerequisites/Calculus/Derivatives.html">Derivatives and Instantaneous Rate of Change</a></li>
+        <li><a href="Lessons/0_prerequisites/Calculus/PartialGradient.html">Partial Derivatives and the Gradient</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/Calculus/UnitQuiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">4</span>Statistics</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/Statistics/Statistics.html">Introduction to Statistics</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/Statistics/UnitQuiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">5</span>Intro to ML</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/IntroToML/WhatIsML.html">What is ML?</a></li>
+        <li><a href="Lessons/0_prerequisites/IntroToML/LinearRegression.html">Linear Regression and Gradient Descent</a></li>
+        <li><a href="Lessons/0_prerequisites/IntroToML/Classificaition.html">Classification and Logistic Regression</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/IntroToML/UnitQuiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">6</span>Multi-Layer Perceptrons</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/MLP/Perceptron.html">Perceptrons and Hidden Layers</a></li>
+        <li><a href="Lessons/0_prerequisites/MLP/MLP.html">Multi-Layer Perceptrons and Backpropagation</a></li>
+        <li><a href="Lessons/0_prerequisites/MLP/FullMLPipeline.html">The Full ML Pipeline</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/MLP/UnitQuiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+    <section class="unit">
+      <h3><span class="num">7</span>Deep Dive: CNNs and RNNs</h3>
+      <ul>
+        <li><a href="Lessons/0_prerequisites/DeepDiveIntoSelectedModel/CNN.html">Convolutional Neural Networks</a></li>
+        <li><a href="Lessons/0_prerequisites/DeepDiveIntoSelectedModel/RNN.html">Recurrent Neural Networks</a></li>
+        <li><a href="Lessons/0_prerequisites/DeepDiveIntoSelectedModel/Review.html">Review: Core Concepts and Structural Patterns</a></li>
+        <li><a class="quiz" href="Lessons/0_prerequisites/DeepDiveIntoSelectedModel/UnitQuiz.html">Unit Quiz</a></li>
+      </ul>
+    </section>
+
+  </div>
+
+  <footer>More modules will be added here as the course progresses.</footer>
+</div>
+</body>
+</html>

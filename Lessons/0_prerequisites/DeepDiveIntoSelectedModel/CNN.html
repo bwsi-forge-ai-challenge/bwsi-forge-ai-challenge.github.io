@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Dive into Convolutional Neural Networks · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Deep Dive: CNNs and RNNs</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Deep Dive: CNNs and RNNs</p>
+    <h1>Deep Dive into Convolutional Neural Networks</h1>
+    <p class="lede">Think about how effortlessly your brain handles image classification. When you look at a photograph, you instantly identify a dog, a bridge, or a face. Yet, translating this instinct algorithmically into computer code is notoriously difficult. A standard image is a massive matrix of hundreds of thousands of individual color pixel channels. To teach a machine to parse them reliably, we need vast training pools.</p>
+  </header>
+
+  <section>
+<p>For a long time, researchers were bottlenecked not by architectures, but by a lack of diverse data. That changed in 2009 with the release of <strong>ImageNet</strong>. Spearheaded by Dr. Fei-Fei Li, the project curated a massive library of over <strong>14 million</strong> annotated, real-world images spanning <strong>1,000</strong> completely distinct category bins. The annual benchmark competition that followed (the <strong>ILSVRC</strong>) unlocked an era where engineers could benchmark neural network layers without starving the models of training examples.</p>
+
+    <p>In our previous units on multi-layer perceptrons (MLPs), we worked with tiny, flattened grids. A natural engineering question arises: <em>Why can't we simply scale up standard fully connected layers to tackle modern web-scale imagery?</em> In this post, we'll look at the architectural limits that cause classic deep networks to fall apart under complex vision tasks, and discover how <strong>Convolutional Neural Networks (CNNs)</strong> elegantly solve those scaling constraints.</p>
+  </section>
+
+  <section>
+<h2>1. The Problem with Flattening: Why MLPs Lose the Big Picture</h2>
+
+    <h3>Problem 1: Spatial Context Disappears</h3>
+    <p>When you feed an ImageNet photo (\(224 \times 224 \times 3\) RGB pixels) into an MLP, you have to serialize the data, flattening the entire multi-channel grid into a single 1D numerical array. This translation layout poses a significant structural problem:</p>
+    
+    <div class="highlight-box">
+        Whether you serialize row-by-row, column-by-column, or in a zig-zag pattern, the choice is arbitrary. More importantly, it permanently shears spatial coordinates. Two pixels that sit right next to each other in the original photo can end up separated by thousands of feature slots in a flattened vector. Because an MLP evaluates each scalar coordinate independently, the model loses all information about pixel neighborhoods. <strong>The moment you flatten an image, you throw away its spatial geometry.</strong>
+    </div>
+
+    <p><strong>Visualize the Shift:</strong> In the 6×6 simulation below, see how pixels <code>(0,0)</code> and <code>(1,0)</code> rest directly on top of each other. Once flattened row-by-row, they are pushed down to indices 0 and 6, rendering their close relationship invisible to a fully connected neuron.</p>
+    <canvas id="l7-flatten-canvas" width="520" height="200" style="border: 1px solid #e2e8f0; display: block; margin: 15px 0; max-width: 100%;"></canvas>
+
+    <h3>Problem 2: Parameter Explosion</h3>
+    <p>Let's calculate the hardware cost of a modest, three-layer classifier processing standard ImageNet images. If we pass our uncompressed pixel vector through two hidden fully connected layers of just 128 neurons each, the architecture maps out as follows:</p>
+    
+    <div class="math-display arch-flow-wrap">
+        <div class="arch-flow">
+            <span class="arch-underbrace">
+                <span class="arch-underbrace-main">\(224 \times 224 \times 3\)</span>
+                <span class="arch-underbrace-annotation">
+                    <span class="arch-underbrace-bracket" aria-hidden="true"></span>
+                    <span class="arch-underbrace-label">150,528 input dimensions</span>
+                </span>
+            </span>
+            <span>\(\longrightarrow\)</span>
+            <span>Dense(128)</span>
+            <span>\(\longrightarrow\)</span>
+            <span>Dense(128)</span>
+            <span>\(\longrightarrow\)</span>
+            <span>Dense(1000)</span>
+        </div>
+    </div>
+
+    <p>This layout might look deceptively compact on paper, but the actual layer parameter counts reveal a massive bottleneck:</p>
+    
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Layer Phase</th><th>Connection Framework</th><th>Weights (+ biases)</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Layer 1 Intersection</td><td>\(150{,}528 \to 128\)</td><td>\(150{,}528 \times 128 + 128 \approx 1.93 \times 10^{7}\) (<strong>19.3 Million</strong>)</td></tr>
+            <tr><td>Layer 2 Intersection</td><td>\(128 \to 128\)</td><td>\(128 \times 128 + 128 \approx 1.65 \times 10^{4}\) (<strong>16 Thousand</strong>)</td></tr>
+            <tr><td>Layer 3 Output Head</td><td>\(128 \to 1{,}000\)</td><td>\(128 \times 1000 + 1000 \approx 1.29 \times 10^{5}\) (<strong>129 Thousand</strong>)</td></tr>
+            <tr><td colspan="2"><strong>Total Cumulative Network Footprint</strong></td><td><strong>\(\approx 1.94 \times 10^{7}\) Active Parameters</strong></td></tr>
+        </tbody>
+    </table></div>
+    
+    <p>Nearly 100% of our compute budget is consumed by the very first layer. If we scale this up to match a wider network with 150,000 hidden units, the first layer alone requires a staggering number of weights before we even factor in network depth:</p>
+    <div class="math-display">
+        \[
+        150{,}000 \times 150{,}528 \;\approx\; 2.4 \times 10^{10} \text{ weights (24 Billion parameters)}
+        \]
+    </div>
+    
+  <p>Beyond this massive computational cost, MLPs struggle with <strong>translation invariance</strong>. If the model learns to identify a cat's ear in the top-left corner of a frame, those learned weights are completely useless if the cat appears in the bottom-right corner. It has to relearn the visual concept from scratch at every single position.</p>
+
+    <h3>The Solution: Convolutions</h3>
+    <p>CNNs are engineered to eliminate these exact pain points by relying on two core principles: <strong>weight sharing</strong> (sliding the same small filter across the entire image instead of giving every pixel unique weights) and <strong>local connectivity</strong> (processing pixels in small, localized neighborhoods first to preserve spatial features like edges, lines, and textures).</p>
+
+    <!-- <div class="interactive-box">
+        <h3>⚡ Concept Check: MLP Layer Overload</h3>
+        <p><strong>Scenario:</strong> You connect a flattened $224 \times 224 \times 3$ RGB input directly to a standard dense hidden layer containing 128 nodes. What causes the massive parameter load?</p>
+        <details>
+            <summary>Click to reveal breakdown</summary>
+            <p style="margin-top: 5px; color: #047857;"><strong>Full, dense interconnectivity.</strong> The parameter weight footprint scales to roughly 19.3 million because every single input pixel must establish a unique connection with every individual node in the hidden layer, completely ignoring spatial locality rules.</p>
+        </details>
+    </div> -->
+  </section>
+
+  <section>
+<h2>2. Stride, Padding, and the Mechanics of the Sliding Kernel</h2>
+    <p>Instead of mapping every pixel to every neuron, a CNN slides a tiny coordinate matrix called a <strong>kernel</strong> (or <strong>filter</strong>)—typically sized 3×3 or 5×5—across the image grid. At each step, it calculates the dot product between the kernel weights and the local pixel patch, sums them up, and records the result as a single value in a new <strong>feature map</strong>.</p>
+    
+    <p>The mathematical transformation at coordinate slot \((i, j)\) is defined as:</p>
+    <div class="math-display">
+        \[
+        (I * K)[i,j] = \sum_{m,n} I[i{+}m,\, j{+}n] \cdot K[m,n]
+        \]
+    </div>
+
+    <p>To control how the kernel scans the canvas, we configure two primary hyperparameters:</p>
+    <ul>
+        <li><strong>Stride (\(S\)):</strong> The step size the filter takes as it moves across the image. A stride of 1 moves the filter one pixel at a time, while a stride of 2 skips a pixel, effectively reducing the spatial dimensions of the output feature map by half.</li>
+        <li><strong>Padding (\(P\)):</strong> Adding artificial borders (typically zero pixels) around the edges of the image. This prevents the grid from shrinking with each convolution layer and helps preserve feature information along the borders.</li>
+    </ul>
+
+    <p>We can precisely compute the resulting output dimensions using this formula:</p>
+    <div class="math-display">
+        \[
+        \text{out} = \left\lfloor \frac{W - K + 2P}{S} \right\rfloor + 1
+        \]
+    </div>
+
+    <p><strong>Interactive Demo: Watch the Filter Scan:</strong> Below is a 16×16 image with a vertical edge-detection kernel. Use the sliders to change <strong>kernel size</strong> (3×3 or 5×5), <strong>stride</strong>, and <strong>padding</strong>—watch how the output feature map shrinks or grows. <strong>Draw directly on the input grid</strong> to sketch a pattern, then press <strong>Play</strong> or <strong>Step</strong> to see how the dot products build the output in real time.</p>
+    
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; width:100%;">
+        <tr>
+            <td align="center" valign="top" style="padding: 12px; width: 300px;">
+                <div id="l7-conv-in-lbl" style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px; min-height: 1.2em;">Input 16×16 (Draw Canvas)</div>
+                <div style="width:280px; height:280px; flex-shrink:0;">
+                <canvas id="l7-conv-in" width="280" height="280" style="display:block; width:280px; height:280px; border: 2px solid #334155; background: #fff; cursor: crosshair; touch-action: none;"></canvas>
+                </div>
+                <p style="font-size: 0.8em; color: #64748b; margin: 6px 0 0;">Drag to paint · Shift+drag to erase · gray border = zero padding</p>
+            </td>
+            <td align="center" valign="middle" style="padding: 5px; font-size: 1.4em; color: #64748b;">➔</td>
+            <td align="center" valign="top" style="padding: 12px; width: 300px;">
+                <div id="l7-conv-out-lbl" style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px; min-height: 1.2em;">Output Feature Map</div>
+                <div style="width:280px; height:280px; flex-shrink:0;">
+                <canvas id="l7-conv-out" width="280" height="280" style="display:block; width:280px; height:280px; border: 2px solid #334155; background: #fff;"></canvas>
+                </div>
+                <div id="l7-conv-dims" style="font-size: 0.78em; color: #64748b; margin-top: 6px; min-height: 2.4em;">out = ⌊(16 − K + 2P) / S⌋ + 1</div>
+            </td>
+            <td valign="top" style="padding: 12px; width: 220px;">
+                <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 8px;">Convolution Parameters</div>
+                <label style="display:block; font-size:0.82em; margin-bottom:2px;">Kernel size: <strong id="l7-conv-k-lbl">3×3</strong></label>
+                <input type="range" id="l7-conv-kernel-size" min="3" max="5" step="2" value="3" style="width:100%; margin-bottom:8px;">
+                <label style="display:block; font-size:0.82em; margin-bottom:2px;">Stride (S): <strong id="l7-conv-stride-lbl">1</strong></label>
+                <input type="range" id="l7-conv-stride" min="1" max="4" step="1" value="1" style="width:100%; margin-bottom:8px;">
+                <label style="display:block; font-size:0.82em; margin-bottom:2px;">Padding (P): <strong id="l7-conv-padding-lbl">0</strong></label>
+                <input type="range" id="l7-conv-padding" min="0" max="4" step="1" value="0" style="width:100%; margin-bottom:10px;">
+                <div id="l7-conv-kernel-lbl" style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px; min-height: 1.2em;">Active Kernel Weights (3×3)</div>
+                <div style="width:110px; height:110px; flex-shrink:0;">
+                <canvas id="l7-conv-kernel" width="110" height="110" style="display:block; width:110px; height:110px; border: 1px solid #94a3b8; background: #fff;"></canvas>
+                </div>
+                <div id="l7-conv-math" class="math-display" style="margin-top: 8px; padding: 10px; font-size: 0.9em; min-height: 52px;">Press Play or Step</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <button id="l7-conv-play">Play</button>
+                    <button id="l7-conv-step">Step</button>
+                    <button id="l7-conv-restart">Restart</button>
+                    <button id="l7-conv-clear" style="background: #fee2e2; color: #b91c1c; border-color: #fca5a5;">Clear</button>
+                    <button id="l7-conv-demo" style="font-size: 0.85em;">Load Pattern</button>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- <div class="interactive-box">
+        <h3>⚡ Concept Check: Dimension Math</h3>
+        <p><strong>Scenario:</strong> You process a $32 \times 32$ feature matrix using a $3 \times 3$ convolutional kernel at stride $S = 1$, with no boundary padding ($P = 0$). What are the dimensions of the output feature map?</p>
+        <details>
+            <summary>Click to reveal breakdown</summary>
+            <p style="margin-top: 5px; color: #047857;"><strong>$30 \times 30$.</strong> Applying our dimension formula: \(\text{out} = \lfloor\frac{32 - 3 + 2(0)}{1}\rfloor + 1 = 29 + 1 = 30\).</p>
+        </details>
+    </div> -->
+  </section>
+
+  <section>
+<h2>3. Feature Maps and the Emergence of Visual Hierarchies</h2>
+    <p>Historically, computer vision relied on hand-crafted mathematical matrices designed to highlight specific structural attributes in an image. Two classic <strong>Sobel filters</strong> detect edges by emphasizing brightness differences along one axis:</p>
+
+    <p><strong>Vertical edge detection</strong> — isolates sharp drops in horizontal brightness:</p>
+    <div class="math-display">
+        \[
+        K_{\text{vertical}} = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix}
+        \]
+    </div>
+
+    <p><strong>Horizontal edge detection</strong> — detects sharp changes in vertical contrast:</p>
+    <div class="math-display">
+        \[
+        K_{\text{horizontal}} = \begin{bmatrix} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{bmatrix}
+        \]
+    </div>
+    
+    <p>In modern deep learning, we don't design these filters by hand. Instead, we initialize them randomly, and the model learns the optimal edge detectors on its own via backpropagation. By stacking multiple filters within a single layer, the model can capture dozens of distinct features simultaneously (such as diagonal lines, textures, or color contrasts).</p>
+
+    <p>As we chain these convolutional operations together, a fascinating <strong>visual hierarchy</strong> emerges naturally:</p>
+    
+    <div class="highlight-box">
+        The earliest layers in a CNN focus on primitive visual features like basic edges, lines, and gradients. Mid-level layers combine these lines into geometric primitives, curves, and patterns. Deep layers build on those shapes and learn intricate semantic concepts like eyes, wheels, or entire faces. In this way, the CNN builds a robust understanding of the entire visual scene step by step.
+    </div>
+
+    <figure style="margin: 15px 0;">
+        <img src="https://contenthub-static.grammarly.com/blog/wp-content/uploads/2024/09/157421-grammarly-6162-blogvisuals-cnns-Image2-Op1-B_V1_new.png"
+             alt="CNN visual hierarchy showing low-level features (edges, dark spots), mid-level features (eyes, ears, nose), and high-level features (facial structure)"
+             style="display: block; max-width: 100%; height: auto; border: 1px solid #cbd5e1;">
+        <figcaption style="font-size: 0.85em; color: #64748b; margin-top: 8px;">
+            <strong>Visual hierarchy in CNNs:</strong> Early layers detect primitive patterns (edges, spots); middle layers combine them into parts (eyes, ears, nose); deep layers recognize whole structures (faces).
+            <em>Image source:</em> <a href="https://www.grammarly.com/blog/ai/what-is-a-convolutional-neural-network/" target="_blank">Grammarly — What Is a Convolutional Neural Network?</a> (2024).
+        </figcaption>
+    </figure>
+  </section>
+
+  <section>
+<h2>4. Max Pooling and Spatial Downsampling</h2>
+    <p>To reduce the computational burden on subsequent layers and make feature detection more robust, CNNs use downsampling layers, most commonly <strong>Max Pooling</strong>. A standard 2×2 max pooling window scans a feature map with a stride of 2, dividing the grid into blocks and keeping only the maximum value within each neighborhood. This step reduces the overall dimensions by 75% without adding any new parameters to train.</p>
+    
+    <p>This approach gives the network a crucial property called <strong>local translation invariance</strong>. By tracking the peak activation within a local region rather than its exact pixel coordinates, the network can still register a feature even if it shifts slightly in the frame.</p>
+
+    <div style="text-align: center; font-weight: bold; margin: 15px 0;">
+        Activations: \(\{3, 7, 2, 5\}\) ➔ Max Value Output: \(\max(3, 7, 2, 5) = 7\)
+    </div>
+
+    <p><strong>Max Pooling in Real Time:</strong> Press play below to watch a 2×2 window downsample an 8×8 feature map, condensing information into a dense 4×4 summary matrix.</p>
+    
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; width:100%;">
+        <tr>
+            <td align="center" valign="top" style="padding: 12px;">
+                <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px;">Feature Map 8×8</div>
+                <canvas id="l7-pool-in" width="200" height="200" style="border: 2px solid #334155; background: #fff;"></canvas>
+            </td>
+            <td align="center" valign="middle" style="font-size: 1.4em; color: #64748b;">➔</td>
+            <td align="center" valign="top" style="padding: 12px;">
+                <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px;">Condensed Output 4×4</div>
+                <canvas id="l7-pool-out" width="120" height="120" style="border: 2px solid #334155; background: #fff;"></canvas>
+            </td>
+            <td valign="top" style="padding: 12px;">
+                <div id="l7-pool-math" class="math-display" style="margin:0 0 10px 0; padding:10px; font-size:0.95em;">\(\max(3,\, 7,\, 2,\, 5) = 7\)</div>
+                <div style="display:flex; gap:4px;">
+                    <button id="l7-pool-play">Play</button>
+                    <button id="l7-pool-step">Step</button>
+                    <button id="l7-pool-reset">Reset</button>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </section>
+
+  <section>
+<h2>5. Combining the Layers: End-to-End CNN Pipelines</h2>
+    <p>A production image classification pipeline alternates convolutional layers, non-linear activations (like <code>ReLU(x) = max(0, x)</code>), and max pooling operations. At the end of these blocks, the spatial grids are flattened into a 1D vector and passed to a final dense layer to output class probabilities via Softmax.</p>
+
+    <p>Here is how a standard CNN processes a 28×28 grayscale pixel digit image (like the MNIST dataset):</p>
+    
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Processing Tier</th><th>Operation Profile</th><th>Output Feature Map Shape</th><th>Learned Concept Target</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Input Image</td><td>Grayscale matrix layer</td><td>\(28 \times 28 \times 1\)</td><td>Raw pixel values</td></tr>
+            <tr><td>Convolution 1</td><td>32 filters (3×3), ReLU</td><td>\(26 \times 26 \times 32\)</td><td>Basic edges and strokes</td></tr>
+            <tr><td>Max Pooling 1</td><td>2×2 window downsampling</td><td>\(13 \times 13 \times 32\)</td><td>Spatially compressed outlines</td></tr>
+            <tr><td>Convolution 2</td><td>64 filters (3×3), ReLU</td><td>\(11 \times 11 \times 64\)</td><td>Curves and intersections</td></tr>
+            <tr><td>Max Pooling 2</td><td>2×2 window downsampling</td><td>\(5 \times 5 \times 64\)</td><td>Abstract object parts</td></tr>
+            <tr><td>Flattening</td><td>Vector reshaping</td><td>\(1600\) dimensions</td><td>Flattened feature representation</td></tr>
+            <tr><td>Dense Hidden Layer</td><td>128 hidden nodes, ReLU</td><td>\(128\) nodes</td><td>High-level visual attributes</td></tr>
+            <tr><td>Output Classification</td><td>10 class nodes, Softmax</td><td>\(10\) probability metrics</td><td>Final predicted digit scores</td></tr>
+        </tbody>
+    </table></div>
+
+    <!-- <p><strong>Interactive Walkthrough: Step Through the Network:</strong> Use the buttons below to trace data as it flows through the network, watching the feature maps grow in depth while shrinking in spatial resolution.</p>
+    <canvas id="l7-arch-canvas" width="620" height="220" style="border: 1px solid #cbd5e1; display: block; margin: 15px 0; max-width: 100%;"></canvas>
+    <div id="l7-arch-caption" style="font-family: monospace; font-size: 0.9em; margin-bottom: 12px; font-weight: bold; color: #1e3a8a;">Input: 28 × 28 × 1 — raw grayscale digit</div>
+    <div style="display:flex; gap:4px; margin-bottom:25px;">
+        <button id="l7-arch-prev">Previous Stage</button>
+        <button id="l7-arch-next">Next Stage</button>
+        <button id="l7-arch-play">Auto-Play Walkthrough</button>
+    </div> -->
+  </section>
+
+  <section>
+<h2>6. AlexNet: The Historical Spark of Deep Learning</h2>
+    <p>In 2012, the pieces we've discussed, such as convolutional kernels, max pooling, ReLU activations, and large datasets, came together in one model to change computer vision forever. The model was called <strong>AlexNet</strong> (designed by Alex Krizhevsky, Ilya Sutskever, and Geoffrey Hinton). It won the ImageNet challenge by such an overwhelming margin that it catalyzed the modern era of deep learning.</p>
+
+    <!-- <h3>The Shift in Performance</h3> -->
+    <p>Before AlexNet, state-of-the-art vision systems relied on hand-crafted visual feature engineering and shallow machine learning models. Top-5 error rates consistently plateaued around 25%. AlexNet smashed through this ceiling, recording a top-5 error rate of just <strong>15.3%</strong>, while the next closest competitor lagged far behind at 26%.</p>
+    
+    <p>This breakthrough was made possible by three key factors converging at the exact same moment:</p>
+    <ul>
+        <li><strong>Scale via ImageNet:</strong> Having access to millions of labeled samples allowed researchers to train high-capacity networks without suffering from immediate overfitting.</li>
+        <li><strong>Parallel GPU Acceleration:</strong> AlexNet moved training workloads to graphics hardware (utilizing two NVIDIA GTX 580 cards), which excel at handling the parallel math of convolution operations.</li>
+        <li><strong>Architectural Patterns:</strong> Stacking deep convolutional layers directly back-to-back before running downsampling operations allowed the network to learn rich feature maps.</li>
+    </ul>
+
+    <!-- <table>
+        <thead>
+            <tr bgcolor="#e2e8f0"><th>Processing Tier</th><th>Operational Details</th><th>Resulting Vector Shape</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Input Canvas</td><td>ImageNet scale RGB file</td><td>\(227 \times 227 \times 3\)</td></tr>
+            <tr><td>Convolution 1</td><td>96 individual filters (\(11 \times 11\)), stride 4, ReLU</td><td>\(55 \times 55 \times 96\)</td></tr>
+            <tr><td>Max Pooling 1</td><td>\(3 \times 3\) window configuration, stride 2</td><td>\(27 \times 27 \times 96\)</td></tr>
+            <tr><td>Convolution 2</td><td>256 individual filters (\(5 \times 5\)), ReLU activation</td><td>\(27 \times 27 \times 256\)</td></tr>
+            <tr><td>Max Pooling 2</td><td>\(3 \times 3\) window configuration, stride 2</td><td>\(13 \times 13 \times 256\)</td></tr>
+            <tr><td>Convolution 3 to 5</td><td>Consecutive back-to-back stacks of 384, 384, and 256 filters (\(3 \times 3\))</td><td>\(13 \times 13 \times 256\)</td></tr>
+            <tr><td>Max Pooling 3</td><td>Final \(3 \times 3\) downsampling window, stride 2</td><td>\(6 \times 6 \times 256\)</td></tr>
+            <tr><td>Dense Hidden 6 & 7</td><td>Fully connected classification nodes + Dropout regularizers</td><td>4096 dimensions ➔ 4096 dimensions</td></tr>
+            <tr><td>Output Layer</td><td>Softmax probability transformation</td><td>1,000 distinct category distributions</td></tr>
+        </tbody>
+    </table> -->
+
+    <p><strong>The Evolution of Vision Models:</strong> AlexNet ignited a wave of innovation that quickly pushed deep learning models to superhuman performance on ImageNet:</p>
+    
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Milestone Year</th><th>Architecture Model Name</th><th>Core Structural Innovation</th><th>Recorded Top-5 Error Target</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>2012</strong></td><td><strong>AlexNet</strong></td><td>GPU-driven deep convolutional stacks with ReLU activation</td><td>~15.3%</td></tr>
+            <tr><td><strong>2014</strong></td><td>VGG Net</td><td>Deep, highly uniform layers using exclusively 3×3 filters</td><td>~7.3%</td></tr>
+            <tr><td><strong>2014</strong></td><td>GoogLeNet</td><td>Inception modules that process multi-scale filters concurrently</td><td>~6.7%</td></tr>
+            <tr><td><strong>2015</strong></td><td><strong>ResNet</strong></td><td>Residual skip connections (\(y = F(x) + x\)) that enable 150+ layers</td><td><strong>~3.6% (Beats human baseline)</strong></td></tr>
+        </tbody>
+    </table></div>
+  </section>
+
+  <section>
+<!-- <h2>7. Interactive Sandbox: Feature Map Laboratory</h2>
+    <p>Draw custom pixel shapes on the canvas below, or load the preconfigured circular template. Choose an edge-detection or blur filter to see how the mathematical dot products calculate feature mappings in real time.</p>
+
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; background-color: #fafafa; width:100%;">
+        <tr>
+            <td align="center" valign="middle" style="padding: 20px; width:45%;">
+                <strong>Input Canvas (24×24)</strong><br><br>
+                <canvas id="l7-draw" width="240" height="240" style="border: 2px solid #333; background-color: #fff; display: block; cursor: crosshair;"></canvas>
+                <br>
+                <label for="l7-preset">Active Spatial Filter Profile:</label>
+                <select id="l7-preset" style="width: 100%; margin-top: 5px;">
+                    <option value="vertical">Vertical Edge Filter</option>
+                    <option value="horizontal">Horizontal Edge Filter</option>
+                    <option value="blur">Box Blur Matrix</option>
+                    <option value="sharpen">Sharpen Configuration</option>
+                </select>
+                <br><br>
+                <label style="font-size:0.9em;">Kernel Position Index: <span id="l7-pos-lbl">Center</span>
+                    <input type="range" id="l7-pos" min="0" max="1" value="1" step="1" style="width: 100%; margin-top:5px;">
+                </label>
+                <br>
+                <div style="display:flex; gap:4px; margin-top:10px;">
+                    <button id="l7-circle" style="flex:1;">Load Template Circle</button>
+                    <button id="l7-clear" style="flex:1; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444;">Clear Canvas</button>
+                </div>
+                <button id="l7-sandbox-play" style="background-color: #2563eb; color: white; width: 100%; border: none; padding: 8px; margin-top:8px;">Animate Convolution Pass</button>
+            </td>
+            <td valign="top" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Feature Map Output Matrix</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div style="display:flex; justify-content:center; margin-bottom:10px;">
+                    <canvas id="l7-out" width="240" height="240" style="border: 1px solid #ccc; display: block;"></canvas>
+                </div>
+                <div id="l7-kernel-viz" class="math-display" style="margin-bottom: 8px; padding: 10px;"></div>
+                <div id="l7-output" style="font-family: monospace; font-size: 0.88em; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #cbd5e1; min-height: 45px;">
+                    Hover over the input canvas or use the slider to inspect the convolutional math.
+                </div>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Framework Logs:</strong> <span id="l7-status">Each point in the output feature map represents the scalar inner product of the 3×3 kernel against the image patch beneath it. Bright areas signal a strong structural match for the filter.</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <hr> -->
+  </section>
+
+  <section>
+<h2>Recommended Literature & Core Resources</h2>
+    <ul>
+        <li><strong>ImageNet Classification with Deep Convolutional Neural Networks (AlexNet Core - 2012):</strong> The landmark paper that popularized GPU acceleration and deep convolutional networks. <a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks" target="_blank">Download NeurIPS PDF</a></li>
+        <li><strong>Deep Residual Learning for Image Recognition (ResNet Core - 2015):</strong> Introduces skip connections, unlocking the ability to train networks hundreds of layers deep. <a href="https://arxiv.org/abs/1512.03385" target="_blank">Download arXiv Paper</a></li>
+        <li><strong>Stanford CS231n Vision Lecture Frameworks (Karpathy, Li):</strong> Exceptional educational notes detailing spatial transformations, parameter constraints, and dimensional mechanics. <a href="https://cs231n.github.io/convolutional-networks/" target="_blank">Access Course Page</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../MLP/UnitQuiz.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Unit Quiz: Multi-Layer Perceptrons</span>
+    </a>
+    <a class="pager__next" href="RNN.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Recurrent Neural Networks</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+    (function() {
+        function typesetMath(el, latex, display) {
+            if (!el) return;
+            el.innerHTML = display
+                ? '\\[' + latex + '\\]'
+                : '\\(' + latex + '\\)';
+            function run() {
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+            }
+            if (window.MathJax && MathJax.startup && MathJax.startup.promise) {
+                MathJax.startup.promise.then(run);
+            } else {
+                run();
+            }
+        }
+
+        function formatKernelLatex(k) {
+            let rows = [];
+            for (let i = 0; i < 3; i++) {
+                let cells = [];
+                for (let j = 0; j < 3; j++) {
+                    let v = k[i * 3 + j];
+                    cells.push(Number.isInteger(v) ? String(v) : v.toFixed(2));
+                }
+                rows.push(cells.join(' & '));
+            }
+            return '\\begin{bmatrix} ' + rows.join(' \\\\ ') + ' \\end{bmatrix}';
+        }
+
+        const GRID = 24;
+        const kernels = {
+            vertical:   [-1, 0, 1,  -2, 0, 2,  -1, 0, 1],
+            horizontal: [-1,-2,-1,   0, 0, 0,   1, 2, 1],
+            blur:       [0.06,0.12,0.06, 0.12,0.25,0.12, 0.06,0.12,0.06],
+            sharpen:    [0,-1,0,  -1,5,-1,  0,-1,0]
+        };
+        let grid = new Array(GRID * GRID).fill(0);
+        let drawing = false;
+        let hoverR = -1, hoverC = -1;
+        let sandboxAnimTimer = null;
+        let sandboxAnimIdx = 0;
+
+        const drawCanvas = document.getElementById('l7-draw');
+        const outCanvas = document.getElementById('l7-out');
+        const presetEl = document.getElementById('l7-preset');
+        const posEl = document.getElementById('l7-pos');
+        const outputEl = document.getElementById('l7-output');
+        const kernelVizEl = document.getElementById('l7-kernel-viz');
+
+        function on(id, event, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(event, handler);
+        }
+
+        function setText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function drawFlattenDiagram() {
+            let c = document.getElementById('l7-flatten-canvas');
+            if (!c) return;
+            let ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, c.width, c.height);
+            let n = 6, sz = 22, ox = 24, oy = 30;
+            for (let r = 0; r < n; r++) {
+                for (let col = 0; col < n; col++) {
+                    let v = (col < 2) ? 0.85 : 0.15;
+                    let b = Math.floor((1 - v) * 255);
+                    ctx.fillStyle = 'rgb(' + b + ',' + b + ',' + b + ')';
+                    ctx.fillRect(ox + col * sz, oy + r * sz, sz - 1, sz - 1);
+                }
+            }
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ox, oy, sz, sz);
+            ctx.strokeRect(ox, oy + sz, sz, sz);
+            ctx.fillStyle = '#2563eb';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('(0,0) index 0', ox, oy - 6);
+            ctx.fillText('(1,0) index 6', ox, oy + sz + 14);
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('6×6 image', ox + 30, oy - 14);
+            ctx.fillText('flatten →', 200, 95);
+            let vx = 280, vy = 24;
+            for (let i = 0; i < 12; i++) {
+                let hi = (i === 0 || i === 6);
+                ctx.fillStyle = hi ? '#dbeafe' : '#f1f5f9';
+                ctx.fillRect(vx, vy + i * 14, 200, 13);
+                ctx.strokeStyle = hi ? '#2563eb' : '#cbd5e1';
+                ctx.strokeRect(vx, vy + i * 14, 200, 13);
+                ctx.fillStyle = '#334155';
+                ctx.font = '10px monospace';
+                ctx.fillText('[' + i + '] = ' + (i === 0 || i === 6 ? '0.85' : '0.15'), vx + 6, vy + i * 14 + 10);
+            }
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Neighbors in the grid → far apart in the vector', 24, 185);
+        }
+
+        function drawParamsComparison() {
+            let c = document.getElementById('l7-params-canvas');
+            if (!c) return;
+            let ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, c.width, c.height);
+            let mlp = 2.4e10, cnn = 50000;
+            let logM = Math.log10(mlp), logC = Math.log10(cnn);
+            let barW = 380, x0 = 80, y0 = 28;
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('First hidden layer weights (224×224 RGB image, log scale)', 12, 16);
+            let mlpW = barW;
+            let cnnW = Math.max(4, barW * (logC / logM));
+            ctx.fillStyle = '#fecaca';
+            ctx.fillRect(x0, y0, mlpW, 28);
+            ctx.strokeStyle = '#dc2626';
+            ctx.strokeRect(x0, y0, mlpW, 28);
+            ctx.fillStyle = '#991b1b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('MLP (one big layer): ~2.4 \u00d7 10\u2071\u2070', x0 + 6, y0 + 18);
+            ctx.fillStyle = '#bbf7d0';
+            ctx.fillRect(x0, y0 + 44, cnnW, 28);
+            ctx.strokeStyle = '#16a34a';
+            ctx.strokeRect(x0, y0 + 44, cnnW, 28);
+            ctx.fillStyle = '#14532d';
+            ctx.fillText('CNN (shared 3×3 filters): ~50,000', x0 + 6, y0 + 62);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Same task — CNN reuses weights across the image', 12, 118);
+        }
+
+        const CONV_N = 16;
+        const CONV_CANVAS_PX = 280;
+        const CONV_KERNEL_CANVAS_PX = 110;
+        const CONV_KERNELS = {
+            3: [-1, 0, 1,  -2, 0, 2,  -1, 0, 1],
+            5: [
+                -1, -1, 0, 1, 1,
+                -2, -2, 0, 2, 2,
+                -3, -3, 0, 3, 3,
+                -2, -2, 0, 2, 2,
+                -1, -1, 0, 1, 1
+            ]
+        };
+        let convKernelSize = 3;
+        let convStride = 1;
+        let convPadding = 0;
+        let convInput = [];
+        let convOutput = [];
+        let convPositions = [];
+        let convStep = 0;
+        let convAnimTimer = null;
+        let convDrawing = false;
+        let convEraseMode = false;
+
+        function convOutSize() {
+            return Math.floor((CONV_N - convKernelSize + 2 * convPadding) / convStride) + 1;
+        }
+
+        function convPaddedSize() {
+            return CONV_N + 2 * convPadding;
+        }
+
+        function getConvKernel() {
+            return CONV_KERNELS[convKernelSize];
+        }
+
+        function getPaddedValue(padR, padC) {
+            let r = padR - convPadding;
+            let c = padC - convPadding;
+            if (r < 0 || r >= CONV_N || c < 0 || c >= CONV_N) return 0;
+            return convInput[r * CONV_N + c];
+        }
+
+        function buildConvPositions() {
+            convPositions = [];
+            let out = convOutSize();
+            if (out < 1) return;
+            for (let or = 0; or < out; or++)
+                for (let oc = 0; oc < out; oc++)
+                    convPositions.push({ or, oc });
+        }
+
+        function loadConvDemoPattern() {
+            const art = [
+                '................',
+                '....██....██....',
+                '...████..████...',
+                '..████████████..',
+                '.██████████████.',
+                '.██████..██████.',
+                '.█████.██.█████.',
+                '.█████.██.█████.',
+                '.██████..██████.',
+                '..████████████..',
+                '...██████████...',
+                '....████████....',
+                '.....██████.....',
+                '......████......',
+                '................',
+                '................'
+            ];
+            convInput = new Array(CONV_N * CONV_N).fill(0.08);
+            for (let r = 0; r < CONV_N; r++) {
+                for (let c = 0; c < CONV_N; c++) {
+                    if (art[r][c] === '█') convInput[r * CONV_N + c] = 0.95;
+                }
+            }
+        }
+
+        function updateConvLabels() {
+            let out = convOutSize();
+            setText('l7-conv-k-lbl', convKernelSize + '×' + convKernelSize);
+            setText('l7-conv-stride-lbl', String(convStride));
+            setText('l7-conv-padding-lbl', String(convPadding));
+            setText('l7-conv-kernel-lbl', 'Active Kernel Weights (' + convKernelSize + '×' + convKernelSize + ')');
+            setText('l7-conv-in-lbl', 'Input ' + CONV_N + '×' + CONV_N + (convPadding > 0 ? ' + P=' + convPadding + ' border' : ' (Draw Canvas)'));
+            setText('l7-conv-out-lbl', out >= 1 ? 'Output Feature Map ' + out + '×' + out : 'Output Feature Map (invalid params)');
+            let dimsEl = document.getElementById('l7-conv-dims');
+            if (dimsEl) {
+                if (out >= 1) {
+                    dimsEl.textContent = '⌊(' + CONV_N + ' − ' + convKernelSize + ' + 2×' + convPadding + ') / ' + convStride + '⌋ + 1 = ' + out;
+                } else {
+                    dimsEl.textContent = 'No valid output — try smaller kernel, more padding, or smaller stride.';
+                }
+            }
+        }
+
+        function onConvParamsChange() {
+            stopConvAnim();
+            updateConvLabels();
+            restartConvAnim();
+            setText('l7-conv-math', 'Parameters updated — press Play or Step.');
+        }
+
+        function initConvDemo() {
+            loadConvDemoPattern();
+            updateConvLabels();
+            restartConvAnim();
+        }
+
+        function clearConvCanvas() {
+            stopConvAnim();
+            convInput = new Array(CONV_N * CONV_N).fill(0);
+            restartConvAnim();
+            setText('l7-conv-math', 'Draw on the grid, then press Play.');
+        }
+
+        function stopConvAnim() {
+            if (convAnimTimer) { clearInterval(convAnimTimer); convAnimTimer = null; }
+            setText('l7-conv-play', 'Play');
+        }
+
+        function restartConvAnim() {
+            stopConvAnim();
+            let out = convOutSize();
+            convOutput = out >= 1 ? new Array(out * out).fill(null) : [];
+            buildConvPositions();
+            convStep = 0;
+            drawConvAnimFrame(-1, -1);
+        }
+
+        function convCellFromEvent(e) {
+            let canvas = document.getElementById('l7-conv-in');
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            let padded = convPaddedSize();
+            let col = Math.floor((clientX - rect.left) / rect.width * padded);
+            let row = Math.floor((clientY - rect.top) / rect.height * padded);
+            let ir = row - convPadding, ic = col - convPadding;
+            if (ir < 0 || ir >= CONV_N || ic < 0 || ic >= CONV_N) return null;
+            return { row: ir, col: ic };
+        }
+
+        function paintConvCell(row, col, erase) {
+            let val = erase ? 0 : 1;
+            convInput[row * CONV_N + col] = val;
+            if (!erase) {
+                if (col > 0) convInput[row * CONV_N + col - 1] = Math.max(convInput[row * CONV_N + col - 1], 0.5);
+                if (col < CONV_N - 1) convInput[row * CONV_N + col + 1] = Math.max(convInput[row * CONV_N + col + 1], 0.5);
+                if (row > 0) convInput[(row - 1) * CONV_N + col] = Math.max(convInput[(row - 1) * CONV_N + col], 0.5);
+                if (row < CONV_N - 1) convInput[(row + 1) * CONV_N + col] = Math.max(convInput[(row + 1) * CONV_N + col], 0.5);
+            }
+        }
+
+        function handleConvDraw(e) {
+            if (!convDrawing) return;
+            let cell = convCellFromEvent(e);
+            if (!cell) return;
+            stopConvAnim();
+            paintConvCell(cell.row, cell.col, convEraseMode || e.shiftKey);
+            let out = convOutSize();
+            convOutput = out >= 1 ? new Array(out * out).fill(null) : [];
+            convStep = 0;
+            drawConvAnimFrame(-1, -1);
+            setText('l7-conv-math', 'Input updated — press Play to convolve.');
+        }
+
+        function convDemoAt(or, oc) {
+            let k = getConvKernel();
+            let kN = convKernelSize;
+            let topR = or * convStride;
+            let topC = oc * convStride;
+            let sum = 0;
+            for (let kr = 0; kr < kN; kr++) {
+                for (let kc = 0; kc < kN; kc++) {
+                    let p = getPaddedValue(topR + kr, topC + kc);
+                    let w = k[kr * kN + kc];
+                    sum += p * w;
+                }
+            }
+            return { sum, topR, topC };
+        }
+
+        function drawKernelGrid(canvasId, k, kernelSize) {
+            let c = document.getElementById(canvasId);
+            if (!c) return;
+            let ctx = c.getContext('2d');
+            let sz = CONV_KERNEL_CANVAS_PX / kernelSize;
+            let fontSize = kernelSize === 3 ? 11 : 9;
+            ctx.clearRect(0, 0, c.width, c.height);
+            for (let i = 0; i < kernelSize * kernelSize; i++) {
+                let v = k[i];
+                let col = i % kernelSize, row = Math.floor(i / kernelSize);
+                let bg = v > 0 ? '#dbeafe' : v < 0 ? '#fee2e2' : '#f1f5f9';
+                ctx.fillStyle = bg;
+                ctx.fillRect(col * sz, row * sz, sz - 1, sz - 1);
+                ctx.fillStyle = '#334155';
+                ctx.font = fontSize + 'px monospace';
+                ctx.textAlign = 'center';
+                let label = Number.isInteger(v) ? String(v) : v.toFixed(1);
+                ctx.fillText(label, col * sz + sz / 2, row * sz + sz / 2 + 4);
+            }
+            ctx.textAlign = 'left';
+        }
+
+        function drawConvAnimFrame(highlightOr, highlightOc) {
+            let inC = document.getElementById('l7-conv-in');
+            let outC = document.getElementById('l7-conv-out');
+            if (!inC || !outC) return;
+            let ctxIn = inC.getContext('2d');
+            let ctxOut = outC.getContext('2d');
+            let padded = convPaddedSize();
+            let out = convOutSize();
+            let szIn = CONV_CANVAS_PX / padded;
+            ctxIn.clearRect(0, 0, inC.width, inC.height);
+            for (let pr = 0; pr < padded; pr++) {
+                for (let pc = 0; pc < padded; pc++) {
+                    let v = getPaddedValue(pr, pc);
+                    let isPad = pr < convPadding || pr >= convPadding + CONV_N ||
+                                pc < convPadding || pc >= convPadding + CONV_N;
+                    let b = Math.floor((1 - v) * 255);
+                    if (isPad && v === 0) {
+                        ctxIn.fillStyle = '#e2e8f0';
+                    } else {
+                        ctxIn.fillStyle = 'rgb(' + b + ',' + b + ',' + b + ')';
+                    }
+                    ctxIn.fillRect(pc * szIn, pr * szIn, szIn - 1, szIn - 1);
+                }
+            }
+            if (convPadding > 0) {
+                ctxIn.strokeStyle = '#94a3b8';
+                ctxIn.lineWidth = 1;
+                ctxIn.setLineDash([3, 3]);
+                ctxIn.strokeRect(convPadding * szIn, convPadding * szIn, CONV_N * szIn, CONV_N * szIn);
+                ctxIn.setLineDash([]);
+            }
+            if (highlightOr >= 0 && highlightOc >= 0) {
+                let { topR, topC } = convDemoAt(highlightOr, highlightOc);
+                ctxIn.strokeStyle = '#2563eb';
+                ctxIn.lineWidth = 2;
+                ctxIn.strokeRect(topC * szIn, topR * szIn, szIn * convKernelSize, szIn * convKernelSize);
+            }
+            ctxOut.clearRect(0, 0, outC.width, outC.height);
+            if (out < 1) {
+                ctxOut.fillStyle = '#64748b';
+                ctxOut.font = '12px sans-serif';
+                ctxOut.textAlign = 'center';
+                ctxOut.fillText('Invalid output size', outC.width / 2, outC.height / 2);
+                ctxOut.textAlign = 'left';
+            } else {
+                let szOut = CONV_CANVAS_PX / out;
+                for (let or = 0; or < out; or++) {
+                    for (let oc = 0; oc < out; oc++) {
+                        let idx = or * out + oc;
+                        if (convOutput[idx] === null) {
+                            ctxOut.fillStyle = '#f8fafc';
+                        } else {
+                            let v = convOutput[idx];
+                            let inten = Math.min(255, Math.abs(v) * 50);
+                            ctxOut.fillStyle = v > 0 ? 'rgb(37,99,' + Math.min(255, 100 + inten) + ')' : 'rgb(' + Math.min(255, 100 + inten) + ',50,50)';
+                        }
+                        ctxOut.fillRect(oc * szOut, or * szOut, szOut - 1, szOut - 1);
+                        if (convOutput[idx] !== null && szOut >= 14) {
+                            ctxOut.fillStyle = '#fff';
+                            ctxOut.font = Math.min(10, szOut - 4) + 'px sans-serif';
+                            ctxOut.textAlign = 'center';
+                            ctxOut.fillText(convOutput[idx].toFixed(1), oc * szOut + szOut / 2, or * szOut + szOut / 2 + 3);
+                            ctxOut.textAlign = 'left';
+                        }
+                    }
+                }
+            }
+            drawKernelGrid('l7-conv-kernel', getConvKernel(), convKernelSize);
+        }
+
+        function convAnimStep() {
+            if (convStep >= convPositions.length) {
+                stopConvAnim();
+                setText('l7-conv-math', 'Done — edit the grid or press Restart to run again.');
+                return;
+            }
+            let p = convPositions[convStep];
+            let out = convOutSize();
+            let { sum } = convDemoAt(p.or, p.oc);
+            convOutput[p.or * out + p.oc] = sum;
+            typesetMath(document.getElementById('l7-conv-math'),
+                '(I \\ast K)_{' + p.oc + ',' + p.or + '} = ' + sum.toFixed(2) +
+                ' \\quad (' + (convStep + 1) + '/' + convPositions.length + ')');
+            drawConvAnimFrame(p.or, p.oc);
+            convStep++;
+        }
+
+        function setupConvDrawing() {
+            let canvas = document.getElementById('l7-conv-in');
+            if (!canvas) return;
+            canvas.addEventListener('mousedown', function(e) {
+                convDrawing = true;
+                convEraseMode = e.shiftKey;
+                handleConvDraw(e);
+            });
+            canvas.addEventListener('mousemove', handleConvDraw);
+            canvas.addEventListener('mouseleave', function() { convDrawing = false; });
+            window.addEventListener('mouseup', function() { convDrawing = false; });
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                convDrawing = true;
+                convEraseMode = false;
+                handleConvDraw(e);
+            }, { passive: false });
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                if (convDrawing) handleConvDraw(e);
+            }, { passive: false });
+            window.addEventListener('touchend', function() { convDrawing = false; });
+        }
+
+        const POOL_N = 8;
+        let poolInput = [];
+        let poolOutput = [];
+        let poolStep = 0;
+        let poolAnimTimer = null;
+
+        function initPoolDemo() {
+            poolInput = [3,7,2,5, 1,9,4,2, 6,3,8,1, 2,5,7,4,
+                         4,1,6,3, 8,2,5,9, 1,7,3,6, 5,4,2,8,
+                         2,6,1,7, 3,8,4,1, 9,2,6,5, 4,3,7,2,
+                         1,5,8,3, 7,4,2,6, 3,9,1,8, 6,2,5,4];
+            poolOutput = new Array(16).fill(null);
+            poolStep = 0;
+        }
+
+        function drawPoolFrame(highlightBlock) {
+            let inC = document.getElementById('l7-pool-in');
+            let outC = document.getElementById('l7-pool-out');
+            if (!inC || !outC) return;
+            let ctxIn = inC.getContext('2d');
+            let ctxOut = outC.getContext('2d');
+            let szIn = inC.width / POOL_N;
+            let szOut = outC.width / 4;
+            ctxIn.clearRect(0, 0, inC.width, inC.height);
+            for (let r = 0; r < POOL_N; r++) {
+                for (let col = 0; col < POOL_N; col++) {
+                    let v = poolInput[r * POOL_N + col];
+                    let t = v / 9;
+                    ctxIn.fillStyle = 'rgb(' + Math.floor(60 + t * 180) + ',80,120)';
+                    ctxIn.fillRect(col * szIn, r * szIn, szIn - 1, szIn - 1);
+                    ctxIn.fillStyle = '#fff';
+                    ctxIn.font = '9px monospace';
+                    ctxIn.fillText(String(v), col * szIn + 4, r * szIn + 12);
+                }
+            }
+            if (highlightBlock >= 0) {
+                let br = Math.floor(highlightBlock / 4) * 2;
+                let bc = (highlightBlock % 4) * 2;
+                ctxIn.strokeStyle = '#f59e0b';
+                ctxIn.lineWidth = 3;
+                ctxIn.strokeRect(bc * szIn, br * szIn, szIn * 2, szIn * 2);
+                let vals = [];
+                for (let dr = 0; dr < 2; dr++)
+                    for (let dc = 0; dc < 2; dc++)
+                        vals.push(poolInput[(br + dr) * POOL_N + (bc + dc)]);
+                document.getElementById('l7-pool-math').innerHTML = '\\(\\max(' + vals.join(',\\, ') + ') = ' + Math.max(...vals) + '\\)';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById('l7-pool-math')]);
+            }
+            ctxOut.clearRect(0, 0, outC.width, outC.height);
+            for (let i = 0; i < 16; i++) {
+                let col = i % 4, r = Math.floor(i / 4);
+                if (poolOutput[i] === null) {
+                    ctxOut.fillStyle = '#f8fafc';
+                } else {
+                    let t = poolOutput[i] / 9;
+                    ctxOut.fillStyle = 'rgb(' + Math.floor(80 + t * 175) + ',50,50)';
+                }
+                ctxOut.fillRect(col * szOut, r * szOut, szOut - 1, szOut - 1);
+                if (poolOutput[i] !== null) {
+                    ctxOut.fillStyle = '#fff';
+                    ctxOut.font = '11px monospace';
+                    ctxOut.fillText(String(poolOutput[i]), col * szOut + 8, r * szOut + 20);
+                }
+            }
+        }
+
+        function poolAnimStep() {
+            if (poolStep >= 16) {
+                clearInterval(poolAnimTimer);
+                poolAnimTimer = null;
+                setText('l7-pool-play', 'Play');
+                return;
+            }
+            let br = Math.floor(poolStep / 4) * 2;
+            let bc = (poolStep % 4) * 2;
+            let vals = [];
+            for (let dr = 0; dr < 2; dr++)
+                for (let dc = 0; dc < 2; dc++)
+                    vals.push(poolInput[(br + dr) * POOL_N + (bc + dc)]);
+            poolOutput[poolStep] = Math.max(...vals);
+            drawPoolFrame(poolStep);
+            poolStep++;
+        }
+
+        function resetPoolAnim() {
+            if (poolAnimTimer) { clearInterval(poolAnimTimer); poolAnimTimer = null; }
+            setText('l7-pool-play', 'Play');
+            initPoolDemo();
+            drawPoolFrame(-1);
+            document.getElementById('l7-pool-math').innerHTML = '\\(\\max(3,\\, 7,\\, 2,\\, 5) = 7\\)';
+            if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById('l7-pool-math')]);
+        }
+
+        const ARCH_STAGES = [
+            { label: 'Input', shape: '28 × 28 × 1', note: 'raw grayscale digit', color: '#dbeafe' },
+            { label: 'Conv1', shape: '26 × 26 × 32', note: '32 edge filters, ReLU', color: '#dcfce7' },
+            { label: 'Pool1', shape: '13 × 13 × 32', note: 'max pool 2×2', color: '#fef9c3' },
+            { label: 'Conv2', shape: '11 × 11 × 64', note: '64 deeper filters', color: '#dcfce7' },
+            { label: 'Pool2', shape: '5 × 5 × 64', note: 'max pool 2×2', color: '#fef9c3' },
+            { label: 'Flatten', shape: '1600', note: 'reshape to vector', color: '#e0e7ff' },
+            { label: 'Dense', shape: '128', note: 'fully connected + ReLU', color: '#fce7f3' },
+            { label: 'Output', shape: '10', note: 'softmax class scores', color: '#ffedd5' }
+        ];
+        let archStage = 0;
+        let archAnimTimer = null;
+
+        function drawArchDiagram() {
+            let c = document.getElementById('l7-arch-canvas');
+            if (!c) return;
+            let ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, c.width, c.height);
+            let boxW = 62, gap = 8, startX = 10, y = 50;
+            ARCH_STAGES.forEach((st, i) => {
+                let x = startX + i * (boxW + gap);
+                let active = i === archStage;
+                ctx.fillStyle = active ? st.color : '#f1f5f9';
+                ctx.strokeStyle = active ? '#2563eb' : '#94a3b8';
+                ctx.lineWidth = active ? 2.5 : 1;
+                ctx.fillRect(x, y, boxW, 70);
+                ctx.strokeRect(x, y, boxW, 70);
+                ctx.fillStyle = '#334155';
+                ctx.font = (active ? 'bold ' : '') + '9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(st.label, x + boxW / 2, y + 18);
+                ctx.font = '8px monospace';
+                ctx.fillText(st.shape, x + boxW / 2, y + 36);
+                if (i < ARCH_STAGES.length - 1) {
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x + boxW + 2, y + 35);
+                    ctx.lineTo(x + boxW + gap - 2, y + 35);
+                    ctx.stroke();
+                }
+            });
+            ctx.textAlign = 'left';
+            let st = ARCH_STAGES[archStage];
+            setText('l7-arch-caption', st.label + ': ' + st.shape + ' — ' + st.note);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Data flows left → right. Highlighted box = current stage.', 12, 24);
+            if (archStage <= 1) {
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(12, 140, 40, 40);
+                for (let i = 0; i < 16; i++) {
+                    ctx.fillStyle = i % 5 === 0 ? '#fff' : '#94a3b8';
+                    ctx.fillRect(14 + (i % 4) * 9, 142 + Math.floor(i / 4) * 9, 8, 8);
+                }
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px sans-serif';
+                ctx.fillText('Spatial grid preserved through conv layers', 60, 165);
+            }
+        }
+
+        function kernel() { return kernels[presetEl.value]; }
+
+        function convAt(row, col, k) {
+            let sum = 0, terms = [];
+            for (let kr = -1; kr <= 1; kr++) {
+                for (let kc = -1; kc <= 1; kc++) {
+                    let tr = row + kr, tc = col + kc;
+                    let w = k[(kr + 1) * 3 + (kc + 1)];
+                    let p = (tr >= 0 && tr < GRID && tc >= 0 && tc < GRID) ? grid[tr * GRID + tc] : 0;
+                    sum += p * w;
+                    if (Math.abs(p) > 0.05) terms.push(p.toFixed(2) + '×' + w.toFixed(1));
+                }
+            }
+            return { sum, terms };
+        }
+
+        function validPositions() {
+            let pos = [];
+            for (let r = 1; r < GRID - 1; r++)
+                for (let c = 1; c < GRID - 1; c++)
+                    pos.push({ r, c });
+            return pos;
+        }
+
+        function renderKernelViz(k) {
+            if (!kernelVizEl) return;
+            typesetMath(kernelVizEl, formatKernelLatex(k), true);
+        }
+
+        function renderInput(highlightR, highlightC) {
+            let ctx = drawCanvas.getContext('2d');
+            let sz = drawCanvas.width / GRID;
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            for (let i = 0; i < grid.length; i++) {
+                let c = i % GRID, r = Math.floor(i / GRID);
+                let v = grid[i];
+                let b = Math.floor((1 - v) * 255);
+                ctx.fillStyle = 'rgb(' + b + ',' + b + ',' + b + ')';
+                ctx.fillRect(c * sz, r * sz, sz, sz);
+            }
+            let hr = highlightR >= 0 ? highlightR : hoverR;
+            let hc = highlightC >= 0 ? highlightC : hoverC;
+            if (hr >= 1 && hr < GRID - 1 && hc >= 1 && hc < GRID - 1) {
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2;
+                ctx.strokeRect((hc - 1) * sz, (hr - 1) * sz, sz * 3, sz * 3);
+            }
+        }
+
+        function evaluate(highlightR, highlightC) {
+            if (!drawCanvas || !outCanvas || !presetEl || !outputEl || !kernelVizEl) return;
+            let k = kernel();
+            renderKernelViz(k);
+            let ctx = outCanvas.getContext('2d');
+            let sz = outCanvas.width / GRID;
+            ctx.clearRect(0, 0, outCanvas.width, outCanvas.height);
+            for (let r = 0; r < GRID; r++) {
+                for (let c = 0; c < GRID; c++) {
+                    let { sum } = convAt(r, c, k);
+                    let intensity = Math.min(255, Math.max(0, Math.abs(sum) * 120));
+                    if (presetEl.value === 'blur') {
+                        ctx.fillStyle = 'rgb(' + intensity + ',' + intensity + ',' + intensity + ')';
+                    } else if (sum > 0.01) {
+                        ctx.fillStyle = 'rgb(37,99,' + Math.min(255, 80 + intensity) + ')';
+                    } else if (sum < -0.01) {
+                        ctx.fillStyle = 'rgb(' + Math.min(255, 80 + intensity) + ',50,50)';
+                    } else {
+                        ctx.fillStyle = '#fff';
+                    }
+                    ctx.fillRect(c * sz, r * sz, sz, sz);
+                }
+            }
+            let hr = highlightR >= 0 ? highlightR : hoverR;
+            let hc = highlightC >= 0 ? highlightC : hoverC;
+            if (hr >= 0 && hc >= 0) {
+                let { sum, terms } = convAt(hr, hc, k);
+                outputEl.innerHTML = 'Position (' + hc + ', ' + hr + '): sum = ' + sum.toFixed(3) + '<br>' +
+                    (terms.length ? 'Terms: ' + terms.join(' + ') : 'Patch mostly empty');
+            } else {
+                outputEl.innerHTML = 'Kernel: ' + presetEl.value + '<br>Conv at position: hover input or use slider';
+            }
+            renderInput(highlightR, highlightC);
+        }
+
+        function loadCircle() {
+            grid = new Array(GRID * GRID).fill(0);
+            for (let r = 0; r < GRID; r++) {
+                for (let c = 0; c < GRID; c++) {
+                    let dr = r - 11.5, dc = c - 11.5;
+                    if (Math.abs(Math.sqrt(dr * dr + dc * dc) - 6.5) < 0.95) grid[r * GRID + c] = 1;
+                }
+            }
+        }
+
+        function setupSlider() {
+            if (!posEl) return;
+            let positions = validPositions();
+            posEl.max = String(positions.length);
+            posEl.value = '0';
+            setText('l7-pos-lbl', 'manual hover');
+        }
+
+        function stopSandboxAnim() {
+            if (sandboxAnimTimer) { clearInterval(sandboxAnimTimer); sandboxAnimTimer = null; }
+            setText('l7-sandbox-play', 'Animate Convolution Pass');
+            sandboxAnimIdx = 0;
+        }
+
+        function handleEvent(e) {
+            if (!drawCanvas) return;
+            stopSandboxAnim();
+            let rect = drawCanvas.getBoundingClientRect();
+            let clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+            let clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : null);
+            if (clientX === null || clientY === null) return;
+            let col = Math.floor((clientX - rect.left) / rect.width * GRID);
+            let row = Math.floor((clientY - rect.top) / rect.height * GRID);
+            if (col < 0 || col >= GRID || row < 0 || row >= GRID) return;
+            if (drawing) {
+                grid[row * GRID + col] = 1;
+                if (col > 0) grid[row * GRID + col - 1] = Math.max(grid[row * GRID + col - 1], 0.6);
+                if (col < GRID - 1) grid[row * GRID + col + 1] = Math.max(grid[row * GRID + col + 1], 0.6);
+                if (row > 0) grid[(row - 1) * GRID + col] = Math.max(grid[(row - 1) * GRID + col], 0.6);
+                if (row < GRID - 1) grid[(row + 1) * GRID + col] = Math.max(grid[(row + 1) * GRID + col], 0.6);
+                posEl.value = '0';
+                setText('l7-pos-lbl', 'manual hover');
+            }
+            hoverR = row; hoverC = col;
+            if (posEl && parseInt(posEl.value, 10) === 0) evaluate(-1, -1);
+        }
+
+        if (posEl) {
+        posEl.addEventListener('input', () => {
+            stopSandboxAnim();
+            let positions = validPositions();
+            let idx = parseInt(posEl.value, 10) - 1;
+            if (idx < 0 || idx >= positions.length) {
+                setText('l7-pos-lbl', 'manual hover');
+                evaluate(-1, -1);
+                return;
+            }
+            let p = positions[idx];
+            setText('l7-pos-lbl', '(' + p.c + ', ' + p.r + ') ' + (idx + 1) + '/' + positions.length);
+            evaluate(p.r, p.c);
+        });
+        }
+
+        if (drawCanvas) {
+        drawCanvas.addEventListener('mousedown', e => { drawing = true; handleEvent(e); });
+        drawCanvas.addEventListener('mousemove', handleEvent);
+        drawCanvas.addEventListener('mouseleave', () => { hoverR = hoverC = -1; if (posEl && parseInt(posEl.value, 10) === 0) evaluate(-1, -1); });
+        drawCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; handleEvent(e); }, { passive: false });
+        drawCanvas.addEventListener('touchmove', e => { e.preventDefault(); if (drawing) handleEvent(e); }, { passive: false });
+        }
+        window.addEventListener('mouseup', () => { drawing = false; });
+        window.addEventListener('touchend', () => { drawing = false; });
+        if (presetEl) presetEl.addEventListener('change', () => { stopSandboxAnim(); evaluate(-1, -1); });
+        on('l7-clear', 'click', () => { stopSandboxAnim(); grid.fill(0); evaluate(-1, -1); });
+        on('l7-circle', 'click', () => { stopSandboxAnim(); loadCircle(); evaluate(-1, -1); });
+
+        on('l7-sandbox-play', 'click', () => {
+            if (sandboxAnimTimer) { stopSandboxAnim(); return; }
+            let positions = validPositions();
+            sandboxAnimIdx = 0;
+            setText('l7-sandbox-play', 'Pause');
+            sandboxAnimTimer = setInterval(() => {
+                if (sandboxAnimIdx >= positions.length) { stopSandboxAnim(); return; }
+                let p = positions[sandboxAnimIdx++];
+                if (posEl) posEl.value = String(sandboxAnimIdx);
+                setText('l7-pos-lbl', '(' + p.c + ', ' + p.r + ') ' + sandboxAnimIdx + '/' + positions.length);
+                evaluate(p.r, p.c);
+            }, 60);
+        });
+
+        on('l7-conv-play', 'click', () => {
+            if (convAnimTimer) { stopConvAnim(); return; }
+            if (convStep >= convPositions.length) restartConvAnim();
+            setText('l7-conv-play', 'Pause');
+            convAnimTimer = setInterval(convAnimStep, 400);
+        });
+        on('l7-conv-step', 'click', () => { if (!convAnimTimer) convAnimStep(); });
+        on('l7-conv-restart', 'click', () => {
+            restartConvAnim();
+            setText('l7-conv-math', 'Press Play or Step');
+        });
+        on('l7-conv-clear', 'click', clearConvCanvas);
+        on('l7-conv-demo', 'click', () => {
+            loadConvDemoPattern();
+            updateConvLabels();
+            restartConvAnim();
+            setText('l7-conv-math', 'Pattern loaded — press Play.');
+        });
+
+        ['l7-conv-kernel-size', 'l7-conv-stride', 'l7-conv-padding'].forEach(function(id) {
+            let el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', function() {
+                convKernelSize = parseInt(document.getElementById('l7-conv-kernel-size').value, 10);
+                convStride = parseInt(document.getElementById('l7-conv-stride').value, 10);
+                convPadding = parseInt(document.getElementById('l7-conv-padding').value, 10);
+                onConvParamsChange();
+            });
+        });
+
+        on('l7-pool-play', 'click', () => {
+            if (poolAnimTimer) { clearInterval(poolAnimTimer); poolAnimTimer = null; setText('l7-pool-play', 'Play'); return; }
+            if (poolStep >= 16) resetPoolAnim();
+            setText('l7-pool-play', 'Pause');
+            poolAnimTimer = setInterval(poolAnimStep, 500);
+        });
+        on('l7-pool-step', 'click', () => { if (!poolAnimTimer) poolAnimStep(); });
+        on('l7-pool-reset', 'click', resetPoolAnim);
+
+        on('l7-arch-next', 'click', () => {
+            archStage = (archStage + 1) % ARCH_STAGES.length;
+            drawArchDiagram();
+        });
+        on('l7-arch-prev', 'click', () => {
+            archStage = (archStage - 1 + ARCH_STAGES.length) % ARCH_STAGES.length;
+            drawArchDiagram();
+        });
+        on('l7-arch-play', 'click', () => {
+            if (archAnimTimer) { clearInterval(archAnimTimer); archAnimTimer = null; setText('l7-arch-play', 'Auto-play'); return; }
+            setText('l7-arch-play', 'Pause');
+            archAnimTimer = setInterval(() => {
+                archStage = (archStage + 1) % ARCH_STAGES.length;
+                drawArchDiagram();
+            }, 1200);
+        });
+
+        // Initialize all demos
+        drawFlattenDiagram();
+        drawParamsComparison();
+        setupConvDrawing();
+        initConvDemo();
+        resetPoolAnim();
+        archStage = 0;
+        drawArchDiagram();
+        loadCircle();
+        setupSlider();
+        evaluate(-1, -1);
+    })();
+    </script>
+
+<script>
+    document.querySelectorAll('details').forEach(function(el) {
+        el.addEventListener('toggle', function() {
+            if (el.open && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+        });
+    });
+    </script>
+
+</body>
+</html>

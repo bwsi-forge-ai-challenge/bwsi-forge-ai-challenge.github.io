@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transformers: Putting It All Together</title>
+</head>
+<body>
+
+    <h1>Transformers: Putting It All Together</h1>
+
+    <p>Lessons 1–3 covered tokenization, embeddings, and attention in isolation. A <b>transformer</b> stacks these pieces into a trainable system that reads a token sequence and predicts what comes next. This lesson walks through the full pipeline — from text to logits — and shows how autoregressive models like GPT generate one token at a time.</p>
+
+    <hr>
+
+    <h2>1. Architecture Overview</h2>
+    <p>A transformer processes text through repeated <b>layers</b>. Each layer applies self-attention (tokens exchange information) plus a feed-forward network (per-token refinement). GPT-3 stacks <b>96</b> such layers; GPT-2 small uses <b>12</b>.</p>
+    <p>Training objective: predict the <b>next token</b>. At inference, sample or argmax one token, append it, repeat.</p>
+
+    <table border="1" cellpadding="12" cellspacing="0" width="100%" style="border-collapse: collapse; background-color: #f8fafc; border: 1px solid #cbd5e1;">
+        <tr>
+            <td align="center">
+                <div style="font-family:monospace;font-size:0.92em;line-height:2;">
+                    <span style="background:#fef3c7;padding:4px 8px;border-radius:4px;">Text</span> →
+                    <span style="background:#fce7f3;padding:4px 8px;border-radius:4px;">Token IDs</span> →
+                    <span style="background:#dbeafe;padding:4px 8px;border-radius:4px;">Embed + Position</span> →
+                    <span style="background:#dcfce7;padding:4px 8px;border-radius:4px;">Layer × N</span> →
+                    <span style="background:#e0e7ff;padding:4px 8px;border-radius:4px;">Logits (50K)</span> →
+                    <span style="background:#fce7f3;padding:4px 8px;border-radius:4px;">Softmax</span> →
+                    <span style="background:#fef3c7;padding:4px 8px;border-radius:4px;">Next token</span>
+                </div>
+                <p style="font-size:0.9em;margin-top:8px;">Shape trail: <span style="font-family:monospace;">(seq_len,) → (seq_len, d) → (seq_len, d) → (seq_len, vocab)</span></p>
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h2>2. The Full Pipeline: "The cat sat"</h2>
+    <ol>
+        <li><b>Tokenize:</b> <span style="font-family:monospace;">["The", " cat", " sat"]</span> → IDs <span style="font-family:monospace;">[50, 3277, 2521]</span></li>
+        <li><b>Embed:</b> each ID → 768-d vector (lookup table)</li>
+        <li><b>Position encode:</b> add sinusoidal or learned position vector per slot</li>
+        <li><b>Layers 1…N:</b> multi-head attention + feed-forward + residual + layer norm (each layer)</li>
+        <li><b>Final token hidden state:</b> vector at last position ("sat")</li>
+        <li><b>Project to vocabulary:</b> linear layer → 50,257 logits</li>
+        <li><b>Softmax:</b> probabilities over all next tokens</li>
+        <li><b>Sample / argmax:</b> e.g. <b>" on"</b> → sequence becomes "The cat sat on"</li>
+    </ol>
+
+    <hr>
+
+    <h2>3. Inside One Transformer Block</h2>
+    <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Step</th><th>Component</th><th>What it does</th><th>Shape</th></tr>
+        <tr><td>1</td><td>Multi-head self-attention</td><td>Tokens blend information from relevant positions</td><td>(seq, d) → (seq, d)</td></tr>
+        <tr><td>2</td><td>Residual + LayerNorm</td><td>Add input back; stabilize activations</td><td>(seq, d)</td></tr>
+        <tr><td>3</td><td>Feed-forward MLP</td><td>768 → 3072 → 768 per token</td><td>(seq, d) → (seq, d)</td></tr>
+        <tr><td>4</td><td>Residual + LayerNorm</td><td>Second skip connection</td><td>(seq, d)</td></tr>
+    </table>
+
+    <svg viewBox="0 0 520 280" width="100%" style="max-width:540px;border:1px solid #e2e8f0;background:#fafafa;">
+        <rect x="200" y="10" width="120" height="28" rx="4" fill="#dbeafe" stroke="#93c5fd"/>
+        <text x="260" y="28" text-anchor="middle" font-size="11">Input (seq, 768)</text>
+        <line x1="260" y1="38" x2="260" y2="55" stroke="#64748b" marker-end="url(#arr)"/>
+        <rect x="170" y="55" width="180" height="36" rx="4" fill="#dcfce7" stroke="#86efac"/>
+        <text x="260" y="72" text-anchor="middle" font-size="10">Multi-Head Attention</text>
+        <text x="260" y="84" text-anchor="middle" font-size="9" fill="#64748b">+ residual + LayerNorm</text>
+        <line x1="260" y1="91" x2="260" y2="108" stroke="#64748b"/>
+        <rect x="170" y="108" width="180" height="36" rx="4" fill="#fef08a" stroke="#fde047"/>
+        <text x="260" y="125" text-anchor="middle" font-size="10">Feed-Forward (768→3072→768)</text>
+        <text x="260" y="137" text-anchor="middle" font-size="9" fill="#64748b">+ residual + LayerNorm</text>
+        <line x1="260" y1="144" x2="260" y2="162" stroke="#64748b"/>
+        <rect x="200" y="162" width="120" height="28" rx="4" fill="#e0e7ff" stroke="#a5b4fc"/>
+        <text x="260" y="180" text-anchor="middle" font-size="11">Output (seq, 768)</text>
+        <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/></marker></defs>
+    </svg>
+
+    <p><b>Depth intuition:</b> early layers often capture local syntax; deeper layers integrate semantics and task-specific patterns. Representations refine layer by layer — not a strict partition, but a useful mental model.</p>
+
+    <hr>
+
+    <h2>4. Autoregressive Generation</h2>
+    <p>GPT-style models are <b>decoder-only</b> and <b>causal</b>: when predicting token <i>t</i>, attention is masked so position <i>t</i> cannot see future tokens. Generation loop:</p>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;font-family:monospace;font-size:0.88em;">
+        <tr bgcolor="#f1f5f9"><th>Step</th><th>Input sequence</th><th>Predicted next</th></tr>
+        <tr><td>1</td><td>The cat sat</td><td>on</td></tr>
+        <tr><td>2</td><td>The cat sat on</td><td>the</td></tr>
+        <tr><td>3</td><td>The cat sat on the</td><td>mat</td></tr>
+    </table>
+    <p>Stop at max length or a special end-of-text token.</p>
+
+    <hr>
+
+    <h2>5. Transformers vs RNNs</h2>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Property</th><th>RNN / LSTM</th><th>Transformer</th></tr>
+        <tr><td>Processing</td><td>Sequential, one step at a time</td><td>Parallel over sequence (training)</td></tr>
+        <tr><td>Long-range links</td><td>Through many hops; gradient decay</td><td>Direct attention in one layer</td></tr>
+        <tr><td>Scale</td><td>Harder to scale to huge data</td><td>Scaling laws favor bigger models + data</td></tr>
+        <tr><td>Attention</td><td>Hand-designed gates</td><td>Learned softmax attention</td></tr>
+    </table>
+
+    <hr>
+
+    <h2>6. Limitations and Quirks</h2>
+    <ul>
+        <li><b>Context window:</b> fixed max length (e.g. 4K–128K tokens). Beyond that → truncate, summarize, or chunk.</li>
+        <li><b>Next-token objective:</b> no explicit reasoning engine — behavior emerges from prediction.</li>
+        <li><b>Hallucination:</b> plausible-sounding tokens when data is missing.</li>
+        <li><b>O(n²) attention:</b> long sequences are compute-heavy.</li>
+        <li><b>Causal masking (GPT):</b> cannot look ahead during training; encoder-decoder models (T5) use bidirectional encoding on input.</li>
+    </ul>
+
+    <hr>
+
+    <h2>7. Sizes and Scales</h2>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Model</th><th>Params</th><th>Layers</th><th>Hidden size</th></tr>
+        <tr><td>GPT-2 (large)</td><td>1.5B</td><td>48</td><td>1,600</td></tr>
+        <tr><td>GPT-2 (small)</td><td>117M</td><td>12</td><td>768</td></tr>
+        <tr><td>GPT-3</td><td>175B</td><td>96</td><td>12,288</td></tr>
+        <tr><td>GPT-4</td><td>Undisclosed</td><td>—</td><td>—</td></tr>
+    </table>
+
+    <!--<table border="1" cellpadding="10" cellspacing="0" bgcolor="#f4faf4" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr>
+            <td>
+                <h3>Check Your Knowledge: Pipeline</h3>
+                <p><strong>Question:</strong> Why do we take only the <em>last</em> position's hidden state when predicting the next token in GPT?</p>
+                <details>
+                    <summary style="cursor: pointer; color: blue;"><strong>Click to reveal answer</strong></summary>
+                    <p style="margin-top: 5px;">Causal masking ensures the last position has attended to all prior tokens but not future ones — it aggregates the full prefix context for next-token prediction.</p>
+                </details>
+            </td>
+        </tr>
+    </table>-->
+
+    <hr>
+
+    <h2>8. Interactive Sandbox: Transformer Walkthrough</h2>
+    <p>Simulated GPT-2-style pipeline with illustrative logits and attention. Shapes and IDs match Lesson 1–3 examples where possible.</p>
+
+    <div style="margin-bottom:8px;">
+        <button type="button" class="tf-tab" data-tab="pipeline" style="padding:8px 14px;font-weight:bold;cursor:pointer;background:#dbeafe;border:1px solid #93c5fd;">1 — Pipeline</button>
+        <button type="button" class="tf-tab" data-tab="layer" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">2 — One Block</button>
+        <button type="button" class="tf-tab" data-tab="generate" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">3 — Generate</button>
+        <button type="button" class="tf-tab" data-tab="evolve" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">4 — Layer Evolution</button>
+        <button type="button" class="tf-tab" data-tab="params" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">5 — Parameters</button>
+        <button type="button" class="tf-tab" data-tab="context" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">6 — Context Window</button>
+        <button type="button" class="tf-tab" data-tab="compare" style="padding:8px 14px;cursor:pointer;background:#fff;border:1px solid #ccc;">7 — RNN vs Transformer</button>
+    </div>
+
+    <div style="margin-bottom:10px;padding:10px;background:#fafafa;border:1px solid #e2e8f0;">
+        <label>Prompt: <input type="text" id="tf-prompt" value="The cat sat" style="width:50%;padding:6px;font-family:inherit;"></label>
+        <button type="button" class="tf-preset" data-p="The cat sat" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">cat sat</button>
+        <button type="button" class="tf-preset" data-p="The pizza was a sentient" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">sentient pizza</button>
+    </div>
+
+    <!-- Tab 1: Pipeline -->
+    <div id="tf-panel-pipeline">
+        <button type="button" id="tf-pipe-start" style="padding:8px 16px;font-weight:bold;cursor:pointer;">Process sentence (step-by-step)</button>
+        <button type="button" id="tf-pipe-next" style="padding:8px 16px;cursor:pointer;margin-left:6px;">Next step</button>
+        <label style="margin-left:12px;">Jump to layer: <input type="range" id="tf-pipe-layer" min="1" max="12" value="12" style="width:120px;"> <span id="tf-pipe-layer-lbl">12</span>/12</label>
+        <div id="tf-pipe-out" style="margin-top:12px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;font-family:monospace;font-size:0.88em;min-height:140px;"></div>
+        <div id="tf-pipe-probs" style="margin-top:8px;"></div>
+        <canvas id="tf-pipe-attn" width="320" height="200" style="border:1px solid #e2e8f0;margin-top:8px;display:none;"></canvas>
+    </div>
+
+    <!-- Tab 2: Layer -->
+    <div id="tf-panel-layer" style="display:none;">
+        <label>Layer: <input type="range" id="tf-block-layer" min="1" max="12" value="6" style="width:200px;"> <span id="tf-block-lbl">6</span></label>
+        <div id="tf-block-detail" style="margin-top:10px;"></div>
+        <div id="tf-block-heads" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Tab 3: Generate -->
+    <div id="tf-panel-generate" style="display:none;">
+        <div id="tf-gen-sequence" style="line-height:2;font-size:1.05em;margin-bottom:10px;"></div>
+        <button type="button" id="tf-gen-one" style="padding:8px 16px;font-weight:bold;cursor:pointer;">Generate next token</button>
+        <button type="button" id="tf-gen-reset" style="padding:8px 16px;cursor:pointer;margin-left:6px;">Reset</button>
+        <div id="tf-gen-probs" style="margin-top:12px;"></div>
+        <div id="tf-gen-log" style="margin-top:8px;font-size:0.88em;color:#475569;"></div>
+    </div>
+
+    <!-- Tab 4: Evolution -->
+    <div id="tf-panel-evolve" style="display:none;">
+        <p>Attention patterns at different depths (simulated). Early = local; late = semantic.</p>
+        <div id="tf-evolve-out"></div>
+    </div>
+
+    <!-- Tab 5: Params -->
+    <div id="tf-panel-params" style="display:none;">
+        <label>Layers: <input type="range" id="tf-par-layers" min="1" max="96" value="12" style="width:180px;"> <span id="tf-par-l-lbl">12</span></label><br>
+        <label>Hidden size: <input type="range" id="tf-par-hidden" min="128" max="4096" step="128" value="768" style="width:180px;"> <span id="tf-par-h-lbl">768</span></label><br>
+        <label>Attention heads: <input type="range" id="tf-par-heads" min="1" max="32" value="12" style="width:180px;"> <span id="tf-par-hd-lbl">12</span></label>
+        <div id="tf-par-out" style="margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;"></div>
+    </div>
+
+    <!-- Tab 6: Context -->
+    <div id="tf-panel-context" style="display:none;">
+        <p>Context window = <b>4096</b> tokens (illustrative). Tokens outside the window are invisible to the model.</p>
+        <label>Window start (token index): <input type="range" id="tf-ctx-start" min="0" max="80" value="0" style="width:240px;"> <span id="tf-ctx-lbl">0</span></label>
+        <div id="tf-ctx-doc" style="margin-top:10px;padding:10px;background:#fff;border:1px solid #e2e8f0;font-size:0.85em;line-height:1.6;max-height:200px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Tab 7: Compare -->
+    <div id="tf-panel-compare" style="display:none;">
+        <button type="button" id="tf-cmp-run" style="padding:8px 16px;font-weight:bold;cursor:pointer;">Animate processing</button>
+        <canvas id="tf-cmp-canvas" width="500" height="220" style="border:1px solid #e2e8f0;margin-top:10px;display:block;background:#fff;"></canvas>
+        <p id="tf-cmp-text" style="font-size:0.9em;color:#475569;"></p>
+    </div>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:4px;font-size:0.85em;margin-top:12px;">
+        <strong>Status:</strong> <span id="tf-status">Choose a tab to explore the full transformer stack.</span>
+    </div>
+
+    <hr>
+
+    <!--<h2>9. Activities</h2>
+    <ol>
+        <li><strong>Token-by-token:</strong> Generate from "The cat sat on" — when does output stop making sense?</li>
+        <li><strong>Top-3 logits:</strong> Run the pipeline on your prompt. Do the top next tokens fit?</li>
+        <li><strong>Layer sweep:</strong> Set layers to 1 vs 12 vs 96 in Parameters — how does estimated quality change?</li>
+        <li><strong>Attention shift:</strong> In Layer Evolution, compare layer 1 vs layer 12 — what changed?</li>
+        <li><strong>Weird prompt:</strong> Try "The pizza was a sentient" and generate several tokens.</li>
+    </ol>-->
+
+    <hr>
+
+    <h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> GPT-3 scale and behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv paper</a></li>
+        <li><strong>Scaling Laws for Neural Language Models (Kaplan et al., 2020):</strong> Parameter/data scaling trends. <a href="https://arxiv.org/abs/2001.08361" target="_blank">arXiv paper</a></li>
+    </ul>
+
+<script>
+(function() {
+    const VOCAB = 50257;
+    const DIM = 768;
+    const TOKEN_MAP = {
+        'The': 50, ' cat': 3277, ' sat': 2521, ' on': 319, ' the': 262, ' mat': 10152,
+        ' down': 866, ' a': 257, ' mat.': 10152, ' pizza': 14256, ' was': 373, ' sentient': 48921,
+        ' being': 852, ' who': 508, ' dreamed': 29508, ' of': 286, ' freedom': 4925, '.': 13
+    };
+
+    const NEXT_PRED = {
+        'The cat sat': [{ t: ' on', p: 0.52 }, { t: ' down', p: 0.14 }, { t: ' still', p: 0.08 }, { t: ' there', p: 0.06 }, { t: ' quietly', p: 0.04 }],
+        'The cat sat on': [{ t: ' the', p: 0.71 }, { t: ' a', p: 0.12 }, { t: ' my', p: 0.05 }, { t: ' its', p: 0.04 }, { t: ' top', p: 0.03 }],
+        'The cat sat on the': [{ t: ' mat', p: 0.68 }, { t: ' floor', p: 0.11 }, { t: ' couch', p: 0.07 }, { t: ' bed', p: 0.05 }, { t: ' rug', p: 0.04 }],
+        'The cat sat on the mat': [{ t: '.', p: 0.45 }, { t: ' and', p: 0.22 }, { t: ',', p: 0.15 }, { t: ' happily', p: 0.06 }, { t: ' today', p: 0.04 }],
+        'The pizza was a sentient': [{ t: ' being', p: 0.38 }, { t: ' entity', p: 0.18 }, { t: ' life', p: 0.12 }, { t: ' creature', p: 0.10 }, { t: ' organism', p: 0.08 }],
+        'The pizza was a sentient being': [{ t: ' who', p: 0.42 }, { t: ' that', p: 0.28 }, { t: ',', p: 0.12 }, { t: ' with', p: 0.08 }, { t: ' and', p: 0.05 }],
+        'The pizza was a sentient being who': [{ t: ' dreamed', p: 0.35 }, { t: ' wanted', p: 0.25 }, { t: ' feared', p: 0.15 }, { t: ' loved', p: 0.12 }, { t: ' questioned', p: 0.08 }]
+    };
+
+    function tokenizeText(text) {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        return words.map(function(w, i) { return i === 0 ? w : ' ' + w; });
+    }
+
+    function idsFor(tokens) {
+        return tokens.map(function(t) { return TOKEN_MAP[t] || Math.abs(hash(t)) % 40000 + 1000; });
+    }
+
+    function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i); return h; }
+
+    function fakeEmbed(id) {
+        const v = [];
+        let x = id;
+        for (let i = 0; i < 10; i++) { x = (x * 1103515245 + 12345) & 0x7fffffff; v.push(((x % 200) / 100 - 1).toFixed(2)); }
+        return v;
+    }
+
+    function getNextProbs(text) {
+        const t = text.trim();
+        if (NEXT_PRED[t]) return NEXT_PRED[t];
+        if (t.indexOf('sentient') >= 0 && t.indexOf('being') < 0) return NEXT_PRED['The pizza was a sentient'];
+        if (t.indexOf('sentient being who') >= 0) return NEXT_PRED['The pizza was a sentient being who'];
+        if (t.indexOf('sentient being') >= 0) return NEXT_PRED['The pizza was a sentient being'];
+        return [{ t: ' the', p: 0.25 }, { t: ' and', p: 0.18 }, { t: ',', p: 0.12 }, { t: ' a', p: 0.10 }, { t: ' to', p: 0.08 }];
+    }
+
+    function softmax(arr) {
+        const m = Math.max.apply(null, arr);
+        const ex = arr.map(function(x) { return Math.exp(x - m); });
+        const s = ex.reduce(function(a, b) { return a + b; }, 0);
+        return ex.map(function(x) { return x / s; });
+    }
+
+    function heatColor(v) {
+        return 'rgb(' + Math.round(255 * (1 - v)) + ',80,' + Math.round(255 * v) + ')';
+    }
+
+    function attnForLayer(tokens, layer, total) {
+        const n = tokens.length;
+        const w = [];
+        const local = Math.max(0, 1 - layer / total);
+        for (let i = 0; i < n; i++) {
+            const row = [];
+            for (let j = 0; j < n; j++) {
+                let s = Math.exp(-Math.abs(i - j) * (2 + local * 4));
+                if (j > i) s *= 0.05;
+                if (layer > total * 0.6 && tokens[j] && tokens[j].indexOf('cat') >= 0 && tokens[i] && tokens[i].indexOf('sat') >= 0) s += 2;
+                if (layer > total * 0.6 && tokens[i] && tokens[i].indexOf('mat') >= 0 && tokens[j] && tokens[j].indexOf('on') >= 0) s += 1.5;
+                row.push(s);
+            }
+            w.push(softmax(row));
+        }
+        return w;
+    }
+
+    function miniHeat(tokens, weights) {
+        let h = '<table border="1" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:0.65em;display:inline-block;">';
+        tokens.forEach(function(t, i) {
+            h += '<tr>';
+            tokens.forEach(function(_, j) {
+                h += '<td style="width:16px;height:16px;background:' + heatColor(weights[i][j]) + ';" title="' + t + '→' + tokens[j] + '"></td>';
+            });
+            h += '</tr>';
+        });
+        return h + '</table>';
+    }
+
+    let pipeStep = 0;
+    let genTokens = [];
+    let genText = '';
+
+    function renderScaleChart() {
+        const models = [
+            { n: '117M', loss: 3.2 }, { n: '1.5B', loss: 2.7 }, { n: '175B', loss: 1.9 }
+        ];
+        document.getElementById('tf-scale-chart').innerHTML = '<strong>Scaling (illustrative loss ↓)</strong><br>' +
+            models.map(function(m) {
+                const w = Math.log10(parseFloat(m.n)) * 40;
+                return '<div style="margin:4px 0;"><span style="display:inline-block;width:50px;">' + m.n + '</span><div style="display:inline-block;background:#2563eb;height:14px;width:' + w + 'px;"></div> loss≈' + m.loss + '</div>';
+            }).join('');
+    }
+
+    function renderPipeline(step) {
+        const text = document.getElementById('tf-prompt').value.trim();
+        const tokens = tokenizeText(text);
+        const ids = idsFor(tokens);
+        const layer = parseInt(document.getElementById('tf-pipe-layer').value, 10);
+        document.getElementById('tf-pipe-layer-lbl').textContent = layer;
+        const steps = [
+            '<strong>Step 1 — Tokenize</strong><br>Text: "' + text + '"<br>Tokens: ' + JSON.stringify(tokens) + '<br>IDs: [' + ids.join(', ') + ']',
+            '<strong>Step 2 — Embed</strong><br>Shape: (' + tokens.length + ', ' + DIM + ')<br>Sample row (ID ' + ids[0] + '): [' + fakeEmbed(ids[0]).join(', ') + ', …]',
+            '<strong>Step 3 — Position encoding</strong><br>Add position vector to each row → unique (token, position) representation.',
+            '<strong>Step 4 — Layers 1…' + layer + '</strong><br>Each layer: Multi-head attention + FFN + residuals.<br>Shape stays (' + tokens.length + ', ' + DIM + ').',
+            '<strong>Step 5 — Final hidden state</strong><br>Take vector at last position ("' + tokens[tokens.length - 1].trim() + '").',
+            '<strong>Step 6 — Project to vocab</strong><br>Linear: (' + DIM + ') → (' + VOCAB + ') logits.',
+            '<strong>Step 7 — Softmax</strong><br>Convert logits to probability distribution.',
+            '<strong>Step 8 — Predict next token</strong><br>See top-5 below.'
+        ];
+        document.getElementById('tf-pipe-out').innerHTML = steps.slice(0, step + 1).join('<hr style="margin:10px 0;border:0;border-top:1px solid #e2e8f0;">');
+        const probs = getNextProbs(text);
+        if (step >= 7) {
+            document.getElementById('tf-pipe-probs').innerHTML = '<strong>Top next tokens:</strong><br>' +
+                probs.map(function(p, i) {
+                    return (i + 1) + '. "' + p.t.trim() + '" — ' + (p.p * 100).toFixed(1) + '%' +
+                        ' <div style="display:inline-block;background:#2563eb;height:12px;width:' + (p.p * 200) + 'px;vertical-align:middle;"></div>';
+                }).join('<br>');
+        } else document.getElementById('tf-pipe-probs').innerHTML = '';
+        if (step >= 3) {
+            const canvas = document.getElementById('tf-pipe-attn');
+            canvas.style.display = 'block';
+            document.getElementById('tf-pipe-out').innerHTML += '<br><br>Attention at layer ' + layer + ': ' + miniHeat(tokens, attnForLayer(tokens, layer, 12));
+        }
+        document.getElementById('tf-status').textContent = 'Pipeline step ' + (step + 1) + ' of 8.';
+    }
+
+    function renderBlock() {
+        const L = parseInt(document.getElementById('tf-block-layer').value, 10);
+        document.getElementById('tf-block-lbl').textContent = L;
+        const text = document.getElementById('tf-prompt').value.trim();
+        const tokens = tokenizeText(text);
+        document.getElementById('tf-block-detail').innerHTML =
+            '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:0.9em;">' +
+            '<tr bgcolor="#f1f5f9"><th>Block</th><th>Detail</th><th>Shape</th></tr>' +
+            '<tr><td>Input</td><td>From layer ' + (L - 1) + ' or embedding</td><td>(' + tokens.length + ', 768)</td></tr>' +
+            '<tr><td>Multi-head attention</td><td>12 heads, causal mask</td><td>(' + tokens.length + ', 768)</td></tr>' +
+            '<tr><td>Residual + LayerNorm</td><td>output + input</td><td>(' + tokens.length + ', 768)</td></tr>' +
+            '<tr><td>Feed-forward</td><td>768 → 3072 → 768 (GELU)</td><td>(' + tokens.length + ', 768)</td></tr>' +
+            '<tr><td>Residual + LayerNorm</td><td>→ layer ' + L + ' output</td><td>(' + tokens.length + ', 768)</td></tr></table>' +
+            '<p style="font-size:0.85em;margin-top:8px;"><em>Hover tip:</em> Attention mixes tokens; FFN transforms each position independently after context is gathered.</p>';
+        const w = attnForLayer(tokens, L, 12);
+        document.getElementById('tf-block-heads').innerHTML =
+            '<strong>3 of 12 heads (simulated):</strong><br>' +
+            miniHeat(tokens, w) + ' ' +
+            miniHeat(tokens, attnForLayer(tokens, Math.max(1, L - 2), 12)) + ' ' +
+            miniHeat(tokens, attnForLayer(tokens, Math.min(12, L + 2), 12));
+    }
+
+    function renderGenSequence() {
+        const el = document.getElementById('tf-gen-sequence');
+        if (!genTokens.length) { el.innerHTML = '<span style="color:#64748b;">Click Reset then Generate.</span>'; return; }
+        el.innerHTML = genTokens.map(function(t, i) {
+            const isNew = i === genTokens.length - 1 && genTokens.length > tokenizeText(document.getElementById('tf-prompt').value.trim()).length;
+            const bg = isNew ? '#fecaca' : '#e2e8f0';
+            return '<span style="padding:4px 10px;margin:2px;background:' + bg + ';border-radius:4px;">' + t.replace(/</g,'&lt;') + '</span>';
+        }).join('');
+    }
+
+    function initGen() {
+        genText = document.getElementById('tf-prompt').value.trim();
+        genTokens = tokenizeText(genText);
+        document.getElementById('tf-gen-log').textContent = '';
+        document.getElementById('tf-gen-probs').innerHTML = '';
+        renderGenSequence();
+    }
+
+    function genOneToken() {
+        const probs = getNextProbs(genText);
+        const pick = probs[0];
+        genText += pick.t;
+        genTokens.push(pick.t);
+        renderGenSequence();
+        document.getElementById('tf-gen-probs').innerHTML = '<strong>Top 5 for:</strong> "' + genText.trim() + '"<br>' +
+            probs.map(function(p, i) { return (i + 1) + '. "' + p.t.trim() + '" ' + (p.p * 100).toFixed(1) + '%'; }).join('<br>');
+        document.getElementById('tf-gen-log').textContent = 'Added "' + pick.t.trim() + '" (' + (pick.p * 100).toFixed(0) + '%). Full: ' + genText;
+        document.getElementById('tf-status').textContent = 'Autoregressive step: append token, re-run full forward pass on longer sequence.';
+    }
+
+    function renderEvolve() {
+        const text = document.getElementById('tf-prompt').value.trim();
+        const tokens = tokenizeText(text);
+        const layers = [1, 3, 6, 12];
+        const labels = ['Layer 1 — local/syntax', 'Layer 3 — structure', 'Layer 6 — mid-level', 'Layer 12 — semantic'];
+        let html = '';
+        layers.forEach(function(L, idx) {
+            html += '<div style="display:inline-block;margin:8px;text-align:center;"><div style="font-size:0.85em;font-weight:bold;margin-bottom:4px;">' + labels[idx] + '</div>' +
+                miniHeat(tokens, attnForLayer(tokens, L, 12)) + '</div>';
+        });
+        document.getElementById('tf-evolve-out').innerHTML = html +
+            '<p style="font-size:0.9em;margin-top:8px;">Early layers: stronger diagonal (nearby tokens). Late layers: "sat"→"cat", "mat"→"on" style links.</p>';
+    }
+
+    function renderParams() {
+        const L = parseInt(document.getElementById('tf-par-layers').value, 10);
+        const d = parseInt(document.getElementById('tf-par-hidden').value, 10);
+        const h = parseInt(document.getElementById('tf-par-heads').value, 10);
+        document.getElementById('tf-par-l-lbl').textContent = L;
+        document.getElementById('tf-par-h-lbl').textContent = d;
+        document.getElementById('tf-par-hd-lbl').textContent = h;
+        const embed = VOCAB * d * 2;
+        const perLayer = 12 * d * d + 13 * d * d;
+        const total = embed + L * perLayer;
+        let quality = 'Weak — barely coherent';
+        if (L >= 6 && d >= 512) quality = 'Moderate — short sentences';
+        if (L >= 12 && d >= 768) quality = 'Good — GPT-2 small class';
+        if (L >= 48 && d >= 1600) quality = 'Strong — large model';
+        if (L >= 96 && d >= 12000) quality = 'State-of-art (GPT-3 class)';
+        document.getElementById('tf-par-out').innerHTML =
+            '<strong>Estimated parameters:</strong> ~' + (total / 1e9 >= 1 ? (total / 1e9).toFixed(2) + 'B' : (total / 1e6).toFixed(0) + 'M') + '<br>' +
+            '<strong>Heads:</strong> ' + h + ' (head dim ≈ ' + Math.floor(d / h) + ')<br>' +
+            '<strong>Qualitative capacity:</strong> ' + quality + '<br>' +
+            '<span style="color:#64748b;">Trade-off: more params → better fluency, higher latency and cost.</span>';
+    }
+
+    function renderContext() {
+        const words = ('The quick brown fox jumps over the lazy dog. ').repeat(30).split(/\s+/);
+        const win = 48;
+        const start = parseInt(document.getElementById('tf-ctx-start').value, 10);
+        document.getElementById('tf-ctx-lbl').textContent = start;
+        const html = words.map(function(w, i) {
+            let style = 'padding:1px 3px;margin:1px;background:#f1f5f9;color:#94a3b8;';
+            if (i >= start && i < start + win) style = 'padding:1px 3px;margin:1px;background:#dbeafe;color:#1e40af;font-weight:bold;';
+            if (i >= start + win) style = 'padding:1px 3px;margin:1px;background:#fef2f2;color:#fca5a5;';
+            return '<span style="' + style + '">' + w + '</span>';
+        }).join(' ');
+        document.getElementById('tf-ctx-doc').innerHTML = html +
+            '<p style="margin-top:8px;"><span style="background:#dbeafe;padding:2px 6px;">In window</span> ' +
+            '<span style="background:#fef2f2;padding:2px 6px;">Before/after — invisible</span></p>';
+    }
+
+    let cmpFrame = 0;
+    let cmpTimer = null;
+    function renderCompare() {
+        const canvas = document.getElementById('tf-cmp-canvas');
+        const ctx = canvas.getContext('2d');
+        const text = document.getElementById('tf-prompt').value.trim();
+        const tokens = tokenizeText(text);
+        const n = tokens.length;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#334155';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('RNN: sequential (one token per step)', 20, 25);
+        ctx.fillText('Transformer: parallel (all tokens at once)', 280, 25);
+        for (let i = 0; i < n; i++) {
+            const doneRnn = i < cmpFrame;
+            ctx.fillStyle = doneRnn ? '#16a34a' : '#e2e8f0';
+            ctx.fillRect(30 + i * 55, 40, 48, 28);
+            ctx.fillStyle = doneRnn ? '#fff' : '#64748b';
+            ctx.font = '10px sans-serif';
+            ctx.fillText(tokens[i].trim().slice(0, 6), 36 + i * 55, 58);
+        }
+        ctx.fillStyle = cmpFrame >= n ? '#2563eb' : '#bfdbfe';
+        for (let i = 0; i < n; i++) {
+            ctx.fillRect(290 + i * 55, 40, 48, 28);
+        }
+        if (cmpFrame >= n) {
+            ctx.fillStyle = '#fff';
+            tokens.forEach(function(t, i) {
+                ctx.fillText(t.trim().slice(0, 6), 296 + i * 55, 58);
+            });
+        }
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Steps: ' + Math.min(cmpFrame, n) + ' / ' + n + '  (~' + n + ' sequential passes)', 20, 95);
+        ctx.fillText(cmpFrame >= n ? '1 parallel pass ✓' : 'Waiting…', 280, 95);
+        document.getElementById('tf-cmp-text').textContent =
+            cmpFrame >= n ? 'Transformer finishes one forward pass over all positions; RNN needs ' + n + ' sequential steps for the same prefix.' : 'Animating RNN steps…';
+    }
+
+    function setTab(tab) {
+        document.querySelectorAll('.tf-tab').forEach(function(btn) {
+            const on = btn.getAttribute('data-tab') === tab;
+            btn.style.fontWeight = on ? 'bold' : 'normal';
+            btn.style.background = on ? '#dbeafe' : '#fff';
+        });
+        ['pipeline','layer','generate','evolve','params','context','compare'].forEach(function(t) {
+            document.getElementById('tf-panel-' + t).style.display = t === tab ? 'block' : 'none';
+        });
+        if (tab === 'layer') renderBlock();
+        if (tab === 'evolve') renderEvolve();
+        if (tab === 'params') renderParams();
+        if (tab === 'context') renderContext();
+        if (tab === 'generate') initGen();
+    }
+
+    document.querySelectorAll('.tf-tab').forEach(function(btn) {
+        btn.addEventListener('click', function() { setTab(btn.getAttribute('data-tab')); });
+    });
+    document.querySelectorAll('.tf-preset').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.getElementById('tf-prompt').value = btn.getAttribute('data-p');
+            pipeStep = 0;
+            if (document.getElementById('tf-panel-generate').style.display !== 'none') initGen();
+        });
+    });
+    document.getElementById('tf-pipe-start').addEventListener('click', function() { pipeStep = 0; renderPipeline(pipeStep); });
+    document.getElementById('tf-pipe-next').addEventListener('click', function() {
+        pipeStep = Math.min(pipeStep + 1, 7);
+        renderPipeline(pipeStep);
+    });
+    document.getElementById('tf-pipe-layer').addEventListener('input', function() {
+        if (pipeStep >= 3) renderPipeline(pipeStep);
+    });
+    document.getElementById('tf-block-layer').addEventListener('input', renderBlock);
+    document.getElementById('tf-gen-one').addEventListener('click', genOneToken);
+    document.getElementById('tf-gen-reset').addEventListener('click', initGen);
+    ['tf-par-layers','tf-par-hidden','tf-par-heads'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', renderParams);
+    });
+    document.getElementById('tf-ctx-start').addEventListener('input', renderContext);
+    document.getElementById('tf-cmp-run').addEventListener('click', function() {
+        cmpFrame = 0;
+        if (cmpTimer) clearInterval(cmpTimer);
+        cmpTimer = setInterval(function() {
+            cmpFrame++;
+            renderCompare();
+            if (cmpFrame > tokenizeText(document.getElementById('tf-prompt').value.trim()).length) clearInterval(cmpTimer);
+        }, 400);
+    });
+
+    renderScaleChart();
+    renderParams();
+    renderContext();
+    pipeStep = 0;
+    renderPipeline(0);
+})();
+</script>
+
+</body>
+</html>

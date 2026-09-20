@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Generation: Lesson 2 - The Art Forger and the Detective</title>
+</head>
+<body>
+
+<div class="genai-lesson-container">
+<style>
+    .genai-lesson-container {
+        line-height: 1.65; color: #1e293b; max-width: 820px; margin: 0 auto; padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 1.5em; }
+    .genai-lesson-container h2 { color: #1e3a8a; margin-top: 36px; }
+    .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+    .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .genai-lesson-container th, .genai-lesson-container td {
+        border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top;
+    }
+    .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+    .genai-lesson-container code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
+    }
+    .genai-lesson-container .callout {
+        background: #f0fdf4; border-left: 4px solid #22c55e;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container .info-box, .genai-lesson-container .quiz {
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 8px; padding: 14px 16px; margin: 18px 0;
+    }
+    .genai-lesson-container .quiz { background: #f4faf4; border-color: #bbf7d0; }
+    .genai-lesson-container .bridge {
+        background: #f1f5f9; border-radius: 8px; padding: 12px 14px;
+        margin: 20px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .roadmap {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 12px 14px; margin: 16px 0 8px; font-size: 0.9em;
+    }
+    .genai-lesson-container .roadmap ol { margin: 8px 0 0; padding-left: 1.3em; }
+    .genai-lesson-container .roadmap .here { font-weight: 700; color: #1e3a8a; }
+    .genai-lesson-container .eq-panel {
+        text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 6px; padding: 14px; margin: 16px 0;
+        font-family: Cambria, "Times New Roman", serif; font-size: 1.08em;
+    }
+    .genai-lesson-container .shape-trail {
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.88em;
+        background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 6px;
+        overflow-x: auto; margin: 12px 0;
+    }
+    .genai-lesson-container .worked {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 14px 16px; margin: 16px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .interactive-box {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 18px 20px; margin: 22px 0; box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+    }
+    .genai-lesson-container .tool-box {
+        background: #fff7ed; border: 1px solid #fed7aa;
+        border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+    }
+    .genai-lesson-container button {
+        padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+        background: #fff; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b;
+    }
+    .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .genai-lesson-container a { color: #2563eb; }
+    .genai-lesson-container details { margin: 12px 0; }
+    .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+    .genai-lesson-container input[type="range"] { width: min(100%, 280px); vertical-align: middle; }
+    .genai-lesson-container canvas { display: block; border-radius: 6px; border: 1px solid #e2e8f0; image-rendering: pixelated; }
+    .genai-lesson-container .metric-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; font-size: 0.92em; }
+    .genai-lesson-container .metric { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; min-width: 140px; }
+    .genai-lesson-container .status-bar { font-weight: 600; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 0.95em; }
+    .genai-lesson-container .status-balanced { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .genai-lesson-container .status-d-wins { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .genai-lesson-container .status-g-wins { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .genai-lesson-container .slider-row { margin: 10px 0; }
+    .genai-lesson-container .canvas-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-top: 12px; }
+    .genai-lesson-container .canvas-label { font-size: 0.85em; color: #64748b; margin: 4px 0 6px; }
+</style>
+
+    <h1>The Art Forger and the Detective (GANs)</h1>
+
+    <div class="roadmap">
+        <strong>Unit roadmap — Teaching Computers to See and Paint</strong>
+        <ol>
+            <li><a href="lesson1.html">1. Pixels &amp; latent space</a></li>
+            <li class="here">2. GANs (forger vs detective) ← <em>you are here</em></li>
+            <li><a href="lesson3.html">3. Diffusion basics (denoising)</a></li>
+            <li>4. Text conditioning &amp; coding lab</li>
+            <li>5. Control, failure modes, prompt craft</li>
+        </ol>
+    </div>
+
+    <p>In Lesson 1 you learned that a generator can map a compact latent <code>z</code> to a full pixel grid. But who decides whether the output looks <em>real</em>? In a GAN — a <strong>Generative Adversarial Network</strong> — that job goes to a second network trained as an adversary. Two players, one game, no labeled “correct answer” image required.</p>
+
+    <div class="bridge">
+        <strong>Building on what you know.</strong>
+        The <strong>Generator</strong> is the upsampler you met last lesson: <code>z → image</code>.
+        The <strong>Discriminator</strong> is a binary classifier from your ML prereqs — same family as “cat vs dog,” but now the classes are <em>real photo</em> vs <em>fake</em>.
+        Training is a tug-of-war: each network’s loss pushes against the other’s.
+    </div>
+
+    <hr>
+
+    <h2>1. Two roles: counterfeiter and museum curator</h2>
+
+    <div class="callout">
+        <strong>Metaphor:</strong> A master forger paints fake Vermeers in a attic. A museum curator (expert authenticator) learns to spot flaws. Every time the curator catches a fake, the forger studies the rejection and tries again. Every time a fake slips through, the curator sharpens their eye. Neither can win forever — they co-evolve.
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Role</th><th>Network</th><th>Input → Output</th><th>Goal</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Forger</strong></td>
+                <td>Generator <code>G</code></td>
+                <td>Random noise <code>z</code> → fake image <code>G(z)</code></td>
+                <td>Make fakes that look real enough to fool the curator</td>
+            </tr>
+            <tr>
+                <td><strong>Detective</strong></td>
+                <td>Discriminator <code>D</code></td>
+                <td>Any image → score in [0, 1] (“probability real”)</td>
+                <td>Score real photos high, fakes low</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Unlike supervised classification, you never need pairs like “this z should produce <em>this</em> exact cat photo.” Real images from a dataset supply the “authentic” side; the Generator manufactures the counterfeits on the fly.</p>
+
+    <div class="shape-trail">sample z ~ p(z)           # e.g. Gaussian vector, length 128
+G(z) → fake image           # Generator (Lesson 1 decoder idea)
+x_real ~ dataset            # real photos
+D(x) → [0, 1]               # Discriminator (binary classifier)
+train D on real vs fake     # detective gets sharper
+train G to raise D(G(z))    # forger learns new tricks</div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: which network is which?</h3>
+        <p><strong>Question:</strong> A student says, “The Discriminator generates improved images when it loses.” What is wrong with that statement?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Only the <strong>Generator</strong> creates new images. The Discriminator never outputs pixels — it outputs a <em>score</em> (real vs fake). When D “loses,” that means G produced a fake D couldn’t reject; G gets the gradient signal to keep fooling D, not D itself painting pictures.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>2. The min–max game in plain language</h2>
+
+    <p>Think of a single number line measuring “how well the detective is doing.” The Discriminator wants to push that number <em>up</em> by confidently labeling reals as real and fakes as fake. The Generator wants to push the <em>same</em> setup so the detective is wrong on fakes — effectively minimizing the detective’s success on counterfeits.</p>
+
+    <div class="eq-panel">
+        min<sub>G</sub> max<sub>D</sub> &nbsp; V(D, G) = E<sub>x~real</sub>[log D(x)] + E<sub>z</sub>[log(1 − D(G(z)))]
+    </div>
+
+    <div class="worked">
+        <strong>Worked intuition (no calculus required).</strong>
+        <ul style="margin:8px 0 0;padding-left:1.2em;">
+            <li><strong>D’s turn (maximize):</strong> On a real photo, D should output near 1 → <code>log D(x)</code> is large (less negative). On a fake, D should output near 0 → <code>log(1 − D(G(z)))</code> is also large.</li>
+            <li><strong>G’s turn (minimize):</strong> G wants <code>D(G(z))</code> close to 1 even though the image is fake — so the second term <code>log(1 − D(G(z)))</code> blows up negative and G’s loss pushes G to improve.</li>
+            <li><strong>Equilibrium fantasy:</strong> At the Nash ideal, G’s fakes sit on the data manifold and D can only guess 50/50 — like a curator who truly cannot tell.</li>
+        </ul>
+    </div>
+
+    <p>Training alternates (or interleaves) updates — not unlike how you saw separate forward/backward passes in the training-loop prereq, except here two models take turns on opposing objectives.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: log trick</h3>
+        <p><strong>Question:</strong> If D correctly outputs 0.01 on a fake (good for D), what happens to <code>log(1 − 0.01)</code> ≈ <code>log(0.99)</code>? Is that good or bad for D’s objective?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;"><code>log(0.99) ≈ −0.01</code> — close to zero, which is <strong>good</strong> for D (D wants to maximize, so values near 0 beat large negatives like <code>log(0.5) ≈ −0.69</code>). If D wrongly said 0.99 on a fake, <code>log(1 − 0.99) = log(0.01) ≈ −4.6</code> — terrible for D, great signal for G.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>3. Why the tug-of-war is fragile</h2>
+
+    <p>GAN training is famous for being finicky. If the Discriminator learns too fast, it always rejects fakes with near-certainty — gradients to the Generator vanish (“G gets no useful feedback”). If the Generator learns too fast, it may find one weird image that always fools D while ignoring diversity — <strong>mode collapse</strong> (every <code>z</code> maps to the same face).</p>
+
+    <ul>
+        <li><strong>D too strong:</strong> G’s loss flatlines; samples stay noisy or frozen.</li>
+        <li><strong>G too strong / collapsed:</strong> D is confused but outputs look identical or surreal.</li>
+        <li><strong>Balanced:</strong> Fakes gradually sharpen; D accuracy hovers below perfection.</li>
+    </ul>
+
+    <p>Learning rates, architecture, and tricks (label smoothing, spectral norm, Wasserstein variants) exist because of this balance problem — but the core story remains: two networks, opposing losses, shared data stream.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: mode collapse</h3>
+        <p><strong>Question:</strong> You sample 100 different noise vectors <code>z</code> but G outputs nearly the same portrait every time. D’s accuracy on fakes is ~50%. Is training “solved”?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">No — that is classic <strong>mode collapse</strong>. D may be fooled by one trick image, but G failed to cover the full diversity of faces. A healthy GAN should produce varied samples across different <code>z</code> while still looking realistic.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>4. Interactive: Training Tug-of-War</h2>
+
+    <p>Use the sliders to set learning rates for Generator and Discriminator. Press <strong>Run training</strong> (or let it auto-run) and watch fake samples on the canvas improve, collapse, or dissolve into noise. Metrics are simulated — but the qualitative story matches real GAN instability.</p>
+
+    <div class="interactive-box">
+        <div class="slider-row">
+            <label>Generator learning rate: <strong><span id="g-lr-val">0.50</span></strong><br>
+            <input type="range" id="g-lr" min="1" max="100" value="50"></label>
+        </div>
+        <div class="slider-row">
+            <label>Discriminator learning rate: <strong><span id="d-lr-val">0.50</span></strong><br>
+            <input type="range" id="d-lr" min="1" max="100" value="50"></label>
+        </div>
+        <p style="margin:12px 0 6px;">
+            <button type="button" class="primary" id="gan-run">Run training</button>
+            <button type="button" id="gan-pause">Pause</button>
+            <button type="button" id="gan-reset">Reset</button>
+        </p>
+        <div id="gan-status" class="status-bar status-balanced">Status: balanced training — fakes sharpening gradually.</div>
+        <div class="metric-row">
+            <div class="metric">Step: <strong id="m-step">0</strong></div>
+            <div class="metric">D accuracy: <strong id="m-dacc">50%</strong></div>
+            <div class="metric">G fool rate: <strong id="m-gfool">50%</strong></div>
+            <div class="metric">Sample diversity: <strong id="m-div">100%</strong></div>
+        </div>
+        <div class="canvas-row">
+            <div>
+                <div class="canvas-label">Real target (fixed)</div>
+                <canvas id="gan-real" width="128" height="128"></canvas>
+            </div>
+            <div>
+                <div class="canvas-label">Generator output G(z) — 4 samples</div>
+                <canvas id="gan-fake" width="256" height="128"></canvas>
+            </div>
+        </div>
+        <p id="gan-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;">Tip: set D LR high and G LR low to starve the forger; flip it to watch mode collapse.</p>
+    </div>
+
+    <hr>
+
+    <h2>5. From toy GANs to StyleGAN faces</h2>
+
+    <p>Early GAN outputs were blurry 64×64 thumbnails. StyleGAN (2019) stacked progressive growing, style mixing, and a carefully balanced discriminator to reach photorealistic faces at 1024×1024. The latent walk you previewed in Lesson 1 — nearby <code>z</code> vectors morph smoothly — comes from this line of work.</p>
+
+    <div class="tool-box">
+        <p style="margin-top:0;"><strong>Live tools</strong></p>
+        <ul>
+            <li><a href="https://thispersondoesnotexist.com/" target="_blank" rel="noopener">This Person Does Not Exist</a> — each refresh samples a StyleGAN2 face (notice lighting, pose, and identity change).</li>
+            <li><a href="https://huggingface.co/spaces/huggingface/StyleGAN" target="_blank" rel="noopener">Hugging Face StyleGAN Spaces</a> — search for StyleGAN2 demos to drag latent sliders yourself.</li>
+        </ul>
+        <p><strong>Guided tasks:</strong></p>
+        <ol>
+            <li>Refresh ThisPersonDoesNotExist five times. List two features that change a lot and two that often stay similar.</li>
+            <li>In a StyleGAN Space, move one latent slider slowly. Write one sentence connecting what you see to “nearby points in latent space look related” from Lesson 1.</li>
+            <li>Ask: could a perfect Discriminator exist for human faces? (Hint: think about high-res artifacts, teeth, earrings.)</li>
+        </ol>
+    </div>
+
+    <div class="bridge">
+        <strong>Historical note:</strong> GANs dominated image synthesis for years, but training instability pushed researchers toward a different generative story — slowly removing noise instead of forging in one shot.
+        You already heard the audio version (Intro to Audio, Lesson 5). Next we make the pixel grid visible.
+        <br>← <a href="lesson1.html">Lesson 1: Latents &amp; pixels</a>
+        &nbsp;|&nbsp;
+        <a href="lesson3.html">Lesson 3: The Sculptor in the Blizzard (Diffusion)</a> →
+    </div>
+
+    <hr>
+    <h2>Further reading</h2>
+    <ul>
+        <li>Goodfellow et al., original GAN paper (2014) — min-max formulation.</li>
+        <li>Karras et al., StyleGAN2 — state-of-the-art face GAN engineering.</li>
+        <li>Compare: GAN one-shot generation vs diffusion iterative denoising (next lesson).</li>
+    </ul>
+
+</div>
+
+<script>
+(function () {
+    var N = 32;
+    var realCanvas = document.getElementById('gan-real');
+    var fakeCanvas = document.getElementById('gan-fake');
+    var rctx = realCanvas.getContext('2d');
+    var fctx = fakeCanvas.getContext('2d');
+
+    var step = 0;
+    var running = false;
+    var intervalId = null;
+    var gQuality = 0.15;
+    var diversity = 1.0;
+    var dAcc = 0.5;
+    var gFool = 0.5;
+    var mode = 'balanced';
+
+    // Target "real" pattern: circle + gradient background
+    var target = [];
+    for (var y = 0; y < N; y++) {
+        target[y] = [];
+        for (var x = 0; x < N; x++) {
+            var nx = (x / N - 0.5) * 2;
+            var ny = (y / N - 0.5) * 2;
+            var bg = 0.35 + 0.15 * nx;
+            var dist = Math.sqrt(nx * nx + ny * ny);
+            var circle = dist < 0.55 ? 0.85 : 0;
+            target[y][x] = Math.min(1, bg + circle);
+        }
+    }
+
+    function drawGrid(ctx, grid, cellW, cellH, offsetX) {
+        var cell = cellW;
+        for (var y = 0; y < N; y++) {
+            for (var x = 0; x < N; x++) {
+                var v = Math.max(0, Math.min(1, grid[y][x]));
+                var g = Math.round(v * 255);
+                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
+                ctx.fillRect(offsetX + x * cell, y * cell, cell + 0.5, cell + 0.5);
+            }
+        }
+    }
+
+    function renderReal() {
+        drawGrid(rctx, target, realCanvas.width / N, realCanvas.height / N, 0);
+    }
+
+    function makeFakeSample(seed, quality, collapsed) {
+        var grid = [];
+        var collapseShift = collapsed ? 0 : (seed - 1.5) * 0.08;
+        for (var y = 0; y < N; y++) {
+            grid[y] = [];
+            for (var x = 0; x < N; x++) {
+                var nx = (x / N - 0.5) * 2 + collapseShift;
+                var ny = (y / N - 0.5) * 2 + collapseShift * 0.5;
+                var dist = Math.sqrt(nx * nx + ny * ny);
+                var ideal = target[y][x];
+                var noise = (Math.random() - 0.5) * (1.4 - quality);
+                var blob = dist < 0.55 + quality * 0.1 ? 0.7 * quality : 0;
+                var v = ideal * quality + blob * (1 - quality) + noise;
+                grid[y][x] = v;
+            }
+        }
+        return grid;
+    }
+
+    function renderFakes() {
+        var collapsed = mode === 'g_wins' && diversity < 0.35;
+        var cell = fakeCanvas.width / N / 2;
+        for (var s = 0; s < 4; s++) {
+            var grid = makeFakeSample(s, gQuality, collapsed);
+            drawGrid(fctx, grid, cell, cell, s * (fakeCanvas.width / 2));
+        }
+    }
+
+    function getLR(id) {
+        return parseInt(document.getElementById(id).value, 10) / 100;
+    }
+
+    function updateStatus() {
+        var el = document.getElementById('gan-status');
+        el.className = 'status-bar ';
+        if (mode === 'd_wins') {
+            el.className += 'status-d-wins';
+            el.textContent = 'Status: Discriminator winning — G gradients vanish; fakes stay noisy or frozen.';
+        } else if (mode === 'g_wins') {
+            el.className += 'status-g-wins';
+            el.textContent = diversity < 0.35
+                ? 'Status: Generator winning too hard — mode collapse! D fooled but samples identical.'
+                : 'Status: Generator winning — D fooled often; fakes sharp but training may destabilize.';
+        } else {
+            el.className += 'status-balanced';
+            el.textContent = 'Status: balanced training — fakes sharpening gradually; D and G co-evolving.';
+        }
+    }
+
+    function trainStep() {
+        var gLR = getLR('g-lr');
+        var dLR = getLR('d-lr');
+        var ratio = gLR / (dLR + 0.001);
+
+        step += 1;
+
+        if (ratio < 0.35) {
+            mode = 'd_wins';
+            gQuality = Math.max(0.05, gQuality - 0.008);
+            diversity = Math.max(0.2, diversity - 0.005);
+            dAcc = Math.min(0.98, dAcc + 0.02 * dLR);
+            gFool = Math.max(0.05, gFool - 0.025);
+        } else if (ratio > 2.5) {
+            mode = 'g_wins';
+            gQuality = Math.min(0.95, gQuality + 0.025 * gLR);
+            diversity = Math.max(0.08, diversity - 0.018);
+            dAcc = Math.max(0.48, dAcc - 0.03 * gLR);
+            gFool = Math.min(0.95, gFool + 0.03 * gLR);
+        } else {
+            mode = 'balanced';
+            gQuality = Math.min(0.88, gQuality + 0.012 * gLR);
+            diversity = Math.min(1, diversity + 0.008);
+            dAcc = 0.72 + 0.12 * Math.sin(step * 0.08);
+            gFool = 1 - dAcc + (Math.random() - 0.5) * 0.06;
+        }
+
+        document.getElementById('m-step').textContent = step;
+        document.getElementById('m-dacc').textContent = Math.round(dAcc * 100) + '%';
+        document.getElementById('m-gfool').textContent = Math.round(gFool * 100) + '%';
+        document.getElementById('m-div').textContent = Math.round(diversity * 100) + '%';
+        updateStatus();
+        renderFakes();
+    }
+
+    function syncLabels() {
+        document.getElementById('g-lr-val').textContent = getLR('g-lr').toFixed(2);
+        document.getElementById('d-lr-val').textContent = getLR('d-lr').toFixed(2);
+    }
+
+    document.getElementById('g-lr').addEventListener('input', syncLabels);
+    document.getElementById('d-lr').addEventListener('input', syncLabels);
+
+    document.getElementById('gan-run').addEventListener('click', function () {
+        if (running) return;
+        running = true;
+        intervalId = setInterval(trainStep, 120);
+    });
+
+    document.getElementById('gan-pause').addEventListener('click', function () {
+        running = false;
+        if (intervalId) clearInterval(intervalId);
+    });
+
+    document.getElementById('gan-reset').addEventListener('click', function () {
+        running = false;
+        if (intervalId) clearInterval(intervalId);
+        step = 0;
+        gQuality = 0.15;
+        diversity = 1.0;
+        dAcc = 0.5;
+        gFool = 0.5;
+        mode = 'balanced';
+        document.getElementById('m-step').textContent = '0';
+        document.getElementById('m-dacc').textContent = '50%';
+        document.getElementById('m-gfool').textContent = '50%';
+        document.getElementById('m-div').textContent = '100%';
+        updateStatus();
+        renderFakes();
+    });
+
+    syncLabels();
+    renderReal();
+    renderFakes();
+    updateStatus();
+})();
+</script>
+
+</body>
+</html>

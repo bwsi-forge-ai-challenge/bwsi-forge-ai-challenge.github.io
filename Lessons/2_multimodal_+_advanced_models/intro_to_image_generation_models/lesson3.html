@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Generation: Lesson 3 - The Sculptor in the Blizzard</title>
+</head>
+<body>
+
+<div class="genai-lesson-container">
+<style>
+    .genai-lesson-container {
+        line-height: 1.65; color: #1e293b; max-width: 820px; margin: 0 auto; padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 1.5em; }
+    .genai-lesson-container h2 { color: #1e3a8a; margin-top: 36px; }
+    .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+    .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .genai-lesson-container th, .genai-lesson-container td {
+        border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top;
+    }
+    .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+    .genai-lesson-container code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
+    }
+    .genai-lesson-container .callout {
+        background: #f0fdf4; border-left: 4px solid #22c55e;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container .info-box, .genai-lesson-container .quiz {
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 8px; padding: 14px 16px; margin: 18px 0;
+    }
+    .genai-lesson-container .quiz { background: #f4faf4; border-color: #bbf7d0; }
+    .genai-lesson-container .bridge {
+        background: #f1f5f9; border-radius: 8px; padding: 12px 14px;
+        margin: 20px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .roadmap {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 12px 14px; margin: 16px 0 8px; font-size: 0.9em;
+    }
+    .genai-lesson-container .roadmap ol { margin: 8px 0 0; padding-left: 1.3em; }
+    .genai-lesson-container .roadmap .here { font-weight: 700; color: #1e3a8a; }
+    .genai-lesson-container .eq-panel {
+        text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 6px; padding: 14px; margin: 16px 0;
+        font-family: Cambria, "Times New Roman", serif; font-size: 1.08em;
+    }
+    .genai-lesson-container .shape-trail {
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.88em;
+        background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 6px;
+        overflow-x: auto; margin: 12px 0;
+    }
+    .genai-lesson-container .worked {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 14px 16px; margin: 16px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .interactive-box {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 18px 20px; margin: 22px 0; box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+    }
+    .genai-lesson-container .tool-box {
+        background: #fff7ed; border: 1px solid #fed7aa;
+        border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+    }
+    .genai-lesson-container button {
+        padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+        background: #fff; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b;
+    }
+    .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .genai-lesson-container a { color: #2563eb; }
+    .genai-lesson-container details { margin: 12px 0; }
+    .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+    .genai-lesson-container input[type="range"] { width: min(100%, 320px); vertical-align: middle; }
+    .genai-lesson-container canvas { display: block; border-radius: 6px; border: 1px solid #e2e8f0; image-rendering: pixelated; }
+    .genai-lesson-container .t-label { font-size: 0.9em; color: #475569; margin: 8px 0; }
+    .genai-lesson-container .step-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .genai-lesson-container .step-pills span {
+        font-size: 0.78em; background: #f1f5f9; border: 1px solid #e2e8f0;
+        border-radius: 999px; padding: 4px 10px;
+    }
+    .genai-lesson-container .step-pills .active { background: #dbeafe; border-color: #93c5fd; color: #1e40af; font-weight: 600; }
+</style>
+
+    <h1>The Sculptor in the Blizzard (Diffusion Basics)</h1>
+
+    <div class="roadmap">
+        <strong>Unit roadmap — Teaching Computers to See and Paint</strong>
+        <ol>
+            <li><a href="lesson1.html">1. Pixels &amp; latent space</a></li>
+            <li><a href="lesson2.html">2. GANs (forger vs detective)</a></li>
+            <li class="here">3. Diffusion basics (denoising) ← <em>you are here</em></li>
+            <li>4. Text conditioning &amp; coding lab</li>
+            <li>5. Control, failure modes, prompt craft</li>
+        </ol>
+    </div>
+
+    <p>GANs generate an image in one forward pass from noise. <strong>Diffusion models</strong> take the opposite journey: start from pure noise and peel it away, step by step, until structure appears. The idea feels slow — but it is remarkably stable and now powers DALL·E 3, Stable Diffusion, and Midjourney.</p>
+
+    <div class="bridge">
+        <strong>You’ve seen this movie before — in audio.</strong>
+        Intro to Audio, Lesson 5 gave a high-level peek: add noise to a spectrogram, train a network to predict that noise, run the process backward to synthesize.
+        Here the grid is visible: each pixel gets noised and denoised. Same training-loop intuition (predict target, backprop loss), different target — <code>ε</code> (noise) instead of a class label.
+    </div>
+
+    <hr>
+
+    <h2>1. Forward diffusion: the blizzard arrives</h2>
+
+    <div class="callout">
+        <strong>Metaphor:</strong> A marble statue stands in a courtyard. A blizzard blows in, coating it with thicker and thicker static each hour. After enough time you cannot tell there was ever a face — only white noise. Forward diffusion is that corruption schedule, but mathematically controlled.
+    </div>
+
+    <p>Given a clean image <code>x₀</code>, forward diffusion adds Gaussian noise over <code>T</code> timesteps until <code>x<sub>T</sub></code> ≈ random noise. Each step uses a small variance <code>β<sub>t</sub></code> so the signal fades smoothly.</p>
+
+    <div class="eq-panel">
+        q(x<sub>t</sub> | x<sub>t−1</sub>) = 𝒩(x<sub>t</sub>; √(1 − β<sub>t</sub>) · x<sub>t−1</sub>, β<sub>t</sub> · I)
+    </div>
+
+    <p>In code you rarely loop one pixel at a time; you can jump straight to any timestep with a closed form using cumulative products <code>ᾱ<sub>t</sub></code>. But the story is always: <strong>signal → noise</strong>, monotonically.</p>
+
+    <div class="shape-trail">x₀  clean image   shape (H, W, 3)
+  → x₁  slightly noised
+  → x₂  more noise ...
+  → x_T  ~ pure Gaussian noise</div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: direction</h3>
+        <p><strong>Question:</strong> Forward diffusion goes from image to noise. What does the <em>generative</em> (sampling) process do?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;"><strong>Reverse diffusion:</strong> start from noise <code>x<sub>T</sub></code> and iteratively denoise to <code>x₀</code>. Training teaches a network to undo one small noise step at a time — like the sculptor chipping away static to reveal the figure underneath.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>2. Reverse diffusion: the sculptor chips static away</h2>
+
+    <p>At sampling time we do not have a clean image — only noise. A learned model (historically a <strong>U-Net</strong>, now often a transformer variant) looks at the noisy image <code>x<sub>t</sub></code> and timestep <code>t</code>, then predicts the noise component <code>ε</code> that was added. Subtract a scaled version and you land closer to <code>x₀</code>.</p>
+
+    <div class="eq-panel">
+        x<sub>t−1</sub> ≈ (1 / √(1 − β<sub>t</sub>)) · (x<sub>t</sub> − (β<sub>t</sub> / √(1 − ᾱ<sub>t</sub>)) · ε<sub>θ</sub>(x<sub>t</sub>, t))
+    </div>
+
+    <p>Do not memorize the fractions — notice the pattern: <strong>current noisy state + noise prediction + schedule = slightly cleaner state</strong>. Repeat for <code>t = T … 1</code>.</p>
+
+    <table>
+        <thead>
+            <tr><th>Component</th><th>Role</th><th>Audio parallel</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Timestep <code>t</code></td><td>Tells the network how noisy the input is</td><td>Same — conditioning on noise level</td></tr>
+            <tr><td>Noise predictor <code>ε<sub>θ</sub></code></td><td>Estimates what was added</td><td>Spectrogram denoiser in audio diffusion peek</td></tr>
+            <tr><td>Schedule <code>β<sub>t</sub></code></td><td>Controls step size</td><td>How aggressively each denoise step runs</td></tr>
+            <tr><td>U-Net / DiT</td><td>Spatial architecture with skip connections</td><td>Convolution over time–frequency bins</td></tr>
+        </tbody>
+    </table>
+
+    <div class="worked">
+        <strong>Worked numbers (T = 1000).</strong>
+        Suppose at step <code>t = 500</code> the network predicts noise <code>ε<sub>θ</sub></code> with mean magnitude 0.4 (in normalized pixel space).
+        The sampler scales that prediction by schedule constants (often ~0.02–0.05 at mid-t) and subtracts it from <code>x<sub>500</sub></code>.
+        After one step you might move 5% closer to the clean image in L2 sense — tiny per step, but 500 steps compound into a crisp circle or face.
+        Production models use fast samplers (DDIM, DPM++) to cut 1000 network calls down to 20–50 with similar quality.
+    </div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: training target</h3>
+        <p><strong>Question:</strong> During training we take a real image, add noise to get <code>x<sub>t</sub></code>, and ask the network to predict something. Is the target the clean image <code>x₀</code> or the noise <code>ε</code>?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Standard DDPM training predicts the <strong>noise ε</strong> that was used to corrupt the image (equivalent formulations predict <code>x₀</code> or velocity — same idea, different algebra). Loss is usually MSE between predicted and actual noise — a regression problem, not classification.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>3. Latent diffusion: denoise small, decode big</h2>
+
+    <p>Full 512×512 RGB diffusion is expensive. Stable Diffusion runs the blizzard in a <strong>VAE latent</strong> — the compressed map from Lesson 1 — then decodes once at the end.</p>
+
+    <div class="shape-trail">sample z_T ~ 𝒩(0, I)     latent noise, shape ~(64, 64, 4)
+for t = T … 1:
+    ε = U-Net(z_t, t)       predict noise in latent space
+    z_{t-1} = denoise_step(z_t, ε, t)
+x₀ = VAE_decode(z₀)         RGB image (512, 512, 3)</div>
+
+    <p>Lesson 4 will add text embeddings into that U-Net call — for now, notice the pipeline: <strong>noise → iterative denoise in latent → VAE decode → pixels</strong>. No adversarial forger required.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: GAN vs diffusion</h3>
+        <p><strong>Question:</strong> A GAN generates in one shot from <code>z</code>. A diffusion model needs hundreds of steps. Why might researchers accept that cost?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Diffusion training is typically <strong>more stable</strong> (no min–max tug-of-war), scales well with data and compute, and gives fine control over diversity via the noise schedule. Fast samplers and latent space shrink the step-count penalty — trade one-shot speed for reliability and quality.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>4. Interactive: Step-by-Step Denoising Slider</h2>
+
+    <p>Drag the slider from <code>t = 1000</code> (pure noise) down to <code>t = 0</code> (clean image). The canvas simulates reverse diffusion on a simple target: circle, square, and a soft “face-like” blob. Watch structure emerge as noise is subtracted each step.</p>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Timestep</strong> (sampling runs <code>T → 0</code>)</p>
+        <label>
+            t = <strong><span id="t-val">1000</span></strong> / 1000
+            <br>
+            <input type="range" id="t-slider" min="0" max="1000" value="1000">
+        </label>
+        <div class="t-label" id="t-desc">Pure noise — no structure visible.</div>
+        <div class="step-pills" id="step-pills"></div>
+        <p style="margin:12px 0 6px;">
+            <button type="button" class="primary" id="play-btn">▶ Play denoising</button>
+            <button type="button" id="reset-btn">Reset to noise</button>
+            <button type="button" id="target-btn">Show clean target</button>
+        </p>
+        <canvas id="denoise-canvas" width="320" height="320"></canvas>
+        <p id="denoise-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;">
+            Simulated update: x<sub>t−1</sub> ← blend(x<sub>t</sub>, x₀, schedule(t)) — 64×64 grid, fixed noise seed for reproducibility.
+        </p>
+    </div>
+
+    <hr>
+
+    <h2>5. Online lab: Diffusion Explainer</h2>
+
+    <div class="tool-box">
+        <p style="margin-top:0;"><strong>Live tool:</strong> <a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> (Georgia Tech Polo Club) — interactive diagrams for forward/noise schedule, U-Net, and sampling.</p>
+        <p><strong>Guided tasks:</strong></p>
+        <ol>
+            <li>Step through <em>Forward Process</em>. Write one sentence linking “more steps → more noise” to the slider above.</li>
+            <li>Open the <em>Reverse Process</em> view. Identify where the noise predictor sits in the loop — same role as <code>ε<sub>θ</sub></code> here.</li>
+            <li>Compare parameter counts: why does the explainer highlight U-Net skip connections for preserving spatial detail?</li>
+            <li>Stretch: if text conditioning were added to the U-Net input, which lesson in this unit will cover that? (Preview Lesson 4.)</li>
+        </ol>
+    </div>
+
+    <div class="bridge">
+        <strong>Where you’ve been / where you’re going.</strong>
+        ← <a href="lesson2.html">Lesson 2 (GANs)</a> — one-shot generation via adversarial training.
+        This lesson — iterative denoising, U-Net noise prediction, latent pipeline preview.
+        → <a href="lesson4.html">Lesson 4</a> (text conditioning) will inject prompt embeddings into <code>ε<sub>θ</sub>(x<sub>t</sub>, t, <strong>text</strong>)</code> so the sculptor follows your words.
+    </div>
+
+    <hr>
+    <h2>Further reading</h2>
+    <ul>
+        <li>Ho et al., Denoising Diffusion Probabilistic Models (DDPM) — foundational image diffusion.</li>
+        <li>Rombach et al., Stable Diffusion (latent diffusion) — VAE + U-Net at scale.</li>
+        <li>Reconnect: Audio Lesson 5 diffusion peek; Lesson 1 latent decode; Lesson 2 GAN comparison.</li>
+    </ul>
+
+</div>
+
+<script>
+(function () {
+    var N = 64;
+    var T = 1000;
+    var canvas = document.getElementById('denoise-canvas');
+    var ctx = canvas.getContext('2d');
+    var slider = document.getElementById('t-slider');
+    var tVal = document.getElementById('t-val');
+    var tDesc = document.getElementById('t-desc');
+    var note = document.getElementById('denoise-note');
+    var pills = document.getElementById('step-pills');
+    var playing = false;
+    var playId = null;
+    var showTargetOnly = false;
+
+    // Fixed noise seed (deterministic "blizzard")
+    var noiseGrid = [];
+    for (var y = 0; y < N; y++) {
+        noiseGrid[y] = [];
+        for (var x = 0; x < N; x++) {
+            noiseGrid[y][x] = (Math.random() * 2 - 1);
+        }
+    }
+
+    // Clean target: circle + square + face blob
+    var clean = [];
+    for (var y = 0; y < N; y++) {
+        clean[y] = [];
+        for (var x = 0; x < N; x++) {
+            var nx = (x / N - 0.5) * 2;
+            var ny = (y / N - 0.5) * 2;
+            var v = 0.25 + 0.1 * ny;
+            // circle left
+            if ((nx + 0.35) * (nx + 0.35) + ny * ny < 0.18) v = 0.82;
+            // square right
+            if (nx > 0.15 && nx < 0.55 && ny > -0.25 && ny < 0.25) v = 0.55;
+            // face blob center-bottom
+            var fx = nx * 0.9;
+            var fy = (ny - 0.45) * 1.2;
+            if (fx * fx + fy * fy < 0.12) v = 0.72;
+            // eyes
+            if ((fx + 0.12) * (fx + 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
+            if ((fx - 0.12) * (fx - 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
+            clean[y][x] = Math.max(0, Math.min(1, v));
+        }
+    }
+
+    function alphaBar(t) {
+        // ᾱ_t decreases from 1 to ~0
+        var frac = t / T;
+        return Math.pow(1 - frac, 2.2);
+    }
+
+    function stateAt(t) {
+        var a = alphaBar(t);
+        var grid = [];
+        for (var y = 0; y < N; y++) {
+            grid[y] = [];
+            for (var x = 0; x < N; x++) {
+                var signal = Math.sqrt(a) * clean[y][x];
+                var noise = Math.sqrt(1 - a) * noiseGrid[y][x];
+                grid[y][x] = signal + noise;
+            }
+        }
+        return grid;
+    }
+
+    function drawGrid(grid) {
+        var cell = canvas.width / N;
+        for (var y = 0; y < N; y++) {
+            for (var x = 0; x < N; x++) {
+                var v = (grid[y][x] + 1) * 0.5;
+                v = Math.max(0, Math.min(1, v));
+                var g = Math.round(v * 255);
+                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
+                ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
+            }
+        }
+    }
+
+    function updateDesc(t) {
+        if (showTargetOnly) {
+            tDesc.textContent = 'Clean target x₀ — no noise.';
+            return;
+        }
+        if (t >= 900) tDesc.textContent = 'Pure noise — no structure visible.';
+        else if (t >= 600) tDesc.textContent = 'Early reverse steps — faint ghost shapes.';
+        else if (t >= 300) tDesc.textContent = 'Mid denoising — circle and square separating from static.';
+        else if (t >= 50) tDesc.textContent = 'Late steps — edges sharpening; face blob emerging.';
+        else tDesc.textContent = 'Nearly clean — fine detail restored.';
+    }
+
+    function renderPills(t) {
+        var marks = [1000, 750, 500, 250, 100, 0];
+        pills.innerHTML = '';
+        marks.forEach(function (m) {
+            var s = document.createElement('span');
+            s.textContent = 't=' + m;
+            if (Math.abs(t - m) < 60 || (m === 0 && t < 30)) s.className = 'active';
+            pills.appendChild(s);
+        });
+    }
+
+    function render() {
+        var t = parseInt(slider.value, 10);
+        tVal.textContent = t;
+        if (showTargetOnly) {
+            drawGrid(clean.map(function (row) { return row.map(function (v) { return v * 2 - 1; }); }));
+        } else {
+            drawGrid(stateAt(t));
+        }
+        updateDesc(t);
+        renderPills(t);
+        note.textContent = showTargetOnly
+            ? 'Showing ground-truth x₀ used during forward diffusion.'
+            : 'Simulated: x_t = √ᾱ_t · x₀ + √(1−ᾱ_t) · ε with ᾱ_t = (1 − t/T)^2.2 — drag t from 1000→0 to reverse.';
+    }
+
+    slider.addEventListener('input', function () {
+        showTargetOnly = false;
+        render();
+    });
+
+    document.getElementById('play-btn').addEventListener('click', function () {
+        if (playing) {
+            playing = false;
+            clearInterval(playId);
+            document.getElementById('play-btn').textContent = '▶ Play denoising';
+            return;
+        }
+        showTargetOnly = false;
+        playing = true;
+        document.getElementById('play-btn').textContent = '⏸ Pause';
+        slider.value = T;
+        playId = setInterval(function () {
+            var t = parseInt(slider.value, 10);
+            if (t <= 0) {
+                playing = false;
+                clearInterval(playId);
+                document.getElementById('play-btn').textContent = '▶ Play denoising';
+                return;
+            }
+            slider.value = Math.max(0, t - 18);
+            render();
+        }, 50);
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', function () {
+        playing = false;
+        clearInterval(playId);
+        document.getElementById('play-btn').textContent = '▶ Play denoising';
+        showTargetOnly = false;
+        slider.value = T;
+        render();
+    });
+
+    document.getElementById('target-btn').addEventListener('click', function () {
+        showTargetOnly = !showTargetOnly;
+        document.getElementById('target-btn').textContent = showTargetOnly ? 'Hide target' : 'Show clean target';
+        render();
+    });
+
+    render();
+})();
+</script>
+
+</body>
+</html>

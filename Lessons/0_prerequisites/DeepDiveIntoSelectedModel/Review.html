@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review: Core Concepts & Structural Patterns · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Deep Dive: CNNs and RNNs</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Deep Dive: CNNs and RNNs</p>
+    <h1>Review: Core Concepts & Structural Patterns</h1>
+    <p class="lede">If you look back at all eight lessons, you'll notice something: the fundamental approach never really changed. Whether we built a simple linear regression or a deep recurrent network, we always did the same thing: define a model, measure how wrong it is, adjust the weights using gradients, and check how it performs on data it hasn't seen.</p>
+  </header>
+
+  <section>
+<p>What did change was the shape of the model. Each architecture we covered—MLPs, CNNs, RNNs—encodes a specific assumption about how your data is organized. It's like choosing between a hammer, a chisel, and a screwdriver. They're all tools for shaping things, but each one works best on a particular kind of material.</p>
+
+    <div class="highlight-box">
+        <strong>The constant underneath everything:</strong> We're always trying to fit a function \(f(x;\,\theta)\) through gradient descent. All that changes is the function's structure — we build constraints into the model based on what we know about the data.
+    </div>
+  </section>
+
+  <section>
+<h2>1. Pick the Right Tool for Your Data</h2>
+
+    <p>The biggest mistake people make is forcing the wrong model onto their problem. It's tempting to think models are interchangeable — just swap one architecture for another and see what works best. But that's not how it works. Each model type has built-in assumptions about how data is organized, and when those assumptions don't match reality, the model wastes its capacity fighting the data instead of learning from it.</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Data Type</th><th>Examples</th><th>Use This</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Tabular</strong></td>
+                <td>House prices, medical records, survey responses</td>
+                <td>Linear/logistic regression, MLPs</td>
+                <td>Each feature is independent. There's no spatial or temporal relationship between them.</td>
+            </tr>
+            <tr>
+                <td><strong>Images</strong></td>
+                <td>Photos, medical scans, satellite imagery</td>
+                <td>CNNs</td>
+                <td>Nearby pixels relate to each other. An edge detector should work the same way whether it's in the top-left or bottom-right corner.</td>
+            </tr>
+            <tr>
+                <td><strong>Sequences</strong></td>
+                <td>Text, audio, time series data</td>
+                <td>RNNs, LSTMs, Transformers</td>
+                <td>Order matters. What comes next depends on what came before.</td>
+            </tr>
+        </tbody>
+    </table></div>
+
+    <p>Here's what happens when you mismatch data and architecture: If you flatten a 224×224 image into a 150,000-element vector for an MLP, you've erased all spatial structure. Pixels that were adjacent are now scattered across the vector. The network has to waste parameters re-learning that pixels next to each other matter. Conversely, if you run a CNN across a spreadsheet of customer demographics, you're pretending that age and income have spatial neighbors when they clearly don't.</p>
+
+    <p>Good models work because their design assumptions match the actual structure of the data. That's what we mean by inductive bias — you're baking in knowledge about the problem at the architecture level.</p>
+  </section>
+
+  <section>
+<h2>2. What You've Built So Far</h2>
+
+    <p><strong>Intro to Machine Learning</strong> laid the foundation. You learned the basic recipe: define an error metric, use gradient descent to minimize it, and watch what happens on data the model hasn't seen. Simple linear regression set the template that every other model since has followed.</p>
+
+    <p><strong>Perceptrons and Hidden Layers</strong> showed you why linear wasn't enough. The XOR problem demonstrated that you need hidden layers and nonlinear activation functions to bend decision boundaries into curves.</p>
+
+    <p><strong>Multi-Layer Perceptrons and Backpropagation</strong> went deeper (literally). MLPs showed you how to stack layers and use backpropagation to calculate gradients through them. More layers meant more expressive power, but also more risk of overfitting.</p>
+
+    <p><strong>The Full ML Pipeline</strong> was about discipline. Train/validation/test splits, fitting preprocessing only on training data, spotting overfitting. This lesson might have been the most important — bad procedure kills more projects than bad architectures do.</p>
+
+    <p><strong>Convolutional Neural Networks</strong> introduced spatial structure with CNNs. Weight sharing across space made vision models practical and let you scale to large images without drowning in parameters.</p>
+
+    <p><strong>Recurrent Neural Networks</strong> tackled time. RNNs carry a hidden state forward to handle sequences, but they struggle with long-range dependencies. LSTMs fix this with gated memory. Both are ways to encode context — ways to remember what matters.</p>
+
+    <div class="highlight-box">
+        <strong>The pattern through all eight lessons:</strong> Define the loss, optimize the weights, measure on held-out data. The architecture changes, but the engine never does.
+    </div>
+  </section>
+
+  <section>
+<h2>3. Overfitting Is Your Real Enemy</h2>
+
+    <p>A neural network is just a function \(f(x;\,\theta)\) that learns to map inputs to outputs. More layers and wider hidden layers give it more capacity — more freedom to fit complex patterns. That power comes with a cost: give a model too much capacity relative to the amount of training data, and it will memorize noise instead of learning real patterns.</p>
+
+    <p>You can spot this on a learning curve. Training loss keeps dropping while validation loss plateaus or climbs. That gap between them is telling you the model has started fitting the training data's quirks instead of the underlying signal. That's overfitting.</p>
+
+    <p>How do you fight it? Three main ways:</p>
+    <ul>
+        <li><strong>Regularization:</strong> L2 penalties on weights, dropout (randomly turning off neurons). Both make the model less extreme.</li>
+        <li><strong>Early stopping:</strong> Stop training the moment validation loss stops improving, even if training loss could go lower.</li>
+        <li><strong>More data or smaller models:</strong> Often the best fix isn't a trick — it's just feeding the model more examples or using fewer parameters.</li>
+    </ul>
+
+    <p>The whole goal is a model that generalizes — that works on data it hasn't seen. A model with 99% training accuracy and 62% validation accuracy hasn't learned anything. It has just memorized a spreadsheet.</p>
+  </section>
+
+  <section>
+<h2>4. The Pipeline (Always in This Order)</h2>
+
+    <p>Whether you're building a linear classifier or a massive deep network, there's a strict sequence you need to follow. Skip steps or reorder them, and you'll accidentally lie to yourself about how good your model is:</p>
+
+    <ol>
+        <li><strong>Explore your data.</strong> Plot distributions, check for missing values, spot class imbalances. Do you understand what you're looking at?</li>
+        <li><strong>Lock away your test set.</strong> Don't touch it. Not even to look. This set is for the very end, and you evaluate exactly once.</li>
+        <li><strong>Preprocess on training data only.</strong> If you compute normalization statistics, do it on the training set alone. Then apply those same statistics to validation and test.</li>
+        <li><strong>Pick an architecture.</strong> Based on your data's structure, not on what's popular.</li>
+        <li><strong>Train and validate.</strong> Watch training and validation loss together. This is where you learn if overfitting is happening.</li>
+        <li><strong>Tune hyperparameters.</strong> Learning rate, layer sizes, regularization — all tuned using validation loss only. Never the test set.</li>
+        <li><strong>Test once, at the very end.</strong> Run your final model on the test set exactly once. That number is your true performance estimate.</li>
+    </ol>
+
+    <p>This order exists because of data leakage — the subtle ways information from the test set can accidentally contaminate your training process. Compute preprocessing statistics on the full dataset? You've leaked information. Use the test set to tune hyperparameters? You've overfit to it. These mistakes create inflated scores that look great until the model hits production and crashes.</p>
+  </section>
+
+  <section>
+<h2>5. Things That Go Wrong in Practice</h2>
+
+    <p>Even with solid code and a sensible architecture, real-world models fail in predictable ways. When something breaks, it's rarely the optimization algorithm — it's usually one of these:</p>
+
+    <p><strong>Mislabeled data.</strong> If enough of your training labels are wrong, your model will faithfully learn those mistakes. No amount of regularization fixes bad labels. Spend an hour manually checking some examples — it's usually more productive than tuning for hours.</p>
+
+    <p><strong>Distribution shift.</strong> Your model trains on historical data, but the real world changes. New lighting, new geography, a year passing, user behavior evolving. The model learned patterns that no longer apply.</p>
+
+    <p><strong>Imbalanced classes.</strong> If 98% of your data is one class, a lazy model can hit 98% accuracy by always guessing that class. Aggregate accuracy lies in these cases — use precision, recall, and confusion matrices instead.</p>
+
+    <p><strong>Data leakage.</strong> This takes subtle forms. Using information calculated from the full dataset (normalization, encoding schemes). Using future data to predict the past. Duplicates across your train/test splits. All create misleadingly good scores.</p>
+
+    <p><strong>Shortcut learning.</strong> Models are lazy. If there's an easy correlation between some artifact and the label (like a watermark or background), the model will learn that instead of the actual concept. A medical imaging model might learn to detect disease from the scanner type rather than actual pathology.</p>
+
+    <p><strong>Fragility.</strong> A model can hit 95% accuracy on the test set while completely falling apart on tiny input changes. Minor lighting shifts, slight text rephrasings, or small noise can flip predictions. This isn't captured by a single accuracy number.</p>
+  </section>
+
+  <section>
+<h2>6. Looking Inside: Interpretability</h2>
+
+    <p>Neural networks aren't completely opaque. You have tools to peer inside and understand what they're actually learning.</p>
+
+    <p>For images, saliency maps and occlusion tests show which pixels influenced a decision. If your digit classifier lights up the corner of the image instead of the actual strokes, that's a red flag — the model is learning the wrong thing.</p>
+
+    <p>For sequences, you can analyze attention weights or track which tokens the model cares about. Is it focusing on meaningful words or just random phrases?</p>
+
+    <p>Keep in mind: these tools are diagnostic aids, not safety guarantees. Showing that a model looked at a certain region doesn't prove it understands the concept. It's useful for debugging, not for certifying correctness.</p>
+  </section>
+
+  <section>
+<h2>7. The Leap to Modern AI</h2>
+
+    <p>Lesson 8 introduced the core idea behind language models: predict the next token. Feed the model a sequence, it guesses what comes next. Do that repeatedly, and you can generate entire texts.</p>
+
+    <p>RNNs and LSTMs do this step-by-step, which is conceptually clean but slow to train (everything is sequential). Transformers speed this up by processing all tokens in parallel using self-attention. Instead of carrying information one step at a time, attention lets every token directly interact with every other token.</p>
+
+    <p>But underneath the architectural differences, the same principles hold. Gradient descent. Validation splits. Overfitting management. The large language models you hear about are just massive, refined versions of these fundamentals.</p>
+
+    <div class="highlight-box">
+        <strong>What you've learned matters:</strong> You now understand how gradient descent works, why architecture matters, how to avoid overfitting, and how sequence models generate text one token at a time. That's enough to understand how modern generative AI actually works.
+    </div>
+  </section>
+
+  <section>
+<h2>8. Feedback Form</h2>
+
+Thank you for taking part in our new course! We’re always looking for ways to improve the curriculum and make the learning experience as valuable and enjoyable as possible for our students. We’d really appreciate it if you could take a few minutes to complete this <a href="https://docs.google.com/forms/d/e/1FAIpQLSdhn7NwStedrR9lGDxraCQDTlQ_5lH4Pd9bz2o4me3C4Tquqg/viewform?usp=dialog">feedback form</a>. Your feedback will help us make the course even better for future students!
+  </section>
+
+  <section>
+<h2>9. Before You Move On</h2>
+
+    <p>Make sure you're solid on these ideas:</p>
+
+    <ul>
+        <li>Supervised learning is optimization — minimize loss on labeled examples.</li>
+        <li>Gradient descent: adjust weights in the direction that reduces error.</li>
+        <li>Hidden layers + nonlinear activations = ability to learn curved boundaries.</li>
+        <li>Backpropagation: use the chain rule to calculate gradients backward through layers.</li>
+        <li>Train / validation / test split: isolate your test set from all decisions.</li>
+        <li>Overfitting vs underfitting: reading a learning curve tells you which problem you have.</li>
+        <li>Architecture matching: CNNs for images (spatial), RNNs for sequences (temporal), MLPs for tabular data.</li>
+        <li>Next-token prediction: the foundation of how language models work.</li>
+        <li>Common pitfalls: mislabeled data, leakage, class imbalance, distribution shift, shortcut learning.</li>
+    </ul>
+  </section>
+
+  <section>
+<h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>Deep Learning, Chapter 5 — Machine Learning Basics (Goodfellow et al.):</strong> Rigorous treatment of generalization and capacity. <a href="https://www.deeplearningbook.org/contents/ml.html" target="_blank">Read online</a></li>
+        <li><strong>Practical Deep Learning for Coders (fast.ai):</strong> Real-world workflows and error analysis through actual projects. <a href="https://course.fast.ai/" target="_blank">Course site</a></li>
+        <li><strong>Understanding LSTM Networks (Christopher Olah):</strong> Visual, intuitive breakdown of how gating and memory actually work. <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank">Read post</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="RNN.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Recurrent Neural Networks</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Deep Dive</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

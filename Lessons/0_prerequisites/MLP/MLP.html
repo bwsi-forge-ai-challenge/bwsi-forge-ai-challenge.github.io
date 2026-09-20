@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Multi-Layer Perceptrons and Backpropagation · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Multi-Layer Perceptrons</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Multi-Layer Perceptrons</p>
+    <h1>Multi-Layer Perceptrons and Backpropagation</h1>
+    <p class="lede">Lesson 4 demonstrated that mapping non-linear spaces like the XOR distribution requires isolating intermediate feature coordinates. A <b>multi-layer perceptron (MLP)</b> generalizes this architecture by stacking multiple computational layers separated by non-linear activation functions, utilizing the <b>backpropagation</b> algorithm to optimize all parameter weights concurrently.</p>
+  </header>
+
+  <section>
+<h2>1. MLP topology</h2>
+    <p>An MLP is organized into three distinct structural zones:</p>
+    <ul>
+        <li><strong>Input layer</strong> — Comprises one node per feature dimension (e.g., 256 nodes to ingest a flattened \(16 \times 16\) grayscale pixel array).</li>
+        <li><strong>Hidden layers</strong> — Intermediate layers that transform raw inputs into high-dimensional latent representations.</li>
+        <li><strong>Output layer</strong> — Contains one target node per classification category (e.g., 10 nodes for digit classes 0–9).</li>
+    </ul>
+    <p>For a network structured with layer dimensions \(n_0 \to n_1 \to n_2 \to n_3\), the total quantity of trainable parameters is calculated via:</p>
+    <p align="center">
+        \[\text{Number of Parameters} = \sum_{l} (n_l \cdot n_{l+1} + n_{l+1})\]
+    </p>
+    <p>The \(n_{l+1}\) term accounts for the independent bias scalar allocated to each destination neuron. Under this formula, a \(256 \to 32 \to 16 \to 10\) topology contains \((256 \times 32 + 32) + (32 \times 16 + 16) + (16 \times 10 + 10) = 8,426\) parameters. Increasing layer width and depth enhances the model's capacity to represent high-variance functions, though it increases empirical variance and the risk of overfitting on finite training sets.</p>
+    <!-- <canvas id="l5-archCanvas" width="360" height="180" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas> -->
+    <p>In the diagram below, the bottom-most yellow element represents the bias scalar.</p>
+    <img 
+        src="https://ars.els-cdn.com/content/image/1-s2.0-S0925231223004502-gr1.jpg"
+        alt="Perceptron anatomy diagram"
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+  	<p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://www.sciencedirect.com/topics/computer-science/multilayer-perceptron" target="_blank">
+            Multilayer Perceptron
+        </a>
+    </p>
+  </section>
+
+  <section>
+<h2>2. The forward propagation pass</h2>
+    <p>Data propagates sequentially through the network graph. Each layer computes an affine transformation followed by an element-wise non-linear activation:</p>
+    <p align="center">
+        \[z^{(l)} = W^{(l)} a^{(l-1)} + b^{(l)}\]
+        \[a^{(l)} = \sigma(z^{(l)})\]
+    </p>
+    <ul>
+        <li><strong>\(a^{(0)} = x\)</strong> — The initial input vector of dimensions \([n_0]\).</li>
+        <li><strong>\(W^{(l)}\)</strong> — The transformation weight matrix of dimensions \([n_l, n_{l-1}]\).</li>
+        <li><strong>\(z^{(l)}\)</strong> — The pre-activation vector compiled prior to non-linear mapping.</li>
+        <li><strong>\(\sigma\)</strong> — The localized activation function (such as ReLU, sigmoid, or tanh).</li>
+    </ul>
+    <p>The final output layer typically applies an activation function to normalize raw logit scores into a valid multinomial probability distribution that integrates to 1. The forward pass is purely deterministic matrix arithmetic; parameter optimization does not occur until an error metric is evaluated and gradients flow in reverse.</p>
+<p>A <b>fully connected layer</b> (also called a <b>dense layer</b>) is the basic computation unit in an MLP. It means every neuron in the layer receives input from every neuron in the previous layer. The term “dense” refers to this all-to-all connection pattern, where no input feature is ignored and all features contribute to every output neuron through learned weights.</p>
+  </section>
+
+  <section>
+<h2>3. Backpropagation mechanics</h2>
+  <p>A single full iteration combines one forward evaluation pass with one reverse propagation pass to derive the comprehensive gradient matrix for the entire network. Computing these updates across random mini-batches iteratively minimizes the objective function over time.</p>
+    <p><b>Backpropagation</b> evaluates the partial derivatives of the loss function \(\frac{\partial L}{\partial w}\) for every weight parameter by systematically chaining derivatives from the output layer back to the input vector. Once the forward pass quantifies the error value \(L\), the gradient at the terminal nodes is established, and each antecedent layer receives an error signal proportional to its contribution to the final variance.</p>
+    <p align="center">
+        \[\frac{\partial L}{\partial w_{ij}^{(l)}} = \left(\frac{\partial L}{\partial z^{(l)}}\right) \cdot \left(\frac{\partial z^{(l)}}{\partial w_{ij}^{(l)}}\right)\]
+    </p>
+    <p>The calculus chain rule isolates dependencies across the computation graph. For a specific parameter scaling the connection from node \(j\) in layer \(l-1\) to node \(i\) in layer \(l\), the local gradient component \(\frac{\partial z^{(l)}}{\partial w_{ij}^{(l)}}\) evaluates exactly to \(a_j^{(l-1)}\)—the specific activation magnitude delivered by the preceding node.</p>
+    <p>Weights are systematically adjusted via standard gradient descent optimization paths:</p>
+    <p align="center">
+        \[w \leftarrow w - \alpha \frac{\partial L}{\partial w}\]
+    </p>
+  <p>Remeber \(\alpha\) here is the learning rate for our optimization.</p>
+  </section>
+
+  <section>
+<h2>4. The vanishing gradient constraint</h2>
+    <p>Utilizing sigmoid activations introduces distinct mathematical limitations during backpropagation, as the derivative of the sigmoid function caps at \(\sigma'(z) \le 0.25\). Propagating errors backward through an architecture containing \(L\) hidden layers scales the gradient signal down by a maximum factor of \(0.25^L\):</p>
+    <p align="center">
+        \[\sigma'(z) = \sigma(z)(1 - \sigma(z)) \le 0.25\]
+    </p>
+    <p>In a 6-layer sigmoid architecture, this dampening effect factors to \(0.25^6 \approx 0.00024\), meaning less than 0.03% of the terminal error gradient reaches the foundational weight parameters. Consequently, these early-stage parameters remain largely unoptimized while only the terminal layers converge. This behavior describes the <b>vanishing gradient problem</b>, which historically restricted the training optimization of deep sigmoid networks.</p>
+    <canvas id="l5-vanishCanvas" width="360" height="150" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+  </section>
+
+  <section>
+<!-- <h2>5. Piecewise linear activation functions</h2>
+    <p>The Rectified Linear Unit (<b>ReLU</b>) mitigates gradient saturation by passing positive inputs directly through unchanged while mapping all negative inputs to zero:</p>
+    <p align="center">
+        $$\text{ReLU}(x) = \max(0, x)$$
+        $$\text{ReLU}'(x) = \begin{cases} 1 & \text{if } x > 0 \\ 0 & \text{else} \end{cases}$$
+    </p>
+    <p>For active nodes ($x > 0$), the first derivative evaluates exactly to 1, passing backward error gradients through the network graph without attenuation. ReLU functions are highly efficient to compute and encourage structural sparsity because inactive nodes output zero. However, this introduces the "dying ReLU" risk, where nodes that receive consistently negative inputs permanently deactivate, halting parameter updates along that path.</p>
+    <p>The hyperbolic tangent (<b>tanh</b>) function maps inputs to a continuous $(-1, 1)$ interval, providing a steeper gradient near the origin than the sigmoid function, but it remains subject to saturation at extreme ranges. Modern architectures processing tabular and flattened visual vectors predominantly utilize ReLU or its targeted variations (such as Leaky ReLU or GELU).</p>
+    <canvas id="l5-activationCanvas" width="360" height="160" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+
+    <table border="1" cellpadding="10" cellspacing="0" bgcolor="#f4faf4" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr>
+            <td>
+                <h3>Check Your Knowledge: ReLU derivative</h3>
+                <p><strong>Question:</strong> Pre-activation $z = 3.5$ passes through ReLU. What is $\text{ReLU}'(z)$?</p>
+                <details>
+                    <summary style="cursor: pointer; color: blue;"><strong>Click to reveal answer</strong></summary>
+                    <p style="margin-top: 5px;">1. Because $z > 0$, the derivative evaluates to unity, passing the error gradient through at full scale.</p>
+                </details>
+            </td>
+        </tr>
+    </table> -->
+
+    <!-- <hr> -->
+  </section>
+
+  <section>
+<h2>5. Interactive Sandbox: Train an MLP on 16×16 Digits</h2>
+    <p>Input pixel configurations on the coordinate canvas, define hidden layer depths and node counts, isolate an activation profile, and execute optimization routines. The sandbox performs forward calculations, computes categorical cross-entropy loss, and runs backpropagation operations natively within the browser environment using a synthetic digit array.</p>
+
+    <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr bgcolor="#fafafa">
+            <td align="center" valign="top" style="padding: 20px;">
+                <strong>16×16 sketchpad and controls</strong><br><br>
+                <canvas id="l5-drawCanvas" width="256" height="256" style="border: 2px solid #333; background-color: #fff; display: block; cursor: crosshair;"></canvas>
+                <br>
+                <label>Hidden layers: <span id="l5-layers-lbl">2</span></label>
+                <input type="range" id="l5-layers" min="1" max="3" value="2" step="1" style="width: 100%;" oninput="l5OnSliderChange()">
+                <label>Neurons per layer: <span id="l5-width-lbl">16</span></label>
+                <input type="range" id="l5-width" min="8" max="32" step="8" value="16" style="width: 100%;" oninput="l5OnSliderChange()">
+                <label>Learning rate \(\alpha\): <span id="l5-lr-lbl">0.25</span></label>
+                <input type="range" id="l5-lr" min="0.05" max="0.50" step="0.05" value="0.25" style="width: 100%;" oninput="l5UpdateLR()">
+                <label>Batch size: <span id="l5-batch-lbl">32</span></label>
+                <input type="range" id="l5-batch" min="1" max="60" step="1" value="32" style="width: 100%;" oninput="l5UpdateBatch()">
+                <label>Activation:</label>
+                <select id="l5-act" style="width: 100%; padding: 6px;" onchange="l5BuildAndReset()">
+                    <option value="relu">ReLU</option>
+                    <option value="tanh">Tanh</option>
+                    <option value="sigmoid">Sigmoid</option>
+                </select>
+                <br><br>
+                <button onclick="l5TrainEpochs()" style="padding: 8px 15px; cursor: pointer; width: 100%;">Train 25 epochs</button>
+                <button id="l5-play-btn" onclick="l5TogglePlay()" style="padding: 8px 15px; cursor: pointer; width: 100%; margin-top: 6px;">Continuous train</button>
+                <br><br>
+                <button id="l5-resetBtn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; width: 100%;">Reset</button>
+            </td>
+            <td valign="top" width="340" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Network output</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div id="l5-outputBox" style="font-family: monospace; font-size: 0.85em;">
+                    <div>Architecture: <span id="l5-arch-txt">256-16-16-10</span></div>
+                    <div>Parameters: <span id="l5-param-txt">—</span></div>
+                    <div>Epochs: <span id="l5-txt-epoch">0 / 250</span></div>
+                    <div>Train accuracy: <span id="l5-txt-acc">0%</span></div>
+                    <div id="l5-spectrum-container" style="margin-top: 8px;"></div>
+                </div>
+                <canvas id="l5-lossCanvas" width="300" height="90" style="border: 1px solid #ccc; width: 100%; margin-top: 10px;"></canvas>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Status:</strong> <span id="l5-status">Populate coordinate configurations to review categorical outputs. Histograms scale with softmax probabilities. Sigmoid maps demonstrate low convergence velocities over multi-layer topologies.</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </section>
+
+  <section>
+<h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Backpropagation Derivations (Michael Nielsen):</strong> Algorithmic matrix notation breakdowns detailing localized partial derivative paths across network layers. <a href="http://neuralnetworksanddeeplearning.com/chap2.html" target="_blank">Chapter 2</a></li>
+        <li><strong>Vanishing Gradients Analysis (Stanford CS231n):</strong> Evaluation notes exploring mathematical decay functions within deep saturation fields. <a href="https://cs231n.github.io/neural-networks-3/" target="_blank">CS231n Notes</a></li>
+        <li><strong>Rectified Linear Units (Nair &amp; Hinton, 2010):</strong> Foundational research demonstrating optimization performance improvements enabled by non-saturating activation profiles. <a href="https://www.cs.toronto.edu/~hinton/absps/reluICML.pdf" target="_blank">ReLU Paper</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="Perceptron.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Perceptrons and Hidden Layers</span>
+    </a>
+    <a class="pager__next" href="FullMLPipeline.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">The Full ML Pipeline</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+        // function l5DrawArchDiagram() {
+        //     let canvas = document.getElementById('l5-archCanvas');
+        //     if (!canvas) return;
+        //     let ctx = canvas.getContext('2d');
+        //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //     let layers = [4, 8, 8, 4, 2];
+        //     let xs = [30, 100, 170, 240, 310];
+        //     layers.forEach((count, li) => {
+        //         let spacing = Math.min(28, 120 / count);
+        //         let startY = (canvas.height - (count - 1) * spacing) / 2;
+        //         for (let n = 0; n < count; n++) {
+        //             let y = startY + n * spacing;
+        //             ctx.fillStyle = li === 0 || li === layers.length - 1 ? '#dbeafe' : '#f0fdf4';
+        //             ctx.strokeStyle = li === 0 || li === layers.length - 1 ? '#2563eb' : '#16a34a';
+        //             ctx.beginPath(); ctx.arc(xs[li], y, 7, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        //             if (li < layers.length - 1) {
+        //                 for (let n2 = 0; n2 < layers[li + 1]; n2++) {
+        //                     let y2 = (canvas.height - (layers[li + 1] - 1) * spacing) / 2 + n2 * spacing;
+        //                     ctx.strokeStyle = 'rgba(148,163,184,0.35)'; ctx.lineWidth = 0.5;
+        //                     ctx.beginPath(); ctx.moveTo(xs[li] + 7, y); ctx.lineTo(xs[li + 1] - 7, y2); ctx.stroke();
+        //                 }
+        //             }
+        //         }
+        //         ctx.fillStyle = '#64748b';
+        //         ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+        //         let labels = ['input\n4', 'hidden\n8', 'hidden\n8', 'hidden\n4', 'output\n2'];
+        //         ctx.fillText(labels[li].replace('\n', ' '), xs[li], canvas.height - 8);
+        //     });
+        // }
+
+        function l5DrawVanishDemo() {
+            let canvas = document.getElementById('l5-vanishCanvas');
+            if (!canvas) return;
+            let ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let layers = 8;
+            let spacing = (canvas.width - 40) / layers;
+            for (let l = 0; l < layers; l++) {
+                let s = Math.pow(0.25, layers - 1 - l);
+                let barH = Math.max(4, s * 110);
+                let x = 20 + l * spacing;
+                ctx.fillStyle = s < 0.05 ? '#dc2626' : (s < 0.2 ? '#f87171' : '#3b82f6');
+                ctx.fillRect(x, canvas.height - 28 - barH, spacing - 6, barH);
+                ctx.fillStyle = '#64748b'; ctx.font = '8px monospace'; ctx.textAlign = 'center';
+                ctx.fillText('L' + (l + 1), x + (spacing - 6) / 2, canvas.height - 10);
+            }
+            ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Gradient magnitude reaching each layer (sigmoid, worst case)', 10, 14);
+        }
+
+        function l5DrawActivations() {
+            let canvas = document.getElementById("l5-activationCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let cx = canvas.width / 2, cy = canvas.height - 30;
+            ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, cy);
+            ctx.lineTo(canvas.width, cy); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
+            ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 2; ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                let z = (x - cx) / 25;
+                let y = cy - (1.0 / (1.0 + Math.exp(-z))) * 85;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.strokeStyle = "#16a34a";
+            ctx.lineWidth = 2; ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                let z = (x - cx) / 25;
+                let y = cy - Math.max(0, z) * 26;
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 1.5; ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                let z = (x - cx) / 25;
+                let y = cy - Math.tanh(z) * 85;
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#64748b"; ctx.font = "10px sans-serif";
+            ctx.fillText("blue: sigmoid  green: ReLU  purple: tanh", 10, 14);
+        }
+
+        function l5Activate(z, actType) {
+            if (actType === 'sigmoid') return 1.0 / (1.0 + Math.exp(-z));
+            if (actType === 'relu') return Math.max(0, z);
+            return Math.tanh(z);
+        }
+
+        function l5ActivateDeriv(out, actType, z) {
+            if (actType === 'sigmoid') return out * (1.0 - out);
+            if (actType === 'relu') return z > 0 ? 1.0 : 0.0;
+            return 1.0 - out * out;
+        }
+
+        let l5Dataset = [];
+        function l5GenerateData() {
+            l5Dataset = [];
+            for (let digit = 0; digit <= 9; digit++) {
+                for (let v = 0; v < 6; v++) {
+                    let grid = new Array(256).fill(0);
+                    let jj = (v - 3) * 0.4;
+                    for (let r = 1; r < 15; r++) {
+                        for (let c = 1; c < 15; c++) {
+                            let idx = r * 16 + c;
+                            if (idx >= 256) continue;
+                            let nr = (r - 7.5) / 5.5 + jj, nc = (c - 7.5) / 5.5 + jj;
+                            let dp = false;
+                            if (digit === 0) dp = Math.abs(Math.sqrt(nr * nr + nc * nc) - 1.0) < 0.25;
+                            else if (digit === 1) dp = Math.abs(nc) < 0.15 && nr > -1 && nr < 1;
+                            else if (digit === 2) dp = (nr < -0.5 && nc > -0.8 && nc < 0.8) || (Math.abs(nr - nc) < 0.3) || (nr > 0.6 && nc > -0.8);
+                            else if (digit === 3) dp = (Math.abs(nr * nr + nc * nc - 0.9) < 0.3 && nc > -0.2) || (Math.abs(nr) < 0.15 && nc > -0.5);
+                            else if (digit === 4) dp = (Math.abs(nc - 0.3) < 0.15) || (Math.abs(nr - 0.1) < 0.15 && nc > -0.7 && nc < 0.7) || (nc < -0.2 && nr < 0.1);
+                            else if (digit === 5) dp = (nr < -0.6 && nc > -0.7) || (nc < -0.5 && nr < 0) || (Math.abs(nr) < 0.2 && nc < 0.4) || (nc > 0.4 && nr > 0) || (nr > 0.6 && nc < 0.5);
+                            else if (digit === 6) dp = (nc < -0.5) || (nr > 0.5) || (nr > -0.2 && nc > 0.5) || (Math.abs(nr) < 0.2);
+                            else if (digit === 7) dp = (nr < -0.7 && nc > -0.8) || (Math.abs(nr + nc * 0.8) < 0.25);
+                            else if (digit === 8) dp = Math.abs(Math.abs(nr) - 0.5) < 0.25 && Math.abs(nc) < 0.6 || Math.abs(nc - 0.5) < 0.2 || Math.abs(nc + 0.5) < 0.2;
+                            else if (digit === 9) dp = (nc > 0.5) || (nr < -0.5) || (Math.abs(nr) < 0.2) || (nc < -0.4 && nr < 0);
+                            if (dp) grid[idx] = 1.0;
+                        }
+                    }
+                    l5Dataset.push({ label: digit, pixels: grid });
+                }
+            }
+        }
+
+        let l5_W = [], l5_B = [], l5_Zcache = [];
+        let l5LossHistory = [], l5TotalEpochs = 0;
+        let l5UserGrid = new Array(256).fill(0);
+        let l5IsDrawing = false, l5IsPlaying = false, l5PlayInterval = null;
+        let l5BatchSize = 32;
+        function l5CountParams() {
+            let total = 0;
+            for (let l = 0; l < l5_W.length; l++) {
+                total += l5_W[l].length * l5_W[l][0].length + l5_B[l].length;
+            }
+            return total;
+        }
+
+        function l5ArchString() {
+            let layersCount = parseInt(document.getElementById("l5-layers").value);
+            let width = parseInt(document.getElementById("l5-width").value);
+            let parts = [256];
+            for (let i = 0; i < layersCount; i++) parts.push(width);
+            parts.push(10);
+            return parts.join('-');
+        }
+
+        function l5SetupSpectrum() {
+            let container = document.getElementById("l5-spectrum-container");
+            if (!container) return;
+            container.innerHTML = "";
+            let colors = ["#2563eb","#16a34a","#ea580c","#8b5cf6","#ec4899","#f59e0b","#10b981","#6366f1","#14532d","#b91c1c"];
+            for (let i = 0; i < 10; i++) {
+                container.innerHTML += '<div style="display:flex;justify-content:space-between;font-size:0.8em;"><span>Digit ' + i + ':</span><b id="l5-prob-' + i + '">0%</b></div><div style="background:#f1f5f9;height:6px;border-radius:3px;margin:2px 0 4px 0;"><div id="l5-bar-' + i + '" style="height:100%;width:0%;background:' + colors[i] + ';"></div></div>';
+            }
+        }
+
+        function l5OnSliderChange() {
+            document.getElementById("l5-layers-lbl").innerText = document.getElementById("l5-layers").value;
+            document.getElementById("l5-width-lbl").innerText = document.getElementById("l5-width").value;
+            l5BuildAndReset();
+        }
+
+        function l5BuildAndReset() {
+            if (l5IsPlaying) l5TogglePlay();
+            let layersCount = parseInt(document.getElementById("l5-layers").value);
+            let width = parseInt(document.getElementById("l5-width").value);
+            l5_W = []; l5_B = []; l5LossHistory = []; l5TotalEpochs = 0;
+            let prevSize = 256;
+            for (let l = 0; l < layersCount; l++) {
+                l5_W.push(Array.from({length: width}, () => Array.from({length: prevSize}, () => (Math.random() - 0.5) * Math.sqrt(2.0 / prevSize))));
+                l5_B.push(new Array(width).fill(0.0));
+                prevSize = width;
+            }
+            l5_W.push(Array.from({length: 10}, () => Array.from({length: prevSize}, () => (Math.random() - 0.5) * Math.sqrt(2.0 / prevSize))));
+            l5_B.push(new Array(10).fill(0.0));
+            document.getElementById("l5-txt-epoch").innerText = "0 / 250";
+            document.getElementById("l5-txt-acc").innerText = "0%";
+            document.getElementById("l5-arch-txt").innerText = l5ArchString();
+            document.getElementById("l5-param-txt").innerText = l5CountParams().toLocaleString();
+            l5SetupSpectrum();
+            l5RunInference();
+            l5DrawLoss();
+            document.getElementById("l5-status").innerText = "Network initialization verified (" + l5ArchString() + "). Configure weights and monitor loss steps.";
+        }
+
+        function l5UpdateLR() {
+            document.getElementById("l5-lr-lbl").innerText = parseFloat(document.getElementById("l5-lr").value).toFixed(2);
+        }
+
+        function l5UpdateBatch() {
+            l5BatchSize = parseInt(document.getElementById("l5-batch").value);
+            document.getElementById("l5-batch-lbl").innerText = l5BatchSize;
+        }
+
+        function l5ForwardPass(input, actType) {
+            let current = [...input];
+            let cache = [current];
+            let zCache = [];
+            for (let l = 0; l < l5_W.length - 1; l++) {
+                let next = [], zLayer = [], W = l5_W[l], B = l5_B[l];
+                for (let r = 0; r < W.length; r++) {
+                    let sum = B[r];
+                    for (let c = 0; c < W[r].length; c++) sum += W[r][c] * current[c];
+                    zLayer.push(sum);
+                    next.push(l5Activate(sum, actType));
+                }
+                zCache.push(zLayer);
+                current = next;
+                cache.push(current);
+            }
+            let outW = l5_W[l5_W.length - 1], outB = l5_B[l5_B.length - 1];
+            let logits = [];
+            for (let r = 0; r < outW.length; r++) {
+                let sum = outB[r];
+                for (let c = 0; c < outW[r].length; c++) sum += outW[r][c] * current[c];
+                logits.push(sum);
+            }
+            let maxLogit = Math.max(...logits);
+            let exps = logits.map(z => Math.exp(z - maxLogit));
+            let sumExps = exps.reduce((a, b) => a + b, 0);
+            return { cache: cache, zCache: zCache, output: exps.map(v => v / (sumExps || 1)) };
+        }
+
+        function l5TrainOneEpoch() {
+            if (l5TotalEpochs >= 250) return false;
+            let lr = parseFloat(document.getElementById("l5-lr").value);
+            let act = document.getElementById("l5-act").value;
+            let indices = [...Array(l5Dataset.length).keys()];
+            for (let i = indices.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            let epochLoss = 0, matches = 0;
+            for (let start = 0; start < l5Dataset.length; start += l5BatchSize) {
+                let batch = indices.slice(start, start + l5BatchSize).map(i => l5Dataset[i]);
+                let batchSize = batch.length;
+                let gradW = l5_W.map(W => W.map(row => row.map(() => 0)));
+                let gradB = l5_B.map(B => B.map(() => 0));
+
+                batch.forEach(sample => {
+                    let res = l5ForwardPass(sample.pixels, act);
+                    let probs = res.output, cache = res.cache, zCache = res.zCache;
+                    if (probs.indexOf(Math.max(...probs)) === sample.label) matches++;
+             
+                    epochLoss -= Math.log(Math.max(1e-12, probs[sample.label]));
+                    let dOut = [...probs];
+                    dOut[sample.label] -= 1.0;
+                    let outIdx = l5_W.length - 1;
+                    
+                    let lastSignals = cache[outIdx];
+                    for (let r = 0; r < 10; r++) {
+                        gradB[outIdx][r] += dOut[r] / batchSize;
+                        for (let c = 0; c < l5_W[outIdx][r].length; c++) {
+                            gradW[outIdx][r][c] += dOut[r] * lastSignals[c] / batchSize;
+                        }
+                    }
+                    let dCurrent = new Array(lastSignals.length).fill(0);
+     
+                    for (let c = 0; c < lastSignals.length; c++) {
+                        for (let r = 0; r < 10; r++) dCurrent[c] += dOut[r] * l5_W[outIdx][r][c];
+                    }
+                    for (let l = outIdx - 1; l >= 0; l--) {
+                        let W = l5_W[l];
+                        let layerOutputs = cache[l + 1];
+                        let layerZ = zCache[l];
+                        let layerInputs = cache[l];
+                        let dNext = new Array(layerInputs.length).fill(0);
+                        for (let r = 0; r < W.length; r++) {
+                            let dAct = l5ActivateDeriv(layerOutputs[r], act, layerZ[r]);
+                            let dLogit = dCurrent[r] * dAct;
+                            gradB[l][r] += dLogit / batchSize;
+                            for (let c = 0; c < W[r].length; c++) {
+                                dNext[c] += dLogit * W[r][c];
+                                gradW[l][r][c] += dLogit * layerInputs[c] / batchSize;
+                            }
+                        }
+                        dCurrent = dNext;
+                    }
+                });
+                for (let l = 0; l < l5_W.length; l++) {
+                    for (let r = 0; r < l5_W[l].length; r++) {
+                        l5_B[l][r] -= lr * gradB[l][r];
+                        for (let c = 0; c < l5_W[l][r].length; c++) {
+                            l5_W[l][r][c] -= lr * gradW[l][r][c];
+                        }
+                    }
+                }
+            }
+            l5TotalEpochs++;
+            l5LossHistory.push(epochLoss / l5Dataset.length);
+            document.getElementById("l5-txt-epoch").innerText = l5TotalEpochs + " / 250";
+            document.getElementById("l5-txt-acc").innerText = Math.round((matches / l5Dataset.length) * 100) + "%";
+            l5DrawLoss();
+            l5RunInference();
+            return true;
+        }
+
+        function l5TrainEpochs() {
+            for (let i = 0; i < 25; i++) {
+                if (!l5TrainOneEpoch()) break;
+            }
+            document.getElementById("l5-status").innerText = "Execution block complete: 25 optimization epochs computed. Final accuracy validated.";
+        }
+
+        function l5TogglePlay() {
+            let btn = document.getElementById("l5-play-btn");
+            if (l5IsPlaying) {
+                clearInterval(l5PlayInterval);
+                l5IsPlaying = false;
+                btn.innerText = "Continuous train";
+            } else {
+                l5IsPlaying = true;
+                btn.innerText = "Pause";
+                l5PlayInterval = setInterval(() => {
+                    if (!l5TrainOneEpoch()) l5TogglePlay();
+                }, 80);
+            }
+        }
+
+        function l5RenderSketchpad() {
+            let canvas = document.getElementById("l5-drawCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let size = canvas.width / 16;
+            for (let i = 0; i < 256; i++) {
+                let col = i % 16, row = Math.floor(i / 16);
+                ctx.fillStyle = l5UserGrid[i] > 0 ? "#1e293b" : "#ffffff";
+                ctx.fillRect(col * size, row * size, size, size);
+                ctx.strokeStyle = "#f1f5f9";
+                ctx.strokeRect(col * size, row * size, size, size);
+            }
+        }
+
+        function l5HandleDraw(e) {
+            let canvas = document.getElementById("l5-drawCanvas");
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let offsetX = (clientX - rect.left) * (canvas.width / rect.width);
+            let offsetY = (clientY - rect.top) * (canvas.height / rect.height);
+            let size = canvas.width / 16;
+            let col = Math.floor(offsetX / size), row = Math.floor(offsetY / size);
+            if (col >= 0 && col < 16 && row >= 0 && row < 16) {
+                l5UserGrid[row * 16 + col] = 1;
+                if (col > 0) l5UserGrid[row * 16 + (col - 1)] = Math.max(l5UserGrid[row * 16 + (col - 1)], 0.5);
+                if (col < 15) l5UserGrid[row * 16 + (col + 1)] = Math.max(l5UserGrid[row * 16 + (col + 1)], 0.5);
+                if (row > 0) l5UserGrid[(row - 1) * 16 + col] = Math.max(l5UserGrid[(row - 1) * 16 + col], 0.5);
+                if (row < 15) l5UserGrid[(row + 1) * 16 + col] = Math.max(l5UserGrid[(row + 1) * 16 + col], 0.5);
+                l5RenderSketchpad();
+                l5RunInference();
+            }
+        }
+
+        function l5RunInference() {
+            let act = document.getElementById("l5-act").value;
+            let res = l5ForwardPass(l5UserGrid, act);
+            let top = 0;
+            for (let c = 0; c < 10; c++) {
+                let pct = Math.round(res.output[c] * 100);
+                if (res.output[c] > res.output[top]) top = c;
+                document.getElementById("l5-prob-" + c).innerText = pct + "%";
+                document.getElementById("l5-bar-" + c).style.width = pct + "%";
+            }
+        }
+
+        function l5ClearSketchpad() {
+            l5UserGrid = new Array(256).fill(0);
+            l5RenderSketchpad();
+            l5RunInference();
+        }
+
+        function l5DrawLoss() {
+            let canvas = document.getElementById("l5-lossCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (l5LossHistory.length < 2) {
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "11px sans-serif";
+                ctx.fillText("Loss metrics materialize following optimization steps.", 10, 45);
+                return;
+            }
+            let maxVal = Math.max(...l5LossHistory), minVal = Math.min(...l5LossHistory);
+            let range = (maxVal - minVal) || 1;
+            ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.beginPath();
+            for (let i = 0; i < l5LossHistory.length; i++) {
+                let ratioY = (l5LossHistory[i] - minVal) / range;
+                let x = 10 + (i / (l5LossHistory.length - 1)) * (canvas.width - 20);
+                let y = (canvas.height - 10) - ratioY * (canvas.height - 20);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#64748b";
+            ctx.font = "9px sans-serif";
+            ctx.fillText("empirical training loss", 10, 12);
+        }
+
+        function l5Reset() {
+            if (l5IsPlaying) l5TogglePlay();
+            l5ClearSketchpad();
+            l5BuildAndReset();
+        }
+
+        function l5Init() {
+            let canvas = document.getElementById("l5-drawCanvas");
+            if (!canvas) return;
+            canvas.addEventListener("mousedown", (e) => { l5IsDrawing = true; l5HandleDraw(e); });
+            canvas.addEventListener("mousemove", (e) => { if (l5IsDrawing) l5HandleDraw(e); });
+            window.addEventListener("mouseup", () => { l5IsDrawing = false; });
+            canvas.addEventListener("touchstart", (e) => { e.preventDefault(); l5IsDrawing = true; l5HandleDraw(e); });
+            canvas.addEventListener("touchmove", (e) => { e.preventDefault(); if (l5IsDrawing) l5HandleDraw(e); });
+            window.addEventListener("touchend", () => { l5IsDrawing = false; });
+            document.getElementById("l5-resetBtn").addEventListener("click", l5Reset);
+            l5GenerateData();
+            l5DrawActivations();
+            l5DrawVanishDemo();
+            // l5DrawArchDiagram();
+            l5UpdateBatch();
+            l5OnSliderChange();
+            l5RenderSketchpad();
+        }
+
+        l5Init();
+    </script>
+
+</body>
+</html>

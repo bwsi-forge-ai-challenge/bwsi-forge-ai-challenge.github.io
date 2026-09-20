@@ -1,0 +1,89 @@
+<!--
+    INTERACTIVE SANDBOX TEMPLATE
+
+    Use this when a concept benefits from direct manipulation.
+    Structure: instructions on the left, live output on the right.
+    The script section contains the computation that ties input to output.
+-->
+
+<h2>N. Interactive Sandbox: SANDBOX_TITLE</h2>
+<p>BRIEF_DESCRIPTION of what this sandbox demonstrates and what mathematical operation it performs.</p>
+<p><strong>Instructions:</strong> STATE_EXACTLY what the user should do to interact with this component and what they should observe in the output.</p>
+
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+    <tr bgcolor="#fafafa">
+        <td align="center" valign="middle" style="padding: 20px;">
+            <strong>INPUT_AREA_LABEL</strong><br><br>
+
+            <!-- Replace with your input element: canvas, sliders, text fields, etc. -->
+            <canvas id="inputCanvas" width="240" height="240" style="border: 2px solid #333; background-color: #fff; display: block; cursor: crosshair;"></canvas>
+            <br>
+            <button id="resetBtn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; width: 100%;">Reset</button>
+        </td>
+        <td valign="top" width="340" style="padding: 20px; background-color: #fff;">
+            <strong style="color: #1e40af;">OUTPUT_AREA_LABEL</strong>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+
+            <div id="outputBox" style="font-family: monospace; font-size: 0.9em; min-height: 220px;">
+                <!-- Populated dynamically by script -->
+            </div>
+
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                <strong>Status:</strong> BRIEF_EXPLANATION of what the output values represent.
+            </div>
+        </td>
+    </tr>
+</table>
+
+<script>
+    // === CONFIGURATION ===
+    const canvas = document.getElementById('inputCanvas');
+    const ctx = canvas.getContext('2d');
+    const resetBtn = document.getElementById('resetBtn');
+    const outputBox = document.getElementById('outputBox');
+
+    // === STATE ===
+    // Define your internal data representation here.
+    // Example: let state = Array(64).fill(0);
+
+    // === PARAMETERS ===
+    // Define your model parameters (weights, biases, constants) here.
+    // Keep these as plain arrays or objects for readability.
+
+    // === RENDERING ===
+    function render() {
+        // Clear and redraw the input visualization based on current state.
+    }
+
+    // === COMPUTATION ===
+    function evaluate() {
+        // Perform the mathematical operation on the current state.
+        // Update outputBox.innerHTML with results.
+    }
+
+    // === INPUT HANDLING ===
+    let isActive = false;
+
+    function handleInput(e) {
+        // Convert event coordinates to state changes.
+        // Call render() and evaluate() after each change.
+    }
+
+    canvas.addEventListener('mousedown', (e) => { isActive = true; handleInput(e); });
+    canvas.addEventListener('mousemove', (e) => { if (isActive) handleInput(e); });
+    window.addEventListener('mouseup', () => { isActive = false; });
+
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isActive = true; handleInput(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (isActive) handleInput(e); });
+    window.addEventListener('touchend', () => { isActive = false; });
+
+    resetBtn.addEventListener('click', () => {
+        // Reset state to initial values.
+        render();
+        evaluate();
+    });
+
+    // === INITIALIZE ===
+    render();
+    evaluate();
+</script>

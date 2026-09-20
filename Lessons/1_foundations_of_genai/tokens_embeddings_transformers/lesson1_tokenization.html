@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tokenization: Breaking Text Into Pieces</title>
+</head>
+<body>
+
+    <h1>Tokenization: Breaking Text Into Pieces</h1>
+
+    <p>The <em>what_is_genai</em> unit explained what generative models do. This unit opens the hood: text must become numbers before a neural network can process it. <b>Tokenization</b> is that first step — and its design choices ripple through training cost, context limits, multilingual behavior, and even what the model finds "easy" to learn.</p>
+
+    <hr>
+
+    <h2>1. The Problem: Models Need Numbers</h2>
+    <p>Neural networks are math machines. They multiply matrices of floating-point numbers. You cannot feed the letter <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">a</span> directly into a matrix multiply.</p>
+    <p><b>First step:</b> convert text → numbers.</p>
+
+    <h3>Naive idea: one number per letter</h3>
+    <p>Map <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">a=1, b=2, …, z=26</span>. The word "cat" becomes <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">[3, 1, 20]</span>.</p>
+    <p><b>Problem:</b> letters carry little meaning alone. The sequence <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">[3, 1, 20]</span> also appears inside unrelated strings if you ignore word boundaries. Sequences get long, and the model must learn spelling from scratch every time.</p>
+
+    <table border="1" cellpadding="12" cellspacing="0" width="100%" style="border-collapse: collapse; background-color: #f8fafc; border: 1px solid #cbd5e1;">
+        <tr>
+            <td align="center">
+                <div style="font-family: monospace; font-size: 1.05em;">
+                    <span style="background:#fef3c7;padding:4px 8px;border-radius:4px;">Raw text</span>
+                    → <span style="background:#dbeafe;padding:4px 8px;border-radius:4px;">Tokenizer</span>
+                    → <span style="background:#dcfce7;padding:4px 8px;border-radius:4px;">Token strings</span>
+                    → <span style="background:#fce7f3;padding:4px 8px;border-radius:4px;">Token IDs (integers)</span>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.95em;">Example: <b>"I love AI"</b> → tokens <span style="font-family: monospace;">["I", " love", " AI"]</span> → IDs <span style="font-family: monospace;">[500, 2100, 22450]</span> (illustrative)</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- <table border="1" cellpadding="10" cellspacing="0" bgcolor="#f4faf4" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr>
+            <td>
+                <h3>Check Your Knowledge: Numbers First</h3>
+                <p><strong>Question:</strong> Why can't a transformer layer multiply its weight matrix by the character <span style="font-family: monospace;">'h'</span> directly?</p>
+                <details>
+                    <summary style="cursor: pointer; color: blue;"><strong>Click to reveal answer</strong></summary>
+                    <p style="margin-top: 5px;">Matrix operations require numeric inputs. Text must be mapped to integers (token IDs) and then to embedding vectors before any linear algebra runs.</p>
+                </details>
+            </td>
+        </tr>
+    </table> -->
+
+    <hr>
+
+    <h2>2. Tokens: Chunks of Meaning</h2>
+    <p>A <b>token</b> is a chunk of text — not necessarily a whole word. Each token gets a unique integer ID. Think of tokenizing a book as converting it into a list of word-piece IDs the model's vocabulary understands.</p>
+
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Text fragment</th><th>Typical tokenization</th><th>Token count</th></tr>
+        <tr><td>"hello"</td><td>one word token</td><td>1</td></tr>
+        <tr><td>"unhappily"</td><td>["un", "happy", "ly"]</td><td>3</td></tr>
+        <tr><td>"!"</td><td>one punctuation token</td><td>1</td></tr>
+        <tr><td>"New York"</td><td>may be one token if frequent in training data</td><td>1 or 2</td></tr>
+    </table>
+
+    <p><b>Why chunks, not letters?</b> Words and subwords carry more semantic signal per position. The model sees fewer steps per sentence and can reuse frequent pieces across many words.</p>
+
+    <hr>
+
+    <h2>3. Tokenization Schemes</h2>
+
+    <p>How we choose to split this text drastically changes what an AI can learn, how fast it processes information, and how large its "vocabulary dictionary" needs to be.</p>
+
+    <h3>Word Tokenization</h3>
+    <p>The most intuitive approach is to split text by looking for spaces (whitespace) and punctuation marks. If you read a sentence, you naturally see words as the basic units of meaning.</p>
+    
+    <p><b>The Downside:</b> Word tokenization runs into major issues with real-world language:</p>
+    <ul>
+        <li><b>Ambiguity:</b> Is a contraction like <span style="font-family: monospace;">don't</span> a single token, or should it be split into three (<span style="font-family: monospace;">don</span>, <span style="font-family: monospace;">'</span>, <span style="font-family: monospace;">t</span>)? What about hyphenated words like <span style="font-family: monospace;">state-of-the-art</span>?</li>
+        <li><b>The Out-of-Vocabulary (OOV) Problem:</b> Language constantly evolves. If a student types a brand-new slang word, a brand-new product name, or a fictional name like <span style="font-family: monospace;">"Xylora"</span>, the model won't find it in its preset dictionary. It forces the system to replace the entire word with a generic <span style="font-family: monospace;">&lt;UNK&gt;</span> (Unknown) token, erasing all specific details and meaning.</li>
+    </ul>
+
+    <h3>Character Tokenization</h3>
+    <p>Instead of words, we can break everything down to the absolute absolute basics: individual letters, numbers, and punctuation marks. Every single character becomes its own token.</p>
+    
+    <p><b>The Downside:</b> While this completely solves the "unknown word" problem (because any new word is just made of familiar letters), it introduces a massive computational burden:</p>
+    <ul>
+        <li><b>Sequence Explosion:</b> The sentence <span style="font-family: monospace;">"The cat sat."</span> is only 3 word tokens, but it expands to 12 character tokens (including spaces and punctuation). For an AI model, processing massive walls of text character-by-character requires a huge amount of memory.</li>
+        <li><b>Diluted Meaning:</b> Individual characters carry no inherent meaning. The letter <span style="font-family: monospace;">'c'</span> tells you nothing by itself. The AI has to work incredibly hard across many processing steps just to learn that combining the character sequence <span style="font-family: monospace;">c-a-t</span> represents a small, furry animal.</li>
+    </ul>
+
+    <h3>Subword Tokenization (Modern Default)</h3>
+    <p>Modern Large Language Models (LLMs) use a smart middle-ground approach. Subword tokenization ensures that frequently used words stay entirely whole, while rare or complex words are systematically broken down into smaller, reusable fragments (like prefixes, suffixes, or roots).</p>
+    
+    <p><b>Byte-Pair Encoding (BPE) Mechanics:</b></p>
+    <ol>
+        <li>Start by treating every individual character as a baseline token.</li>
+        <li>Scan the entire text corpus and count how often pairs of tokens appear side-by-side.</li>
+        <li>Find the single most common adjacent pair and merge them together into a brand-new, single token.</li>
+        <li>Repeat this loop thousands of times until your total vocabulary reach its target cap size (typically around 32,000 to 50,000 unique tokens).</li>
+    </ol>
+    <p><b>The Result:</b> Common words like <span style="font-family: monospace;">"happy"</span> stay as a single token. A rare variant like <span style="font-family: monospace;">"unhappily"</span> automatically splits into reusable components: <span style="font-family: monospace;">["un", "happy", "ly"]</span>. If it encounters a completely fabricated word like <span style="font-family: monospace;">"unxyz"</span>, it won't crash or throw an unknown token error; it simply handles it cleanly as <span style="font-family: monospace;">["un", "xyz"]</span>.</p>
+
+    <h3>Scheme comparison: "unhappily"</h3>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Scheme</th><th>Tokens</th><th>Count</th><th>Core Trade-off</th></tr>
+        <tr><td>Character</td><td style="font-family: monospace;">[u, n, h, a, p, p, i, l, y]</td><td>9</td><td>Tiny vocabulary, but massive sequence lengths.</td></tr>
+        <tr><td>Word</td><td style="font-family: monospace;">[unhappily]</td><td>1</td><td>Short sequences, but massive vocabulary prone to missing new words.</td></tr>
+        <tr><td>Subword (BPE-style)</td><td style="font-family: monospace;">[un, happy, ly]</td><td>3</td><td>Balanced vocabulary size; handles unseen words elegantly.</td></tr>
+    </table>
+
+    <div style="margin: 14px 0;">
+        <strong>Sequence length by scheme</strong> (example sentence: "The cat sat on the mat")
+        <table border="0" cellpadding="4" cellspacing="0" width="100%" style="font-size: 0.9em;">
+            <tr><td width="120">Character</td><td><div style="background:#dc2626;height:16px;width:100%;max-width:400px;border-radius:2px;" title="22 tokens"></div></td><td>22</td></tr>
+            <tr><td>Word</td><td><div style="background:#2563eb;height:16px;width:27%;max-width:110px;border-radius:2px;"></div></td><td>6</td></tr>
+            <tr><td>Subword</td><td><div style="background:#16a34a;height:16px;width:32%;max-width:130px;border-radius:2px;"></div></td><td>7</td></tr>
+        </table>
+    </div>
+
+    <h3>BPE Merge Visualization (Conceptual)</h3>
+    <p>Let's trace how a raw string of text evolves step-by-step through successive merge steps during BPE training:</p>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse; font-family: monospace; font-size: 0.9em;">
+        <tr bgcolor="#f1f5f9"><th>Step</th><th>Corpus State</th><th>Action / Rule Reason</th></tr>
+        <tr><td>0</td><td>u n h a p p i l y</td><td>Start purely with base characters.</td></tr>
+        <tr><td>1</td><td>u n h a <b>pp</b> i l y</td><td>Merge most frequent pair: <b>p + p &rarr; pp</b></td></tr>
+        <tr><td>2</td><td>u n <b>ha</b> pp i l y</td><td>Merge next most frequent pair: <b>h + a &rarr; ha</b></td></tr>
+        <tr><td>3</td><td>u n <b>hap</b> py i l y</td><td>Merge existing token with adjacent character: <b>ha + p &rarr; hap</b></td></tr>
+        <tr><td>...</td><td>...</td><td>Continues searching for structural trends across the text...</td></tr>
+        <tr><td>Final</td><td><b>un</b> + <b>happy</b> + <b>ly</b></td><td>Optimized down to 3 highly reusable subword tokens.</td></tr>
+    </table>
+
+    <!-- <table border="1" cellpadding="10" cellspacing="0" bgcolor="#f4faf4" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr>
+            <td>
+                <h3>Check Your Knowledge: Schemes</h3>
+                <p><strong>Question:</strong> A vocabulary has only 256 entries but must handle any Unicode string. Which scheme fits best?</p>
+                <details>
+                    <summary style="cursor: pointer; color: blue;"><strong>Click to reveal answer</strong></summary>
+                    <p style="margin-top: 5px;">Character or byte-level tokenization. Word-level cannot cover every word with 256 IDs. Production LLMs use ~50k subword tokens as a compromise.</p>
+                </details>
+            </td>
+        </tr>
+    </table> -->
+
+    <hr>
+
+    <h2>4. GPT-Style Tokenization (Real-World Example)</h2>
+    <p>GPT-family models use BPE on byte sequences (cl100k_base for GPT-4 class models). Vocabulary size ≈ <b>50,000</b> tokens.</p>
+    <p>Example: <span style="font-family: monospace;">"Hello, how are you?"</span> might become IDs like <span style="font-family: monospace;">[15339, 11, 534, 366, 345, 30]</span> — exact splits depend on the trained merge table.</p>
+    <p><b>Key property:</b> tokenization is <b>deterministic</b>. The same string always yields the same token sequence for a fixed tokenizer version.</p>
+
+    <h3>Token ID mapping example</h3>
+    <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse; text-align: center;">
+        <tr bgcolor="#e0e7ff">
+            <td style="font-family: monospace; font-size: 1.1em;">The</td>
+            <td style="font-family: monospace; font-size: 1.1em;"> cat</td>
+            <td style="font-family: monospace; font-size: 1.1em;"> sat</td>
+            <td style="font-family: monospace; font-size: 1.1em;"> on</td>
+            <td style="font-family: monospace; font-size: 1.1em;"> the</td>
+            <td style="font-family: monospace; font-size: 1.1em;"> mat</td>
+        </tr>
+        <tr>
+            <td style="font-family: monospace; color: #1d4ed8;">50</td>
+            <td style="font-family: monospace; color: #1d4ed8;">3277</td>
+            <td style="font-family: monospace; color: #1d4ed8;">2521</td>
+            <td style="font-family: monospace; color: #1d4ed8;">319</td>
+            <td style="font-family: monospace; color: #1d4ed8;">50</td>
+            <td style="font-family: monospace; color: #1d4ed8;">10152</td>
+        </tr>
+    </table>
+    <p style="font-size: 0.9em; color: #64748b;">Note the leading space on <span style="font-family: monospace;">" cat"</span> — GPT tokenizers often attach spaces to the following word token.</p>
+
+    <hr>
+
+    <h2>5. Why Tokenization Matters</h2>
+    <ul>
+        <li><b>Downstream effects:</b> embedding lookup, attention length, and memory all depend on token count, not word count.</li>
+        <li><b>Longer sequences</b> → slower training and inference, higher API cost.</li>
+        <li><b>Language differences:</b> English averages ~1.3 tokens per word; Japanese may use ~1.3 tokens <em>per character</em> — same meaning can cost 2–3× more tokens.</li>
+        <li><b>Split entities:</b> if "New" and "York" are separate tokens, the model must learn they belong together (it can, but it's harder).</li>
+        <li><b>Billing:</b> OpenAI and other APIs charge per token — tokenization is literally the meter on the pump.</li>
+    </ul>
+
+    <h3>Language comparison (same meaning, different token counts)</h3>
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9"><th>Language</th><th>Sentence (translation of "I love learning AI")</th><th>Approx. tokens</th></tr>
+        <tr><td>English</td><td>I love learning AI</td><td>5</td></tr>
+        <tr><td>Spanish</td><td>Me encanta aprender IA</td><td>7</td></tr>
+        <tr><td>Japanese</td><td>私はAIを学ぶのが好きです</td><td>14</td></tr>
+        <tr><td>Chinese</td><td>我喜欢学习人工智能</td><td>10</td></tr>
+    </table>
+    <div style="margin: 10px 0;">
+        <div style="font-size:0.85em;margin-bottom:4px;">Token count (illustrative)</div>
+        <div style="display:flex;align-items:flex-end;gap:8px;height:80px;">
+            <div style="text-align:center;"><div style="background:#2563eb;width:40px;height:25px;border-radius:2px 2px 0 0;"></div><div style="font-size:0.75em;">EN 5</div></div>
+            <div style="text-align:center;"><div style="background:#7c3aed;width:40px;height:35px;border-radius:2px 2px 0 0;"></div><div style="font-size:0.75em;">ES 7</div></div>
+            <div style="text-align:center;"><div style="background:#db2777;width:40px;height:70px;border-radius:2px 2px 0 0;"></div><div style="font-size:0.75em;">JA 14</div></div>
+            <div style="text-align:center;"><div style="background:#ea580c;width:40px;height:50px;border-radius:2px 2px 0 0;"></div><div style="font-size:0.75em;">ZH 10</div></div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- <h2>6. Edge Cases and Quirks</h2>
+    <ul>
+        <li><b>Spaces are tokens.</b> <span style="font-family: monospace;">"hello world"</span> → <span style="font-family: monospace;">["hello", " world"]</span> — the space often attaches to the second piece.</li>
+        <li><b>Numbers:</b> <span style="font-family: monospace;">"123"</span> may be one token; <span style="font-family: monospace;">"1234567890"</span> often splits into several.</li>
+        <li><b>Emojis:</b> usually dedicated tokens, behavior varies by tokenizer version.</li>
+        <li><b>Apostrophe variants:</b> straight <span style="font-family: monospace;">'</span> vs curly <span style="font-family: monospace;">'</span> can tokenize differently.</li>
+        <li><b>ALL CAPS:</b> <span style="font-family: monospace;">HELLO</span> may split differently from <span style="font-family: monospace;">hello</span> if rare in training.</li>
+    </ul> -->
+
+ 
+<h2>6. Edge Cases and Quirks</h2>
+
+    <p>Because subword tokenizers rely strictly on mathematical patterns found in their training text rather than understanding human rules, they produce strange, non-intuitive quirks. These "glitches" directly affect how an AI counts words, handles formatting, or understands code.</p>
+
+    <ul>
+        <li>
+            <b>Spaces are Regular Characters:</b> 
+            A common mistake is thinking tokenizers only look at letters. In reality, spaces are treated just like any other character. In many modern tokenizers (like the one used by GPT models), spaces are represented by a special meta-character (like <span style="font-family: monospace;">Ġ</span> or <span style="font-family: monospace;">_</span>) and typically attach themselves to the <i>beginning</i> of the following word.
+            <br>
+            <small>Example: <span style="font-family: monospace;">"hello world"</span> splits into <span style="font-family: monospace;">["hello", " world"]</span>. The space belongs to " world", meaning an AI considers <span style="font-family: monospace;">"world"</span> and <span style="font-family: monospace;">" world"</span> as two completely separate tokens in its dictionary.</small>
+        </li>
+        <br>
+        <li>
+            <b>The Math Blindspot (Number Splitting):</b> 
+            Tokenizers are notoriously bad at math because of how they slice numbers. Short, common numbers like <span style="font-family: monospace;">"123"</span> or <span style="font-family: monospace;">"2026"</span> are often bundled into a single whole token. However, larger or rare numbers get broken into unpredictable fragments.
+            <br>
+            <small>Example: The number <span style="font-family: monospace;">"1234567890"</span> might be chopped up into random pieces like <span style="font-family: monospace;">["123", "4567", "890"]</span>. Because the AI doesn't see the digits sequentially, it struggles with basic arithmetic on larger numbers.</small>
+        </li>
+        <br>
+        <li>
+            <b>Emoji Math & Mishaps:</b> 
+            An emoji might look like a single cute symbol on your screen, but behind the scenes, it is made up of complex bytes of data. Depending on how old or advanced the tokenizer is, an emoji might be preserved as a single token, or completely shredded into raw data fragments. 
+            <br>
+            <small>Example: A basic smile might be one token, but a complex family emoji with specific skin tone modifiers might explode into 4 or 5 separate tokens, causing the AI to pay "extra" attention to a single character.</small>
+        </li>
+        <br>
+        <li>
+            <b>The Typographic Trap (Straight vs. Curly Quotes):</b> 
+            To an AI, a straight apostrophe typed on a standard keyboard (<span style="font-family: monospace;">'</span>) is completely unrelated to a stylized, curly apostrophe automatically generated by word processors (<span style="font-family: monospace;">’</span>). 
+            <br>
+            <small>Example: The word <span style="font-family: monospace;">"don't"</span> might map cleanly to 2 tokens, while <span style="font-family: monospace;">"don’t"</span> with a curly quote might shatter into <span style="font-family: monospace;">["don", "â", "Ģ", "trademark symbol", "t"]</span>. Copy-pasting text from a Google Doc can accidentally change how an AI interprets a sentence.</small>
+        </li>
+        <br>
+        <li>
+            <b>ALL CAPS Penalty:</b> 
+            LLM training text is mostly standard, grammatically correct prose. Because words written in ALL CAPS are relatively rare in books and articles, the tokenizer hasn't learned to keep them whole.
+            <br>
+            <small>Example: The lowercase word <span style="font-family: monospace;">"hello"</span> is a single, common token. If an angry user types <span style="font-family: monospace;">"HELLO"</span>, the tokenizer might split it into <span style="font-family: monospace;">["H", "EL", "LO"]</span>. Typing in all caps forces the AI to process more tokens, leaving less room in its memory for actual reasoning.</small>
+        </li>
+    </ul>
+
+<h2>7. Interactive Sandbox: Tokenization Playground</h2>
+    <p>Type any custom phrase below to see exactly how different tokenization strategies slice up human text. Pay close attention to how total token counts change across the three methods!</p>
+
+    <table border="1" cellpadding="16" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #cbd5e1; background-color: #fafafa;">
+        <tr>
+            <td valign="top" width="40%" style="background-color: #f8fafc; padding: 16px;">
+                <label style="font-weight: bold; font-size: 1em; color: #1e293b;">1. Enter Sample Text:</label>
+                <textarea id="simple-input" rows="4" style="width:100%; box-sizing:border-box; font-family:inherit; margin-top:6px; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">unhappily eating 1234567890 banana mat</textarea>
+                
+                <br><br>
+                
+                <label style="font-weight: bold; font-size: 1em; color: #1e293b;">2. Adjust Model Vocabulary Size:</label>
+                <input type="range" id="simple-vocab" min="1" max="3" value="3" style="width:100%; margin-top:6px;">
+                <div style="font-size:0.85em; color:#64748b; margin-top:4px; line-height:1.3;">
+                    Setting: <span id="simple-vocab-lbl" style="font-weight:bold; color:#2563eb;">Large (Modern LLM)</span><br>
+                    <i>Hint: Smaller vocabularies force the AI to chop text into much smaller, more numerous fragments.</i>
+                </div>
+            </td>
+            
+            <td valign="top" style="background-color: #ffffff; padding: 16px;">
+                <h4 style="margin-top:0; color:#0f172a;">Real-Time Token Analysis</h4>
+                
+                <!-- Character-Level Split -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <strong>Character-Level Tokenizer</strong>
+                        <span style="color:#dc2626; font-weight:bold;"><span id="count-char">0</span> tokens</span>
+                    </div>
+                    <div id="out-char" style="min-height:36px; padding:8px; border:1px solid #e2e8f0; background:#fff5f5; line-height:1.8; word-break:break-all; border-radius:4px;"></div>
+                </div>
+
+                <!-- Word-Level Split -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <strong>Word-Level Tokenizer</strong>
+                        <span style="color:#2563eb; font-weight:bold;"><span id="count-word">0</span> tokens</span>
+                    </div>
+                    <div id="out-word" style="min-height:36px; padding:8px; border:1px solid #e2e8f0; background:#eff6ff; line-height:1.8; word-break:break-word; border-radius:4px;"></div>
+                </div>
+
+                <!-- Subword Split -->
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <strong>Subword Tokenizer (BPE-Style)</strong>
+                        <span style="color:#16a34a; font-weight:bold;"><span id="count-subword">0</span> tokens</span>
+                    </div>
+                    <div id="out-subword" style="min-height:36px; padding:8px; border:1px solid #e2e8f0; background:#f0fdf4; line-height:1.8; word-break:break-word; border-radius:4px;"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h2>8. Activities</h2>
+    <ol>
+        <li><strong>Tokenize your name.</strong> How many tokens? Does it split into subwords? Why?</li>
+        <li><strong>Try another language.</strong> Is the token count longer than English? Why?</li>
+        <li><strong>Find an odd split.</strong> Paste a URL, hashtag, or rare word — why did the tokenizer break it that way?</li>
+        <li><strong>Challenge:</strong> Find a short string that uses the <em>most</em> tokens per character.</li>
+        <li><strong>Back-of-envelope:</strong> A 77,000-word book × ~1.3 tokens/word ≈ <b>100,000 tokens</b> (Harry Potter book 1 scale). At $0.01/1k tokens, one full read-through generation costs ~$1 in tokens alone.</li>
+    </ol>
+
+    <hr>
+
+    <h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Neural Machine Translation of Rare Words with Subword Units (Sennrich et al., 2016):</strong> Introduces BPE for NMT. <a href="https://arxiv.org/abs/1508.07909" target="_blank">arXiv paper</a></li>
+        <li><strong>Byte Pair Encoding (Gage, 1994):</strong> Original compression algorithm BPE tokenization adapts. <a href="https://doi.org/10.1016/0097-8493(94)90032-9" target="_blank">Original paper</a></li>
+        <li><strong>OpenAI tiktoken:</strong> Fast BPE tokenizer used by GPT models. <a href="https://github.com/openai/tiktoken" target="_blank">GitHub repo</a></li>
+        <li><strong>Hugging Face Tokenizers:</strong> Train and compare tokenizers interactively. <a href="https://huggingface.co/docs/tokenizers" target="_blank">Documentation</a></li>
+    </ul>
+
+<script>
+(function() {
+    const COLORS = ['#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#a5f3fc', '#c4b5fd', '#f9a8d4', '#ddd6fe'];
+
+    const BPE_DICTIONARY = {
+        3: {
+            'unhappily': ['un', 'happy', 'ly'],
+            'eating': ['eating'],
+            'banana': ['banana'],
+            'mat': ['mat'],
+            '1234567890': ['123', '4567', '890']
+        },
+        2: {
+            'unhappily': ['un', 'hap', 'pi', 'ly'],
+            'eating': ['eat', 'ing'],
+            'banana': ['ba', 'na', 'na'],
+            'mat': ['mat'],
+            '1234567890': ['12', '34', '56', '78', '90']
+        },
+        1: {
+            'unhappily': ['u', 'n', 'h', 'a', 'p', 'p', 'i', 'l', 'y'],
+            'eating': ['e', 'a', 't', 'i', 'n', 'g'],
+            'banana': ['b', 'a', 'n', 'a', 'n', 'a'],
+            'mat': ['m', 'a', 't'],
+            '1234567890': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+        }
+    };
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function makeChips(tokenArray) {
+        return tokenArray.map((token, index) => {
+            const color = COLORS[index % COLORS.length];
+            const displayToken = token === ' ' ? '⎵' : token;
+            return `<span style="background:${color}; padding:2px 6px; margin:2px; border-radius:3px; font-family:monospace; display:inline-block; font-size:0.9em; border:1px solid rgba(0,0,0,0.05);">${escapeHtml(displayToken)}</span>`;
+        }).join('');
+    }
+
+    function processTokenization() {
+        const text = document.getElementById('simple-input').value;
+        const vocabLevel = parseInt(document.getElementById('simple-vocab').value, 10);
+        
+        const labels = { 1: "Small (Basic Characters Only)", 2: "Medium (Short Slices)", 3: "Large (Modern LLM)" };
+        document.getElementById('simple-vocab-lbl').textContent = labels[vocabLevel];
+
+        if (!text.trim()) {
+            document.getElementById('out-char').innerHTML = '—';
+            document.getElementById('out-word').innerHTML = '—';
+            document.getElementById('out-subword').innerHTML = '—';
+            document.getElementById('count-char').textContent = '0';
+            document.getElementById('count-word').textContent = '0';
+            document.getElementById('count-subword').textContent = '0';
+            return;
+        }
+
+        const charTokens = Array.from(text);
+        document.getElementById('out-char').innerHTML = makeChips(charTokens);
+        document.getElementById('count-char').textContent = charTokens.length;
+
+        const wordTokens = text.split(/\s+/).filter(w => w.length > 0);
+        document.getElementById('out-word').innerHTML = makeChips(wordTokens);
+        document.getElementById('count-word').textContent = wordTokens.length;
+
+        let subwordTokens = [];
+        const rawWords = text.split(/(\s+)/);
+
+        rawWords.forEach(chunk => {
+            if (!chunk) return;
+            if (/^\s+$/.test(chunk)) {
+                subwordTokens.push(chunk);
+                return;
+            }
+            
+            const cleanWord = chunk.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const lookupTable = BPE_DICTIONARY[vocabLevel];
+
+            if (lookupTable && lookupTable[cleanWord]) {
+                subwordTokens.push(...lookupTable[cleanWord]);
+            } else {
+                if (vocabLevel === 3) {
+                    subwordTokens.push(chunk);
+                } else if (vocabLevel === 2) {
+                    const half = Math.ceil(chunk.length / 2);
+                    subwordTokens.push(chunk.slice(0, half), chunk.slice(half));
+                } else {
+                    subwordTokens.push(...Array.from(chunk));
+                }
+            }
+        });
+
+        document.getElementById('out-subword').innerHTML = makeChips(subwordTokens);
+        document.getElementById('count-subword').textContent = subwordTokens.length;
+    }
+
+    document.getElementById('simple-input').addEventListener('input', processTokenization);
+    document.getElementById('simple-vocab').addEventListener('input', processTokenization);
+    
+    processTokenization();
+})();
+</script>
+
+</body>
+</html>

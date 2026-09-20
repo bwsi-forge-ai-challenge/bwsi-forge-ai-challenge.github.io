@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setting Up Your Environment · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Introduction</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Introduction</p>
+    <h1>Setting Up Your Environment</h1>
+    <p class="lede">Coding assignments in this course run as Jupyter notebooks. If you have your own GPU, feel free to use that on your machine. If not, you can execute them in <strong>Google Colab</strong>, which provides a free browser-based Python environment and an optional free GPU. This page covers the setup for Google Colab and can be skipped if using local GPU.</p>
+  </header>
+
+  <section>
+    <h2>1. What you will use</h2>
+    <p>Assignment notebooks are <code>.ipynb</code> files. Colab runs the cells in the cloud and can attach a free GPU when training would otherwise be slow on CPU.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tool</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Google Colab</strong></td>
+            <td>Host the notebook, run cells, attach a free GPU</td>
+          </tr>
+          <tr>
+            <td><strong>Python packages</strong></td>
+            <td>Provided in Colab or installed from a cell in the notebook when needed</td>
+          </tr>
+          <tr>
+            <td><strong>Free GPU</strong></td>
+            <td>Speeds up model training; notebooks check for it automatically when available</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Interactive HTML lessons run in the browser and do not require Colab. Use Colab for the coding assignment notebooks.</p>
+  </section>
+
+  <section>
+    <h2>2. Create a Google account</h2>
+    <p>Colab requires a Google account. If you do not already have one, create an account at <a href="https://accounts.google.com/signup" target="_blank" rel="noopener">accounts.google.com</a>. Use a personal Google account that you can access for the full course.</p>
+  </section>
+
+  <section>
+    <h2>3. Open an assignment in Colab</h2>
+    <p>When an assignment notebook is released, open it in Colab using one of these methods:</p>
+
+    <h3>Upload the file</h3>
+    <ol>
+      <li>Go to <a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a>.</li>
+      <li>Choose <strong>File → Upload notebook</strong>.</li>
+      <li>Select the <code>.ipynb</code> file from your computer.</li>
+    </ol>
+
+    <h3>Open from Google Drive</h3>
+    <ol>
+      <li>Upload the notebook to Drive.</li>
+      <li>Right-click the file → <strong>Open with → Google Colaboratory</strong>.</li>
+    </ol>
+
+    <h3>Open from GitHub (if the course posts a link)</h3>
+    <ol>
+      <li>In Colab, choose <strong>File → Open notebook → GitHub</strong>.</li>
+      <li>Paste the repository URL or notebook path provided by the instructors.</li>
+    </ol>
+
+    <p>After opening, run cells from top to bottom with <strong>Shift+Enter</strong>, or use <strong>Runtime → Run all</strong> once you have completed any TODO cells.</p>
+  </section>
+
+  <section>
+    <h2>4. Enable the free GPU</h2>
+    <p>Training runs much faster on a GPU. Enable it before the training sections of each assignment:</p>
+    <ol>
+      <li>In the Colab menu, open <strong>Runtime → Change runtime type</strong>.</li>
+      <li>Set <strong>Hardware accelerator</strong> to <strong>T4 GPU</strong> (or any available GPU).</li>
+      <li>Click <strong>Save</strong>.</li>
+      <li>Re-run the setup cell so the notebook picks up the new device.</li>
+    </ol>
+
+    <p>Most assignment notebooks print which device they are using after the setup cell. Confirm that output shows a GPU (often labeled <code>cuda</code>). If it shows <code>cpu</code>, the GPU is not attached — return to <strong>Change runtime type</strong> and confirm the accelerator setting.</p>
+  </section>
+
+  <section>
+    <h2>5. Libraries and installs</h2>
+    <p>Colab already includes many common scientific and deep learning packages. Each assignment notebook lists what it needs. If an import fails, look for a commented install cell near the top, for example:</p>
+    <pre><code># !pip install -q package_name</code></pre>
+    <p>Uncomment and run that cell only if the imports fail, then re-run the import cell.</p>
+  </section>
+
+  <section>
+    <h2>6. Recommended workflow</h2>
+    <ol>
+      <li><strong>Read the companion lesson</strong> named in the notebook before you start coding.</li>
+      <li><strong>Enable the GPU</strong> before long training cells.</li>
+      <li><strong>Complete TODOs in order</strong> and run any provided checks after each part.</li>
+      <li><strong>Save a copy</strong> with <strong>File → Save a copy in Drive</strong> so your work survives session disconnects.</li>
+      <li><strong>Download your finished notebook</strong> (<strong>File → Download → Download .ipynb</strong>) when you are ready to submit.</li>
+    </ol>
+
+    <aside class="callout callout--note">
+      <p class="callout__title">Sessions disconnect</p>
+      <p>Colab sessions disconnect after idle time. Reconnecting starts a new runtime: re-enable the GPU if needed, then re-run cells from the top through your current progress.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2>7. Common problems</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Symptom</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Notebook reports CPU during training</td>
+            <td>Runtime → Change runtime type → T4 GPU, then re-run the setup cell</td>
+          </tr>
+          <tr>
+            <td>GPU option missing or unavailable</td>
+            <td>Wait and retry later, or continue on CPU for short experiments (training will be slower)</td>
+          </tr>
+          <tr>
+            <td><code>ModuleNotFoundError</code></td>
+            <td>Run the notebook's <code>pip install</code> cell, then re-run the import cell</td>
+          </tr>
+          <tr>
+            <td>Session disconnected; variables gone</td>
+            <td>Re-run from the top; restore from your Drive copy if you edited cells</td>
+          </tr>
+          <tr>
+            <td>Checks fail after a TODO</td>
+            <td>Fix that section before moving on; later parts depend on earlier results</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+      <li><a href="https://colab.research.google.com/notebooks/intro.ipynb" target="_blank" rel="noopener">Google Colab Welcome</a>
+        <span class="desc">Overview of notebooks, runtimes, and file access in the browser.</span></li>
+      <li><a href="https://colab.research.google.com/notebooks/gpu.ipynb" target="_blank" rel="noopener">Colab: Using GPUs</a>
+        <span class="desc">Hardware accelerator settings and limits on free runtimes.</span></li>
+      <li><a href="https://docs.jupyter.org/en/latest/" target="_blank" rel="noopener">Jupyter Notebook basics</a>
+        <span class="desc">How cells, kernels, and top-to-bottom execution work.</span></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="CourseCommunication.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Course Communication</span>
+    </a>
+    <a class="pager__next" href="GradingPolicy.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Grading Policy</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

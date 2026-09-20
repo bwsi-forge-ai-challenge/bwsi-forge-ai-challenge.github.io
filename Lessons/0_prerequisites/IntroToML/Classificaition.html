@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classification and Logistic Regression · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Intro to ML</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Intro to ML</p>
+    <h1>Classification and Logistic Regression</h1>
+    <p class="lede">Lesson 2 implemented a linear optimization framework to predict continuous real values along a trend line. However, many core problems require assigning instances to discrete categories—such as pass versus fail, or species identifiers. Restricting model outputs to valid probability ranges between 0 and 1 requires a non-linear activation function and an alternative objective function.</p>
+  </header>
+
+  <section>
+<h2>1. Classification frameworks</h2>
+    <p><b>Classification</b> algorithms map inputs to discrete, categorical target tokens, distinguishing them from <b>regression</b> algorithms which predict continuous quantitative scales. In binary classification systems, targets are formally represented as \(y \in \{0, 1\}\), where 0 corresponds to the negative class baseline and 1 denotes the positive class.</p>
+    <p>Evaluating an unconstrained linear score vector \(z = w_0x_0 + w_1x_1 + b\) can yield arbitrary real outputs. Because these unbounded scalars violate probability axioms, a mapping function is required to compress any real number into an open interval between 0 and 1.</p>
+
+    <h3>Iris flowers</h3>
+    <p>The standard Iris benchmark dataset records sepal lengths and widths across distinct botanical varieties. Isoradial isolation of the <i>versicolor</i> (designated class 0) and <i>virginica</i> (designated class 1) variants reveals clear statistical distributions: versicolor specimens typically display shorter, wider sepals, whereas virginica specimens exhibit elongated, narrower structures. Plotting sepal length against width reveals overlapping coordinate clusters that, while not linearly separable, can be effectively bisected by an optimized decision boundary.</p>
+
+    <h3>Pass or fail</h3>
+    <p>Consider a trial tracking preparation time and sleep duration for 30 students. Empirical patterns demonstrate that individuals passing the assessment cluster above 5 study hours and 6 sleep hours, while insufficient study hours coupled with high sleep metrics correlate strongly with failure. A logistic model optimizes weights for both features to output conditional probabilities: \(P(\text{pass}) = \sigma(w_1 \cdot \text{study} + w_2 \cdot \text{sleep} + b)\). Under an optimized weight matrix, a coordinate of 8 study hours and 7 sleep hours evaluates to \(\hat{y} = 0.91\), while a coordinate of 2 and 4 yields \(\hat{y} = 0.12\).</p>
+  </section>
+
+  <section>
+<h2>2. The sigmoid activation function</h2>
+    <p><b>Logistic regression</b> passes unconstrained linear combinations through the <b>sigmoid</b> (or logistic) function:</p>
+    <p>\(\sigma(z) = \frac{1}{(1 + e^{−z})}\)</p>
+    <p>As \(z \to \infty\), \(\sigma(z)\) asymptotically approaches 1, and as \(z \to -\infty\), \(\sigma(z)\) approaches 0. At the origin (\(z = 0\)), the function evaluates exactly to \(\sigma(0) = 0.5\). The combined system is parametrized as \(\hat{y} = \sigma(w^T x + b)\), which explicitly estimates the conditional probability \(P(y = 1 \mid x)\).</p>
+    <p>Evaluating the first derivative—essential for calculating gradient updates during backpropagation—yields:</p>
+    <p>
+        \[\sigma'(z) = \sigma(z)(1 − \sigma(z))\]
+    </p>
+    <p>At \(z = 0\), the derivative peaks at \(\sigma'(0) = 0.25\), defining the maximum velocity of change along the function's curve. As the input diverges from zero, the gradient flattens dramatically (\(\sigma'(z) \to 0\)), a property that induces vanishing gradients when stacking multiple non-linear layers in deep architectures.</p>
+    <canvas id="l3-sigmoidCanvas" width="360" height="200" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+  </section>
+
+  <section>
+<h2>3. Cross-entropy loss</h2>
+    <p>Mean Squared Error is mathematically unsuited for probabilistic targets: predicting \(\hat{y} = 0.9\) when the true label \(y = 1\) scales to an error contribution of \((1 - 0.9)^2 = 0.01\), which provides insufficient optimization signals. The binary <b>cross-entropy</b> loss function exponentially penalizes incorrect classifications based on confidence:</p>
+    <p>
+        \[L = −(1/n) \Sigma_i [ y_i \log(\hat{y}_i) + (1 − y_i) \log(1 − \hat{y}_i) ]\]
+    </p>
+    <p>When evaluating a true positive label (\(y = 1\)), an underestimation of \(\hat{y} = 0.1\) incurs a loss of \(-\log(0.1) \approx 2.30\). Conversely, an accurate estimation of \(\hat{y} = 0.9\) drops the loss to \(-\log(0.9) \approx 0.11\). This asymmetric logarithmic scaling means a fixed error gap in probability space penalizes the model 20 times more severely when the system outputs a confident, incorrect prediction.</p>
+    <canvas id="l3-lossCompareCanvas" width="360" height="160" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+    <p>For a true negative target (\(y = 0\)) where the model mistakenly predicts \(\hat{y} = 0.99\), the loss scales to \(-\log(0.01) \approx 4.61\). Under identical conditions, an MSE objective function would yield a benign penalty of \((0 - 0.99)^2 \approx 0.98\), failing to generate the necessary gradient push to correct the confident error.</p>
+  </section>
+
+  <section>
+<h2>4. Decision boundaries and thresholds</h2>
+    <p>The <b>decision boundary</b> represents the locus of points where the model evaluates the conditional probability exactly at 50% (\(\hat{y} = 0.5\), or equivalently, \(z = 0\)). In a two-dimensional feature domain with coordinates \(x_0\) and \(x_1\), this boundary describes a straight line for standard logistic models: vectors on one side map to class 1, while coordinates on the inverse side map to class 0.</p>
+    <p>While the classification <b>threshold</b> defaults to 0.5, this hyperparameter can be shifted depending on objective constraints. Elevating the decision threshold to 0.7 requires greater model confidence to assign the positive label, reducing false-positive rates at the expense of introducing more false negatives. Lowering the threshold to 0.3 produces the inverse trade-off. Adjusting this decision cutoff changes the class assignment rules without modifying the underlying boundary line or parameter weights.</p>
+    <p>When data clusters overlap significantly within the feature space, complete linear separation becomes impossible. Under these conditions, classification accuracy asymptotes below 100%, indicating that a single linear decision hyperplane has reached its structural limits and requires non-linear mapping transformations or higher-capacity models.</p>
+  </section>
+
+  <section>
+<h2>5. Interactive Sandbox: Logistic Regression Classifier</h2>
+    <p>Generate positive and negative coordinates within the 2D plane, optimize parameter weights using gradient descent, and adjust the decision threshold. The canvas will render the shifts in the decision boundary and updating class probability maps in real time.</p>
+
+    <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr bgcolor="#fafafa">
+            <td align="center" valign="top" style="padding: 20px;">
+                <strong>2D plot and controls</strong><br><br>
+                <canvas id="l3-mainCanvas" width="400" height="300" style="border: 2px solid #333; background-color: #fff; display: block; cursor: crosshair;"></canvas>
+                <br>
+                <button id="l3-btn-red" onclick="l3SetColor('red')" style="padding: 6px 12px; cursor: pointer; background: #fee2e2; border: 2px solid #dc2626;">Class 0 (red)</button>
+                <button id="l3-btn-blue" onclick="l3SetColor('blue')" style="padding: 6px 12px; cursor: pointer; background: #dbeafe; border: 2px solid #2563eb;">Class 1 (blue)</button>
+                <br><br>
+                <label for="l3-lr"><strong>Learning rate:</strong> <span id="l3-lr-val">0.05</span></label><br>
+                <input type="range" id="l3-lr" min="0.01" max="0.50" value="0.05" step="0.01" style="width: 100%; max-width: 400px;" oninput="l3UpdateLR()">
+                <br>
+                <label for="l3-thresh"><strong>Decision threshold:</strong> <span id="l3-thresh-val">0.50</span></label><br>
+                <input type="range" id="l3-thresh" min="0.10" max="0.90" value="0.50" step="0.05" style="width: 100%; max-width: 400px;" oninput="l3UpdateThresh()">
+                <br><br>
+                <button onclick="l3TrainStep()" style="padding: 8px 15px; cursor: pointer; margin: 2px;">Take 1 step</button>
+                <button id="l3-auto-btn" onclick="l3ToggleAutoTrain()" style="padding: 8px 15px; cursor: pointer; margin: 2px;">Train (auto)</button>
+                <br><br>
+                <button id="l3-resetBtn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; width: 100%; max-width: 400px;">Reset</button>
+            </td>
+            <td valign="top" width="340" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Training metrics</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div id="l3-outputBox" style="font-family: monospace; font-size: 0.9em; min-height: 100px;">
+                    <div>Accuracy: <span id="l3-txt-acc">—</span></div>
+                    <div>Cross-entropy: <span id="l3-txt-loss">—</span></div>
+                    <div>w₀=<span id="l3-w0">0</span>, w₁=<span id="l3-w1">0</span>, b=<span id="l3-bias">0</span></div>
+                </div>
+                <canvas id="l3-miniSigmoid" width="280" height="100" style="border: 1px solid #ddd; width: 100%; margin-top: 10px;"></canvas>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Status:</strong> <span id="l3-status">Isolate class configurations, populate coordinates, and run optimization. Out-of-bounds coordinates fade dynamically.</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </section>
+
+  <section>
+<h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Logistic Regression (Andrew Ng, CS229):</strong> Mathematical derivation of the logistic hypothesis, cross-entropy criteria, and partial derivative updates. <a href="https://cs229.stanford.edu/main_notes.pdf" target="_blank">CS229 Notes</a></li>
+        <li><strong>Cross-Entropy Loss (deeplearning.ai):</strong> Foundational breakdown explaining information-theoretic metrics within probabilistic evaluation frameworks. <a href="https://www.deeplearning.ai/short-courses/" target="_blank">DeepLearning.AI Courses</a></li>
+        <li><strong>scikit-learn LogisticRegression:</strong> Documentation detail highlighting parameter weight convergence routines over standard class matrices. <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html" target="_blank">sklearn LogisticRegression</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="LinearRegression.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Linear Regression and Gradient Descent</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Intro to ML</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+        let l3Points = [];
+        let l3_w0 = -0.01, l3_w1 = 0.02, l3_bias = -1.0;
+        let l3CurrentColor = 'red';
+        let l3IsTraining = false, l3TrainInterval = null;
+        let l3ConfidenceThreshold = 0.50;
+
+        function l3Sigmoid(z) { return 1.0 / (1.0 + Math.exp(-z)); }
+
+        function l3LoadIris() {
+            if (l3IsTraining) l3ToggleAutoTrain();
+            l3Points = [
+                {x: 70, y: 200, label: 0, opacity: 1}, {x: 95, y: 230, label: 0, opacity: 1},
+                {x: 110, y: 180, label: 0, opacity: 1}, {x: 130, y: 210, label: 0, opacity: 1},
+                {x: 150, y: 195, label: 0, opacity: 1}, {x: 280, y: 90, label: 1, opacity: 1},
+                {x: 310, y: 120, label: 1, opacity: 1}, {x: 340, y: 75, label: 1, opacity: 1},
+                {x: 360, y: 110, label: 1, opacity: 1}, {x: 385, y: 85, label: 1, opacity: 1}
+            ];
+            l3_w0 = -0.02; l3_w1 = 0.04; l3_bias = -2.5;
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+            document.getElementById("l3-status").innerText = "Iris metric matrices active. Initialize parameter updates to isolate distinct species distributions.";
+        }
+
+        function l3LoadPassFail() {
+            if (l3IsTraining) l3ToggleAutoTrain();
+            l3Points = [
+                {x: 60, y: 220, label: 0, opacity: 1}, {x: 90, y: 240, label: 0, opacity: 1},
+                {x: 120, y: 200, label: 0, opacity: 1}, {x: 80, y: 180, label: 0, opacity: 1},
+                {x: 250, y: 100, label: 1, opacity: 1}, {x: 300, y: 130, label: 1, opacity: 1},
+                {x: 350, y: 90, label: 1, opacity: 1}, {x: 320, y: 160, label: 1, opacity: 1},
+                {x: 280, y: 200, label: 1, opacity: 1}, {x: 200, y: 150, label: 1, opacity: 1}
+            ];
+            l3_w0 = 0.03; l3_w1 = 0.03; l3_bias = -4.0;
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+            document.getElementById("l3-status").innerText = "Performance evaluation vector applied. Multi-feature optimization isolates high-variance instances.";
+        }
+
+        function l3LoadDefaultPoints() {
+            l3LoadIris();
+        }
+
+        function l3UpdateLR() {
+            document.getElementById("l3-lr-val").innerText = parseFloat(document.getElementById("l3-lr").value).toFixed(2);
+        }
+
+        function l3UpdateThresh() {
+            l3ConfidenceThreshold = parseFloat(document.getElementById("l3-thresh").value);
+            document.getElementById("l3-thresh-val").innerText = l3ConfidenceThreshold.toFixed(2);
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+        }
+
+        function l3SetColor(color) {
+            l3CurrentColor = color;
+            document.getElementById("l3-btn-red").style.borderWidth = color === 'red' ? '3px' : '2px';
+            document.getElementById("l3-btn-blue").style.borderWidth = color === 'blue' ? '3px' : '2px';
+        }
+
+        function l3TrainStep() {
+            if (l3Points.length === 0) return;
+            let alpha = parseFloat(document.getElementById("l3-lr").value);
+            let grad_w0 = 0, grad_w1 = 0, grad_bias = 0, N = l3Points.length;
+
+            for (let i = 0; i < N; i++) {
+                let p = l3Points[i];
+                let nx = p.x / 100.0, ny = p.y / 100.0;
+                let z = l3_w0 * nx + l3_w1 * ny + l3_bias;
+                let pred = l3Sigmoid(z);
+                let error = pred - p.label;
+                grad_w0 += error * nx;
+                grad_w1 += error * ny;
+                grad_bias += error;
+            }
+
+            l3_w0 -= (alpha * grad_w0) / N;
+            l3_w1 -= (alpha * grad_w1) / N;
+            l3_bias -= (alpha * grad_bias) / N;
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+        }
+
+        function l3EvaluateMetrics() {
+            if (l3Points.length === 0) return;
+            let correct = 0, totalLoss = 0, eps = 1e-15;
+
+            for (let i = 0; i < l3Points.length; i++) {
+                let p = l3Points[i];
+                let nx = p.x / 100.0, ny = p.y / 100.0;
+                let z = l3_w0 * nx + l3_w1 * ny + l3_bias;
+                let prob = l3Sigmoid(z);
+                let prediction = prob >= l3ConfidenceThreshold ? 1 : 0;
+                if (prediction === p.label) { correct++; p.opacity = 1.0; }
+                else { p.opacity = 0.35; }
+                totalLoss -= p.label * Math.log(prob + eps) + (1 - p.label) * Math.log(1 - prob + eps);
+            }
+
+            let accPercent = Math.round((correct / l3Points.length) * 100);
+            let avgLoss = totalLoss / l3Points.length;
+            document.getElementById("l3-txt-acc").innerText = accPercent + "%";
+            document.getElementById("l3-txt-loss").innerText = avgLoss.toFixed(3);
+            document.getElementById("l3-w0").innerText = l3_w0.toFixed(3);
+            document.getElementById("l3-w1").innerText = l3_w1.toFixed(3);
+            document.getElementById("l3-bias").innerText = l3_bias.toFixed(3);
+            document.getElementById("l3-status").innerText = "Accuracy evaluation: " + accPercent + "%. Cross-entropy: " + avgLoss.toFixed(3) + ".";
+            l3DrawMiniSigmoid();
+        }
+
+        function l3ToggleAutoTrain() {
+            let btn = document.getElementById("l3-auto-btn");
+            if (l3IsTraining) {
+                clearInterval(l3TrainInterval);
+                l3IsTraining = false;
+                btn.innerText = "Train (auto)";
+            } else {
+                l3IsTraining = true;
+                btn.innerText = "Pause";
+                l3TrainInterval = setInterval(l3TrainStep, 40);
+            }
+        }
+
+        function l3Reset() {
+            if (l3IsTraining) l3ToggleAutoTrain();
+            l3_w0 = -0.01; l3_w1 = 0.02; l3_bias = -1.0;
+            l3Points = [];
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+            document.getElementById("l3-status").innerText = "State initialization complete. Add custom map coordinates or evaluate pre-configured benchmarks.";
+        }
+
+        function l3DrawSigmoidCurve() {
+            let canvas = document.getElementById("l3-sigmoidCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height); ctx.stroke();
+            ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let px = 0; px < canvas.width; px++) {
+                let z = ((px / canvas.width) * 12) - 6;
+                let s = l3Sigmoid(z);
+                let py = canvas.height - (s * canvas.height);
+                if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#64748b"; ctx.font = "11px sans-serif";
+            ctx.fillText("σ(z)", 10, 16);
+            ctx.fillText("z", canvas.width - 20, canvas.height / 2 - 6);
+        }
+
+        function l3DrawLossCompare() {
+            let canvas = document.getElementById("l3-lossCompareCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let cy = canvas.height - 25;
+            ctx.strokeStyle = "#cbd5e1"; ctx.beginPath(); ctx.moveTo(30, cy); ctx.lineTo(canvas.width - 10, cy); ctx.stroke();
+            ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.beginPath();
+            for (let px = 30; px < canvas.width - 10; px++) {
+                let yhat = (px - 30) / (canvas.width - 40);
+                if (yhat < 0.02) yhat = 0.02;
+                let mse = (1 - yhat) * (1 - yhat);
+                let ce = -Math.log(yhat);
+                let py = cy - Math.min(ce * 18, cy - 10);
+                if (px === 30) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.strokeStyle = "#2563eb"; ctx.beginPath();
+            for (let px = 30; px < canvas.width - 10; px++) {
+                let yhat = (px - 30) / (canvas.width - 40);
+                if (yhat < 0.02) yhat = 0.02;
+                let mse = (1 - yhat) * (1 - yhat);
+                let py = cy - mse * 80;
+                if (px === 30) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#64748b"; ctx.font = "10px sans-serif";
+            ctx.fillText("y=1 evaluation curve — red: cross-entropy, blue: MSE", 30, 14);
+        }
+
+        function l3DrawMiniSigmoid() {
+            let canvas = document.getElementById("l3-miniSigmoid");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "#2563eb"; ctx.lineWidth = 1.5; ctx.beginPath();
+            for (let px = 0; px < canvas.width; px++) {
+                let z = ((px / canvas.width) * 8) - 4;
+                let py = canvas.height - 10 - l3Sigmoid(z) * (canvas.height - 20);
+                if (px === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            let threshY = canvas.height - 10 - l3ConfidenceThreshold * (canvas.height - 20);
+            ctx.strokeStyle = "#16a34a"; ctx.setLineDash([4, 3]);
+            ctx.beginPath(); ctx.moveTo(0, threshY); ctx.lineTo(canvas.width, threshY); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#64748b"; ctx.font = "9px sans-serif";
+            ctx.fillText("σ(z) parametrized projection", 8, 12);
+        }
+
+        function l3RenderMainCanvas() {
+            let canvas = document.getElementById("l3-mainCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let step = 5;
+            for (let x = 0; x < canvas.width; x += step) {
+                for (let y = 0; y < canvas.height; y += step) {
+                    let nx = x / 100.0, ny = y / 100.0;
+                    let z = l3_w0 * nx + l3_w1 * ny + l3_bias;
+                    let p = l3Sigmoid(z);
+                    if (p >= l3ConfidenceThreshold) {
+                        ctx.fillStyle = "rgba(37, 99, 235, " + Math.min(0.22, (p - l3ConfidenceThreshold) * 0.5 + 0.05) + ")";
+                    } else {
+                        ctx.fillStyle = "rgba(220, 38, 38, " + Math.min(0.22, (l3ConfidenceThreshold - p) * 0.5 + 0.05) + ")";
+                    }
+                    ctx.fillRect(x, y, step, step);
+                }
+            }
+
+            if (Math.abs(l3_w1) > 1e-6) {
+                ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                let foundStart = false;
+                let targetZ = Math.log(l3ConfidenceThreshold / (1.0 - l3ConfidenceThreshold));
+                for (let x = 0; x <= canvas.width; x += 2) {
+                    let nx = x / 100.0;
+                    let ny = (targetZ - l3_bias - l3_w0 * nx) / l3_w1;
+                    let y = ny * 100.0;
+                    if (y >= 0 && y <= canvas.height) {
+                        if (!foundStart) { ctx.moveTo(x, y); foundStart = true; }
+                        else ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+
+            l3Points.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.opacity;
+                ctx.fillStyle = p.label === 0 ? "#dc2626" : "#2563eb";
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 7, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.restore();
+            });
+        }
+
+        function l3HandleInput(e) {
+            let canvas = document.getElementById("l3-mainCanvas");
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let x = (clientX - rect.left) * (canvas.width / rect.width);
+            let y = (clientY - rect.top) * (canvas.height / rect.height);
+            let label = l3CurrentColor === 'red' ? 0 : 1;
+            l3Points.push({ x: x, y: y, label: label, opacity: 1.0 });
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+        }
+
+        function l3Init() {
+            let canvas = document.getElementById("l3-mainCanvas");
+            let isActive = false;
+            canvas.addEventListener("mousedown", (e) => { isActive = true; l3HandleInput(e); });
+            canvas.addEventListener("mousemove", (e) => { if (isActive) l3HandleInput(e); });
+            window.addEventListener("mouseup", () => { isActive = false; });
+            canvas.addEventListener("touchstart", (e) => { e.preventDefault(); isActive = true; l3HandleInput(e); });
+            canvas.addEventListener("touchmove", (e) => { e.preventDefault(); if (isActive) l3HandleInput(e); });
+            window.addEventListener("touchend", () => { isActive = false; });
+            document.getElementById("l3-resetBtn").addEventListener("click", l3Reset);
+            l3UpdateLR();
+            l3LoadDefaultPoints();
+            l3SetColor('red');
+            l3DrawSigmoidCurve();
+            l3DrawLossCompare();
+            l3EvaluateMetrics();
+            l3RenderMainCanvas();
+        }
+
+        l3Init();
+    </script>
+
+</body>
+</html>

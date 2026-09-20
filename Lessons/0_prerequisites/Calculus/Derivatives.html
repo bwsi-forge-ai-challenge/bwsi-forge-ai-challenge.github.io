@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Derivatives and Instantaneous Rate of Change · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Calculus</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Calculus</p>
+    <h1>Derivatives and Instantaneous Rate of Change</h1>
+    <p class="lede"> In the previous lesson, we explored the idea of a <strong>tangent line</strong>. We saw that a tangent line touches a curve at a single point and tells us how the function is changing at that exact location. </p>
+  </header>
+
+  <section>
+<p>
+The slope of the tangent line actually has its own name:
+the <strong>derivative</strong>.
+</p>
+
+<p>
+A derivative measures the <strong>instantaneous rate of change</strong> of a function. In other words, it tells us how quickly the output of a function is changing at a specific value of \(x\).
+</p>
+  </section>
+
+  <section>
+<h2>1. From Tangent Lines to Derivatives</h2>
+
+<p>
+Recall that in the previous lesson, moving the tangent point changed the slope of the tangent line.
+</p>
+
+<p>
+These slopes describe how the function behaves locally:
+</p>
+
+<ul>
+<li>Positive slopes mean the function is increasing.</li>
+<li>Negative slopes mean the function is decreasing.</li>
+<li>A slope of zero indicates a horizontal tangent line.</li>
+</ul>
+
+<p>
+If we continuously track the derivative at each point of a function \(f(x)\), we can define a new function \(f'(x)\), referred to as the <b>derivative of</b> \(f(x)\).
+</p>
+  </section>
+
+  <section>
+<h2>2. Derivative Notation</h2>
+
+<p>
+Different textbooks and fields use different symbols for derivatives. The two most common are:
+</p>
+
+<div class="table-wrap"><table>
+
+<tr>
+    <th>Name</th>
+<th>Notation</th>
+<th>Read As</th>
+</tr>
+
+<tr>
+    <td>Lagrange Notation</td>
+<td>\(f'(x)\)</td>
+<td>"f prime of x"</td>
+</tr>
+
+<tr>
+      <td>Leibniz Notation</td>
+<td>\(\dfrac{dy}{dx}\)</td>
+<td>"dy dx"</td>
+</tr>
+
+</table></div>
+
+<p>
+Although these symbols look different, they describe the same quantity:
+the slope of the tangent line.
+</p>
+  </section>
+
+  <section>
+<h2>3. Derivatives as rates of change</h2>
+
+<p>Derivatives are not just geometric slopes. They also represent real-world rates of change.</p>
+
+<h3>Velocity</h3>
+
+<p>If position changes over time, the derivative of position gives velocity:</p>
+
+<div class="math-box mono">
+    v(t) = ds/dt
+</div>
+
+<ul>
+    <li>Position is stable → zero velocity</li>
+    <li>Moving forwards → positive velocity</li>
+    <li>Moving backwards → negative velocity</li>
+</ul>
+
+<h3>Acceleration</h3>
+
+<p>The derivative of velocity is acceleration:</p>
+
+<div class="math-box mono">
+    a(t) = dv/dt
+</div>
+
+<ul>
+    <li>Constant speed → zero acceleration</li>
+    <li>Speeding up → direction of acceleration matches velocity</li>
+    <li>Slowing down → direction of acceleration is the opposite of velocity</li>
+</ul>
+
+<div class="info-card">
+<h3>Interactive Motion Simulator</h3>
+
+<p>Let's see how setting an initial position, velocity, and acceleration affects an object and it's motion over time. Enter the initial conditions and press <b>Play</b> to run the simulation.</p>
+
+<label>Initial Position (\(x_0\)): </label>
+<input type="number" id="s0" value="0"><br><br>
+
+<label>Initial Velocity (\(v_0\)): </label>
+<input type="number" id="v0" value="5"><br><br>
+
+<label>Acceleration (\(a\)): </label>
+<input type="number" id="a" value="1"><br><br>
+
+<button onclick="startSimulation()">Play</button>
+<hr>
+  
+    <h4>Position vs Time</h4>
+    <canvas id="positionCanvas" width="600" height="200"></canvas>
+
+    <h4>Velocity vs Time</h4>
+    <canvas id="velocityCanvas" width="600" height="200"></canvas>
+
+    <h4>Acceleration vs Time</h4>
+    <canvas id="accelerationCanvas" width="600" height="200"></canvas>
+</div>
+
+<p>Calculus lets us describe these changing systems continuously rather than step-by-step.</p>
+  </section>
+
+  <section>
+<h2>4. Common Derivative Rules Cheat Sheet</h2>
+
+<p>
+  Below is a table containing derivatives of several common functions. Feel free to reference it whenever you need.
+</p>
+
+<div class="table-wrap"><table>
+
+<tr>
+<th>Function</th>
+<th>Derivative</th>
+</tr>
+
+<tr>
+<td>\(c\) (constant)</td>
+<td>\(0\)</td>
+</tr>
+
+<tr>
+<td>\(x\)</td>
+<td>\(1\)</td>
+</tr>
+
+<tr>
+<td>\(x^n\)</td>
+<td>\(nx^{n-1}\)</td>
+</tr>
+
+<tr>
+<td>\(e^x\)</td>
+<td>\(e^x\)</td>
+</tr>
+
+<tr>
+<td>\(\ln(x)\)</td>
+<td>\(\dfrac{1}{x}\)</td>
+</tr>
+  
+<tr>
+<td>\(\sin(x)\)</td>
+<td>\(\cos(x)\)</td>
+</tr>
+  
+<tr>
+<td>\(\cos(x)\)</td>
+<td>\(-\sin(x)\)</td>
+</tr>
+  
+<tr>
+<td>\(\tan(x)\)</td>
+<td>\(\sec^2(x)\)</td>
+</tr>
+
+<tr>
+<td>\(c\,f(x)\)</td>
+<td>\(c\,f'(x)\)</td>
+</tr>
+
+<tr>
+<td>\(f(x)+g(x)\)</td>
+<td>\(f'(x)+g'(x)\)</td>
+</tr>
+
+<tr>
+<td>\(f(x)-g(x)\)</td>
+<td>\(f'(x)-g'(x)\)</td>
+</tr>
+
+<tr>
+<td>\(f(x)g(x)\)</td>
+<td>\(f'(x)g(x)+f(x)g'(x)\)</td>
+</tr>
+
+<tr>
+<td>\(\dfrac{f(x)}{g(x)}\)</td>
+<td>\(\dfrac{f'(x)g(x)-f(x)g'(x)}{[g(x)]^2}\)</td>
+</tr>
+
+<tr>
+<td>\(f(g(x))\)</td>
+<td>\(f'(g(x))\,g'(x)\)</td>
+</tr>
+
+</table></div>
+  </section>
+
+  <section>
+<h2>5. The Chain Rule</h2>
+
+<p>
+Let's take a closer look at the final row of the table above. To differentiate composite functions, we must utilize a formula called the <strong>Chain Rule</strong>.
+</p>
+
+<p>
+The Chain Rule says:
+</p>
+
+<div class="math-box">
+
+\[
+\frac{d}{dx}
+[f(g(x))]
+=
+f'(g(x))
+\cdot
+g'(x)
+\]
+
+</div>
+
+Another common way of writing the chain rule is in Leibniz notation:
+
+<div class="math-box">
+
+\[
+\frac{dz}{dx}
+=
+\frac{dz}{dy}
+  \times
+\frac{dy}{dx}
+\]
+
+</div>
+
+You may notice that we can keep applying the chain rule in this fashion to obtain the following:
+
+<div class="math-box">
+
+\[
+\frac{dz}{dx}
+=
+\frac{dz}{dy_0}
+  \times
+\frac{dy_0}{dy_1}
+  \times
+\frac{dy_1}{dy_2}
+  \times
+  \cdots
+  \times
+\frac{dy_n}{dx}  
+\]
+
+</div>
+
+<p>Let's take a look at an example:<p>
+
+\(
+h(x)=(3x^2+1)^5
+\)
+
+<p>
+  We can define our composite functions \(f(z)=z^5\) and \(g(z)=3z^2+1\).</p>
+  
+  <p>
+As such, \(f'(z)=5z^4\) and \(g'(z)=6z\). Then
+</p>
+
+\(h'(x)=
+f'(g(x))\cdot g'(x)=5(3x+1)^4\cdot 6x = 30x(3x+1)^4
+\)
+  </section>
+
+  <section>
+<h2>6. Maxima and Minima</h2>
+
+<p>
+Derivatives not only tell us how a function is changing, but they also help us find where a function reaches its highest or lowest points within a certain range.
+These points are called <strong>local maxima</strong> and <strong>local minima</strong>. Across the entire function, the highest and lowest points are called the <strong>absolute maxima</strong> and <strong>absolute minima</strong>, respectively. A function can have several local maxima and minima but only up to one absolute maximum and absolute minimum.
+</p>
+
+<p>
+A key idea is that at a maximum or minimum point, the tangent line is horizontal. This means:
+</p>
+
+<div class="math-box">
+\[
+f'(x)=0
+\]
+</div>
+
+<p>
+To find potential maxima and minima, we first solve \(f'(x)=0\), then analyze what happens around those points. Below, we can examine the local maximum and minimum of the function \(f(x)=x^3-x\) at \(x=-1\) and \(x=1\):
+</p>
+
+<canvas id="cubicCanvas" width="600" height="300"></canvas>
+  </section>
+
+  <section>
+<h2>7. The Second Derivative</h2>
+
+<p>
+The <strong>second derivative</strong> is the derivative of the derivative. It is written as:
+</p>
+
+<div class="math-box">
+\[
+f''(x)
+\]
+</div>
+
+or
+
+<div class="math-box">
+\[
+\frac{d^2y}{dx^2}
+\]
+</div>
+
+<p>
+While the first derivative tells us the slope of a function, the second derivative tells us how that slope is changing.
+This is often described as the <strong>concavity</strong> of the graph.
+</p>
+
+<ul>
+<li>If \(f''(x) > 0\), the graph is concave up (shaped like a cup).</li>
+<li>If \(f''(x) < 0\), the graph is concave down (shaped like a cap).</li>
+</ul>
+
+<p>
+We call a point where concavity changes (which requires \(f''(x) = 0\)) an <strong>inflection point</strong>. Let's see how we can use these terms to label the previous function \(f(x)=x^3-x\).
+</p>
+
+  <canvas id="cubicConcaveCanvas" width="600" height="300"></canvas>
+  </section>
+
+  <section>
+<h2>8. Connecting to Maxima and Minima</h2>
+
+<p>
+The second derivative can also help classify critical points:
+</p>
+
+<div class="math-box">
+
+<ul>
+<li>If \(f'(x)=0\) and \(f''(x) > 0\), then \(x\) is a local minimum.</li>
+<li>If \(f'(x)=0\) and \(f''(x) < 0\), then \(x\) is a local maximum.</li>
+</ul>
+
+</div>
+  </section>
+
+  <section>
+<h2>9. Extending to Higher-Order Derivatives</h2>
+
+<p>
+We can continue differentiating a function multiple times:
+</p>
+
+<div class="math-box">
+\[
+f(x),\quad f'(x),\quad f''(x),\quad f'''(x),\quad \dots,\quad f^{(n)}(x)
+\]
+</div>
+
+<p>
+These are called <strong>higher-order derivatives</strong>.
+In Leibniz notation, we express these as
+</p>
+
+<div class="math-box">
+\[
+y,\frac{dy}{dx},\frac{d^2y}{dx^2},\quad \frac{d^3y}{dx^3},\quad \dots,\quad \frac{d^ny}{dx^n}
+\]
+</div>
+
+<p>
+They are useful in physics, engineering, and advanced mathematics for describing motion, acceleration, and more complex change.
+In general, each additional derivative gives us a deeper layer of information about how a function behaves.
+</p>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="TangentLinesAndLocalChange.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Tangent Lines and Local Change</span>
+    </a>
+    <a class="pager__next" href="PartialGradient.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Partial Derivatives and the Gradient</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+let t = 0;
+let interval = null;
+
+let positionHist = [];
+let velocityHist = [];
+let accelerationHist = [];
+
+const positionCanvas = document.getElementById("positionCanvas");
+const velocityCanvas = document.getElementById("velocityCanvas");
+const accelerationCanvas = document.getElementById("accelerationCanvas");
+
+const positionCtx = positionCanvas.getContext("2d");
+const velocityCtx = velocityCanvas.getContext("2d");
+const accelerationCtx = accelerationCanvas.getContext("2d");
+
+
+function drawAxes(ctx, canvas, xLabel, yLabel, yMin, yMax) {
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let left = 50;
+    let right = canvas.width - 20;
+    let top = 20;
+    let bottom = canvas.height - 30;
+
+    let midY = (top + bottom) / 2;
+
+
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "black";
+    ctx.lineWidth = 1;
+
+
+    // x-axis at y = 0
+    ctx.beginPath();
+    ctx.moveTo(left, midY);
+    ctx.lineTo(right, midY);
+    ctx.stroke();
+
+
+    // y-axis
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+    ctx.lineTo(left, bottom);
+    ctx.stroke();
+
+
+    ctx.font = "12px Arial";
+
+
+    // Time axis labels
+    for(let t = 2; t <= 10; t += 2){
+
+        let x = left + t*(right-left)/10;
+
+        ctx.beginPath();
+        ctx.moveTo(x, midY-5);
+        ctx.lineTo(x, midY+5);
+        ctx.stroke();
+
+        ctx.fillText(
+            t,
+            x-8,
+            midY+20
+        );
+    }
+
+
+    // Y-axis labels
+    let steps = 4;
+
+    for(let i=-steps/2; i<=steps/2; i++){
+
+        let value = i*(yMax/(steps/2));
+
+        let y = midY - (value/(yMax-yMin))*(bottom-top);
+
+        ctx.fillText(
+            value.toFixed(0),
+            15,
+            y+4
+        );
+
+        ctx.beginPath();
+        ctx.moveTo(left-5,y);
+        ctx.lineTo(left,y);
+        ctx.stroke();
+    }
+
+
+    ctx.fillText(
+        xLabel,
+        right-15,
+        midY-20
+    );
+
+    ctx.fillText(
+        yLabel,
+        55,
+        top
+    );
+}
+
+
+function drawGraph(ctx, canvas, data, color, label, yMin, yMax){
+
+    drawAxes(ctx, canvas, "time", label, yMin, yMax);
+
+    let left = 50;
+    let right = canvas.width - 20;
+    let top = 20;
+    let bottom = canvas.height - 30;
+
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+
+    for(let i = 0; i < data.length; i++){
+
+        // x-coordinate: time
+        let x = left + i*(right-left)/100;
+
+        // y-coordinate: convert data value to canvas coordinate
+        let y = bottom -
+            ((data[i]-yMin)/(yMax-yMin)) *
+            (bottom-top);
+
+
+        if(i===0)
+            ctx.moveTo(x,y);
+        else
+            ctx.lineTo(x,y);
+    }
+
+    ctx.stroke();
+}
+
+
+function startSimulation() {
+
+    resetSimulation();
+
+    const x0 = Number(document.getElementById("s0").value);
+    const v0 = Number(document.getElementById("v0").value);
+    const a = Number(document.getElementById("a").value);
+
+
+    interval = setInterval(()=>{
+
+        if(t>10){
+            clearInterval(interval);
+            return;
+        }
+
+
+        let x = x0 + v0*t + 0.5*a*t*t;
+        let v = v0 + a*t;
+
+
+        positionHist.push(x);
+        velocityHist.push(v);
+        accelerationHist.push(a);
+
+
+drawGraph(
+    positionCtx,
+    positionCanvas,
+    positionHist,
+    "blue",
+    "x",
+    -100,
+    100
+);
+
+drawGraph(
+    velocityCtx,
+    velocityCanvas,
+    velocityHist,
+    "green",
+    "v",
+    -20,
+    20
+);
+
+drawGraph(
+    accelerationCtx,
+    accelerationCanvas,
+    accelerationHist,
+    "red",
+    "a",
+    -5,
+    5
+);
+
+
+        t += 0.1;
+
+    },50);
+
+}
+
+
+function resetSimulation(){
+
+    if(interval)
+        clearInterval(interval);
+
+    t=0;
+
+    positionHist=[];
+    velocityHist=[];
+    accelerationHist=[];
+
+    positionCtx.clearRect(0,0,600,200);
+    velocityCtx.clearRect(0,0,600,200);
+    accelerationCtx.clearRect(0,0,600,200);
+}
+  
+drawAxes(
+    positionCtx,
+    positionCanvas,
+    "time",
+    "x",
+    -100,
+    100
+);
+
+drawAxes(
+    velocityCtx,
+    velocityCanvas,
+    "time",
+    "v",
+    -20,
+    20
+);
+
+drawAxes(
+    accelerationCtx,
+    accelerationCanvas,
+    "time",
+    "a",
+    -5,
+    5
+);
+  
+  const cubicCanvas = document.getElementById("cubicCanvas");
+const cubicCtx = cubicCanvas.getContext("2d");
+
+
+function drawCubicGraph() {
+
+    let ctx = cubicCtx;
+    let canvas = cubicCanvas;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    let left = 50;
+    let right = canvas.width - 20;
+    let top = 20;
+    let bottom = canvas.height - 40;
+
+
+    // coordinate transformation
+    function xPixel(x){
+        return left + (x + 2.5)/5 * (right-left);
+    }
+
+    function yPixel(y){
+        return bottom - (y + 5)/10 * (bottom-top);
+    }
+  
+  
+    // -------------------------
+    // Clip graph to axes region
+    // -------------------------
+
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.rect(
+        left,
+        top,
+        right-left,
+        bottom-top
+    );
+    ctx.clip();
+
+
+
+    // axes
+    ctx.strokeStyle = "black";
+
+    ctx.beginPath();
+    ctx.moveTo(xPixel(0), top);
+    ctx.lineTo(xPixel(0), bottom);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(left, yPixel(0));
+    ctx.lineTo(right, yPixel(0));
+    ctx.stroke();
+
+
+    // curve y=x^3-x
+    ctx.strokeStyle = "blue";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+    for(let x=-2.5; x<=2.5; x+=0.01){
+
+        let y = x*x*x - x;
+
+        let px = xPixel(x);
+        let py = yPixel(y);
+
+        if(x===-2.5)
+            ctx.moveTo(px,py);
+        else
+            ctx.lineTo(px,py);
+    }
+
+    ctx.stroke();
+
+
+    // Mark critical points
+    let points = [
+        {
+            x: -1/Math.sqrt(3),
+            label: "Local max"
+        },
+        {
+            x: 1/Math.sqrt(3),
+            label: "Local min"
+        }
+    ];
+
+    points.forEach(point => {
+
+        let y = point.x**3 - point.x;
+
+        ctx.beginPath();
+        ctx.arc(
+            xPixel(point.x),
+            yPixel(y),
+            5,
+            0,
+            2*Math.PI
+        );
+        ctx.fill();
+
+        ctx.fillText(
+            point.label,
+            xPixel(point.x)-35,
+            yPixel(y)-10
+        );
+    });
+
+}
+
+drawCubicGraph();
+  
+const cubicConcaveCanvas = document.getElementById("cubicConcaveCanvas");
+const cubicConcaveCtx = cubicConcaveCanvas.getContext("2d");
+
+
+function drawCubicGraphConcave() {
+
+    let ctx = cubicConcaveCtx;
+    let canvas = cubicConcaveCanvas;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+
+    let left = 50;
+    let right = canvas.width - 20;
+    let top = 20;
+    let bottom = canvas.height - 40;
+
+
+    // Same coordinate transformation as first graph
+    function xPixel(x){
+        return left + (x + 2.5)/5 * (right-left);
+    }
+
+    function yPixel(y){
+        return bottom - (y + 5)/10 * (bottom-top);
+    }
+
+
+
+    // -------------------------
+    // Clip graph area
+    // -------------------------
+
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.rect(
+        left,
+        top,
+        right-left,
+        bottom-top
+    );
+
+    ctx.clip();
+
+
+
+    // -------------------------
+    // Axes
+    // -------------------------
+
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+
+
+    // y-axis
+    ctx.beginPath();
+    ctx.moveTo(xPixel(0), top);
+    ctx.lineTo(xPixel(0), bottom);
+    ctx.stroke();
+
+
+    // x-axis
+    ctx.beginPath();
+    ctx.moveTo(left, yPixel(0));
+    ctx.lineTo(right, yPixel(0));
+    ctx.stroke();
+
+
+
+    // -------------------------
+    // Concave down: x < 0
+    // -------------------------
+
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    for(let x=-2.5; x<=0; x+=0.01){
+
+        let y = x*x*x-x;
+
+        let px = xPixel(x);
+        let py = yPixel(y);
+
+        if(x===-2.5)
+            ctx.moveTo(px,py);
+        else
+            ctx.lineTo(px,py);
+    }
+
+    ctx.stroke();
+
+
+
+    // -------------------------
+    // Concave up: x > 0
+    // -------------------------
+
+    ctx.strokeStyle = "blue";
+
+    ctx.beginPath();
+
+    for(let x=0; x<=2.5; x+=0.01){
+
+        let y = x*x*x-x;
+
+        let px = xPixel(x);
+        let py = yPixel(y);
+
+        if(x===0)
+            ctx.moveTo(px,py);
+        else
+            ctx.lineTo(px,py);
+    }
+
+    ctx.stroke();
+
+
+    // End clipping
+    ctx.restore();
+
+
+
+    // -------------------------
+    // Mark inflection point
+    // -------------------------
+
+    ctx.fillStyle = "black";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        xPixel(0),
+        yPixel(0),
+        5,
+        0,
+        2*Math.PI
+    );
+
+    ctx.fill();
+
+
+    ctx.font = "12px Arial";
+
+    ctx.fillText(
+        "Inflection Point",
+        xPixel(0)+10,
+        yPixel(0)-10
+    );
+
+
+
+    // -------------------------
+    // Legend
+    // -------------------------
+
+    ctx.fillStyle = "red";
+    ctx.fillText(
+        "Concave Down",
+        70,
+        35
+    );
+
+
+    ctx.fillStyle = "blue";
+    ctx.fillText(
+        "Concave Up",
+        220,
+        35
+    );
+
+}
+
+drawCubicGraphConcave();
+</script>
+
+</body>
+</html>

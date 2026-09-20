@@ -1,0 +1,507 @@
+<div class="genai-lesson-container">
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .highlight-box {
+            background: #f8fafc; border-left: 4px solid #3b82f6;
+            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .genai-lesson-container .interactive-box {
+            background: #f4faf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 20px; margin: 20px 0;
+        }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td {
+            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
+        }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container .eq-panel {
+            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 14px; margin: 16px 0;
+            font-family: Cambria, "Times New Roman", serif; font-size: 1.05em;
+        }
+        .genai-lesson-container .diagram-wrap {
+            overflow-x: auto; margin: 16px 0; text-align: center;
+        }
+        .genai-lesson-container .diagram-wrap svg {
+            display: block; max-width: 100%; height: auto; margin: 0 auto;
+            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+        }
+        .genai-lesson-container figcaption {
+            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
+        }
+        .genai-lesson-container .reflect-label {
+            display: block; font-weight: 600; font-size: 0.92em; margin: 16px 0 6px; color: #334155;
+        }
+        .genai-lesson-container .reflect-input {
+            width: 100%; box-sizing: border-box; min-height: 80px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
+            font-size: 0.92em; line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container details { margin: 12px 0; }
+        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+        .genai-lesson-container var { font-style: italic; font-family: Cambria, "Times New Roman", serif; }
+        .genai-lesson-container .stat-pill {
+            display: inline-block; background: #e0e7ff; color: #3730a3;
+            padding: 2px 8px; border-radius: 4px; font-size: 0.88em; font-weight: 600;
+        }
+        .genai-lesson-container .compare-cols {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0;
+        }
+        @media (max-width: 640px) {
+            .genai-lesson-container .compare-cols { grid-template-columns: 1fr; }
+        }
+        .genai-lesson-container .compare-card {
+            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #fff;
+        }
+        .genai-lesson-container .compare-card h4 { margin: 0 0 10px; font-size: 0.95em; }
+        .genai-lesson-container .compare-card.local { border-top: 4px solid #16a34a; }
+        .genai-lesson-container .compare-card.api { border-top: 4px solid #2563eb; }
+        .genai-lesson-container .footnote {
+            font-size: 0.85em; color: #64748b; margin-top: 8px;
+        }
+        .genai-lesson-container .lc-input {
+            width: 100%; max-width: 200px; padding: 8px 10px; border: 1px solid #cbd5e1;
+            border-radius: 6px; font-size: 0.92em; box-sizing: border-box;
+        }
+        .genai-lesson-container .lc-row {
+            display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0;
+        }
+        .genai-lesson-container .lc-field { flex: 1; min-width: 140px; }
+        .genai-lesson-container .lc-result {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 14px; margin-top: 14px;
+        }
+        .genai-lesson-container .lc-result-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.92em;
+        }
+        .genai-lesson-container .lc-result-row:last-child { border-bottom: none; }
+        .genai-lesson-container .lc-cost { font-weight: 700; color: #1d4ed8; }
+        .genai-lesson-container .lc-cost.high { color: #dc2626; }
+    </style>
+
+    <h1>Latency and Cost: Why Bigger Isn't Always Better</h1>
+
+    <p>Lessons 1 and 2 covered <em>how</em> models are trained and <em>how much</em> text they can see at once. This lesson is about the decision you face every time you pick a model: <strong>how fast</strong> will it respond, and <strong>how much</strong> will it cost?</p>
+
+    <p>Before your assignment — and before building anything real — you need a framework for matching model size to task complexity. The smartest model is rarely the right default.</p>
+
+    <hr>
+
+    <h2>1. What Is Latency?</h2>
+
+    <p><strong>Latency</strong> is the time between sending a prompt and receiving a useful response. Users feel it immediately: a chatbot that pauses for 5 seconds before every reply feels broken, even if the answer is perfect.</p>
+
+    <p>Latency has two main components:</p>
+    <ul>
+        <li><strong>Time to first token (TTFT):</strong> how long before the model starts streaming output. This covers reading your prompt, running the forward pass, and beginning generation.</li>
+        <li><strong>Tokens per second (throughput):</strong> how fast tokens arrive <em>after</em> the first one. A long answer at 20 tokens/sec feels much slower than the same answer at 80 tokens/sec.</li>
+    </ul>
+
+    <div class="highlight-box">
+        <strong>Total wait ≈ TTFT + (output tokens ÷ tokens per second).</strong> A 500-token reply at 50 tok/s adds ~10 seconds <em>after</em> TTFT. Short prompts to small models feel snappy; long prompts to huge models do not.
+    </div>
+
+    <p><strong>Bigger models are slower</strong> because each generated token requires more matrix math across more parameters. A 7B-parameter model on a laptop might feel instant; a 405B frontier model on shared cloud GPUs might take seconds before the first word appears.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 680 160" role="img" aria-label="Latency timeline showing time to first token and generation phase">
+            <text x="20" y="22" font-size="11" fill="#475569" font-weight="600">Request timeline →</text>
+            <line x1="20" y1="100" x2="660" y2="100" stroke="#cbd5e1" stroke-width="2"/>
+            <circle cx="20" cy="100" r="6" fill="#334155"/>
+            <text x="20" y="125" text-anchor="middle" font-size="9" fill="#64748b">Send</text>
+            <rect x="20" y="55" width="90" height="28" rx="4" fill="#fef3c7" stroke="#fbbf24"/>
+            <text x="65" y="73" text-anchor="middle" font-size="9" fill="#92400e" font-weight="600">TTFT</text>
+            <text x="65" y="88" text-anchor="middle" font-size="8" fill="#92400e">~350ms–2s</text>
+            <line x1="110" y1="100" x2="110" y2="55" stroke="#fbbf24" stroke-dasharray="3 2"/>
+            <rect x="110" y="55" width="420" height="28" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+            <text x="320" y="73" text-anchor="middle" font-size="9" fill="#1d4ed8" font-weight="600">Generation phase (tokens per second)</text>
+            <text x="320" y="88" text-anchor="middle" font-size="8" fill="#1d4ed8">Each token = another forward pass</text>
+            <line x1="530" y1="100" x2="530" y2="55" stroke="#2563eb" stroke-dasharray="3 2"/>
+            <circle cx="530" cy="100" r="6" fill="#16a34a"/>
+            <text x="530" y="125" text-anchor="middle" font-size="9" fill="#64748b">Done</text>
+            <text x="340" y="145" text-anchor="middle" font-size="10" fill="#475569">User waits through <em>both</em> phases — TTFT is especially noticeable in chat UIs</text>
+        </svg>
+        <figcaption>Latency breakdown: TTFT (thinking before speaking) plus generation time (speaking speed). Longer outputs multiply the second phase.</figcaption>
+    </figure>
+
+    <table>
+        <thead>
+            <tr><th>Model tier (illustrative)</th><th>Typical TTFT</th><th>Typical throughput</th><th>Feel</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Small / mini (e.g., GPT-4o mini)</td><td>~300–500 ms</td><td>60–100+ tok/s</td><td>Snappy for short tasks</td></tr>
+            <tr><td>Medium (e.g., Claude Haiku)</td><td>~400–700 ms</td><td>50–80 tok/s</td><td>Good balance for volume</td></tr>
+            <tr><td>Large (e.g., Claude Sonnet)</td><td>~700 ms–1.5 s</td><td>30–60 tok/s</td><td>Noticeable on long replies</td></tr>
+            <tr><td>Frontier (e.g., Claude Opus, GPT-5 class)</td><td>~1–3 s</td><td>20–40 tok/s</td><td>Powerful but patient users only</td></tr>
+        </tbody>
+    </table>
+    <p class="footnote">Numbers vary by region, provider load, prompt length, and batching. Treat as order-of-magnitude guides, not guarantees.</p>
+
+    <hr>
+
+    <h2>2. What Drives Cost?</h2>
+
+    <p>Most hosted LLM APIs charge <strong>per token</strong>. From Lesson 2: tokens are the billing unit, not words or characters.</p>
+
+    <ul>
+        <li><strong>Input tokens</strong> — your prompt, system message, retrieved documents, chat history</li>
+        <li><strong>Output tokens</strong> — everything the model generates</li>
+    </ul>
+
+    <div class="eq-panel">
+        Cost per request ≈ (input tokens × input price) + (output tokens × output price)
+    </div>
+
+    <p><strong>Output tokens usually cost more</strong> than input tokens — generating each new token requires a full forward pass and sampling step, while reading input is a single pass. On Claude Sonnet 4.6, for example, output is priced at $15/M tokens vs. $3/M for input — a 5× premium.</p>
+
+    <p><strong>Bigger, more capable models cost more per token</strong> than smaller ones. GPT-4o mini might cost $0.15/M input; Claude Opus 4.6 costs $5/M input — over 30× more for the same token count.</p>
+
+    <h3>Illustrative API pricing (mid-2026 list prices)</h3>
+    <p class="footnote">Vendors change prices frequently. These are for comparison and classroom estimation — check official pricing pages before production decisions.</p>
+    <table>
+        <thead>
+            <tr><th>Tier</th><th>Example model</th><th>Input $/M tokens</th><th>Output $/M tokens</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Small</td><td>GPT-4o mini</td><td>$0.15</td><td>$0.60</td></tr>
+            <tr><td>Small–medium</td><td>Claude Haiku 4.5</td><td>$1.00</td><td>$5.00</td></tr>
+            <tr><td>Medium–large</td><td>Claude Sonnet 4.6</td><td>$3.00</td><td>$15.00</td></tr>
+            <tr><td>Frontier</td><td>Claude Opus 4.6 / GPT-5 class</td><td>$5.00</td><td>$25.00</td></tr>
+        </tbody>
+    </table>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 520 260" role="img" aria-label="Cost per million tokens across model tiers">
+            <line x1="60" y1="220" x2="480" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <line x1="60" y1="40" x2="60" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <text x="270" y="248" text-anchor="middle" font-size="11" fill="#475569">Model tier →</text>
+            <text x="22" y="130" text-anchor="middle" font-size="11" fill="#475569" transform="rotate(-90 22 130)">$/M output tokens</text>
+            <text x="100" y="232" font-size="8" fill="#64748b">Mini</text>
+            <text x="200" y="232" font-size="8" fill="#64748b">Haiku</text>
+            <text x="310" y="232" font-size="8" fill="#64748b">Sonnet</text>
+            <text x="420" y="232" font-size="8" fill="#64748b">Opus</text>
+            <rect x="75" y="205" width="50" height="15" rx="2" fill="#16a34a"/>
+            <rect x="175" y="175" width="50" height="45" rx="2" fill="#2563eb"/>
+            <rect x="285" y="115" width="50" height="105" rx="2" fill="#7c3aed"/>
+            <rect x="395" y="45" width="50" height="175" rx="2" fill="#dc2626"/>
+            <text x="100" y="198" text-anchor="middle" font-size="8" fill="#166534">$0.60</text>
+            <text x="200" y="168" text-anchor="middle" font-size="8" fill="#1e40af">$5</text>
+            <text x="310" y="108" text-anchor="middle" font-size="8" fill="#5b21b6">$15</text>
+            <text x="420" y="38" text-anchor="middle" font-size="8" fill="#991b1b">$25</text>
+            <text x="270" y="55" font-size="9" fill="#64748b">Output pricing scales ~40× from mini to Opus</text>
+        </svg>
+        <figcaption>Output token cost across tiers (illustrative mid-2026 list prices). Input follows the same pattern at lower absolute numbers.</figcaption>
+    </figure>
+
+    <hr>
+
+    <h2>3. The Core Tradeoff: Quality vs. Speed vs. Cost</h2>
+
+    <p>You rarely get all three. The mental model is a triangle — push toward one corner and the others suffer:</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 400 320" role="img" aria-label="Quality Speed Cost tradeoff triangle">
+            <polygon points="200,30 40,280 360,280" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+            <text x="200" y="22" text-anchor="middle" font-size="13" fill="#1d4ed8" font-weight="700">Quality</text>
+            <text x="28" y="295" text-anchor="middle" font-size="13" fill="#16a34a" font-weight="700">Speed</text>
+            <text x="372" y="295" text-anchor="middle" font-size="13" fill="#dc2626" font-weight="700">Cost</text>
+            <text x="200" y="175" text-anchor="middle" font-size="11" fill="#475569">Pick two —</text>
+            <text x="200" y="192" text-anchor="middle" font-size="11" fill="#475569">the third suffers</text>
+            <circle cx="200" cy="55" r="5" fill="#2563eb"/>
+            <text x="200" y="75" text-anchor="middle" font-size="9" fill="#1e40af">High quality + low cost → slow</text>
+            <circle cx="70" cy="255" r="5" fill="#16a34a"/>
+            <text x="70" y="240" text-anchor="middle" font-size="9" fill="#166534">Fast + cheap → lower quality</text>
+            <circle cx="330" cy="255" r="5" fill="#dc2626"/>
+            <text x="330" y="240" text-anchor="middle" font-size="9" fill="#991b1b">Fast + high quality → expensive</text>
+        </svg>
+        <figcaption>The quality / speed / cost triangle. Frontier models optimize quality; mini models optimize speed and cost.</figcaption>
+    </figure>
+
+    <ul>
+        <li><strong>Tiny model:</strong> fast, cheap, but more errors on hard tasks</li>
+        <li><strong>Huge model:</strong> slow, expensive, but much more capable and reliable on complex work</li>
+        <li><strong>There is no free lunch</strong> — "best model for everything" does not exist</li>
+    </ul>
+
+    <hr>
+
+    <h2>4. Matching the Model to the Task</h2>
+
+    <p>The assignment skill — and the production skill — is <strong>right-sizing</strong>:</p>
+
+    <table>
+        <thead>
+            <tr><th>Task type</th><th>Complexity</th><th>Typical tier</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Sentiment classification, date extraction, spam filter</td><td>Low</td><td>Small / mini</td><td>Pattern is simple; errors are cheap to catch; volume is high</td></tr>
+            <tr><td>Summarization, Q&amp;A over docs, email drafting</td><td>Medium</td><td>Medium (Haiku / Sonnet)</td><td>Needs coherence but not deep reasoning chains</td></tr>
+            <tr><td>Multi-step reasoning, code generation, research synthesis</td><td>High</td><td>Large / frontier</td><td>Mistakes compound; quality matters more than marginal cost</td></tr>
+        </tbody>
+    </table>
+
+    <p>Real companies often run a <strong>mix</strong>: a cheap model triages or filters millions of requests; an expensive model handles only the hard cases that pass through. This is called a <strong>cascade</strong> or <strong>router</strong> pattern.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 640 300" role="img" aria-label="Decision flowchart for choosing model tier">
+            <defs>
+                <marker id="lc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+                </marker>
+            </defs>
+            <rect x="220" y="10" width="200" height="36" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+            <text x="320" y="33" text-anchor="middle" font-size="10" font-weight="600">What task are you solving?</text>
+            <line x1="320" y1="46" x2="320" y2="66" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <rect x="220" y="66" width="200" height="36" rx="6" fill="#fef3c7" stroke="#fbbf24"/>
+            <text x="320" y="89" text-anchor="middle" font-size="10" font-weight="600">How complex is it?</text>
+            <line x1="320" y1="102" x2="320" y2="122" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <line x1="320" y1="122" x2="100" y2="150" stroke="#64748b"/>
+            <line x1="320" y1="122" x2="320" y2="150" stroke="#64748b"/>
+            <line x1="320" y1="122" x2="540" y2="150" stroke="#64748b"/>
+            <line x1="100" y1="150" x2="100" y2="170" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <line x1="320" y1="150" x2="320" y2="170" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <line x1="540" y1="150" x2="540" y2="170" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <rect x="20" y="170" width="160" height="50" rx="6" fill="#dcfce7" stroke="#86efac"/>
+            <text x="100" y="192" text-anchor="middle" font-size="9" font-weight="600">Simple / high volume</text>
+            <text x="100" y="208" text-anchor="middle" font-size="9" fill="#166534">→ Small / mini model</text>
+            <rect x="240" y="170" width="160" height="50" rx="6" fill="#e0e7ff" stroke="#a5b4fc"/>
+            <text x="320" y="192" text-anchor="middle" font-size="9" font-weight="600">Moderate reasoning</text>
+            <text x="320" y="208" text-anchor="middle" font-size="9" fill="#3730a3">→ Medium model</text>
+            <rect x="460" y="170" width="160" height="50" rx="6" fill="#fce7f3" stroke="#f9a8d4"/>
+            <text x="540" y="192" text-anchor="middle" font-size="9" font-weight="600">Hard / high stakes</text>
+            <text x="540" y="208" text-anchor="middle" font-size="9" fill="#9d174d">→ Large / frontier model</text>
+            <line x1="100" y1="220" x2="100" y2="240" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <line x1="320" y1="220" x2="320" y2="240" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <line x1="540" y1="220" x2="540" y2="240" stroke="#64748b" marker-end="url(#lc-arr)"/>
+            <rect x="20" y="240" width="160" height="44" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+            <text x="100" y="258" text-anchor="middle" font-size="8">Optimize: cost + latency</text>
+            <text x="100" y="272" text-anchor="middle" font-size="8">Accept some error rate</text>
+            <rect x="240" y="240" width="160" height="44" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+            <text x="320" y="258" text-anchor="middle" font-size="8">Balance quality &amp; spend</text>
+            <text x="320" y="272" text-anchor="middle" font-size="8">Default for many apps</text>
+            <rect x="460" y="240" width="160" height="44" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+            <text x="540" y="258" text-anchor="middle" font-size="8">Optimize: accuracy</text>
+            <text x="540" y="272" text-anchor="middle" font-size="8">Use sparingly at scale</text>
+        </svg>
+        <figcaption>Decision flowchart: task complexity drives model tier. When in doubt, start small and upgrade only where quality fails.</figcaption>
+    </figure>
+
+    <hr>
+
+    <h2>5. Local Models vs. API Models</h2>
+
+    <p>Your assignment will likely use <strong>open-source models running locally</strong> (e.g., smaller Llama or GPT-2 variants). Hosted APIs are the other path. Both are valid — they optimize different corners of the triangle.</p>
+
+    <div class="compare-cols">
+        <div class="compare-card local">
+            <h4>Local (self-hosted)</h4>
+            <ul style="font-size:0.92em;margin:0;padding-left:18px;">
+                <li><strong>No per-token API bill</strong> — you pay for hardware and electricity</li>
+                <li>Needs a capable GPU/CPU; big models may be impractical on a laptop</li>
+                <li>Can be slower than optimized cloud inference</li>
+                <li>Full control over data — nothing leaves your machine</li>
+                <li>Great for learning, prototyping, and privacy-sensitive work</li>
+            </ul>
+        </div>
+        <div class="compare-card api">
+            <h4>API (OpenAI, Anthropic, Hugging Face Inference)</h4>
+            <ul style="font-size:0.92em;margin:0;padding-left:18px;">
+                <li><strong>Pay per use</strong> — no upfront GPU purchase</li>
+                <li>Access to frontier models you could not run locally</li>
+                <li>Provider handles scaling, uptime, and optimization</li>
+                <li>Data sent to a third party — check privacy policies</li>
+                <li>Usually faster and more capable than local on consumer hardware</li>
+            </ul>
+        </div>
+    </div>
+
+    <!--<div class="highlight-box">
+        <strong>Assignment preview:</strong> Downloading and running a smaller open-weight model locally teaches you the full stack — tokenization, inference, latency on your own hardware — without racking up API bills. Tradeoff: you will not match GPT-5 quality on a MacBook, and that is the point.
+    </div>-->
+
+    <hr>
+
+    <h2>6. Why This Matters for Real Products</h2>
+
+    <p>At scale, small per-request differences become enormous:</p>
+
+    <div class="eq-panel">
+        1 million requests/day × $0.002 extra per request ≈ <strong>$2,000/day</strong> ≈ <strong>$60,000/month</strong>
+    </div>
+
+    <p>A spam filter processing 10 million emails daily cannot afford frontier-model pricing on every message. A legal research tool handling 50 complex queries per day <em>can</em> afford Opus — because volume is low and mistake cost is high.</p>
+
+    <p>Product teams constantly ask: <em>"Do we need the smartest model, or does a cheaper one work well enough?"</em> The answer is almost always task-dependent — which is why this framework matters before you write your first API call.</p>
+
+    <hr>
+
+    <!--<h2>7. Try It: Monthly Cost Calculator</h2>
+    <div class="interactive-box">
+        <p>Estimate monthly API spend across four illustrative tiers. Adjust the inputs — numbers update instantly.</p>
+
+        <div class="lc-row">
+            <div class="lc-field">
+                <label class="reflect-label" for="lc-requests">Requests per day</label>
+                <input class="lc-input" type="number" id="lc-requests" value="1000" min="1">
+            </div>
+            <div class="lc-field">
+                <label class="reflect-label" for="lc-input-tok">Avg input tokens / request</label>
+                <input class="lc-input" type="number" id="lc-input-tok" value="500" min="1">
+            </div>
+            <div class="lc-field">
+                <label class="reflect-label" for="lc-output-tok">Avg output tokens / request</label>
+                <input class="lc-input" type="number" id="lc-output-tok" value="200" min="0">
+            </div>
+        </div>
+
+        <p style="margin:8px 0;font-size:0.92em;">
+            <strong>Daily volume:</strong> <span id="lc-daily-tokens">—</span> total tokens/day
+            &nbsp;·&nbsp; <strong>Monthly requests:</strong> <span id="lc-monthly-reqs">—</span>
+        </p>
+
+        <div class="lc-result" id="lc-results"></div>
+
+        <p class="footnote">Illustrative list pricing (mid-2026). Real bills include caching discounts, batch APIs, free tiers, and tiered long-context surcharges. Use this for back-of-envelope planning, not invoicing.</p>
+    </div>
+
+    <hr>
+
+    <h2>8. Reflect on Tradeoffs</h2>
+    <div class="interactive-box">
+        <label class="reflect-label" for="lc-reflect-1">You're building a spam filter for emails that runs on millions of messages a day. Would you use the biggest, smartest model available? Why or why not?</label>
+        <textarea class="reflect-input" id="lc-reflect-1" placeholder="Consider volume, cost, latency, error tolerance, and whether spam detection needs frontier reasoning…"></textarea>
+        <details>
+            <summary>Sample answer</summary>
+            <p>No. Spam detection is a high-volume, low-complexity classification task. Running Opus on 5M emails/day at ~700 input tokens each would cost tens of thousands of dollars <em>per day</em> and add seconds of latency per message. A small model (or even a traditional ML classifier) catches most spam at a fraction of the cost. Reserve expensive models for ambiguous edge cases via a cascade — e.g., 95% handled by a mini model, 5% escalated.</p>
+        </details>
+
+        <label class="reflect-label" for="lc-reflect-2">You're building a research assistant that needs to reason through complex multi-step problems. Would a small, fast model be a good fit? What tradeoff are you making either way?</label>
+        <textarea class="reflect-input" id="lc-reflect-2" placeholder="Think about reasoning depth, hallucination risk, user trust, and budget…"></textarea>
+        <details>
+            <summary>Sample answer</summary>
+            <p>A small model is a poor default here. Multi-step research requires chaining logic, citing sources accurately, and recovering from mistakes — areas where frontier models outperform. Using GPT-4o mini saves money and latency but increases hallucination risk and shallow reasoning; users may get confident-sounding wrong answers. The tradeoff with a large model: higher cost (~30–40× per token) and slower responses, but better reliability on hard tasks. For a research assistant, quality usually wins — unless you hybridize (small model for retrieval/summarization, large model for synthesis).</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li><strong>Latency</strong> = time to first token + generation time; bigger models are slower on both axes.</li>
+        <li><strong>Cost</strong> = input tokens + output tokens × per-model rates; output is usually pricier; frontier models cost far more per token.</li>
+        <li>You trade off <strong>quality, speed, and cost</strong> — rarely get all three.</li>
+        <li><strong>Match model tier to task complexity</strong>; use cascades at scale.</li>
+        <li><strong>Local models</strong> avoid per-token bills but need hardware; <strong>APIs</strong> offer capability without capital expense.</li>
+        <li>At millions of requests, <strong>small cost differences compound</strong> — model choice is a product decision, not just an engineering one.</li>
+    </ul>
+
+    <hr>-->
+
+    <h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>OpenAI API Pricing:</strong> Current per-token rates for GPT models. <a href="https://openai.com/api/pricing/" target="_blank">openai.com/api/pricing</a></li>
+        <li><strong>Anthropic Claude Pricing:</strong> Input/output rates and prompt caching discounts. <a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank">Claude Platform Docs</a></li>
+        <li><strong>FrugalGPT (Chen et al., 2023):</strong> How to combine models of different sizes to cut cost without losing quality. <a href="https://arxiv.org/abs/2305.05176" target="_blank">arXiv</a></li>
+    </ul>
+
+    <script>
+    (function () {
+        var TIERS = [
+            { name: 'Small — GPT-4o mini', input: 0.15, output: 0.60 },
+            { name: 'Medium — Claude Haiku 4.5', input: 1.00, output: 5.00 },
+            { name: 'Large — Claude Sonnet 4.6', input: 3.00, output: 15.00 },
+            { name: 'Frontier — Claude Opus 4.6', input: 5.00, output: 25.00 }
+        ];
+
+        function formatMoney(n) {
+            if (n >= 1000000) return '$' + (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return '$' + n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            if (n >= 10) return '$' + n.toFixed(2);
+            return '$' + n.toFixed(4);
+        }
+
+        function formatNum(n) {
+            return Math.round(n).toLocaleString();
+        }
+
+        function calcCost(requestsPerDay, inputTok, outputTok, tier) {
+            var daysPerMonth = 30;
+            var monthlyRequests = requestsPerDay * daysPerMonth;
+            var totalInput = monthlyRequests * inputTok;
+            var totalOutput = monthlyRequests * outputTok;
+            var inputCost = (totalInput / 1000000) * tier.input;
+            var outputCost = (totalOutput / 1000000) * tier.output;
+            return {
+                monthly: inputCost + outputCost,
+                inputCost: inputCost,
+                outputCost: outputCost,
+                totalInput: totalInput,
+                totalOutput: totalOutput
+            };
+        }
+
+        function updateCalculator() {
+            var reqEl = document.getElementById('lc-requests');
+            var inEl = document.getElementById('lc-input-tok');
+            var outEl = document.getElementById('lc-output-tok');
+            var resultsEl = document.getElementById('lc-results');
+            if (!reqEl || !resultsEl) return;
+
+            var requests = Math.max(1, parseInt(reqEl.value, 10) || 1);
+            var inputTok = Math.max(1, parseInt(inEl.value, 10) || 1);
+            var outputTok = Math.max(0, parseInt(outEl.value, 10) || 0);
+            var dailyTokens = requests * (inputTok + outputTok);
+
+            document.getElementById('lc-daily-tokens').textContent = formatNum(dailyTokens);
+            document.getElementById('lc-monthly-reqs').textContent = formatNum(requests * 30);
+
+            var costs = TIERS.map(function (tier) {
+                var c = calcCost(requests, inputTok, outputTok, tier);
+                return { tier: tier, cost: c };
+            });
+
+            var maxCost = Math.max.apply(null, costs.map(function (x) { return x.cost.monthly; }));
+
+            var html = '';
+            costs.forEach(function (item) {
+                var pct = maxCost > 0 ? (item.cost.monthly / maxCost) * 100 : 0;
+                var cls = item.cost.monthly > 10000 ? 'lc-cost high' : 'lc-cost';
+                html += '<div class="lc-result-row">';
+                html += '<span><strong>' + item.tier.name + '</strong><br>';
+                html += '<span style="font-size:0.82em;color:#64748b;">$' + item.tier.input + '/M in · $' + item.tier.output + '/M out</span></span>';
+                html += '<span class="' + cls + '">' + formatMoney(item.cost.monthly) + '/mo</span>';
+                html += '</div>';
+                html += '<div style="background:#e2e8f0;border-radius:4px;height:8px;margin:-4px 0 10px;overflow:hidden;">';
+                html += '<div style="background:#2563eb;height:100%;width:' + pct + '%;border-radius:4px;"></div></div>';
+            });
+
+            var miniCost = costs[0].cost.monthly;
+            var opusCost = costs[3].cost.monthly;
+            if (opusCost > 0 && miniCost > 0) {
+                html += '<p class="footnote" style="margin-top:12px;">At these settings, frontier tier costs roughly <strong>' +
+                    Math.round(opusCost / miniCost) + '×</strong> more than the small tier per month.</p>';
+            }
+
+            resultsEl.innerHTML = html;
+        }
+
+        ['lc-requests', 'lc-input-tok', 'lc-output-tok'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateCalculator);
+        });
+        updateCalculator();
+    })();
+    </script>
+</div>

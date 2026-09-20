@@ -1,0 +1,442 @@
+<div class="genai-lesson-container">
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .highlight-box {
+            background: #f8fafc; border-left: 4px solid #3b82f6;
+            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .genai-lesson-container .assignment-box {
+            background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+        }
+        .genai-lesson-container .interactive-box {
+            background: #f4faf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 20px; margin: 20px 0;
+        }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td {
+            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
+        }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container .diagram-wrap {
+            overflow-x: auto; margin: 16px 0; text-align: center;
+        }
+        .genai-lesson-container .diagram-wrap svg {
+            display: block; max-width: 100%; height: auto; margin: 0 auto;
+            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+        }
+        .genai-lesson-container figcaption {
+            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
+        }
+        .genai-lesson-container .question-card {
+            border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;
+            margin: 14px 0; background: #fff;
+        }
+        .genai-lesson-container .question-card h3 { margin-top: 0; font-size: 1.05em; color: #1e3a8a; }
+        .genai-lesson-container .question-num {
+            display: inline-block; background: #dbeafe; color: #1e40af;
+            font-size: 0.78em; font-weight: 700; padding: 2px 8px;
+            border-radius: 4px; margin-bottom: 8px; letter-spacing: 0.04em;
+        }
+        .genai-lesson-container .reflect-label {
+            display: block; font-weight: 600; font-size: 0.92em; margin: 14px 0 6px; color: #334155;
+        }
+        .genai-lesson-container .reflect-input {
+            width: 100%; box-sizing: border-box; min-height: 72px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
+            font-size: 0.92em; line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container details { margin: 10px 0; }
+        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; font-size: 0.92em; }
+        .genai-lesson-container .step-list {
+            counter-reset: ftstep; list-style: none; padding: 0; margin: 16px 0;
+        }
+        .genai-lesson-container .step-list li {
+            counter-increment: ftstep; position: relative; padding: 0 0 16px 44px; margin: 0;
+        }
+        .genai-lesson-container .step-list li::before {
+            content: counter(ftstep); position: absolute; left: 0; top: 0;
+            width: 28px; height: 28px; line-height: 28px; text-align: center;
+            background: #2563eb; color: #fff; border-radius: 50%; font-size: 0.85em; font-weight: 700;
+        }
+        .genai-lesson-container .project-card {
+            border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px;
+            margin: 16px 0; background: #fafafa;
+        }
+        .genai-lesson-container .project-card h4 { margin: 0 0 8px; color: #0f172a; }
+        .genai-lesson-container .footnote { font-size: 0.85em; color: #64748b; margin-top: 8px; }
+        .genai-lesson-container ol { padding-left: 1.4em; }
+        .genai-lesson-container li { margin-bottom: 6px; }
+    </style>
+
+    <h1>Putting It Together: Choosing the Right Model</h1>
+
+    <p>Lessons 1–3 covered three pillars of real-world LLM decisions: <strong>how models are trained</strong>, <strong>how much context they can see</strong>, and <strong>what speed and cost you pay</strong>. This lesson ties those threads into one practical framework — the same kind of thinking you'll use in the upcoming hands-on assignment.</p>
+
+    <div class="assignment-box">
+        <strong>Before the assignment:</strong> You will fine-tune a model, track experiments, and compare runs. This page is your cheat sheet for <em>why</em> those choices matter — not just <em>how</em> to click through a notebook.
+    </div>
+
+    <hr>
+
+    <h2>1. Three Questions to Ask Before Choosing a Model</h2>
+
+    <p>Every product decision starts with constraints. Before you pick "GPT-4" or "fine-tune Llama" by default, run through these three questions:</p>
+
+    <div class="question-card">
+        <span class="question-num">QUESTION 1</span>
+        <h3>How much context do I need?</h3>
+        <p><strong>Short prompts</strong> (a tweet-length question, a single email) fit easily in any modern model — even 8K-token windows are plenty.</p>
+        <p><strong>Long documents</strong> (full contracts, codebases, multi-turn chat history) need a model with a large context window <em>and</em> budget for all those input tokens. From Lesson 2: stuffing 100 pages into the prompt is expensive and slow even when it technically fits.</p>
+        <p><strong>Rule of thumb:</strong> retrieve or summarize first; only send what the model must see.</p>
+    </div>
+
+    <div class="question-card">
+        <span class="question-num">QUESTION 2</span>
+        <h3>How fast does this need to respond?</h3>
+        <p><strong>Real-time chat</strong> (customer support, copilots in the IDE) needs low latency — usually a smaller or mid-tier model, streaming output, and short replies.</p>
+        <p><strong>Batch / overnight jobs</strong> (summarizing thousands of tickets, labeling a dataset) can tolerate slow, frontier models because nobody is staring at a spinner.</p>
+        <p>From Lesson 3: latency = time to first token + (output length ÷ tokens per second). Pick model tier accordingly.</p>
+    </div>
+
+    <div class="question-card">
+        <span class="question-num">QUESTION 3</span>
+        <h3>How complex is the task?</h3>
+        <p><strong>Simple classification or extraction</strong> ("Is this email spam?", "Pull the invoice date") often works with a small model + clear prompt — or even a non-LLM baseline.</p>
+        <p><strong>Deep reasoning, multi-step planning, rare domain expertise</strong> (legal analysis, complex debugging, nuanced writing) may need a larger model — but verify with evals before assuming you need the biggest one.</p>
+        <p>Don't use a sledgehammer for a thumbtack. Start small, measure, escalate only when metrics justify it.</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Question</th><th>Lean smaller / cheaper when…</th><th>Lean bigger / fine-tuned when…</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Context</strong></td>
+                <td>Prompts stay under a few pages; you summarize long sources</td>
+                <td>You truly need full-document reasoning in one shot</td>
+            </tr>
+            <tr>
+                <td><strong>Speed</strong></td>
+                <td>Interactive UI, high QPS, mobile users</td>
+                <td>Offline batch, quality beats wait time</td>
+            </tr>
+            <tr>
+                <td><strong>Complexity</strong></td>
+                <td>Structured labels, templates, narrow formats</td>
+                <td>Multi-hop reasoning, novel domain jargon, strict style</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>2. Base Model vs. Fine-Tuned — When Do You Need Which?</h2>
+
+    <p>From Lesson 1: a <strong>base model</strong> (or a general instruction-tuned API like ChatGPT) already absorbed broad language knowledge during pretraining. A <strong>fine-tuned model</strong> gets extra training on <em>your</em> examples to specialize behavior.</p>
+
+    <div class="highlight-box">
+        <strong>Default stance:</strong> If a general-purpose model already passes your evals with good prompting, <em>don't fine-tune</em>. Fine-tuning costs data, compute, and ongoing maintenance. Prompt engineering + retrieval is cheaper to iterate.
+    </div>
+
+    <p><strong>Fine-tuning makes sense when:</strong></p>
+    <ul>
+        <li>You need a <strong>very specific style or format</strong> (brand voice, JSON schema, medical note template) that prompting alone can't stabilize</li>
+        <li>You have <strong>domain knowledge</strong> the base model rarely saw (internal acronyms, proprietary procedures, niche regulations)</li>
+        <li>You need <strong>consistent behavior on a narrow task</strong> at scale — same input pattern, same output structure, every time</li>
+    </ul>
+
+    <p><strong>Stick with a base / API model when:</strong></p>
+    <ul>
+        <li>The task is general Q&amp;A, brainstorming, or summarization of public topics</li>
+        <li>Your requirements change weekly — prompts update in minutes; retraining does not</li>
+        <li>You lack enough high-quality labeled examples (rough rule: hundreds to thousands for meaningful SFT, not five examples)</li>
+    </ul>
+
+    <!--<figure class="diagram-wrap">
+        <svg viewBox="0 0 620 420" role="img" aria-label="Decision tree for whether to fine-tune a language model">
+            <defs>
+                <marker id="dt-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+                </marker>
+            </defs>
+            <rect x="210" y="12" width="200" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+            <text x="310" y="32" text-anchor="middle" font-size="11" font-weight="600">Does a general model</text>
+            <text x="310" y="46" text-anchor="middle" font-size="11" font-weight="600">pass your evals with prompts?</text>
+            <line x1="310" y1="56" x2="310" y2="78" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="330" y="72" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+            <rect x="210" y="78" width="200" height="36" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+            <text x="310" y="100" text-anchor="middle" font-size="10" font-weight="600">Use base / API model</text>
+            <line x1="210" y1="34" x2="120" y2="34" stroke="#64748b"/>
+            <line x1="120" y1="34" x2="120" y2="130" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="132" y="82" font-size="9" fill="#dc2626" font-weight="600">No</text>
+            <rect x="30" y="130" width="180" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+            <text x="120" y="148" text-anchor="middle" font-size="10" font-weight="600">Need fixed style / format</text>
+            <text x="120" y="160" text-anchor="middle" font-size="10" font-weight="600">or domain jargon?</text>
+            <line x1="120" y1="170" x2="120" y2="192" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="138" y="188" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+            <rect x="30" y="192" width="180" height="36" rx="8" fill="#fce7f3" stroke="#db2777"/>
+            <text x="120" y="214" text-anchor="middle" font-size="10" font-weight="600">Consider fine-tuning</text>
+            <line x1="30" y1="210" x2="10" y2="210" stroke="#64748b"/>
+            <line x1="10" y1="210" x2="10" y2="280" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="22" y="250" font-size="9" fill="#64748b">No</text>
+            <rect x="30" y="280" width="180" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1"/>
+            <text x="120" y="298" text-anchor="middle" font-size="10" font-weight="600">Try bigger model,</text>
+            <text x="120" y="312" text-anchor="middle" font-size="10" font-weight="600">RAG, or better prompts</text>
+            <line x1="410" y1="34" x2="500" y2="34" stroke="#64748b"/>
+            <line x1="500" y1="34" x2="500" y2="130" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="488" y="82" font-size="9" fill="#64748b">Maybe later</text>
+            <rect x="410" y="130" width="180" height="40" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+            <text x="500" y="148" text-anchor="middle" font-size="10" font-weight="600">Enough quality</text>
+            <text x="500" y="160" text-anchor="middle" font-size="10" font-weight="600">training examples?</text>
+            <line x1="500" y1="170" x2="500" y2="192" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="518" y="188" font-size="9" fill="#dc2626" font-weight="600">No → collect data</text>
+            <line x1="590" y1="210" x2="590" y2="280" stroke="#64748b" marker-end="url(#dt-arr)"/>
+            <text x="518" y="250" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+            <rect x="410" y="280" width="180" height="40" rx="8" fill="#fce7f3" stroke="#db2777"/>
+            <text x="500" y="298" text-anchor="middle" font-size="10" font-weight="600">Fine-tune + track</text>
+            <text x="500" y="312" text-anchor="middle" font-size="10" font-weight="600">experiments in W&amp;B</text>
+            <rect x="140" y="360" width="340" height="44" rx="8" fill="#f0fdf4" stroke="#16a34a"/>
+            <text x="310" y="380" text-anchor="middle" font-size="10" font-weight="600">Always: pick model size for context + latency + cost (Lessons 2 &amp; 3)</text>
+            <text x="310" y="394" text-anchor="middle" font-size="9" fill="#64748b">Measure on your task — don't guess from parameter count alone</text>
+        </svg>
+        <figcaption>Decision tree: prompt-first, fine-tune only when you have a narrow gap and enough data. Model size is a separate axis.</figcaption>
+    </figure>-->
+  
+  <figure class="diagram-wrap">
+        <svg viewBox="0 0 720 460" role="img" aria-label="Decision tree for whether to fine-tune a language model">
+    <defs>
+        <marker id="dt-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+        </marker>
+    </defs>
+
+    <!-- Root decision -->
+    <rect x="260" y="12" width="200" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+    <text x="360" y="32" text-anchor="middle" font-size="11" font-weight="600">Does a general model</text>
+    <text x="360" y="46" text-anchor="middle" font-size="11" font-weight="600">pass your evals with prompts?</text>
+
+    <!-- Yes branch -->
+    <line x1="460" y1="34" x2="570" y2="34" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="505" y="24" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+
+    <rect x="540" y="16" width="150" height="36" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+    <text x="615" y="38" text-anchor="middle" font-size="10" font-weight="600">Use base / API model</text>
+
+    <!-- No branch -->
+    <line x1="360" y1="56" x2="360" y2="100" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="378" y="84" font-size="9" fill="#dc2626" font-weight="600">No</text>
+
+    <!-- Style / jargon decision -->
+    <rect x="270" y="100" width="180" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+    <text x="360" y="118" text-anchor="middle" font-size="10" font-weight="600">Need fixed style / format</text>
+    <text x="360" y="130" text-anchor="middle" font-size="10" font-weight="600">or domain jargon?</text>
+
+    <!-- No branch -->
+    <line x1="270" y1="120" x2="120" y2="120" stroke="#64748b"/>
+    <line x1="120" y1="120" x2="120" y2="250" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="132" y="185" font-size="9" fill="#64748b" font-weight="600">No</text>
+
+    <rect x="30" y="250" width="180" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1"/>
+    <text x="120" y="268" text-anchor="middle" font-size="10" font-weight="600">Try bigger model,</text>
+    <text x="120" y="282" text-anchor="middle" font-size="10" font-weight="600">or better prompts</text>
+
+    <!-- Yes branch -->
+    <line x1="360" y1="140" x2="360" y2="190" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="378" y="172" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+
+    <!-- Data decision -->
+    <rect x="270" y="190" width="180" height="40" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="360" y="208" text-anchor="middle" font-size="10" font-weight="600">Enough quality</text>
+    <text x="360" y="220" text-anchor="middle" font-size="10" font-weight="600">training examples?</text>
+
+    <!-- No -> collect data -->
+    <line x1="450" y1="210" x2="580" y2="210" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="500" y="198" font-size="9" fill="#dc2626" font-weight="600">No</text>
+
+    <rect x="580" y="190" width="120" height="40" rx="8" fill="#fee2e2" stroke="#dc2626"/>
+    <text x="640" y="214" text-anchor="middle" font-size="10" font-weight="600">Collect data</text>
+
+    <!-- Yes -> fine tune -->
+    <line x1="360" y1="230" x2="360" y2="300" stroke="#64748b" marker-end="url(#dt-arr)"/>
+    <text x="378" y="270" font-size="9" fill="#16a34a" font-weight="600">Yes</text>
+
+    <rect x="270" y="300" width="180" height="40" rx="8" fill="#fce7f3" stroke="#db2777"/>
+    <text x="360" y="318" text-anchor="middle" font-size="10" font-weight="600">Fine-tune + track</text>
+    <text x="360" y="332" text-anchor="middle" font-size="10" font-weight="600">experiments in W&amp;B</text>
+
+    <!-- Footer note -->
+    <rect x="170" y="390" width="380" height="44" rx="8" fill="#f0fdf4" stroke="#16a34a"/>
+    <text x="360" y="410" text-anchor="middle" font-size="10" font-weight="600">
+        Always: pick model size for context + latency + cost (Lessons 2 &amp; 3)
+    </text>
+    <text x="360" y="424" text-anchor="middle" font-size="9" fill="#64748b">
+        Measure on your task — don't guess from parameter count alone
+    </text>
+</svg>
+        <figcaption>Decision tree: prompt-first, fine-tune only when you have a narrow gap and enough data. Model size is a separate axis.</figcaption>
+    </figure>
+
+    <hr>
+
+    <h2>3. What Fine-Tuning Looks Like in Practice</h2>
+
+    <p>Fine-tuning is not mysterious — it's the same gradient-descent loop from Lesson 1, just on a small curated dataset and for far fewer steps than pretraining.</p>
+
+    <ol class="step-list">
+        <li><strong>Prepare a dataset</strong> of input/output pairs for your task. Example: customer message → ideal support reply. Clean, consistent formatting matters more than raw size.</li>
+        <li><strong>Choose a starting checkpoint</strong> — a pretrained or instruction-tuned base (e.g., Llama, Mistral, GPT fine-tuning API). You are nudging weights, not training from scratch.</li>
+        <li><strong>Train with small learning rates</strong> for a few epochs. Updates are tiny compared to pretraining — you don't want to "forget" general language ability (catastrophic forgetting).</li>
+        <li><strong>Evaluate on a held-out set</strong> you did not train on. Did accuracy, F1, human ratings, or task-specific metrics improve vs. the base model with prompts?</li>
+        <li><strong>Log everything</strong> — hyperparameters, loss curves, eval scores — so you can compare runs and reproduce what worked.</li>
+    </ol>
+
+    <table>
+        <thead>
+            <tr><th>Phase</th><th>Pretraining (Lesson 1)</th><th>Fine-tuning (your assignment)</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Data</td><td>Trillions of web tokens</td><td>Hundreds–thousands of curated pairs</td></tr>
+            <tr><td>Duration</td><td>Weeks–months</td><td>Hours–days</td></tr>
+            <tr><td>Weight changes</td><td>Large, from random init</td><td>Small nudges on a capable base</td></tr>
+            <tr><td>Success metric</td><td>Low general loss</td><td>High score on <em>your</em> task eval</td></tr>
+        </tbody>
+    </table>
+
+    <p>Fine-tuning involves lots of trial and error: learning rate too high → model diverges; too low → no improvement; too many epochs → overfits your tiny set. That is why experiment tracking is not optional — it is how professionals remember what they already tried.</p>
+
+    <hr>
+
+    <h2>4. Introducing Weights &amp; Biases (W&amp;B)</h2>
+
+    <p><strong>Weights &amp; Biases</strong> (W&amp;B) is an experiment-tracking platform used across industry and research. When you fine-tune in the assignment, you'll log runs to W&amp;B and see dashboards like the mockup below.</p>
+
+    <p><strong>What W&amp;B tracks for you:</strong></p>
+    <ul>
+        <li><strong>Loss curves</strong> — training (and validation) loss over steps; should generally trend down unless something is wrong</li>
+        <li><strong>Hyperparameters</strong> — learning rate, batch size, epochs, model name — attached to each run automatically</li>
+        <li><strong>Side-by-side comparisons</strong> — overlay multiple runs to see which settings won</li>
+        <li><strong>Artifacts &amp; notes</strong> — checkpoints, eval tables, free-text "changed prompt template v2"</li>
+    </ul>
+
+    <p>Why this matters: your first fine-tune will probably underperform. Your fifth might win — but only if you can remember what changed between them. Spreadsheets and memory don't scale; W&amp;B does.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 640 320" role="img" aria-label="Mock Weights and Biases dashboard showing training loss curve and hyperparameter table">
+            <rect x="0" y="0" width="640" height="320" fill="#fafafa"/>
+            <rect x="0" y="0" width="640" height="36" fill="#1e1b4b"/>
+            <text x="16" y="23" font-size="12" fill="#fff" font-weight="600">wandb — fine-tune-support-bot</text>
+            <text x="520" y="23" font-size="10" fill="#a5b4fc">Runs: 4 · Best: run-3</text>
+            <rect x="12" y="48" width="380" height="200" rx="6" fill="#fff" stroke="#e2e8f0"/>
+            <text x="24" y="68" font-size="11" fill="#334155" font-weight="600">train/loss</text>
+            <line x1="40" y1="220" x2="360" y2="220" stroke="#cbd5e1"/>
+            <line x1="40" y1="80" x2="40" y2="220" stroke="#cbd5e1"/>
+            <text x="28" y="224" font-size="8" fill="#64748b">0</text>
+            <text x="22" y="90" font-size="8" fill="#64748b">2.0</text>
+            <text x="200" y="238" text-anchor="middle" font-size="8" fill="#64748b">training steps →</text>
+            <path d="M 50 95 C 120 180, 200 200, 350 205" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 3" opacity="0.7"/>
+            <text x="300" y="100" font-size="8" fill="#ef4444">run-1 (lr too high)</text>
+            <path d="M 50 100 C 150 160, 250 190, 350 200" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <text x="300" y="125" font-size="8" fill="#d97706">run-2</text>
+            <path d="M 50 105 C 140 150, 220 175, 350 195" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+            <text x="300" y="150" font-size="8" fill="#2563eb" font-weight="600">run-3 ✓ best</text>
+            <rect x="404" y="48" width="224" height="200" rx="6" fill="#fff" stroke="#e2e8f0"/>
+            <text x="416" y="68" font-size="11" fill="#334155" font-weight="600">Hyperparameters</text>
+            <text x="416" y="92" font-size="9" fill="#64748b">learning_rate</text>
+            <text x="580" y="92" text-anchor="end" font-size="9" fill="#0f172a" font-family="monospace">2e-5</text>
+            <text x="416" y="112" font-size="9" fill="#64748b">epochs</text>
+            <text x="580" y="112" text-anchor="end" font-size="9" fill="#0f172a" font-family="monospace">3</text>
+            <text x="416" y="132" font-size="9" fill="#64748b">batch_size</text>
+            <text x="580" y="132" text-anchor="end" font-size="9" fill="#0f172a" font-family="monospace">8</text>
+            <text x="416" y="152" font-size="9" fill="#64748b">base_model</text>
+            <text x="580" y="152" text-anchor="end" font-size="9" fill="#0f172a" font-family="monospace">llama-3-8b</text>
+            <text x="416" y="172" font-size="9" fill="#64748b">train_examples</text>
+            <text x="580" y="172" text-anchor="end" font-size="9" fill="#0f172a" font-family="monospace">1,240</text>
+            <text x="416" y="200" font-size="9" fill="#64748b">eval_accuracy</text>
+            <text x="580" y="200" text-anchor="end" font-size="10" fill="#16a34a" font-weight="700">91.2%</text>
+            <rect x="12" y="260" width="616" height="48" rx="6" fill="#fff" stroke="#e2e8f0"/>
+            <text x="24" y="280" font-size="10" fill="#334155" font-weight="600">What you look for:</text>
+            <text x="24" y="296" font-size="9" fill="#64748b">Smooth downward loss · validation not diverging · compare runs before picking a checkpoint for deployment</text>
+        </svg>
+        <figcaption>Mock W&amp;B view — what you'll see after logging your assignment runs. Red dashed line = unstable training; blue = run you'd ship.</figcaption>
+    </figure>
+
+    <p class="footnote">W&amp;B is standard in real ML workflows — not just coursework. The habit of "log first, argue from curves later" saves teams from mistaking luck for skill.</p>
+
+    <!--<hr>
+
+    <h2>5. Activity: Match the Model to the Project</h2>
+
+    <div class="interactive-box">
+        <p>For each project below, decide: <strong>base model or fine-tuned?</strong> <strong>Big model or small?</strong> Briefly explain why, using context, latency, cost, and task complexity.</p>
+
+        <div class="project-card">
+            <h4>Project A — Customer support chatbot</h4>
+            <p>Live chat widget on a retail site. Must reply in under 2 seconds. Answers draw on return policies, order status APIs, and brand tone guidelines.</p>
+            <label class="reflect-label" for="tt4-a">Your decision (base vs fine-tuned, big vs small, why):</label>
+            <textarea class="reflect-input" id="tt4-a" placeholder="Consider latency, domain tone, volume…"></textarea>
+            <details>
+                <summary>Sample reasoning</summary>
+                <p><strong>Small–medium instruction model + fine-tune (or RAG).</strong> Latency demands rules out frontier models. Fine-tuning (or heavy prompt + retrieval over policy docs) helps stable brand voice and consistent refund steps. Base GPT-style API might work with RAG first — fine-tune if tone/format still drifts at scale.</p>
+            </details>
+        </div>
+
+        <div class="project-card">
+            <h4>Project B — Code autocomplete in the IDE</h4>
+            <p>Suggests the next few lines as the developer types. Must feel instant (&lt;200 ms perceived). Runs locally or on a nearby server millions of times per day.</p>
+            <label class="reflect-label" for="tt4-b">Your decision:</label>
+            <textarea class="reflect-input" id="tt4-b" placeholder="Consider local inference, model size, specialization…"></textarea>
+            <details>
+                <summary>Sample reasoning</summary>
+                <p><strong>Small specialized base model, often pre-trained on code (not generic chat).</strong> Fine-tuning on your company's codebase patterns can help, but many products start with Codex/StarCoder-class models without custom fine-tune. Size beats raw capability — latency and cost dominate. Frontier chat models are wrong tool.</p>
+            </details>
+        </div>
+
+        <div class="project-card">
+            <h4>Project C — Poetry generator for a creative writing app</h4>
+            <p>Users request poems in specific forms (haiku, sonnet). Quality matters more than speed; batch generation overnight is acceptable for a "workshop" feature.</p>
+            <label class="reflect-label" for="tt4-c">Your decision:</label>
+            <textarea class="reflect-input" id="tt4-c" placeholder="Consider creativity, format constraints, fine-tuning for meter…"></textarea>
+            <details>
+                <summary>Sample reasoning</summary>
+                <p><strong>Medium–large general model; optional fine-tune for strict forms.</strong> Latency is relaxed, so a capable instruction model can shine. Fine-tune if you need reliable syllable counts or sonnet rhyme schemes the base model mishandles. Base model + examples in prompt may be enough for v1.</p>
+            </details>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>Ask <strong>context, speed, complexity</strong> before picking a model tier.</li>
+        <li><strong>Prompt + eval first</strong>; fine-tune only for narrow gaps with enough data.</li>
+        <li>Fine-tuning is <strong>small-data, small-step</strong> training — measure on your task, not vibes.</li>
+        <li><strong>W&amp;B</strong> (or similar) is how you compare runs and avoid repeating failed experiments.</li>
+        <li>The assignment puts this framework into practice — choose hyperparameters deliberately and read your loss curves.</li>
+    </ul>
+
+    <div class="assignment-box">
+        <strong>Next up:</strong> Hands-on fine-tuning. You will build a dataset, train a model, log runs to W&amp;B, and compare results. Return to this page if you get stuck on <em>whether</em> to change the model vs. the learning rate vs. the data.
+    </div>-->
+
+    <hr>
+
+    <h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>Weights &amp; Biases documentation:</strong> <a href="https://docs.wandb.ai/" target="_blank">docs.wandb.ai</a> — quickstart for logging training runs</li>
+        <li><strong>OpenAI fine-tuning guide:</strong> Practical notes on when fine-tuning helps vs. prompting. <a href="https://platform.openai.com/docs/guides/fine-tuning" target="_blank">OpenAI docs</a></li>
+        <li><strong>Hugging Face Transformers fine-tuning tutorial:</strong> Code-level walkthrough aligned with many classroom assignments. <a href="https://huggingface.co/docs/transformers/training" target="_blank">HF docs</a></li>
+    </ul>
+</div>

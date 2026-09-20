@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!--
+  Lesson page template for the F.O.R.G.E. AI Challenge.
+
+  To make a new page:
+    1. Copy this file into the lesson's folder.
+    2. Fix the two relative paths marked PATH so they point at the repo root.
+       Pages in Lessons/<module>/<unit>/ are three levels deep, hence ../../../
+    3. Fill in the title, breadcrumb, eyebrow, h1 and sections.
+    4. Delete any component you don't use, and delete this comment.
+
+  All styling lives in css/forge.css. Do not add <style> blocks to pages; if a
+  page needs something new, add a component to forge.css so every page gets it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page Title · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css"> <!-- PATH -->
+<script src="../../../js/forge-math.js"></script> <!-- PATH; only needed if the page has LaTeX -->
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a> <!-- PATH -->
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Unit Name</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Unit Name</p>
+    <h1>Page Title</h1>
+    <p class="lede">One or two sentences saying what this page covers.</p>
+  </header>
+
+  <!-- One <section> per topic. Sections get a divider automatically; no <hr>. -->
+  <section>
+    <h2>1. Section heading</h2>
+    <p>Body text with <strong>emphasis</strong>, <code>inline code</code> and a <a href="#">link</a>.</p>
+
+    <h3>Sub-heading</h3>
+    <ul>
+      <li>Bulleted item</li>
+      <li>Another item</li>
+    </ul>
+    <ol>
+      <li>Numbered step</li>
+      <li>Another step</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Callouts</h2>
+    <aside class="callout callout--note">
+      <p class="callout__title">Note</p>
+      <p>Extra context the reader should not miss.</p>
+    </aside>
+    <aside class="callout callout--warn">
+      <p class="callout__title">Important</p>
+      <p>Something that affects grades, deadlines or correctness.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2>Math</h2>
+    <p>Inline math uses <code>\( ... \)</code>, for example \(\vec{x} \in \mathbb{R}^n\). Display math uses <code>\[ ... \]</code>:</p>
+    \[\|\vec{x}\|_2 = \sqrt{x_1^2 + x_2^2 + \cdots + x_n^2}\]
+  </section>
+
+  <section>
+    <h2>Tables and code</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Column A</th><th>Column B</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Cell</td><td>Cell</td></tr>
+          <tr><td>Cell</td><td>Cell</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <pre><code># python or shell snippet
+print("hello")</code></pre>
+  </section>
+
+  <section>
+    <h2>Figures, links and access details</h2>
+    <figure>
+      <img src="image.png" alt="Describe the image for screen readers">
+      <figcaption>Caption and source.</figcaption>
+    </figure>
+
+    <ul class="link-list">
+      <li><a href="#" target="_blank" rel="noopener">Resource title</a>
+        <span class="desc">One line on why it is worth reading.</span></li>
+      <li><a href="#" target="_blank" rel="noopener">Another resource</a></li>
+    </ul>
+
+    <dl class="access-card">
+      <dt>Link</dt>
+      <dd><a href="#" target="_blank" rel="noopener">Join here</a></dd>
+      <dt>Access code</dt>
+      <dd><span class="code">ABC123</span></dd>
+    </dl>
+  </section>
+
+  <!-- Prev / next: omit the side that does not exist. -->
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="Previous.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Previous page title</span>
+    </a>
+    <a class="pager__next" href="Next.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Next page title</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a> <!-- PATH -->
+</footer>
+
+</body>
+</html>

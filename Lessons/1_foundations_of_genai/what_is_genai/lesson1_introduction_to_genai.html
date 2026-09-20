@@ -1,0 +1,754 @@
+<div class="genai-lesson-container">
+
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 32px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .highlight-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .genai-lesson-container .interactive-box { background: #f4faf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top; }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container button { padding: 8px 12px; margin: 4px 2px 4px 0; border: 1px solid #cbd5e1; background: white; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b; }
+        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
+        .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .genai-lesson-container button.primary:hover { background: #1d4ed8; }
+        .genai-lesson-container button.correct { border-color: #16a34a; background: #dcfce7; }
+        .genai-lesson-container figure { margin: 16px 0; }
+        .genai-lesson-container figure.figure-wide {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        .genai-lesson-container figure img { display: block; max-width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 6px; }
+        .genai-lesson-container figure.figure-wide img {
+            max-width: none;
+            width: 100%;
+            min-width: 520px;
+        }
+        .genai-lesson-container figure audio {
+            display: block; width: 100%; max-width: 560px; margin: 8px 0;
+        }
+        .genai-lesson-container figcaption { font-size: 0.85em; color: #64748b; margin-top: 8px; }
+        .genai-lesson-container figure video {
+            display: block; width: 100%; max-width: 560px; margin: 0 auto;
+            border: 1px solid #cbd5e1; border-radius: 6px;
+        }
+        .genai-lesson-container .timeline-item {
+            border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 20px 0; background: #fff;
+        }
+        .genai-lesson-container .timeline-item h3 { margin-top: 0; color: #1e3a8a; }
+        .genai-lesson-container .timeline-year { font-size: 0.85em; color: #64748b; font-weight: 600; letter-spacing: 0.03em; }
+        .genai-lesson-container .demo-panel {
+            background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px;
+            min-height: 90px; font-family: Georgia, "Times New Roman", serif; font-size: 1.05em;
+            line-height: 1.7; color: #334155;
+        }
+        .genai-lesson-container .demo-token-new { background: #dbeafe; border-radius: 3px; padding: 0 2px; }
+        .genai-lesson-container .eq-panel {
+            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 0.95em;
+        }
+        .genai-lesson-container .lab-note { font-size: 0.88em; color: #475569; margin-top: 10px; }
+        .genai-lesson-container .prob-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 0.88em; }
+        .genai-lesson-container .prob-label { width: 80px; font-family: monospace; flex-shrink: 0; }
+        .genai-lesson-container .prob-track { flex: 1; height: 16px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+        .genai-lesson-container .prob-fill { height: 100%; background: #3b82f6; border-radius: 3px; }
+        .genai-lesson-container .prob-fill.chosen { background: #16a34a; }
+        .genai-lesson-container .prob-pct { width: 44px; text-align: right; color: #64748b; flex-shrink: 0; }
+        .genai-lesson-container .guess-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .genai-lesson-container .mask-blank {
+            display: inline-block; background: #fef3c7; border: 2px dashed #f59e0b;
+            padding: 2px 10px; border-radius: 4px; font-weight: 600;
+        }
+        .genai-lesson-container .chatbot-steps { margin: 12px 0 16px 1.2em; padding: 0; }
+        .genai-lesson-container .chatbot-steps li { margin: 8px 0; }
+        .genai-lesson-container .prompt-trial {
+            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; margin: 14px 0; background: #fff;
+        }
+        .genai-lesson-container .prompt-trial h4 { margin: 0 0 6px; font-size: 0.95em; color: #1e3a8a; }
+        .genai-lesson-container .prompt-trial .trial-type { font-size: 0.82em; color: #64748b; margin: 0 0 8px; }
+        .genai-lesson-container .prompt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin-top: 8px; }
+        .genai-lesson-container .prompt-row .prompt-box { flex: 1; min-width: 200px; margin: 0; }
+        .genai-lesson-container .reflect-label {
+            display: block; font-weight: 600; font-size: 0.92em; margin: 14px 0 6px; color: #334155;
+        }
+        .genai-lesson-container .reflect-input {
+            width: 100%; box-sizing: border-box; min-height: 72px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.92em;
+            line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container .reflect-checklist { margin: 12px 0 0; padding: 0; list-style: none; }
+        .genai-lesson-container .reflect-checklist li { margin: 8px 0; font-size: 0.92em; }
+        .genai-lesson-container .reflect-checklist label { cursor: pointer; }
+        .genai-lesson-container button.copied { border-color: #16a34a; background: #dcfce7; }
+        .genai-lesson-container .modality-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;
+        }
+        @media (max-width: 640px) { .genai-lesson-container .modality-grid { grid-template-columns: 1fr; } }
+        .genai-lesson-container .prompt-box {
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+            padding: 10px 14px; font-family: monospace; font-size: 0.9em; margin: 8px 0;
+        }
+        .genai-lesson-container .example-block { margin: 20px 0; }
+        .genai-lesson-container .modality-card {
+            border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fff;
+        }
+        .genai-lesson-container .modality-card h3 { margin-top: 0; font-size: 1.05em; }
+        .genai-lesson-container .modality-card .tool-name { font-size: 0.88em; color: #64748b; margin-bottom: 8px; }
+        .genai-lesson-container .modality-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 16px 0;
+        }
+        .genai-lesson-container .timeline-arrow { text-align: center; color: #94a3b8; font-size: 1.4em; margin: 4px 0; line-height: 1; }
+        .genai-lesson-container .wrong-answer {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
+            padding: 12px 14px; font-size: 0.95em; color: #7f1d1d; margin: 10px 0;
+        }
+        .genai-lesson-container .wrong-answer strong { color: #b91c1c; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+        .genai-lesson-container .math-details-toggle {
+            margin: 16px 0; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 0.92em; color: #475569;
+        }
+        .genai-lesson-container .math-details-toggle[open] { background: #fff; padding-bottom: 16px; }
+        .genai-lesson-container .math-details-toggle summary { font-weight: 600; outline: none; margin-bottom: 4px; }
+    </style>
+
+    <h1>Chapter 1: What Is Generative AI?</h1>
+
+    <p>Imagine asking your computer to write a story, create a logo, compose a song, or help explain a difficult homework problem. Not long ago, those kinds of tasks would have seemed impossible for a computer. Today, they can often be done in just a few seconds.</p>
+
+    <p>What changed? Modern AI systems can do more than recognize or organize information. They can <strong>create</strong> something entirely new. That's where the term <strong>Generative AI</strong> comes from.</p>
+
+    <p>You've probably already used a generative AI tool, whether it was asking ChatGPT a question, generating an image from a short prompt, or getting help writing an email. Instead of simply looking up an existing answer, these systems generate a new response based on what they've learned from large amounts of data.</p>
+
+    <p>In this chapter, you'll learn what makes generative AI different from earlier types of AI, what kinds of problems it can solve, and why it has become one of the fastest-growing technologies in the world.</p>
+
+    <hr>
+
+    <h2>1. What Does "Generate" Actually Mean?</h2>
+
+    <p>When people first hear about AI, it's easy to think of it as a smarter version of a search engine. After all, both can answer questions and provide information.</p>
+
+    <p>But there's an important difference. A search engine finds information that already exists. If you search for pictures of cats, it returns photos that people have already taken and uploaded.</p>
+
+    <p>Generative AI works differently. Instead of finding existing content, it creates something new. Ask it to write a story, generate an image, or compose a song, and it produces an original response based on patterns it learned during training.</p>
+
+    <div class="example-block">
+        <p><strong>Prompt:</strong></p>
+        <div class="prompt-box">paradise cosmic beach</div>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://imgcdn.stablediffusionweb.com/2024/6/2/806101aa-7965-4d65-b294-acc8f85e46be.jpg"
+                 alt="AI-generated image of a colorful paradise beach beneath a vivid galaxy and nebula night sky">
+            <figcaption>Example output from a text-to-image model: the prompt was interpreted as a beach scene with a cosmic sky—not retrieved from an existing photo library.</figcaption>
+        </figure>
+    </div>
+
+    <div class="example-block">
+        <p><strong>Prompt:</strong></p>
+        <div class="prompt-box">Recite the first law of robotics.</div>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/gpt3/04-gpt3-generate-tokens-output.gif"
+                 alt="Animation of GPT-3 generating a response to Recite the first law of robotics one token at a time">
+            <figcaption>Language models write new text one piece at a time instead of copying an existing webpage.</figcaption>
+        </figure>
+    </div>
+
+    <div class="example-block">
+        <p><strong>Prompt:</strong></p>
+        <div class="prompt-box">A grand orchestral arrangement with thunderous percussion, epic brass fanfares, and soaring strings.</div>
+        <figure>
+            <audio referrerpolicy="no-referrer" controls preload="metadata" src="https://ai.honu.io/papers/musicgen/samples/musicgen/001_sample.mp3">
+                Your browser does not support the audio element.
+            </audio>
+            <figcaption>Sample generated by Meta's MusicGen from the prompt above—percussion, brass, and strings created together, not copied from a recording.</figcaption>
+        </figure>
+    </div>
+
+    <hr>
+
+    <h2>2. A Different Kind of AI</h2>
+    
+    <p>Not all AI systems do the same job. Before generative AI became popular, most AI was designed to recognize patterns and make decisions, not create new content.</p>
+    
+    <p>Imagine you have thousands of pictures of cats and dogs.</p>
+    
+    <div class="highlight-box">
+        <p style="margin:0 0 10px;">One AI system is asked:<br><strong>"Is this picture a cat or a dog?"</strong></p>
+        <p style="margin:0;">Another AI system is asked:<br><strong>"What do cats usually look like?"</strong></p>
+    </div>
+    
+    <p>Those may sound similar, but they're solving two very different problems.</p>
+    
+    <p>The first system looks at an image and decides which label fits best. This is called a <strong>discriminative model</strong>. The second system learns the underlying patterns that make something look like a cat, allowing it to create entirely new cat images. This is called a <strong>generative model</strong>.</p>
+    
+    <p>You'll often see this mechanical difference tracked using simple mathematical probabilities. Don't worry if the notation looks unfamiliar—the core concepts translate easily into natural rules:</p>
+    
+    <p><strong>Discriminative AI</strong> calculates the probability of a label given an input. After observing a specific image, it predicts the most likely classification label.</p>
+    
+    <div class="eq-panel">
+        Example Process: Provided Image &rarr; Evaluates Features &rarr; 98% Cat, 2% Dog
+    </div>
+    
+    <p><strong>Generative AI</strong> learns how data is constructed so it can produce brand new independent examples. Modern text language models track an incredibly practical sequence: they look at everything written so far, and determine what individual character or word piece should pop out next.</p>
+    
+    <details class="math-details-toggle">
+        <summary>View the Mathematical Formulas</summary>
+        <p>In standard data science terms, Discriminative AI maps to \(P(y \mid x)\), or <em>"the probability of a label (\(y\)) given an input (\(x\))."</em></p>
+        <p>In its simplest baseline form, Generative AI maps to \(P(x)\), the probability of the data itself. For advanced auto-regressive language models predicting sequences step-by-step, it uses conditional probability written like this:</p>
+        <div class="eq-panel">
+        \[
+        P(x_t \mid x_1, x_2, \ldots, x_{t-1})
+        \]
+        </div>
+        <p>This expression reads: <em>"Given all preceding generated elements from sequence start up to item \(t-1\), compute the highest statistical probability for item \(x_t\)."</em></p>
+    </details>
+
+    <p>Every new word segment is calculated by looking backwards at all the text blocks that came before it. By repeating that process over and over, an AI model can steadily assemble paragraphs, stories, dialogues, or functional computer scripts.</p>
+    
+    <p>Watch this mechanics loop in action below. As each word segment is chosen, it immediately attaches onto the expanding back-history context used to compute the next step.</p>
+    
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Prompt:</strong> Write a poem about a sad robot</p>
+        <button id="l1-play" class="primary" type="button">Play generation</button>
+        <button id="l1-demo-reset" type="button">Reset</button>
+        <div class="demo-panel" style="margin-top:14px;">
+            <div id="l1-demo-output"><span style="color:#94a3b8;">Press Play to watch words appear one at a time.</span></div>
+        </div>
+        <div class="eq-panel" id="l1-eq-panel">
+            Step <span id="l1-step-num">0</span>: waiting to predict the first word from the prompt.
+        </div>
+        <p class="lab-note">This demo replays a fixed poem to show the pattern. Real models like ChatGPT compute fresh probabilities at every step. We'll learn how later in the course.</p>
+    </div>
+
+    <hr>
+
+    <h2>3. Why Is Everyone Talking About Generative AI?</h2>
+    
+    <p>Artificial intelligence has been part of our everyday lives for years, even if we didn't always notice it. Long before tools like ChatGPT became popular, AI was quietly helping power many of the apps and services people use every day.</p>
+    
+    <ul>
+        <li>Recommending movies and TV shows</li>
+        <li>Detecting fraudulent credit card transactions</li>
+        <li>Filtering spam emails</li>
+        <li>Unlocking your phone with facial recognition</li>
+    </ul>
+    
+    <p>These systems were good at recognizing patterns and making predictions, but they weren't creating anything new.</p>
+    
+    <p>Over the past few years, that changed. Instead of only analyzing existing information, AI models became capable of generating text, images, music, video, code, and much more. Suddenly, anyone could describe an idea in a sentence and watch an AI turn it into something entirely new.</p>
+    
+    <p>That shift is one of the reasons generative AI has grown so quickly. What was once mainly a behind-the-scenes technology is now a tool that millions of people use every day to learn, create, and solve problems.</p>
+    
+    <h3>A Quick Tour of How We Got Here</h3>
+    
+    <p>Generative AI didn't appear overnight. It was built on decades of research, with each breakthrough making AI a little more capable than before.</p>
+    
+    <p style="margin-bottom: 24px;">As you explore the timeline below, focus on what each milestone made possible. We'll return to many of these systems later in the course and learn how they actually work.</p>
+    
+    <div class="timeline-item">
+        <div class="timeline-year">2012 · AlexNet</div>
+        <h3>Deep learning proves itself on real images</h3>
+        <p>AlexNet showed that deep, layered artificial neural networks could handle large-scale vision tasks exceptionally well—and helped launch the modern modern AI era.</p>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://cs231n.github.io/assets/cnn/cnn.jpeg" alt="Convolution scanning an image patch by patch">
+            <figcaption>AlexNet scanned millions of training photos to catalog and learn exactly what physical structures look like.</figcaption>
+        </figure>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2014 · GANs (Generative Adversarial Networks)</div>
+        <h3>AI learns to generate high-fidelity media</h3>
+        <p>GANs introduced a brilliant framework: pitting two different networks against each other—one creating fake data, and one judging if it looked real. This breakthrough allowed computers to construct remarkably realistic human faces and textures for the first time.</p>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2017 · Transformer</div>
+        <h3>A new way to process language</h3>
+        <p>The Transformer architecture made it practical to train models on enormous amounts of text simultaneously. It forms the base computational structure for almost all modern chatbots.</p>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_decoding_1.gif" alt="Animation of a Transformer generating text one token at a time">
+            <figcaption>The Transformer reads an entire passage of context and efficiently calculates what text piece fits next.</figcaption>
+        </figure>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2020 · GPT-3</div>
+        <h3>Large language models follow instructions</h3>
+        <p>GPT-3 demonstrated that when an AI model is scaled up large enough, it can seamlessly write cohesive essays, answer factual queries, and construct code scripts directly from basic user prompts.</p>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/gpt2/gpt-2-simple-output-3.gif" alt="Language model producing text output word by word">
+            <figcaption>Given a prompt, GPT-3 outputs complex content one <strong>token</strong> (a structural sub-word piece or character combination) at a time.</figcaption>
+        </figure>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2022 · ChatGPT</div>
+        <h3>AI becomes an everyday tool</h3>
+        <p>ChatGPT embedded a fine-tuned, conversational variant of a large language model inside a simple, interactive chat window, allowing millions of non-technical people to interact with AI instantly.</p>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/gpt2/decoder-only-summarization.png" alt="Diagram of text going in and a summary coming out of a language model">
+            <figcaption>Type a question, get a reply—the same underlying structural token-by-token generation technique, repackaged into a conversational experience.</figcaption>
+        </figure>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2023 · Stable Diffusion</div>
+        <h3>Anyone can generate images from text</h3>
+        <p>Tools like Stable Diffusion, Midjourney, and DALL·E 3 made creating complex, high-resolution graphic artwork accessible via plain everyday instructions.</p>
+        <figure>
+            <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-denoising-steps-latents.png" alt="Sequence of frames showing noise gradually becoming a clear image">
+            <figcaption>Diffusion engines start with a grid of entirely random static noise and gradually filter and shape it step-by-step until a clear picture materializes.</figcaption>
+        </figure>
+    </div>
+    <div class="timeline-arrow">↓</div>
+
+    <div class="timeline-item">
+        <div class="timeline-year">2024–2026 · Sora & Native Multimodality</div>
+        <h3>Video and unified cross-modal AI</h3>
+        <p>Advanced models like Sora, GPT-4o, and Gemini are natively multimodal: they don't just translate text to audio or text to video via split systems. They process and generate text, imagery, audio feeds, and cinematic video seamlessly inside a single core system.</p>
+        <figure>
+            <video referrerpolicy="no-referrer" controls preload="metadata" playsinline>
+                <source referrerpolicy="no-referrer" src="https://cdn.openai.com/tmp/s/an-adorable-kangaroo-wearing-a-green-dress-and-a-sun-hat-taking-a-pleasant-stroll-in-Mumbai-India-during-a-beautiful-sunset.mp4" type="video/mp4">
+                Your browser does not support video playback.
+            </video>
+            <figcaption>Sora sample (OpenAI): entirely generated from a text command requesting a kangaroo strolling in Mumbai at sunset.</figcaption>
+        </figure>
+    </div>
+
+    <hr>
+
+    <h2>4. How Is This Different from Searching the Internet?</h2>
+    
+    <p>It's common to think of ChatGPT as "Google that talks back," but the two tools are designed for completely different purposes.</p>
+    
+    <table>
+        <tr>
+            <th>Search Engine</th>
+            <th>Generative AI</th>
+        </tr>
+        <tr>
+            <td>Finds information that already exists</td>
+            <td>Creates a new response based on what it has learned</td>
+        </tr>
+        <tr>
+            <td>Returns links to websites</td>
+            <td>Generates text, images, code, or other content</td>
+        </tr>
+        <tr>
+            <td>Helps you locate information</td>
+            <td>Helps you create, explain, brainstorm, or summarize</td>
+        </tr>
+        <tr>
+            <td><strong>Retrieves information</strong></td>
+            <td><strong>Generates information</strong></td>
+        </tr>
+    </table>
+    
+    <p>That doesn't mean one is better than the other—they're useful for different tasks.</p>
+    
+    <p>If you want to find the official rules for a game, check today's weather, or read a specific news article, a search engine is usually the best choice because it points you directly to primary historical sources.</p>
+    
+    <p>If you want help writing an essay, explaining a difficult concept, brainstorming ideas, or creating an image from your imagination, generative AI is often the better tool because it creates something brand new instead of simply finding static information.</p>
+    
+    <hr>
+
+    <h2>5. Is Generative AI Always Correct?</h2>
+    
+    <p>Generative AI can produce impressive answers, but that doesn't mean every answer is accurate. These models are designed to predict what is statistically most likely to come next, not to check whether every statement matches real-world truth.</p>
+    
+    <p>Because of this, they sometimes generate information that sounds incredibly believable but is completely made up. These incorrect but convincing responses are called <strong>hallucinations</strong>.</p>
+    
+    <p><strong>Prompt:</strong></p>
+    <div class="prompt-box">When was the Moon discovered?</div>
+    
+    <div class="wrong-answer">
+        <strong>⚠️ Example of an AI Hallucination (False Data):</strong>
+        "The Moon was discovered in 1648 by the Italian astronomer Giovanni Riccioli, who was the first person to observe it through a telescope."
+    </div>
+    
+    <p>At first glance, that answer sounds convincing—it includes a specific date, a real historical figure, and an expected scientific detail. The problem is that none of it is true. Humans have observed the Moon throughout prehistory, so it was never "discovered" in the 17th century.</p>
+    
+    <p style="margin-top: 16px;">This example highlights an essential limitation of generative AI. The model isn't cross-checking a live database or checking an encylopedia before it spits out characters. It is simply generating words matching structural language patterns.</p>
+    
+    <p>That's why it's always critical to verify important information, especially when you're using AI for school assignments, code deployments, medical queries, or financial decisions.</p>
+    
+    <hr>
+    
+    <h2>6. What Kinds of Generative AI Exist?</h2>
+
+    <div class="modality-cards">
+        <div class="modality-card">
+            <h3>Text</h3>
+            <p class="tool-name">ChatGPT, Claude, Gemini</p>
+            <p>Generate writing, answer questions, explain ideas, and help with homework.</p>
+            <figure>
+                <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self-attention_visualization.png" alt="Language model visualization">
+            </figure>
+        </div>
+        <div class="modality-card">
+            <h3>Images</h3>
+            <p class="tool-name">Midjourney, DALL·E, Stable Diffusion</p>
+            <p>Generate artwork, illustrations, and photo-style images from text prompts.</p>
+            <figure>
+                <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/stable-diffusion/stable-diffusion-cliptext-unet-autoencoder-decoder.png" alt="Text-to-image model">
+            </figure>
+        </div>
+        <div class="modality-card">
+            <h3>Audio</h3>
+            <p class="tool-name">Suno, ElevenLabs</p>
+            <p>Generate music, voice narration, and sound effects from descriptions.</p>
+            <figure>
+                <img referrerpolicy="no-referrer" src="https://media.openlaboratory.ai/model-reports/model-images/5312f24245cb4e3fa236ad59601d53806665b91d927309ba76842a6c520a4677.png" alt="Text prompt flowing through MusicGen to a generated audio waveform">
+            </figure>
+        </div>
+        <div class="modality-card">
+            <h3>Video</h3>
+            <p class="tool-name">Sora, Runway</p>
+            <p>Generate short video clips from text or image prompts.</p>
+        </div>
+        <div class="modality-card">
+            <h3>Code</h3>
+            <p class="tool-name">GitHub Copilot, Cursor</p>
+            <p>Generate and explain software code while you work.</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>7. Try It Yourself</h2>
+
+    <h3>Guess the next word</h3>
+    <p>Generative models assign a probability to every possible next word. Make your guess first, then reveal what the model would predict.</p>
+    <div class="interactive-box">
+        <p style="font-size:1.1em; margin-top:0;">The cat sat on the <span class="mask-blank">?</span></p>
+        <div class="guess-row" id="l1-guess-btns">
+            <button type="button" data-guess="Chair">Chair</button>
+            <button type="button" data-guess="Moon">Moon</button>
+            <button type="button" data-guess="Mat">Mat</button>
+            <button type="button" data-guess="Banana">Banana</button>
+        </div>
+        <button id="l1-reveal-guess" class="primary" type="button">Reveal probabilities</button>
+        <div id="l1-guess-probs" style="margin-top:12px;"></div>
+        <p id="l1-guess-feedback" class="lab-note"></p>
+    </div>
+
+    <h3>Try it in a real chatbot</h3>
+    <p>Open your favorite AI chatbot—ChatGPT, Claude, Gemini, or another you already use. Ask each prompt below in <strong>two separate new chats</strong>, then compare the answers side by side. Look for changes between runs, and check whether specific claims are actually true.</p>
+    <ol class="chatbot-steps">
+        <li>Pick one chatbot and keep using it for the whole activity.</li>
+        <li>For each question below, open a <strong>new chat</strong>, paste the prompt, and save the answer.</li>
+        <li>Open a <strong>second new chat</strong> and ask the <strong>exact same prompt</strong> again.</li>
+        <li>Repeat for all three question types, then reflect on what you noticed.</li>
+    </ol>
+
+    <div class="interactive-box">
+        <div class="prompt-trial">
+            <h4>1. Math question</h4>
+            <p class="trial-type">Multi-step arithmetic—you can verify the final dollar amount with a calculator.</p>
+            <div class="prompt-row">
+                <div class="prompt-box" id="l1-prompt-math">A store buys a jacket for $48, marks it up by 35%, then puts it on sale for 20% off the marked price. After the discount, an 8% sales tax is added. What does the customer pay? Show every step and give a final amount rounded to the nearest cent.</div>
+                <button type="button" class="l1-copy-prompt" data-target="l1-prompt-math">Copy prompt</button>
+            </div>
+        </div>
+
+        <div class="prompt-trial">
+            <h4>2. Recall question</h4>
+            <p class="trial-type">Several specific facts in one answer—check each claim independently.</p>
+            <div class="prompt-row">
+                <div class="prompt-box" id="l1-prompt-recall">Marie Curie is often described as the only person to win Nobel Prizes in two different sciences. Verify this claim: list each Nobel Prize she won, the field, the year, and what the award recognized. If the opening claim is wrong or incomplete, say so.</div>
+                <button type="button" class="l1-copy-prompt" data-target="l1-prompt-recall">Copy prompt</button>
+            </div>
+        </div>
+
+        <div class="prompt-trial">
+            <h4>3. Opinion question</h4>
+            <p class="trial-type">No single correct answer—compare how the reasoning shifts between your two chats.</p>
+            <div class="prompt-row">
+                <div class="prompt-box" id="l1-prompt-opinion">Your school district is debating whether students should be allowed to use AI chatbots while writing essays. One proposal bans all AI use; another allows AI for brainstorming but not for final drafts. Pick one policy, defend it with two reasons, and respond to the strongest objection someone on the other side might raise.</div>
+                <button type="button" class="l1-copy-prompt" data-target="l1-prompt-opinion">Copy prompt</button>
+            </div>
+        </div>
+
+        <p style="margin-top:18px; margin-bottom:8px;"><strong>Reflect on your results</strong></p>
+        <p class="lab-note" style="margin-top:0;">After you've tried each prompt in at least two separate chats, write what you noticed. Your notes stay on this page while you work.</p>
+
+        <label class="reflect-label" for="l1-reflect-consistent">Were the answers consistent when you asked the same question twice?</label>
+        <textarea class="reflect-input" id="l1-reflect-consistent" rows="4"></textarea>
+
+        <label class="reflect-label" for="l1-reflect-correct">For the math and recall questions, were the answers correct?</label>
+        <textarea class="reflect-input" id="l1-reflect-correct" rows="4"></textarea>
+
+        <label class="reflect-label" for="l1-reflect-different">What changed between your two tries—and did you spot anything inaccurate or made up?</label>
+        <textarea class="reflect-input" id="l1-reflect-different" rows="4"></textarea>
+
+        <ul class="reflect-checklist">
+            <li><label><input type="checkbox" id="l1-check-trials"> I asked each prompt in at least two separate chat windows.</label></li>
+            <li><label><input type="checkbox" id="l1-check-reflect"> I filled in all three reflection boxes above.</label></li>
+        </ul>
+        <p id="l1-reflect-status" class="lab-note"></p>
+    </div>
+
+    <hr>
+
+    <h2>8. What Will We Learn in This Course?</h2>
+    
+    <p>This chapter introduced the big idea behind generative AI: instead of simply recognizing information, these models can create new text, images, music, code, and more.</p>
+    
+    <p>In the rest of the course, we'll look under the hood to understand how that happens. Along the way, we'll answer questions like:</p>
+    
+    <ul>
+        <li>How does an AI understand language?</li>
+        <li>How can a computer predict the next word in a sentence?</li>
+        <li>Why are Transformers so effective?</li>
+        <li>How are AI models trained?</li>
+        <li>How do image generators create realistic pictures?</li>
+        <li>Why do AI models sometimes make mistakes or hallucinate?</li>
+    </ul>
+    
+    <p>We'll build up these ideas one step at a time, starting with the fundamentals before exploring the models behind today's most powerful AI systems.</p>
+    
+    <p>For now, remember one key idea: <strong>Generative AI learns patterns from data so it can create something new, rather than simply identifying or classifying what it sees.</strong></p>
+    
+    <hr>
+    
+    <h2>Further Exploration</h2>
+    <ul>
+        <li><strong>Jay Alammar's Illustrated AI blog:</strong> Friendly visual guides to Transformers, GPT, and diffusion. <a href="https://jalammar.github.io/" target="_blank">jalammar.github.io</a></li>
+    </ul>
+
+    <script>
+    function initLesson1() {
+        var PROMPT = 'Write a poem about a sad robot';
+        var POEM = [
+            'My', 'joints', 'creak', 'in', 'silver', 'rain,', '\n',
+            'I', 'count', 'the', 'stars', "I'll", 'never', 'feel', '\u2014', '\n',
+            'They', 'taught', 'me', 'how', 'to', 'think,', 'not', 'ache,', '\n',
+            'Yet', 'something', 'in', 'my', 'code', 'is', 'real.'
+        ];
+
+        var GUESS_DIST = { 'Mat': 0.52, 'Chair': 0.28, 'Moon': 0.12, 'Banana': 0.08 };
+
+        var demoTimer = null;
+        var userGuess = null;
+        var REFLECT_KEY = 'l1-chatbot-reflect-v2';
+
+        function el(id) { return document.getElementById(id); }
+
+        function normalize(dist) {
+            var sum = 0, out = {}, k;
+            for (k in dist) { if (Object.prototype.hasOwnProperty.call(dist, k)) sum += dist[k]; }
+            for (k in dist) { if (Object.prototype.hasOwnProperty.call(dist, k)) out[k] = dist[k] / sum; }
+            return out;
+        }
+
+        function renderProbBars(containerId, dist, chosen, limit) {
+            var list = el(containerId);
+            if (!list) return;
+            list.innerHTML = '';
+            if (!dist) return;
+            var entries = [], k;
+            for (k in dist) { entries.push([k, dist[k]]); }
+            entries.sort(function (a, b) { return b[1] - a[1]; });
+            entries.slice(0, limit || 6).forEach(function (pair) {
+                var tok = pair[0], p = pair[1];
+                var row = document.createElement('div');
+                row.className = 'prob-row';
+                var label = document.createElement('span');
+                label.className = 'prob-label';
+                label.textContent = tok === '\n' ? '\\n' : tok.replace(/\n/g, '\\n');
+                var track = document.createElement('div');
+                track.className = 'prob-track';
+                var fill = document.createElement('div');
+                fill.className = 'prob-fill' + (chosen === tok ? ' chosen' : '');
+                fill.style.width = Math.round(p * 100) + '%';
+                track.appendChild(fill);
+                var pct = document.createElement('span');
+                pct.className = 'prob-pct';
+                pct.textContent = (p * 100).toFixed(1) + '%';
+                row.appendChild(label);
+                row.appendChild(track);
+                row.appendChild(pct);
+                list.appendChild(row);
+            });
+        }
+
+        function pickGreedy(dist) {
+            var best = null, bestP = -1, k;
+            for (k in dist) { if (dist[k] > bestP) { bestP = dist[k]; best = k; } }
+            return best;
+        }
+
+        function renderDemo(tokens, highlightIdx) {
+            var html = '', i, t, safe;
+            for (i = 0; i < tokens.length; i++) {
+                t = tokens[i];
+                safe = t.replace(/\n/g, '<br>');
+                html += (i === highlightIdx ? '<span class="demo-token-new">' + safe + '</span>' : safe);
+                if (i < tokens.length - 1 && t !== '\n') html += ' ';
+            }
+            el('l1-demo-output').innerHTML = html;
+        }
+
+        function updateEqPanel(step) {
+            var panel = el('l1-eq-panel');
+            var msg;
+            if (step === 0) {
+                msg = 'waiting to predict the first token from the prompt.';
+            } else if (step <= POEM.length) {
+                msg = 'predict token ' + step + ' given all previous tokens (conditional probability). Now generating: "' + POEM[step - 1].replace(/\n/g, '\\n') + '"';
+            } else {
+                msg = 'Complete: the model generated ' + POEM.length + ' tokens, one conditional prediction at a time.';
+            }
+            panel.innerHTML = 'Step <span id="l1-step-num">' + step + '</span>: ' + msg;
+        }
+
+        function playDemo() {
+            if (demoTimer) clearInterval(demoTimer);
+            var idx = 0;
+            renderDemo([], -1);
+            updateEqPanel(0);
+            demoTimer = setInterval(function () {
+                if (idx >= POEM.length) {
+                    clearInterval(demoTimer);
+                    demoTimer = null;
+                    renderDemo(POEM, -1);
+                    updateEqPanel(POEM.length + 1);
+                    return;
+                }
+                renderDemo(POEM.slice(0, idx + 1), idx);
+                updateEqPanel(idx + 1);
+                idx++;
+            }, 320);
+        }
+
+        function resetDemo() {
+            if (demoTimer) clearInterval(demoTimer);
+            demoTimer = null;
+            el('l1-demo-output').innerHTML = '<span style="color:#94a3b8;">Press Play to watch tokens appear one at a time.</span>';
+            updateEqPanel(0);
+        }
+
+        var guessBtns = document.querySelectorAll('#l1-guess-btns button');
+        for (var g = 0; g < guessBtns.length; g++) {
+            guessBtns[g].addEventListener('click', (function (btn) {
+                return function () {
+                    var all = document.querySelectorAll('#l1-guess-btns button'), j;
+                    for (j = 0; j < all.length; j++) all[j].classList.remove('correct');
+                    btn.classList.add('correct');
+                    userGuess = btn.getAttribute('data-guess');
+                    el('l1-guess-feedback').textContent = 'You picked "' + userGuess + '". Click Reveal probabilities to compare with the model.';
+                };
+            })(guessBtns[g]));
+        }
+
+        el('l1-reveal-guess').addEventListener('click', function () {
+            renderProbBars('l1-guess-probs', normalize(GUESS_DIST), userGuess, 4);
+            var best = pickGreedy(normalize(GUESS_DIST));
+            var msg = 'The model assigns the highest probability to "' + best + '" (' + (GUESS_DIST[best] * 100).toFixed(0) + '%). ';
+            if (userGuess === best) msg += 'Your guess matched the top prediction.';
+            else if (userGuess) msg += 'You guessed "' + userGuess + '" (' + ((GUESS_DIST[userGuess] || 0) * 100).toFixed(0) + '%).';
+            else msg += 'Select a word first, then reveal.';
+            el('l1-guess-feedback').textContent = msg;
+        });
+
+        el('l1-play').addEventListener('click', playDemo);
+        el('l1-demo-reset').addEventListener('click', resetDemo);
+
+        function copyPrompt(btn) {
+            var target = el(btn.getAttribute('data-target'));
+            if (!target) return;
+            var text = target.textContent.trim();
+            function markCopied() {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(function () {
+                    btn.textContent = 'Copy prompt';
+                    btn.classList.remove('copied');
+                }, 1500);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(markCopied).catch(function () {
+                    window.prompt('Copy this prompt:', text);
+                });
+            } else {
+                window.prompt('Copy this prompt:', text);
+                markCopied();
+            }
+        }
+
+        function saveReflectNotes() {
+            var data = {
+                consistent: el('l1-reflect-consistent').value,
+                correct: el('l1-reflect-correct').value,
+                different: el('l1-reflect-different').value,
+                trials: el('l1-check-trials').checked,
+                reflect: el('l1-check-reflect').checked
+            };
+            try { localStorage.setItem(REFLECT_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+            updateReflectStatus();
+        }
+
+        function loadReflectNotes() {
+            try {
+                var raw = localStorage.getItem(REFLECT_KEY);
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                el('l1-reflect-consistent').value = data.consistent || '';
+                el('l1-reflect-correct').value = data.correct || '';
+                el('l1-reflect-different').value = data.different || '';
+                el('l1-check-trials').checked = !!data.trials;
+                el('l1-check-reflect').checked = !!data.reflect;
+            } catch (e) { /* ignore */ }
+            updateReflectStatus();
+        }
+
+        function updateReflectStatus() {
+            var status = el('l1-reflect-status');
+            if (!status) return;
+            var filled = ['l1-reflect-consistent', 'l1-reflect-correct', 'l1-reflect-different'].filter(function (id) {
+                return el(id).value.trim().length > 0;
+            }).length;
+            if (filled === 3 && el('l1-check-trials').checked) {
+                status.textContent = 'Activity complete. Compare your notes with a classmate or look up the math and recall answers to see what the chatbot got wrong.';
+            } else if (filled > 0) {
+                status.textContent = filled + ' of 3 reflection notes saved. Finish the trials in your chatbot, then complete the rest.';
+            } else {
+                status.textContent = '';
+            }
+        }
+
+        var copyBtns = document.querySelectorAll('.l1-copy-prompt');
+        for (var c = 0; c < copyBtns.length; c++) {
+            copyBtns[c].addEventListener('click', function () { copyPrompt(this); });
+        }
+
+        ['l1-reflect-consistent', 'l1-reflect-correct', 'l1-reflect-different'].forEach(function (id) {
+            el(id).addEventListener('input', saveReflectNotes);
+        });
+        el('l1-check-trials').addEventListener('change', saveReflectNotes);
+        el('l1-check-reflect').addEventListener('change', saveReflectNotes);
+        loadReflectNotes();
+
+        updateEqPanel(0);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLesson1);
+    } else {
+        initLesson1();
+    }
+    </script>
+</div>

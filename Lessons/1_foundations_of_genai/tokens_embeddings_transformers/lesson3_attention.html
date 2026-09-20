@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attention: The Key Innovation</title>
+</head>
+<body>
+
+<div class="genai-lesson-container">
+    <h1>Attention: The Key Innovation</h1>
+    <hr>
+    
+    <p>Think about reading a story. Early on, you're introduced to a character named Alice. Dozens of pages later, you read the sentence, "She opened the door." Without thinking about it, you know that "she" refers to Alice. Even though many pages separate the two, your brain quickly connects them.</p>
+    
+    <p>Language is full of these long-distance connections. We naturally figure out which words relate to one another and use that context to understand what's being said.</p>
+    
+    <p>In this lesson, we'll see how computers can learn to do something similar. The idea that makes this possible is called <strong>attention</strong>, and it's one of the biggest breakthroughs in modern AI. Attention is the key idea behind <strong>Transformers</strong>, the architecture that powers models like ChatGPT and many of today's most advanced AI systems.</p>
+
+    <figure>
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self-attention_visualization.png"
+            alt="Diagram showing that when the model processes the word it, attention connects it back to the word animal earlier in the sentence">
+        <figcaption>Self-attention lets a later word pull information from an earlier one. Here <em>it</em> links to <em>animal</em>, just as <em>She</em> would link to <em>Alice</em> in our opening example.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <hr>
+    
+    <h2>1. Let's Start With a Problem</h2>
+    
+    <p>Take a look at this sentence:</p>
+    
+    <p><em>"The bank executive jumped over the bank wall."</em></p>
+    
+    <p>The word <em>bank</em> appears twice, but it doesn't mean the same thing both times.</p>
+    
+    <ul>
+        <li>The first <em>bank</em> refers to a financial institution. The nearby word <em>executive</em> gives you that clue.</li>
+        <li>The second <em>bank</em> refers to the edge of a river. This time, words like <em>wall</em> suggest a riverbank instead.</li>
+    </ul>
+    
+    <p>You probably figured that out immediately. But notice what your brain actually did. You didn't interpret the word <em>bank</em> by itself. Yyou looked at the surrounding words to figure out which meaning made sense.</p>
+
+    <div class="highlight-box" style="background:#f8fafc;border-left:4px solid #3b82f6;padding:15px;margin:20px 0;">
+        <strong>The challenge:</strong> The meaning of a word depends on its context. If an AI only looks at one word at a time, or only pays attention to a few nearby words, it can easily misunderstand the sentence. We need a way for every word to find and use the other words that matter, even if they're far apart.
+    </div>
+    
+    <hr>
+    
+    <h2>2. Why Couldn't The RNN Model Handle This?</h2>
+    
+    <p>Previously, you learned about <strong>Recurrent Neural Networks (RNNs)</strong>. An RNN reads a sentence one word at a time, moving from left to right while carrying a hidden "memory" of everything it has seen so far.</p>
+    
+    <p>That sounds reasonable, but it creates a problem. When the model reaches the first <em>bank</em>, it has only read:</p>
+    
+    <p style="font-family:monospace; text-align:center; font-size:1.05em;">
+    The → bank
+    </p>
+    
+    <p>At that moment, it hasn't seen the word <em>executive</em> yet. Since that important clue comes later in the sentence, the model has to guess what "bank" means without all the information.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://colah.github.io/posts/2015-08-Understanding-LSTMs/img/RNN-unrolled.png"
+            alt="An unrolled recurrent neural network passing hidden state one timestep at a time">
+        <figcaption>An RNN reads the sentence left to right, passing a hidden state from step to step — so early words like <em>bank</em> may not yet have seen <em>executive</em>, and distant context can fade.
+            Source: Christopher Olah, <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank">Understanding LSTM Networks</a>.</figcaption>
+    </figure>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/encoder_with_tensors.png"
+            alt="Transformer encoder where every word position has a parallel path through self-attention">
+        <figcaption>Attention takes the opposite approach: every word can look at every other word in one step, no matter how far apart they are.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <p>There's another challenge. Imagine the sentence were much longer. By the time an RNN reaches the end, it has to remember information from dozens—or even hundreds—of words earlier. As that information is passed from one step to the next, some of it can gradually fade or become less useful.</p>
+    
+    <p>This is closely related to a training issue called the <strong>vanishing gradient problem</strong>, which you learned about in a previous lesson. In practice, it makes learning long-range relationships much more difficult.</p>
+    
+    <p><strong>Attention</strong> takes a completely different approach. Instead of relying on a memory that gets passed from one word to the next, every word can directly look at the other words in the sentence whenever it needs more context. It doesn't matter whether those words are right next to each other or many words apart.</p>
+    
+    <hr>
+    
+    <h2>3. The Big Idea: Every Word Asks a Question</h2>
+    
+    <p>Before we introduce the math behind attention, let's build some intuition.</p>
+    
+    <div class="highlight-box" style="background:#f8fafc;border-left:4px solid #3b82f6;padding:15px;margin:20px 0;">
+        <strong>When the model processes each word, imagine that it is asking:</strong><br><br>
+        <em>"Which other words in this sentence will help me understand what I mean?"</em>
+        <br><br>
+        The model looks at every word in the sentence, decides which ones are most helpful, and combines information from those words to better understand the one it's currently processing.
+    </div>
+    
+    <p>Let's go back to our example:</p>
+    
+    <p style="font-size:1.1em; padding:12px; background:#f8fafc; border-left:4px solid #3b82f6;"><em>"The bank executive jumped."</em></p>
+    
+    <p>Suppose the model is trying to understand the word <em>bank</em>. Rather than treating it as an isolated word, it compares <em>bank</em> with every other word in the sentence.</p>
+    
+    <ol>
+        <li>It asks, <em>"Which words will help me figure out what 'bank' means here?"</em></li>
+        <li>It looks at every word: <em>The</em>, <em>bank</em>, <em>executive</em>, and <em>jumped</em>.</li>
+        <li>It realizes that <em>executive</em> is a very useful clue because executives usually work at financial institutions.</li>
+        <li>It gives very little attention to <em>The</em>, since articles don't add much meaning, and some attention to <em>jumped</em>, which describes an action but doesn't help identify the type of bank.</li>
+        <li>Finally, it combines information from all of these words (giving more weight to the important ones) to build a better representation of <em>bank</em>.</li>
+    </ol>
+    
+    <p>Notice that the word itself hasn't changed. It's still the word <em>bank</em>. What has changed is the model's <em>understanding</em> of that word.</p>
+    
+    <p>In this sentence, <em>bank</em> now carries the meaning of a financial institution, not the edge of a river. If we placed the same word in a different sentence, attention would focus on different surrounding words and arrive at a different meaning.</p>
+    
+    <p>That's the power of attention: instead of assigning every word a single fixed meaning, it allows the model to understand words <strong>in context</strong>.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self_attention_score.png"
+            alt="Attention scores from one word's query dotted with every word's key">
+        <figcaption>To understand one word (here, the first word in the sentence), the model compares its Query against every Key and assigns higher scores to more helpful neighbors — the same idea as <em>bank</em> scoring <em>executive</em> highly.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <hr>
+    
+    <h2>4. Turning the Idea Into Math (Gently)</h2>
+    
+    <p>Now that you have the intuition, let's see how a computer actually performs attention. The good news is that the process is much simpler than it might sound. We'll build it one step at a time.</p>
+    
+    <h3>Step 1: Every word gets three different vectors</h3>
+    
+    <p>Recall that prior to being passed to the network, every word is first converted into an <strong>embedding</strong>, which is a vector that captures its meaning. Attention starts by taking that embedding and creating three new vectors. Each one has a different purpose.</p>
+    
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9">
+            <th>Vector</th>
+            <th>Purpose</th>
+            <th>Intuition</th>
+        </tr>
+        <tr>
+            <td><strong>Query (Q)</strong></td>
+            <td>What information am I looking for?</td>
+            <td>Like typing a search into Google. The word asks, <em>"Who can help me understand my meaning?"</em></td>
+        </tr>
+        <tr>
+            <td><strong>Key (K)</strong></td>
+            <td>What kind of information do I provide?</td>
+            <td>Like a webpage title that helps others decide whether it's relevant.</td>
+        </tr>
+        <tr>
+            <td><strong>Value (V)</strong></td>
+            <td>What information should I contribute?</td>
+            <td>Like the actual contents of the webpage after you click on it.</td>
+        </tr>
+    </table>
+    
+    <p>Every word in the sentence creates its own Query, Key, and Value vectors. The model learns how to produce these vectors during training.</p>
+
+    <p>For a sequence of word embeddings collected in a matrix <var>X</var>, the three vector types are computed with learned weight matrices (\(W_Q, W_K, W_V\)):</p>
+    \[Q = XW_Q, K = XW_K, V = XW_V\]
+    <p>Each row of <var>Q</var>, <var>K</var>, and <var>V</var> belongs to one token in the sentence.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self_attention_vectors.png"
+            alt="Word embeddings multiplied by weight matrices to produce Query, Key, and Value vectors">
+        <figcaption>Step 1: each word embedding is projected into three learned vectors: Query (what am I looking for?), Key (what do I offer?), and Value (what information do I contribute?).
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <h3>Step 2: Compare the Query with every Key</h3>
+    
+    <p>Next, the model measures how well each word matches every other word.</p>
+    
+    <p>Suppose we're trying to understand the word <em>bank</em>. Its Query vector is compared with the Key vector of every word in the sentence, including its own. Each comparison produces a <strong>score</strong> that tells the model how useful that word might be.</p>
+    
+    <p>Mathematically, this comparison is a <strong>dot product</strong> between two vectors. For token <var>i</var> looking at token <var>j</var>:</p>
+  \[s_{ij} = \mathbf{q}_i \cdot \mathbf{k}_j\]
+    <p>A larger score \(s_{ij}\) means token \(j\) looks more useful for understanding token \(i\).</p>
+    
+    <h3>Step 3: Turn the scores into attention weights</h3>
+    
+    <p>After comparing every pair of words, the model has a list of scores. Some are large, some are small, and some may even be negative.</p>
+    
+    <p>To make these scores easier to use, they're passed through a function called <strong>softmax</strong>. Softmax converts them into values between 0 and 1 that add up to 1, so they can be interpreted as how much attention each word should receive.</p>
+    
+    <p>If you've seen softmax before, this idea should feel familiar. In a classifier, softmax converts raw scores into class probabilities. Here, it converts relevance scores into <strong>attention weights</strong> that sum to 1 for each row. First divide each score by 
+      \(\sqrt{d_k}\) (the size of each Key vector). Call the result a scaled score \(s'_{ij}\):</p>
+  \[s'_{ij} = \frac{s_{ij}}{\sqrt{d_k}}\]
+  \[\alpha_{ij} = \frac{e^{s'_{ij}}}{Z_i}\]
+
+    \[Z_i = \sum_{j} e^{s'_{ij}}\]
+    </div>
+    <p>Each weight \(\alpha_{ij}\) is between 0 and 1, and for a fixed row <var>i</var> the weights add up to 1. Dividing by \(\sqrt{d_k}\) keeps the dot products from growing too large (this scaling appears in the original Transformer paper).</p>
+
+    <h3>Step 4: Combine information from the important words</h3>
+    
+    <p>Finally, the model uses those attention weights to combine the Value vectors. Words with higher attention weights contribute more to the final representation, while less relevant words contribute very little.</p>
+    
+    <p>The result is a new representation of the word that includes information from the rest of the sentence. Instead of relying only on its original embedding, the word now carries the context it needs to be understood correctly.</p>
+  \[\mathbf{z}_i = \sum_{j} \alpha_{ij} \mathbf{v}_j\]
+
+    <p>Each output vector \(z_i\) is a weighted blend of all Value vectors, with weights set by attention.</p>
+
+    <p>All four steps are often written as one formula — 
+  
+  \[ \text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^T}{\sqrt{d_k}} \right) V \]
+
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/self-attention-output.png"
+            alt="Full self-attention walkthrough including softmax weights and weighted sum of value vectors">
+        <figcaption>Steps 3–4 in one view: softmax converts scores to weights (e.g. 0.88 and 0.12), then those weights blend the Value vectors into the output <em>z</em>. Scroll horizontally on narrow screens to see the full table.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <table border="1" cellpadding="12" cellspacing="0" width="100%" style="border-collapse:collapse; background:#f8fafc; border:1px solid #cbd5e1;">
+        <tr>
+            <td align="center">
+                <div style="font-family:monospace; font-size:0.95em; line-height:2;">
+                    1. Create Query, Key, and Value vectors<br>
+                    2. Compare each Query with every Key (dot product)<br>
+                    3. Apply softmax to get attention weights<br>
+                    4. Compute a weighted combination of the Value vectors
+                </div>
+            </td>
+        </tr>
+    </table>
+    
+    <p>Those four steps are the entire attention mechanism. In the next section, we'll work through a concrete numerical example so you can see exactly how each step is calculated.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/self-attention-matrix-calculation-2.png"
+            alt="Matrix form of the full self-attention calculation from Q K V to output">
+        <figcaption>The four steps combined in matrix form: Q, K, V → scores → softmax → weighted sum of V.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <hr>    
+
+    <h2>5. Walking Through a Real Example</h2>
+    
+    <p>Let's see what attention looks like in practice using the sentence:</p>
+    
+    <p style="font-size:1.1em; padding:12px; background:#f8fafc; border-left:4px solid #3b82f6;"><em>"The bank executive jumped."</em></p>
+    
+    <p>We'll focus on the word <em>bank</em>. Remember, the goal is to figure out which other words are most helpful for understanding what <em>bank</em> means in this sentence.</p>
+    
+    <h3>Step 1: Compute relevance scores</h3>
+    
+    <p>The model compares the Query for <em>bank</em> with the Key for every word in the sentence. This produces a relevance score for each word.</p>
+    
+    <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
+        <tr bgcolor="#f1f5f9">
+            <th>Word</th>
+            <th>Relevance Score</th>
+            <th>Why?</th>
+        </tr>
+        <tr>
+            <td>The</td>
+            <td>0.3</td>
+            <td>Not very informative. It's a common article that doesn't tell us much about the meaning of <em>bank</em>.</td>
+        </tr>
+        <tr>
+            <td>bank (itself)</td>
+            <td>1.0</td>
+            <td>The word itself is naturally important, so it receives a high score.</td>
+        </tr>
+        <tr>
+            <td>executive</td>
+            <td>0.8</td>
+            <td>A strong clue that we're talking about a financial institution rather than a riverbank.</td>
+        </tr>
+        <tr>
+            <td>jumped</td>
+            <td>0.2</td>
+            <td>This describes an action, but it doesn't say much about what kind of bank we're referring to.</td>
+        </tr>
+    </table>
+    
+    <p>These aren't probabilities yet—they're simply similarity scores. Larger scores mean the model thinks that word is more useful for understanding <em>bank</em>.</p>
+    
+    <h3>Step 2: Convert the scores into attention weights</h3>
+    
+    <p>Next, the scores are passed through softmax, which converts them into attention weights that add up to 1.</p>
+    
+    <p style="font-family:monospace; background:#f8fafc; padding:10px;">
+    weights ≈ [0.15, 0.40, 0.35, 0.10]
+    </p>
+    
+    <p>Now we can interpret these numbers more easily. About 40% of the final representation comes from <em>bank</em> itself, about 35% comes from <em>executive</em>, and the remaining words contribute much smaller amounts.</p>
+    
+    <h3>Step 3: Combine the Value vectors</h3>
+    
+    <p>Finally, the model uses those weights to combine the Value vectors for every word.</p>
+    
+    <p style="font-family:monospace; background:#f8fafc; padding:10px;">
+    Output = 0.15 × Value(The)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.40 × Value(bank)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.35 × Value(executive)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.10 × Value(jumped)
+    </p>
+    
+    <p>The result is a brand-new vector representing the word <em>bank</em>. This vector doesn't just capture the dictionary meaning of the word—it captures what <em>bank</em> means <em>in this particular sentence</em>.</p>
+    
+    <p>Because <em>executive</em> received a large attention weight, the new representation is pulled toward the meaning of a financial institution. If the sentence had been "<em>The fisherman sat on the bank</em>," attention would have focused on different words, producing a different representation for exactly the same word.</p>
+    
+    <p>This is what makes attention so powerful: the meaning of a word can change depending on its context, and the model automatically learns which surrounding words matter most.</p>
+
+    <figure>
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/self-attention-matrix-calculation.png"
+            alt="Matrix multiplication producing Query, Key, and Value matrices from input embeddings">
+        <figcaption>Matrix form of Step 1: the input matrix \(X\) is multiplied by \(W_Q, W_K, and W_V\) to produce \(Q, K\) and \(V\).
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+
+    <div class="highlight-box" style="background:#f0fdf4;border:1px solid #bbf7d0;padding:18px;margin:24px 0;border-radius:6px;">
+        <h3 style="margin-top:0;">Summary: What Attention Is Trying to Do</h3>
+        <p>Attention gives every word a way to <strong>look at the rest of the sentence</strong> and ask: <em>Which other words should shape my meaning right now?</em> It turns that question into numbers so the model can represent the same word differently in different sentences.</p>
+        <h3>Why It Matters</h3>
+        <ul style="margin-bottom:0;">
+            <li><strong>Context:</strong> Ambiguous words like <em>bank</em> can mean different things depending on neighbors like <em>executive</em> or <em>river</em>.</li>
+            <li><strong>Long-range links:</strong> Pronouns like <em>She</em> can connect to <em>Alice</em> even when many words sit between them.</li>
+            <li><strong>Parallel processing:</strong> Unlike RNNs, all words can be updated together, which is faster to train on modern hardware.</li>
+            <li><strong>Foundation of Transformers:</strong> This mechanism (often with multiple heads and positional encoding) is the core idea behind models like ChatGPT.</li>
+        </ul>
+        <p style="margin-bottom:0;font-size:0.92em;color:#64748b;">You do not need to memorize every symbol. The key takeaway: attention = <em>weighted lookup</em> over the sentence, learned from data.</p>
+    </div>
+    
+    <hr>    
+
+    <h2>6. Why Does Attention Work So Well?</h2>
+    
+    <p>Attention solved several problems that had limited earlier language models. Here are some of the biggest advantages.</p>
+    
+    <ul>
+        <li>It can process an entire sentence at once. Unlike an RNN, which reads one word after another, attention allows every word in the sentence to be processed simultaneously. This makes training much faster and allows modern AI models to take advantage of powerful GPUs.</li>
+    
+        <li>Long-distance relationships are easy to capture. A word can directly attend to another word anywhere in the sentence, whether it's one word away or one hundred. The model doesn't have to pass information step by step through a long chain of words.</li>
+    
+        <li>The model learns what matters on its own. Nobody manually tells the model that words like <em>executive</em> or <em>money</em> should be associated with a financial bank. By training on enormous amounts of text, it gradually discovers these relationships for itself.</li>
+    
+        <li>Words can have different meanings in different situations. The word <em>bank</em> doesn't always produce the same representation. In one sentence it may represent a financial institution, while in another it represents the side of a river. Attention uses the surrounding context to determine which meaning fits best.</li>
+    </ul>
+
+    <figure>
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/Transformer_encoder.png"
+            alt="Transformer encoder layer with self-attention and feed-forward applied to every word position">
+        <figcaption>Every word in the sentence flows through the same encoder layer in parallel — self-attention first, then a feed-forward network — which is why Transformers scale well on GPUs.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <hr>
+    
+    <h2>7. Looking at a Sentence from More Than One Perspective</h2>
+    
+    <p>So far, we've described attention as if there were only one attention mechanism. In reality, modern Transformers use <strong>multiple attention heads</strong> at the same time.</p>
+    
+    <p>Why? Because language contains many different kinds of relationships. Sometimes you need to understand grammar. Other times you need to connect a pronoun to the person it refers to, or recognize that two words have related meanings. One attention mechanism isn't likely to capture all of these patterns equally well.</p>
+    
+    <p>Instead, the model learns several attention mechanisms in parallel. Each one is called an <strong>attention head</strong>. During training, different heads naturally become good at noticing different kinds of relationships.</p>
+    
+    <ul>
+        <li>One head might focus on nearby words that form common phrases.</li>
+        <li>Another head might learn grammatical relationships, such as matching subjects with their verbs.</li>
+        <li>A third head might connect pronouns like <em>she</em> or <em>they</em> to the people or objects they refer to.</li>
+    </ul>
+    
+    <p>These are just examples; the model isn't explicitly assigned these jobs. Instead, each head develops its own specialization as it learns from data.</p>
+    
+    <p>After every attention head finishes its work, their outputs are combined into a single representation. Looking at a sentence from several perspectives gives the model a much richer understanding than relying on just one attention mechanism.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_multi-headed_self-attention-recap.png"
+            alt="Overview of multi-head self-attention with eight parallel heads">
+        <figcaption>Multi-head attention runs several Q/K/V projections in parallel, then concatenates and projects the results into one combined representation. Scroll horizontally on narrow screens to read all step labels.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+    
+    <hr>    
+
+    <h2>8. One More Piece: How Does the Model Know Word Order?</h2>
+    
+    <p>So far, we've seen how attention decides <em>which</em> words are important. But there's one important question left:</p>
+    
+    <p>How does the model know where each word appears in the sentence?</p>
+    
+    <p>On its own, attention doesn't understand word order. It simply compares every word with every other word. Without additional information, these two sentences would contain the same words, just arranged differently:</p>
+    
+    <p style="text-align:center; font-style:italic; padding:10px; background:#f8fafc;">
+    "The dog bit the cat."<br>
+    "The cat bit the dog."
+    </p>
+    
+    <p>Even though the words are identical, the meaning is completely different because the order has changed.</p>
+    
+    <p>To solve this problem, Transformers add a small piece of information to every word before attention begins. This extra information tells the model where each word appears in the sentence.</p>
+    
+    <p>This is called <strong>positional encoding</strong> (or position encoding). You can think of it as giving every word an invisible position tag. Two identical words can now be distinguished because they appear in different locations.</p>
+<!--     
+    <p>For example, the word <em>the</em> at the beginning of a sentence receives a slightly different positional encoding than the word <em>the</em> appearing near the end.</p> -->
+    
+    <p>By combining the word embedding with its positional encoding, the model knows both what the word is and where it appears. That allows attention to understand sentences where word order matters.</p>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_positional_encoding_example.png"
+            alt="Positional encoding vectors added to word embedding vectors for three French words">
+        <figcaption>Positional encodings are added to word embeddings so the model knows both <em>what</em> each token is and <em>where</em> it sits in the sentence.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
+    </figure>
+
+    <figure class="figure-wide">
+        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_positional_encoding_large_example.png"
+            alt="Heatmap of sinusoidal positional encodings across embedding dimensions">
+        <figcaption>The original Transformer uses sinusoidal functions across embedding dimensions — low dimensions oscillate quickly; higher dimensions change slowly. This heatmap shows the full pattern with readable axis labels.
+            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>; based on Vaswani et al., <a href="https://arxiv.org/abs/1706.03762" target="_blank">Attention Is All You Need</a>.</figcaption>
+    </figure>
+    
+    <p style="font-size:0.9em;color:#64748b;">
+    Each position in the sentence is assigned its own numerical encoding. This positional information is added to the word embedding before the attention mechanism begins, allowing the model to distinguish between identical words that appear in different places.
+    </p>
+    
+    <hr>    
+
+    <h2>9. Try It Yourself: Self-Attention Visualizer</h2>
+    <p>This activity runs a real <strong>MiniLM</strong> encoder (22M-parameter BERT-style model) in your browser using <a href="https://huggingface.co/docs/transformers.js" target="_blank">Transformers.js</a>. It uses the model’s <strong>WordPiece tokenizer</strong> and real learned <strong>Query–Key attention</strong> from the final layer (averaged across 12 heads).</p>
+
+    <div class="l3-sav-box" style="padding:14px; background:#fafafa; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px;">
+        <label for="l3-sav-input" style="display:block; margin-bottom:8px; font-weight:600;">Sentence</label>
+        <input type="text" id="l3-sav-input" value="The bank executive jumped" style="width:100%; box-sizing:border-box; padding:10px; font-size:16px; font-family:inherit; border:1px solid #cbd5e1; border-radius:6px;">
+        <p style="font-size:0.88em; color:#64748b; margin:10px 0 0;">Tokens below are from the model’s tokenizer (not spaces). Click a token to see its attention row. <strong>Requires</strong> opening this page over <code>http://localhost</code> (not as a double-clicked <code>file://</code> link). First visit downloads ~87MB — usually 30 seconds to 2 minutes on fast internet, then cached.</p>
+        <div class="l3-sav-row" id="l3-sav-tokens" style="margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+        <p id="l3-sav-status" style="font-size:0.9em; color:#334155; margin:14px 0 0; min-height:1.4em;">Starting…</p>
+        <div style="margin-top:12px;">
+            <span style="font-size:0.85em; color:#64748b; margin-right:6px;">Try:</span>
+            <button type="button" class="l3-sav-preset" data-s="The bank executive jumped" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">bank sentence</button>
+            <button type="button" class="l3-sav-preset" data-s="Alice went to the store. She bought milk." style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">She → Alice</button>
+            <button type="button" class="l3-sav-preset" data-s="attention is all you need" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">attention paper</button>
+        </div>
+    </div>
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:4px;font-size:0.9em;margin-top:12px;">
+        <strong>What to look for:</strong> Subword pieces like <span style="font-family:monospace;">bank</span> or <span style="font-family:monospace;">##ed</span> are separate tokens. Attention patterns come from trained weights—not hand rules—so they may differ from our textbook examples, especially on ambiguous words.
+    </div>
+
+    <hr>
+
+    <h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> The original research paper that introduced this idea. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv paper</a></li>
+        <li><strong>The Illustrated Transformer (Jay Alammar):</strong> A visual, step-by-step walkthrough of Query, Key, Value, and multi-head attention. <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">Blog post</a></li>
+        <li><strong>BERTViz:</strong> An interactive tool for visualizing attention in real, full-size models. <a href="https://github.com/jessevig/bertviz" target="_blank">GitHub</a></li>
+        <li><strong>Attention? Attention! (Lilian Weng):</strong> A deeper survey of different attention mechanisms used in deep learning. <a href="https://lilianweng.github.io/posts/2018-06-24-attention/" target="_blank">Blog post</a></li>
+    </ul>
+
+<script>
+(function () {
+    var statusEl = document.getElementById('l3-sav-status');
+    var input = document.getElementById('l3-sav-input');
+    var tokensDiv = document.getElementById('l3-sav-tokens');
+    if (!statusEl || !input || !tokensDiv) return;
+
+    var MODEL_ID = 'dbernsohn/all-MiniLM-L6-v2-onnx';
+    var TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.0';
+    var tokenizer = null;
+    var model = null;
+    var tokenLabels = [];
+    var attentionRows = null;
+    var busy = false;
+    var debounceTimer = null;
+
+    function markReady() {
+        statusEl.setAttribute('data-l3-sav-ready', '1');
+    }
+
+    function markBoot() {
+        statusEl.setAttribute('data-l3-sav-boot', '1');
+    }
+
+    function onLoadProgress(info) {
+        if (info.status === 'progress_total' && typeof info.progress === 'number') {
+            statusEl.textContent = 'Downloading model files: ' + info.progress.toFixed(0) + '% (first visit ~87MB)…';
+        } else if (info.status === 'progress' && info.total) {
+            statusEl.textContent = 'Downloading ' + (info.file || 'file') + ': ' +
+                (info.loaded / 1048576).toFixed(0) + ' / ' + (info.total / 1048576).toFixed(0) + ' MB…';
+        } else if (info.status === 'done' && info.file) {
+            statusEl.textContent = 'Finished ' + info.file + ' — loading next file…';
+        } else if (info.status === 'ready') {
+            statusEl.textContent = 'Initializing ONNX runtime in browser…';
+        }
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function idsToLabels(inputIds, seqLen) {
+        var ids = inputIds.data ? Array.from(inputIds.data) : Array.from(inputIds);
+        var labels = [];
+        for (var i = 0; i < seqLen; i++) {
+            labels.push(tokenizer.decode([Number(ids[i])], { skip_special_tokens: false }));
+        }
+        return labels;
+    }
+
+    function getSeqLen(inputs) {
+        var mask = inputs.attention_mask.data ? Array.from(inputs.attention_mask.data) : Array.from(inputs.attention_mask);
+        var len = 0;
+        for (var i = 0; i < mask.length; i++) {
+            if (Number(mask[i]) === 1) len = i + 1;
+        }
+        return len;
+    }
+
+    function getLastAttentionTensor(output) {
+        var keys = Object.keys(output).filter(function (k) { return k.indexOf('attentions.') === 0; });
+        if (!keys.length) return null;
+        keys.sort(function (a, b) {
+            return parseInt(a.split('.')[1], 10) - parseInt(b.split('.')[1], 10);
+        });
+        return output[keys[keys.length - 1]];
+    }
+
+    function averageHeads(attnTensor, seqLen) {
+        var dims = attnTensor.dims;
+        var heads = dims[1];
+        var stride = dims[3];
+        var data = attnTensor.data;
+        var rows = [];
+        for (var i = 0; i < seqLen; i++) {
+            var row = new Array(seqLen).fill(0);
+            for (var h = 0; h < heads; h++) {
+                for (var j = 0; j < seqLen; j++) {
+                    row[j] += data[h * stride * stride + i * stride + j];
+                }
+            }
+            for (var k = 0; k < seqLen; k++) row[k] /= heads;
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    function renderTokenRow() {
+        tokensDiv.innerHTML = '';
+        tokenLabels.forEach(function (label, i) {
+            var el = document.createElement('div');
+            el.className = 'l3-sav-token';
+            el.setAttribute('data-idx', String(i));
+            el.style.cssText = 'padding:8px 10px;border-radius:6px;cursor:pointer;background:#e2e8f0;border:2px solid transparent;transition:background 0.2s,border-color 0.2s;min-width:48px;text-align:center;';
+            el.innerHTML =
+                '<div class="l3-sav-label" style="font-size:13px;font-weight:600;color:#1e293b;font-family:monospace;">' + escapeHtml(label) + '</div>' +
+                '<div class="l3-sav-bar-track" style="height:8px;margin-top:6px;background:#cbd5e1;border-radius:4px;overflow:hidden;">' +
+                '<div class="l3-sav-bar-fill" style="height:100%;width:0;background:#dc2626;border-radius:4px;transition:width 0.25s;"></div></div>' +
+                '<div class="l3-sav-pct" style="font-size:11px;color:#64748b;margin-top:4px;">—</div>';
+            el.addEventListener('click', function () { showAttention(i); });
+            tokensDiv.appendChild(el);
+        });
+    }
+
+    function showAttention(queryIdx) {
+        if (!attentionRows || !tokenLabels.length) return;
+        var row = attentionRows[queryIdx];
+        var maxP = Math.max.apply(null, row);
+
+        document.querySelectorAll('.l3-sav-token').forEach(function (el, j) {
+            var p = row[j];
+            var rel = maxP > 0 ? p / maxP : 0;
+            var red = Math.round(254 - rel * 120);
+            var green = Math.round(226 - rel * 190);
+            var blue = Math.round(226 - rel * 190);
+            var isQuery = j === queryIdx;
+
+            el.style.background = isQuery ? '#fde68a' : 'rgb(' + red + ',' + green + ',' + blue + ')';
+            el.style.borderColor = isQuery ? '#2563eb' : '#94a3b8';
+            el.querySelector('.l3-sav-bar-fill').style.width = Math.round(p * 100) + '%';
+            el.querySelector('.l3-sav-pct').textContent = (p * 100).toFixed(0) + '%';
+        });
+
+        var topIdx = row.indexOf(maxP);
+        statusEl.innerHTML =
+            'MiniLM layer 6 · 12-head average · WordPiece tokens: ' + tokenLabels.length +
+            '<br>Attention <strong>from</strong> <span style="font-family:monospace;">' + escapeHtml(tokenLabels[queryIdx]) +
+            '</span> → strongest <span style="font-family:monospace;">' + escapeHtml(tokenLabels[topIdx]) +
+            '</span> (' + (maxP * 100).toFixed(1) + '%). Row sums to 100%.';
+    }
+
+    function defaultSelection() {
+        var bankIdx = tokenLabels.findIndex(function (t) { return t.toLowerCase() === 'bank'; });
+        if (bankIdx >= 0) return bankIdx;
+        var sheIdx = tokenLabels.findIndex(function (t) { return t.toLowerCase() === 'she'; });
+        if (sheIdx >= 0) return sheIdx;
+        return Math.min(1, tokenLabels.length - 1);
+    }
+
+    async function runInference(text) {
+        if (!model || !tokenizer) return;
+        var trimmed = text.trim();
+        if (!trimmed) {
+            tokensDiv.innerHTML = '';
+            statusEl.textContent = 'Type a sentence to tokenize and run attention.';
+            attentionRows = null;
+            return;
+        }
+        if (busy) return;
+        busy = true;
+        statusEl.textContent = 'Running MiniLM attention…';
+
+        try {
+            var inputs = await tokenizer(trimmed, { padding: true, truncation: true, max_length: 64 });
+            var output = await model(inputs);
+            var attnTensor = getLastAttentionTensor(output);
+            if (!attnTensor) throw new Error('Model did not return attention tensors.');
+
+            var seqLen = getSeqLen(inputs);
+            tokenLabels = idsToLabels(inputs.input_ids, seqLen);
+            attentionRows = averageHeads(attnTensor, seqLen);
+            renderTokenRow();
+            showAttention(defaultSelection());
+        } catch (err) {
+            statusEl.textContent = 'Inference failed: ' + err.message;
+        } finally {
+            busy = false;
+        }
+    }
+
+    function scheduleInference() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { runInference(input.value); }, 450);
+    }
+
+    input.addEventListener('input', scheduleInference);
+    document.querySelectorAll('.l3-sav-preset').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            input.value = btn.getAttribute('data-s');
+            runInference(input.value);
+        });
+    });
+
+    async function boot() {
+        if (location.protocol === 'file:') {
+            statusEl.innerHTML = 'This page was opened as a local file (<code>file://</code>). Chrome blocks the model library in that mode. ' +
+                'Run a local server in this folder, then open the lesson via <code>http://localhost</code>:<br><br>' +
+                '<code style="display:block;background:#f1f5f9;padding:8px;border-radius:4px;margin-top:6px;">cd "' +
+                location.pathname.split('/').slice(0, -1).join('/') +
+                '"<br>python3 -m http.server 8000</code><br>' +
+                'Then visit the printed <code>http://localhost:8000/...</code> URL for this file.';
+            return;
+        }
+
+        statusEl.textContent = 'Loading Transformers.js from CDN…';
+        markBoot();
+
+        try {
+            var tf = await import(TRANSFORMERS_URL);
+            var AutoTokenizer = tf.AutoTokenizer;
+            var AutoModel = tf.AutoModel;
+            var env = tf.env;
+            env.allowLocalModels = false;
+            env.useBrowserCache = true;
+
+            statusEl.textContent = 'Loading MiniLM tokenizer and weights (~87MB on first visit)…';
+            var loadOpts = { progress_callback: onLoadProgress };
+            tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, loadOpts);
+            statusEl.textContent = 'Tokenizer ready — downloading model weights…';
+            model = await AutoModel.from_pretrained(MODEL_ID, Object.assign({ dtype: 'fp32' }, loadOpts));
+            markReady();
+            await runInference(input.value);
+        } catch (err) {
+            markReady();
+            statusEl.innerHTML = 'Could not load the activity: <strong>' + escapeHtml(err.message) + '</strong>. ' +
+                'Open DevTools → Network and check that requests to <code>cdn.jsdelivr.net</code> and <code>huggingface.co</code> succeed (not blocked by an extension, firewall, or LMS iframe).';
+        }
+    }
+
+    boot();
+})();
+</script>
+
+</div>
+
+</body>
+</html>

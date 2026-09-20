@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perceptrons and Hidden Layers · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Multi-Layer Perceptrons</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Multi-Layer Perceptrons</p>
+    <h1>Perceptrons and Hidden Layers</h1>
+    <p class="lede">Lesson 3 utilized logistic regression to construct a single linear decision boundary for classification tasks. A <b>perceptron</b> represents this same structural unit from a connectionist perspective: an artificial neuron that aggregates inputs via weights and a bias before applying an activation function. While a single perceptron can emulate fundamental logic gates, the exclusive-OR (XOR) operation reveals the geometric constraints of single-layer systems.</p>
+  </header>
+
+  <section>
+<h2>1. Anatomy of a perceptron</h2>
+    <p>A <b>perceptron</b> serves as the baseline computational node in neural architectures. It accepts an input vector, computes its dot product with a weight vector, adds a scalar bias, and passes the aggregate score through an <b>activation function</b>:</p>
+    \[
+    z = w^T x + b
+    \]
+
+    \[
+    a = \sigma(z)
+    \]
+    <ul>
+        <li><strong>\(x_j\)</strong> — The input feature components (represented as binary values 0 or 1 within logical operators).</li>
+        <li><strong>\(w_j\)</strong> — The scaling weights; a positive value increases the pre-activation score when the corresponding feature \(x_j\) is active.</li>
+        <li><strong>b</strong> — The bias term, which shifts the activation threshold along the affine axis independent of feature values.</li>
+        <li><strong>\(\sigma\)</strong> — The activation function (see below).</li>
+    </ul>
+    <div style="margin: 10px 0;">
+    <img 
+        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcyH2UWLHuOvJTP56eQ-OGOwrrLM0oK2BHOw&s"
+        alt="Perceptron anatomy diagram"
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+      <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://www.geeksforgeeks.org/deep-learning/what-is-perceptron-the-simplest-artificial-neural-network/" target="_blank">
+            GeeksForGeeks: What is Perceptron?
+        </a>
+    </p>
+</div>
+  </section>
+
+  <section>
+<h2>Activation Functions</h2>
+
+<p>
+An activation function transforms a neuron’s raw output:
+</p>
+
+\[
+z = w^T x + b,\quad a = \sigma(z)
+\]
+
+<p>
+It introduces <b>non-linearity</b>, which is necessary for neural networks to learn non-linear patterns.
+</p>
+  </section>
+
+  <section>
+<div class="table-wrap"><table>
+
+    <tr>
+        <th>Activation</th>
+        <th>Formula</th>
+        <th>Key Ideas</th>
+    </tr>
+
+    <tr>
+        <td><b>Sigmoid</b></td>
+        <td>
+            \[
+            \sigma(z) = \frac{1}{1 + e^{-z}}
+            \]
+        </td>
+        <td>
+            <ul>
+                <li>Outputs between 0 and 1</li>
+                <li>Used for probabilities</li>
+            </ul>
+        </td>
+    </tr>
+
+    <tr>
+        <td><b>ReLU</b></td>
+        <td>
+            \[
+            \text{ReLU}(z) = \max(0, z)
+            \]
+        </td>
+        <td>
+            <ul>
+                <li>Zero for negative values</li>
+                <li>Linear for positive values</li>
+            </ul>
+        </td>
+    </tr>
+
+    <tr>
+        <td><b>Tanh</b></td>
+        <td>
+            \[
+            \tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}
+            \]
+        </td>
+        <td>
+            <ul>
+                <li>Outputs between −1 and 1</li>
+                <li>Zero-centered (better than sigmoid in some cases)</li>
+                <li>Smoother transitions around 0</li>
+            </ul>
+        </td>
+    </tr>
+
+</table></div>
+
+<p>
+Without activation functions, stacking layers would still behave like a single linear model.
+Activations allow neural networks to learn non-linear decision boundaries.
+</p>
+
+<div style="margin: 10px 0;">
+    <img 
+        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTwLB8jyJQyOmwTJDhIEPv0zinSoUVNnkX0k-h3tca4tuXiqwe5CuqxIQE&s=10" 
+        alt="Activation functions comparison (Sigmoid vs ReLU vs Tanh)"
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+  <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://www.researchgate.net/figure/Activation-Functions-ReLU-Tanh-Sigmoid_fig4_327435257" target="_blank">
+            ResearchGate
+        </a>
+    </p>
+</div>
+  </section>
+
+  <section>
+<h2>2. Linear separation of AND and OR gates</h2>
+    <p>Boolean logic operations function as classification tasks over a binary coordinate space. A single perceptron maps a linear decision boundary through the unit square \([0,1] \times [0,1]\) to separate the truth table coordinates.</p>
+
+    <h3>AND and OR gates</h3>
+    <p>The AND operator evaluates to 1 exclusively when both inputs are active. The truth table values are: (0,0)\(\rightarrow\)0, (1,0)\(\rightarrow\)0, (0,1)\(\rightarrow\)0, (1,1)\(\rightarrow\)1. Geometric separation requires isolating the upper-right vertex from the remaining three coordinates. Setting parameters to \(w_1 = 1\), \(w_2 = 1\), and \(b = -1.5\) achieves this separation: at coordinate (1,1), the pre-activation is \(z = 1 + 1 - 1.5 = 0.5 > 0\), while at coordinate (1,0), it drops to \(z = 1 - 1.5 = -0.5 < 0\).</p>
+    
+    <p>The OR operator evaluates to 1 if at least one input is active: (0,0)\(\rightarrow\)0, and all other coordinates map to 1. Initializing parameter weights to \(w_1 = 1\), \(w_2 = 1\), and \(b = -0.5\) balances this condition: coordinate (0,0) yields \(z = -0.5\), whereas coordinate (1,0) yields \(z = 0.5\). While the separating hyperplane shifts position relative to the AND gate configuration, it remains a single linear division.</p>
+
+    <p>Both AND and OR distributions are classified as <b>linearly separable</b>. A single linear equation \(w_1x_1 + w_2x_2 + b = 0\) can completely segregate the target classes into opposing half-spaces.</p>
+  </section>
+
+  <section>
+<h2>3. The linear non-separability of XOR</h2>
+    <p>The <b>XOR</b> (exclusive-OR) operator evaluates to 1 only when its binary inputs are non-identical: (0,0)\(\rightarrow\)0, (1,0)\(\rightarrow\)1, (0,1)\(\rightarrow\)1, (1,1)\(\rightarrow\)0. The positive class targets sit at vertices (1,0) and (0,1), forming a diagonal distribution across the feature space. No single linear hyperplane can isolate the positive vertices from the negative vertices at (0,0) and (1,1).</p>
+ 
+  
+  <div style="margin: 15px 0;">
+    <img 
+        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjmPe_HyzKZXz7XhBWBD5ALfP_FLsl7Nm_zg&s" 
+        alt="AND, OR, and XOR Logic Gate Separability Graph" 
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+    <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://www.researchgate.net/figure/Linear-separability-of-Boolean-functions-the-axes-represent-the-input-values-and-the-dots_fig14_42803645" target="_blank">
+            Linear Separability of Boolean Functions
+        </a>
+    </p>
+</div>
+  </section>
+
+  <section>
+<h2>4. Hidden layers and feature space transformation</h2>
+    <p>Introducing a <b>hidden layer</b> between the input features and the output layer resolves non-linear distributions. Each independent hidden unit projects its own linear hyperplane, and subsequent layers aggregate these intermediate activations:</p>
+    \[
+    h = \sigma(W_1 x + b_1)
+    \]
+
+    \[
+    \hat{y} = \sigma(W_2 h + b_2)
+    \]
+
+    <p>
+    Here, \(h\) represents the hidden-layer activations, while \(\hat{y}\) represents the network's final prediction.
+    </p>
+    <p>To decode the XOR problem using a two-unit hidden layer, hidden unit A can be parametrized to evaluate a combined threshold for the input components, while hidden unit B isolates cross-axis variances. The final output node evaluates the intermediate activation vector \(h\), utilizing the hidden layer as an altered coordinate space where the original non-linear vertices become linearly separable.</p>
+    <p>By expanding hidden layer dimensions, multi-layer networks can approximate complex, high-dimensional decision boundaries in the primary input plane. This capacity for universal function approximation forms the foundational basis for deep network architectures, though it increases empirical variance and risk of overfitting on small datasets.</p>
+
+    <!-- <hr>
+
+    <h2>5. Interactive Sandbox: XOR and Layer Depth</h2>
+    <p>Toggle between a single-layer perceptron and a multi-layer neural network with a two-unit hidden layer. Modify the weight sliders to track the resulting shifts in the decision boundaries. The single-node baseline remains capped at 50% classification accuracy on XOR, whereas the multi-layer configuration can reach 100% convergence.</p>
+  <h1>TODO: REMOVE RIGHT COLUMN</h1>
+
+    <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr bgcolor="#fafafa">
+            <td align="center" valign="top" style="padding: 20px;">
+                <strong>Boundary plot and controls</strong><br><br>
+                <button id="l4-tab-single" onclick="l4SwitchTab('single')" style="padding: 6px 14px; cursor: pointer; font-weight: bold;">Single neuron</button>
+                <button id="l4-tab-multi" onclick="l4SwitchTab('multi')" style="padding: 6px 14px; cursor: pointer;">Two-layer network</button>
+                <br><br>
+                <canvas id="l4-mainCanvas" width="380" height="300" style="border: 2px solid #333; background-color: #fff; display: block;"></canvas>
+                <br>
+                <div id="l4-controls-single">
+                    <label>$w_1$: <span id="l4-s-w1-lbl">1.0</span></label>
+                    <input type="range" id="l4-s-w1" min="-3" max="3" step="0.1" value="1.0" style="width: 100%;" oninput="l4Process()">
+                    <label>$w_2$: <span id="l4-s-w2-lbl">-1.0</span></label>
+                    <input type="range" id="l4-s-w2" min="-3" max="3" step="0.1" value="-1.0" style="width: 100%;" oninput="l4Process()">
+                    <label>b: <span id="l4-s-b-lbl">0.0</span></label>
+                    <input type="range" id="l4-s-b" min="-2" max="2" step="0.1" value="0.0" style="width: 100%;" oninput="l4Process()">
+                </div>
+                <div id="l4-controls-multi" style="display: none;">
+                    <p style="font-size: 0.9em; margin: 0 0 8px 0;"><strong>Hidden neuron A</strong> (computes $x_1$+$x_2$ profile)</p>
+                    <label>w_A1: <span id="l4-m-wa1-lbl">2.0</span></label>
+                    <input type="range" id="l4-m-wa1" min="-4" max="4" step="0.2" value="2.0" style="width: 100%;" oninput="l4Process()">
+                    <label>w_A2: <span id="l4-m-wa2-lbl">2.0</span></label>
+                    <input type="range" id="l4-m-wa2" min="-4" max="4" step="0.2" value="2.0" style="width: 100%;" oninput="l4Process()">
+                    <label>b_A: <span id="l4-m-ba-lbl">-1.5</span></label>
+                    <input type="range" id="l4-m-ba" min="-3" max="3" step="0.2" value="-1.5" style="width: 100%;" oninput="l4Process()">
+                    <p style="font-size: 0.9em; margin: 12px 0 8px 0;"><strong>Hidden neuron B</strong> (computes $x_1$−$x_2$ profile)</p>
+                    <label>w_B1: <span id="l4-m-wb1-lbl">2.0</span></label>
+                    <input type="range" id="l4-m-wb1" min="-4" max="4" step="0.2" value="2.0" style="width: 100%;" oninput="l4Process()">
+                    <label>w_B2: <span id="l4-m-wb2-lbl">-2.0</span></label>
+                    <input type="range" id="l4-m-wb2" min="-4" max="4" step="0.2" value="-2.0" style="width: 100%;" oninput="l4Process()">
+                    <label>b_B: <span id="l4-m-bb-lbl">-0.5</span></label>
+                    <input type="range" id="l4-m-bb" min="-3" max="3" step="0.2" value="-0.5" style="width: 100%;" oninput="l4Process()">
+                    <p style="font-size: 0.9em; margin: 12px 0 8px 0;"><strong>Output neuron</strong></p>
+                    <label>out $w_1$: <span id="l4-m-ow1-lbl">4.0</span></label>
+                    <input type="range" id="l4-m-ow1" min="-6" max="6" step="0.5" value="4.0" style="width: 100%;" oninput="l4Process()">
+                    <label>out $w_2$: <span id="l4-m-ow2-lbl">-4.0</span></label>
+                    <input type="range" id="l4-m-ow2" min="-6" max="6" step="0.5" value="-4.0" style="width: 100%;" oninput="l4Process()">
+                    <label>out b: <span id="l4-m-ob-lbl">-2.0</span></label>
+                    <input type="range" id="l4-m-ob" min="-4" max="4" step="0.2" value="-2.0" style="width: 100%;" oninput="l4Process()">
+                    <button onclick="l4LoadXORSolution()" style="padding: 6px 12px; cursor: pointer; margin-top: 8px;">Load XOR solution</button>
+                </div>
+                <br>
+                <button id="l4-resetBtn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; width: 100%;">Reset</button>
+            </td>
+            <td valign="top" width="340" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Classification output</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div id="l4-outputBox" style="font-family: monospace; font-size: 0.9em; min-height: 200px;">
+                    <div>XOR accuracy: <span id="l4-score-txt">50%</span></div>
+                    <canvas id="l4-netDiagram" width="280" height="120" style="border: 1px solid #eee; width: 100%; margin-top: 8px;"></canvas>
+                    <div id="l4-telemetry" style="display: none; margin-top: 10px; font-size: 0.82em; line-height: 1.5;">
+                        <strong>Hidden layer activation map:</strong><br>
+                        (0,0): $h_1$=<span id="t-00-a">0</span>, $h_2$=<span id="t-00-b">0</span> → <span id="t-00-f">RED</span><br>
+                        (1,0): $h_1$=<span id="t-10-a">0</span>, $h_2$=<span id="t-10-b">0</span> → <span id="t-10-f">BLUE</span><br>
+                        (0,1): $h_1$=<span id="t-01-a">0</span>, $h_2$=<span id="t-01-b">0</span> → <span id="t-01-f">BLUE</span><br>
+                        (1,1): $h_1$=<span id="t-11-a">0</span>, $h_2$=<span id="t-11-b">0</span> → <span id="t-11-f">RED</span>
+                    </div>
+                </div>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Status:</strong> <span id="l4-status">Single layer nodes asymptote at 50% accuracy on XOR. Initialize multi-layer topology to process non-linear spaces.</span>
+                </div>
+            </td>
+        </tr>
+    </table> -->
+  </section>
+
+  <section>
+<h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Perceptrons (Minsky &amp; Papert, 1969):</strong> The landmark mathematical analysis detailing structural constraints of single-layer vector processing models. 
+            <a href="https://papers.baulab.info/papers/Minsky-1969.pdf" target="_blank">Paper</a></li>
+        <li><strong>Neural Networks and Deep Learning (Michael Nielsen):</strong> Instructional overview covering perceptron mechanics and multilayer architectures via interactive elements. <a href="http://neuralnetworksanddeeplearning.com/chap1.html" target="_blank">Chapter 1</a></li>
+        <li><strong>Neural Networks (3Blue1Brown):</strong> Visual analysis highlighting how hidden layer transforms combine discrete linear partitions into curved decision regions. <a href="https://www.3blue1brown.com/lessons/neural-networks" target="_blank">Neural Networks Lesson</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../IntroToML/UnitQuiz.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Unit Quiz: Intro to ML</span>
+    </a>
+    <a class="pager__next" href="MLP.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Multi-Layer Perceptrons and Backpropagation</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+        let l4ActiveMode = 'single';
+        const l4XORNodes = [
+            {x: 95, y: 215, label: 0, nx: 0, ny: 0},
+            {x: 285, y: 215, label: 1, nx: 1, ny: 0},
+            {x: 95, y: 75, label: 1, nx: 0, ny: 1},
+            {x: 285, y: 75, label: 0, nx: 1, ny: 1}
+        ];
+
+        function l4Sigmoid(z) { return 1.0 / (1.0 + Math.exp(-z)); }
+
+        function l4ToNorm(canvasX, canvasY, canvas) {
+            return {
+                nx: (canvasX - 50) / 230.0,
+                ny: (canvas.height - canvasY - 35) / 200.0
+            };
+        }
+
+        // function l4DrawNetDiagram(multi) {
+        //     let canvas = document.getElementById("l4-netDiagram");
+        //     if (!canvas) return;
+        //     let ctx = canvas.getContext("2d");
+        //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //     ctx.fillStyle = "#64748b"; ctx.font = "10px sans-serif"; ctx.textAlign = "center";
+        //     if (!multi) {
+        //         ctx.fillText("$x_1$, $x_2$  →  [$\sigma$+$\sigma$]  →  $\hat y$", canvas.width / 2, 65);
+        //         return;
+        //     }
+        //     let xIn = 35, h1x = 130, h2x = 130, outX = 240;
+        //     let y1 = 35, y2 = 85, yh1 = 45, yh2 = 75, yOut = 60;
+        //     ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1;
+        //     let edges = [
+        //         [xIn, y1, h1x, yh1], [xIn, y2, h1x, yh1],
+        //         [xIn, y1, h2x, yh2], [xIn, y2, h2x, yh2],
+        //         [h1x, yh1, outX, yOut], [h2x, yh2, outX, yOut]
+        //     ];
+        //     edges.forEach(e => {
+        //         ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[2], e[3]); ctx.stroke();
+        //     });
+        //     ctx.fillStyle = "#f1f5f9"; ctx.strokeStyle = "#475569";
+        //     [[xIn, y1], [xIn, y2], [h1x, yh1], [h2x, yh2], [outX, yOut]].forEach(p => {
+        //         ctx.beginPath(); ctx.arc(p[0], p[1], 10, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+        //     });
+        //     ctx.fillStyle = "#1e293b"; ctx.font = "8px sans-serif";
+        //     ctx.fillText("$x_1$", xIn, y1 + 3); ctx.fillText("$x_2$", xIn, y2 + 3);
+        //     ctx.fillText("$h_1$", h1x, yh1 + 3); ctx.fillText("$h_2$", h2x, yh2 + 3);
+        //     ctx.fillText("$\hat y$", outX, yOut + 3);
+        // }
+
+        function l4DrawNetDiagram(multi) {
+    let canvas = document.getElementById("l4-netDiagram");
+    if (!canvas) return;
+    let ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#1e293b";
+    ctx.font = "10px sans-serif";
+
+    if (!multi) {
+        ctx.fillText("x1, x2 → [σ] → ŷ", canvas.width / 2, 60);
+        return;
+    }
+
+    // 🔥 spread nodes properly
+    let xIn = 40;
+
+    let h1x = 140;
+    let h2x = 140;
+
+    let outX = 250;
+
+    let y1 = 40;
+    let y2 = 100;
+
+    let h1y = 60;
+    let h2y = 100;
+
+    let yOut = 80;
+
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 1;
+
+    let edges = [
+        [xIn, y1, h1x, h1y],
+        [xIn, y2, h1x, h1y],
+        [xIn, y1, h2x, h2y],
+        [xIn, y2, h2x, h2y],
+        [h1x, h1y, outX, yOut],
+        [h2x, h2y, outX, yOut]
+    ];
+
+    edges.forEach(e => {
+        ctx.beginPath();
+        ctx.moveTo(e[0], e[1]);
+        ctx.lineTo(e[2], e[3]);
+        ctx.stroke();
+    });
+
+    // nodes
+    ctx.fillStyle = "#f1f5f9";
+    ctx.strokeStyle = "#475569";
+
+    let nodes = [
+        [xIn, y1, "x1"],
+        [xIn, y2, "x2"],
+        [h1x, h1y, "h1"],
+        [h2x, h2y, "h2"],
+        [outX, yOut, "y"]
+    ];
+
+    nodes.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(n[0], n[1], 10, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#1e293b";
+        ctx.fillText(n[2], n[0], n[1] + 3);
+        ctx.fillStyle = "#f1f5f9";
+    });
+}
+        function l4SwitchTab(mode) {
+            l4ActiveMode = mode;
+            document.getElementById("l4-tab-single").style.fontWeight = mode === 'single' ? 'bold' : 'normal';
+            document.getElementById("l4-tab-multi").style.fontWeight = mode === 'multi' ? 'bold' : 'normal';
+            document.getElementById("l4-controls-single").style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById("l4-controls-multi").style.display = mode === 'multi' ? 'block' : 'none';
+            document.getElementById("l4-telemetry").style.display = mode === 'multi' ? 'block' : 'none';
+            l4DrawNetDiagram(mode === 'multi');
+            l4Process();
+        }
+
+        function l4LoadXORSolution() {
+            document.getElementById("l4-m-wa1").value = 2.0;
+            document.getElementById("l4-m-wa2").value = 2.0;
+            document.getElementById("l4-m-ba").value = -1.5;
+            document.getElementById("l4-m-wb1").value = 2.0;
+            document.getElementById("l4-m-wb2").value = -2.0;
+            document.getElementById("l4-m-bb").value = -0.5;
+            document.getElementById("l4-m-ow1").value = 4.0;
+            document.getElementById("l4-m-ow2").value = -4.0;
+            document.getElementById("l4-m-ob").value = -2.0;
+            l4SwitchTab('multi');
+        }
+
+        function l4DrawBoundaryLine(ctx, w1, w2, b, canvas, color) {
+            if (Math.abs(w2) < 1e-6) return;
+            ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.setLineDash(color === '#f59e0b' ? [6,4] : []);
+            ctx.beginPath();
+            let hasLine = false;
+            for (let x = 0; x <= canvas.width; x += 4) {
+                let nx = (x - 50) / 230.0;
+                let ny = (-b - w1 * nx) / w2;
+                let y = canvas.height - (ny * 200.0) - 35;
+                if (y >= 20 && y <= canvas.height - 20) {
+                    if (!hasLine) { ctx.moveTo(x, y); hasLine = true; } else ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function l4Process() {
+            let canvas = document.getElementById("l4-mainCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let correct = 0;
+
+            if (l4ActiveMode === 'single') {
+                let w1 = parseFloat(document.getElementById("l4-s-w1").value);
+                let w2 = parseFloat(document.getElementById("l4-s-w2").value);
+                let b = parseFloat(document.getElementById("l4-s-b").value);
+                document.getElementById("l4-s-w1-lbl").innerText = w1.toFixed(1);
+                document.getElementById("l4-s-w2-lbl").innerText = w2.toFixed(1);
+                document.getElementById("l4-s-b-lbl").innerText = b.toFixed(1);
+
+                let step = 6;
+                for (let x = 0; x < canvas.width; x += step) {
+                    for (let y = 0; y < canvas.height; y += step) {
+                        let n = l4ToNorm(x, y, canvas);
+                        let output = l4Sigmoid(w1 * n.nx + w2 * n.ny + b);
+                        ctx.fillStyle = output >= 0.5 ? "rgba(37,99,235,0.14)" : "rgba(220,38,38,0.14)";
+                        ctx.fillRect(x, y, step, step);
+                    }
+                }
+                l4DrawBoundaryLine(ctx, w1, w2, b, canvas, '#475569');
+
+                l4XORNodes.forEach(n => {
+                    if ((l4Sigmoid(w1 * n.nx + w2 * n.ny + b) >= 0.5 ? 1 : 0) === n.label) correct++;
+                });
+            } else {
+                let wa1 = parseFloat(document.getElementById("l4-m-wa1").value);
+                let wa2 = parseFloat(document.getElementById("l4-m-wa2").value);
+                let ba = parseFloat(document.getElementById("l4-m-ba").value);
+                let wb1 = parseFloat(document.getElementById("l4-m-wb1").value);
+                let wb2 = parseFloat(document.getElementById("l4-m-wb2").value);
+                let bb = parseFloat(document.getElementById("l4-m-bb").value);
+                let ow1 = parseFloat(document.getElementById("l4-m-ow1").value);
+                let ow2 = parseFloat(document.getElementById("l4-m-ow2").value);
+                let ob = parseFloat(document.getElementById("l4-m-ob").value);
+                ["l4-m-wa1-lbl","l4-m-wa2-lbl","l4-m-ba-lbl","l4-m-wb1-lbl","l4-m-wb2-lbl","l4-m-bb-lbl","l4-m-ow1-lbl","l4-m-ow2-lbl","l4-m-ob-lbl"].forEach((id,i)=>{
+                    let ids = ["l4-m-wa1","l4-m-wa2","l4-m-ba","l4-m-wb1","l4-m-wb2","l4-m-bb","l4-m-ow1","l4-m-ow2","l4-m-ob"];
+                    document.getElementById(id).innerText = parseFloat(document.getElementById(ids[i]).value).toFixed(1);
+                });
+
+                let step = 6;
+                for (let x = 0; x < canvas.width; x += step) {
+                    for (let y = 0; y < canvas.height; y += step) {
+                        let n = l4ToNorm(x, y, canvas);
+                        let h1 = l4Sigmoid(wa1 * n.nx + wa2 * n.ny + ba);
+                        let h2 = l4Sigmoid(wb1 * n.nx + wb2 * n.ny + bb);
+                        let z_out = ow1 * h1 + ow2 * h2 + ob;
+                        let finalProb = l4Sigmoid(z_out);
+                        ctx.fillStyle = finalProb >= 0.5 ? "rgba(37,99,235,0.16)" : "rgba(220,38,38,0.16)";
+                        ctx.fillRect(x, y, step, step);
+                    }
+                }
+                l4DrawBoundaryLine(ctx, wa1, wa2, ba, canvas, '#f59e0b');
+                l4DrawBoundaryLine(ctx, wb1, wb2, bb, canvas, '#8b5cf6');
+
+                l4XORNodes.forEach(n => {
+                    let h1 = l4Sigmoid(wa1 * n.nx + wa2 * n.ny + ba);
+                    let h2 = l4Sigmoid(wb1 * n.nx + wb2 * n.ny + bb);
+                    let z_out = ow1 * h1 + ow2 * h2 + ob;
+                    let finalPred = l4Sigmoid(z_out) >= 0.5 ? 1 : 0;
+                    if (finalPred === n.label) correct++;
+                    let key = n.nx === 0 ? (n.ny === 0 ? "00" : "01") : (n.ny === 0 ? "10" : "11");
+                    document.getElementById("t-" + key + "-a").innerText = h1.toFixed(2);
+                    document.getElementById("t-" + key + "-b").innerText = h2.toFixed(2);
+                    document.getElementById("t-" + key + "-f").innerText = finalPred === 1 ? "BLUE" : "RED";
+                });
+            }
+
+            let accuracy = Math.round((correct / 4) * 100);
+            document.getElementById("l4-score-txt").innerText = accuracy + "%";
+            document.getElementById("l4-status").innerText = (l4ActiveMode === 'single' ? "Single node template" : "Two-layer network configuration") + ": achieved " + accuracy + "% over XOR targets.";
+            l4XORNodes.forEach(n => {
+                ctx.fillStyle = n.label === 0 ? "#dc2626" : "#2563eb";
+                ctx.beginPath(); ctx.arc(n.x, n.y, 11, 0, 2 * Math.PI); ctx.fill();
+                ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#1e293b"; ctx.font = "9px sans-serif"; ctx.textAlign = "center";
+                ctx.fillText("(" + n.nx + "," + n.ny + ")", n.x, n.y + 22);
+            });
+        }
+
+        function l4Reset() {
+            document.getElementById("l4-s-w1").value = 1.0;
+            document.getElementById("l4-s-w2").value = -1.0;
+            document.getElementById("l4-s-b").value = 0.0;
+            l4SwitchTab('single');
+            document.getElementById("l4-status").innerText = "Parameter initialization complete. Isolated perceptrons remain bounded by the non-separability threshold.";
+        }
+
+        document.getElementById("l4-resetBtn").addEventListener("click", l4Reset);
+
+        l4SwitchTab('single');
+    </script>
+
+</body>
+</html>

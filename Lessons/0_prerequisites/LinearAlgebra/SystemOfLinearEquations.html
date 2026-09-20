@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Systems of Linear Equations · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Linear Algebra</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Linear Algebra</p>
+    <h1>Systems of Linear Equations</h1>
+  </header>
+
+  <section>
+<h2>1. What is a system of linear equations?</h2>
+
+        <p>A system of linear equations is a collection of one or more linear equations involving the same set of variables. For example, a system of two equations with two unknowns (\(x_1\) and \(x_2\)) looks like this:</p>
+
+      	\[3x_1 + 2x_2 = 7\]
+        \[-x_1 + 4x_2 = 7\]
+
+        <p>To solve the system means to find values for \(x_1\) and \(x_2\) that make both equations true at the same time. In this case, the unique solution is \(x_1 = 1\) and \(x_2 = 2\).</p>
+  </section>
+
+  <section>
+<h2>2. The Matrix Form: \(A\vec{x} = \vec{b}\)</h2>
+
+        <p>Any linear system can be rewritten compactly using the matrix-vector multiplication layouts learned in the previous sections. We organize the system into three parts:</p>
+        <ul>
+            <li>A <strong>coefficient matrix</strong> (\(A\)) holding the scalar weights</li>
+            <li>A <strong>variable vector</strong> (\(\vec{x}\)) holding the unknowns</li>
+            <li>A <strong>constant vector</strong> (\(\vec{b}\)) holding the outputs</li>
+        </ul>
+
+        <p>Using our initial example from Section 1, the matrix equation is structured as:</p>
+
+        \[\begin{bmatrix} 3 & 2 \\ -1 & 4 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} = \begin{bmatrix} 7 \\ 7 \end{bmatrix}\]
+
+        <p>Performing row-vector multiplication returns you exactly back to the scalar equations: \((3 \cdot x_1 + 2 \cdot x_2 = 7)\) and \((-1 \cdot x_1 + 4 \cdot x_2 = 7)\).</p>
+  </section>
+
+  <section>
+<h2>3. Solving with Matrix Inverses</h2>
+
+        <p>If the coefficient matrix \(A\) is a square matrix and possesses an inverse (\(A^{-1}\)), we can algebraically solve the system \(A\vec{x} = \vec{b}\) by multiplying both sides by the inverse from the left side:</p>
+
+        \[A^{-1}A\vec{x} = A^{-1}\vec{b}\]
+        \[I\vec{x} = A^{-1}\vec{b}\]
+        \[\vec{x} = A^{-1}\vec{b}\]
+
+        <p>Let's look at a concrete computational example:</p>
+
+        \[\begin{bmatrix} 2 & 1 \\ 5 & 3 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} = \begin{bmatrix} 4 \\ 11 \end{bmatrix}\]
+
+        <p>Given that the inverse of the matrix \(A\) is \(\begin{bmatrix} 3 & -1 \\ -5 & 2 \end{bmatrix}\), we calculate the variable values directly:</p>
+
+        \[\begin{bmatrix} x_1 \\ x_2 \end{bmatrix} = \begin{bmatrix} 3 & -1 \\ -5 & 2 \end{bmatrix} \begin{bmatrix} 4 \\ 11 \end{bmatrix} = \begin{bmatrix} (3 \cdot 4) + (-1 \cdot 11) \\ (-5 \cdot 4) + (2 \cdot 11) \end{bmatrix} = \begin{bmatrix} 12 - 11 \\ -20 + 22 \end{bmatrix} = \begin{bmatrix} 1 \\ 2 \end{bmatrix}\]
+  </section>
+
+  <section>
+<h2>4. Number of Solutions</h2>
+
+        <p>A linear system will always fall into one of exactly three structural categories:</p>
+        <ol>
+            <li><strong>Exactly one unique solution:</strong> The equations represent lines or planes that intersect at a single distinct point. This occurs when \(A\) is fully invertible.</li>
+            <li><strong>Infinitely many solutions:</strong> The equations represent lines or planes that completely overlap. There are infinite valid coordinate combinations.</li>
+            <li><strong>No solution:</strong> The equations represent parallel paths that never cross. No possible coordinate configuration can satisfy all parameters simultaneously.</li>
+        </ol>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="Matrices.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Matrices</span>
+    </a>
+    <a class="pager__next" href="Unit%20Quiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Linear Algebra</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

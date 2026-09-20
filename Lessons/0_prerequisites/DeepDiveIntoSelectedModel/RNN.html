@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recurrent Neural Networks & The Problem of Memory · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Deep Dive: CNNs and RNNs</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Deep Dive: CNNs and RNNs</p>
+    <h1>Recurrent Neural Networks & The Problem of Memory</h1>
+    <p class="lede">Up until now, we have treated machine learning data as something fundamentally static. When we built MLPs and Convolutional Networks, we fed them isolated snapshots of data: a fixed grid of pixels or a single input vector. The model would compute its output, draw its boundary, and completely wipe its slate clean for the next input.</p>
+  </header>
+
+  <section>
+<p>But many types of data are not static. The world around us is structured as continuous, evolving <strong>sequences</strong>. Think of the words you are reading right now, the sound waves of a music file, or the varying numbers of a stock index. In these formats, context is everything. The meaning of an element at step \(t\) depends entirely on what happened directly before it. To map these dependencies, computing frameworks require something new: an architectural <strong>memory</strong> footprint.</p>
+    
+    <p>To represent this data, we introduce the <strong>Recurrent Neural Network (RNN)</strong>. Developed as the original model for time-series and language tasks, the RNN attempts to handle data streams by passing an internal, evolving "hidden state" forward across time steps. In this post, we will look at how that loop works, why context matters for sequential data, and how later models (LSTMs, Transformers) solve the same problem with different machinery.</p>
+  </section>
+
+  <section>
+<h2>1. Why Feedforward Networks Struggle with Sequences</h2>
+
+<p>Suppose we want to predict the next word in a sentence using a standard feedforward network (MLP). If we feed the model only the current token, such as <code>"sat"</code>, the network has no information about the words that came before it. It cannot tell whether the sentence began with <code>"The fierce mountain lion..."</code> or <code>"The priceless antique vase..."</code>. Without context, many language tasks become much harder.</p>
+
+<p>One possible solution is to provide several previous words along with the current one by concatenating them into a larger input vector. While this gives the model some context, it introduces a new problem: the input size grows with the length of the context window, and the model can only use information that fits within that fixed window.</p>
+
+<h3>Observable Inputs vs. Hidden Memory</h3>
+
+<p>To understand how an RNN works, it helps to separate the information provided by the dataset from the information maintained internally by the model:</p>
+
+<ul>
+    <li><strong>Observable Input (\(x_t\)):</strong> The input vector at timestep \(t\). This could be a token embedding, an audio frame, or a sensor measurement.</li>
+
+<li><strong>Hidden State (\(h_t\)):</strong> The model's internal representation at timestep \(t\). It is not part of the input data; instead, it stores information accumulated from previous timesteps.</li>
+
+<li><strong>Output / Prediction (\(y_t\)):</strong> The model's prediction at timestep \(t\). In language modeling, this is typically a probability distribution over possible next tokens and is compared against the true next token during training.</li>
+
+</ul>
+
+<p>The hidden state provides the model with a form of memory, allowing information from earlier parts of the sequence to influence later predictions.</p>
+  </section>
+
+  <section>
+<h2>2. Inside a Recurrent Cell</h2>
+
+<p>At each timestep \(t\), an RNN combines two pieces of information: the current input vector \(x_t\) and the hidden state from the previous timestep \(h_{t-1}\). The update is defined by the following equations:</p>
+
+<div class="math-display">
+    \[
+    h_t = \tanh(W_h \cdot h_{t-1} + W_x \cdot x_t + b)
+    \]
+    \[
+    y_t = W_y \cdot h_t + b_y
+    \]
+</div>
+
+<p>The key detail is that the parameter matrices \(W_h\), \(W_x\), and \(W_y\) are reused at every timestep. This property is known as <strong>weight sharing</strong>.</p>
+
+<p>Weight sharing allows the same computation to be applied across an entire sequence regardless of its length. As a result, an RNN uses the same set of parameters whether it processes a sentence containing 5 words or a document containing 5,000 words.</p>
+
+<p>This idea is similar to the weight sharing used in convolutional neural networks, where the same kernel is applied repeatedly across different regions of an image.</p>
+
+<p><strong>Visualizing the Recurrent Update:</strong> At each timestep, the current input \(x_t\) and the previous hidden state \(h_{t-1}\) are combined to produce an updated hidden state \(h_t\). That hidden state is then used to generate the output \(y_t\).</p>
+
+<div style="overflow-x: auto; text-align: center; margin: 15px 0;">
+    <canvas id="l8-cell-canvas" width="680" height="250" style="border: 1px solid #e2e8f0; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+</div>
+
+    <!-- <p><strong>Next-Step Token Autoregression:</strong> Watch a mini language model read the sequence <code>The ➔ cat ➔ sat ➔ on ➔ the</code>. After each token input, the hidden state updates (visualized by the changing blue bars), shifting the network's predictive output (purple) closer to guessing the final word: <code>mat</code>.</p>
+    <canvas id="l8-nextpred-canvas" width="620" height="220" style="border: 1px solid #e2e8f0; display: block; margin: 15px 0; max-width: 100%;"></canvas>
+    <div id="l8-nextpred-caption" style="font-size: 0.88em; color: #475569; margin-bottom: 16px; text-align: center;">Each token input shifts the hidden state vector, refining the next-token prediction distribution.</div> -->
+
+    <!-- <p><strong>Tracing a Counting Sequence:</strong> Press <strong>Play</strong> to watch an RNN ingest the counting pattern <code>[1, 2, 3, 4, 5]</code>. See how the hidden state coordinates mutate with each step, encoding the abstract concept of incremental growth to successfully predict the next value: <code>6</code>.</p>
+    
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; width: 100%;">
+        <tr>
+            <td align="center" valign="top" style="padding: 15px;">
+                <div id="l8-count-seq" style="font-family: monospace; font-size: 1.1em; margin-bottom: 8px; font-weight: bold;">[ 1, 2, 3, 4, 5, ? ]</div>
+                <canvas id="l8-count-bars" width="320" height="100" style="border: 1px solid #94a3b8; background: #fff;"></canvas>
+                <div id="l8-count-caption" style="font-size: 0.85em; margin-top: 8px; color: #475569;">Hidden state bars update as each digit arrives.</div>
+            </td>
+            <td valign="middle" style="padding: 15px; font-size: 0.9em; color:#475569;">
+                <strong>What to look for:</strong> The recurring multiplication maps a path through latent space. By timestep 5, the model's hidden representation has cleanly captured the concept of sequential accumulation—allowing it to project a <code>6</code> without explicitly hardcoding any mathematical addition rules.
+            </td>
+        </tr>
+    </table> -->
+  </section>
+
+  <section>
+<h2>3. Unrolling Time</h2>
+    <p>To train an RNN with standard optimization methods, we use a conceptual tool called <strong>unrolling</strong>. When an RNN is unrolled across a sequence of length \(T\), it becomes equivalent to a feedforward network with \(T\) layers, where each layer shares the same parameters.</p>
+    
+    <p>Unrolling removes the recurrent loop and lays the computation out across time. This makes it easier to see how information moves forward through a sequence and how gradients flow backward during training.</p>
+    
+    <div style="overflow-x: auto; text-align: center; margin: 15px 0;">
+        <canvas id="l8-state-flow-canvas" width="700" height="250" style="border: 1px solid #e2e8f0; display: block; width: 100%; max-width: 700px; aspect-ratio: 700 / 250;"></canvas>
+    </div>
+    <div id="l8-flow-caption" style="font-size: 0.88em; color: #475569; margin-bottom: 16px; text-align: center;">Green = observable input, blue = hidden memory, purple = next-step prediction.</div>
+  </section>
+
+  <section>
+<h2>4. When RNNs Dominated Sequence Modeling</h2>
+    <p>Before Transformers became the standard architecture, recurrent neural networks and their gated variants were the leading approach for sequence-based tasks. During the mid-2010s, they powered major advances in language and speech systems:</p>
+    
+    <ul>
+        <li><strong>Machine Translation:</strong> In 2016, architectures like <a href="https://arxiv.org/abs/1609.08144" target="_blank">Google’s Neural Machine Translation (GNMT)</a> replaced many traditional statistical translation systems with deep LSTM-based models. These networks encoded a source sentence into a learned representation and then generated a translation in the target language.</li>
+    
+    <li><strong>Speech Recognition:</strong> Early production voice assistants such as Siri and Google Assistant relied heavily on recurrent architectures to process audio streams and convert speech into text.</li>
+    
+    <li><strong>Character-Level Text Generation:</strong> Andrej Karpathy's influential post, <a href="https://karpathy.github.io/2015/05/21/rnn-effectiveness/" target="_blank">The Unreasonable Effectiveness of Recurrent Neural Networks</a>, demonstrated that even relatively simple RNNs could learn to generate text one character at a time, including code, Shakespeare-style writing, and structured documents.</li>
+    
+    </ul>
+  </section>
+
+  <section>
+<h2>5. The Main Limitation: Vanishing Gradients</h2>
+    
+    <p>Despite their elegance, vanilla RNNs struggle with long-range dependencies. Training an RNN requires an algorithm called <strong>Backpropagation Through Time (BPTT)</strong>, which propagates gradients backward through every step of the unrolled sequence.</p>
+    
+    <div class="math-display">
+        \[
+        \frac{\partial L}{\partial W_h} = \sum_{t=1}^T \frac{\partial L_t}{\partial h_t} \cdot \frac{\partial h_t}{\partial W_h}
+        \]
+    </div>
+    
+    <p>The challenge comes from the recurrent connection itself. To determine how an early input affects a much later prediction, BPTT must repeatedly apply the chain rule through every intermediate timestep.</p>
+    
+    <!-- <div class="highlight-box">
+        <strong>The Vanishing Gradient Problem:</strong> During backpropagation, the same recurrent weight matrix \(W_h\) is effectively applied over and over. If its values are slightly smaller than 1, gradients shrink exponentially as they move backward through time.
+    
+    $$0.75^{30} \approx 0.00018$$
+    
+    After enough timesteps, the gradient becomes so small that early parts of the sequence receive almost no learning signal. As a result, the network struggles to connect information that is far apart in time.
+    
+    </div> -->
+    
+    <!-- <p><strong>Visualizing Gradient Decay:</strong> Watch the error signals fade as they move backward through an unrolled vanilla network. The rapidly shrinking bars show why early timesteps fail to learn long-range context.</p>
+    <canvas id="l8-bptt-canvas" width="560" height="180" style="border: 1px solid #e2e8f0; display: block; margin: 15px 0; max-width: 100%;"></canvas>
+    <div id="l8-bptt-caption" style="font-size: 0.88em; color: #475569; margin-bottom: 25px;">Red arrows trace BPTT backward; bar height = surviving gradient magnitude at each step.</div> -->
+  </section>
+
+  <section>
+<h2>6. LSTMs and GRUs: A Better Memory Mechanism</h2>
+    
+    <p>To address the limitations of vanilla RNNs, researchers developed <strong>gated recurrent architectures</strong>, most notably the <strong>Long Short-Term Memory (LSTM)</strong> network and the <strong>Gated Recurrent Unit (GRU)</strong>.</p>
+    
+    <p>Rather than storing everything in a single hidden state, an LSTM introduces a dedicated memory pathway called the <strong>cell state (\(c_t\))</strong>. This pathway allows information to travel across many timesteps with less degradation, making long-range dependencies much easier to learn.</p>
+    
+    <p>The flow of information through the cell state is controlled by three gates. Each gate uses a sigmoid activation to produce values between 0 and 1, determining how much information should be kept, added, or exposed:</p>
+    
+    <ul>
+        <li><strong>Forget Gate (\(f_t\)):</strong> Decides which information should be removed from memory.</li>
+        <li><strong>Input Gate (\(i_t\)):</strong> Determines which new information should be written into memory.</li>
+        <li><strong>Output Gate (\(o_t\)):</strong> Controls how much of the cell state contributes to the hidden state \(h_t\).</li>
+    </ul>
+    
+    <p><strong>The LSTM Information Highway:</strong> The cell state (top horizontal path) carries information across long distances, while the gates control what is forgotten, stored, and revealed at each step.</p>
+    
+    <figure style="margin: 15px 0;">
+        <img src="https://media.geeksforgeeks.org/wp-content/uploads/20250621121540869638/Long-Short-Term-Memory-LSTM-Networks-using-PyTorch.webp"
+             alt="LSTM cell architecture showing cell state pathway, forget gate, input gate, and output gate with inputs x_t, h_{t-1}, c_{t-1} and outputs h_t, c_t"
+             style="display: block; max-width: 100%; height: auto; border: 1px solid #cbd5e1;">
+        <figcaption style="font-size: 0.85em; color: #64748b; margin-top: 8px;">
+            <strong>LSTM cell architecture:</strong> The cell state (top) carries information across timesteps; forget, input, and output gates control what is removed, stored, and exposed as the hidden state.
+            <em>Image source:</em> <a href="https://www.geeksforgeeks.org/deep-learning/long-short-term-memory-networks-using-pytorch/" target="_blank">GeeksforGeeks — Long Short Term Memory (LSTM) Networks using PyTorch</a>.
+        </figcaption>
+    </figure>
+    
+    <!-- <div class="highlight-box">
+        <strong>Key Idea:</strong> You do not need to memorize every gate equation. The important concept is that vanilla RNNs, LSTMs, and Transformers are all trying to solve the same problem: how to preserve and use context across long sequences of data.
+    </div> -->
+    
+    <p>Here's how these approaches differ:</p>
+    
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Architecture</th><th>How Context Is Handled</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Vanilla RNN</strong></td><td>Maintains a single hidden state that is updated at every timestep. Simple, but struggles with long-range dependencies.</td></tr>
+            <tr><td><strong>LSTM / GRU</strong></td><td>Uses gated memory pathways to preserve information over longer sequences, but still processes tokens one step at a time.</td></tr>
+            <tr><td><strong>Transformer</strong> (Next Unit)</td><td>Uses self-attention to directly connect tokens across the sequence without relying on a recurrent loop.</td></tr>
+        </tbody>
+    </table></div>
+  </section>
+
+  <section>
+<h2>7. From Recurrence to Attention</h2>
+    
+    <p>Recurrent models introduced one of the most important ideas in modern AI: <strong>next-token prediction</strong>. By training a model to predict what comes next in a sequence, we encourage it to learn patterns in language, structure, and meaning.</p>
+    
+    <p>However, even LSTMs face an important limitation: they process information sequentially. Before computing timestep \(t\), the model must first compute timestep \(t-1\). This dependency makes training difficult to parallelize across modern hardware.</p>
+    
+    <p>As datasets and model sizes grew, this sequential bottleneck became increasingly restrictive. The breakthrough came with the <strong>Transformer</strong>, which replaced recurrence with <strong>self-attention</strong>. Instead of processing tokens one at a time, Transformers allow every token to interact with every other token simultaneously, making large-scale training dramatically more efficient. We will introduce Transformers in the next module, Intro to Generative AI.</p>
+  </section>
+
+  <section>
+<h2>8. Interactive Laboratory: Comparing RNNs and LSTMs</h2>
+    
+    <p>Train a vanilla RNN or an LSTM to predict a sine wave. Adjust the BPTT window length and observe how gradient behavior changes as sequences become longer.</p>
+
+    <div class="interactive-box">
+        <h3>Sine Wave Prediction Lab</h3>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; margin-bottom: 14px;">
+            <label style="font-size: 0.9em;">
+                Architecture:
+                <select id="l8-mode" style="margin-left: 6px;">
+                    <option value="rnn">Vanilla RNN</option>
+                    <option value="lstm">LSTM (simplified)</option>
+                </select>
+            </label>
+
+            <label style="font-size: 0.9em; flex: 1; min-width: 220px;">
+                BPTT window length: <strong id="l8-seqlen-lbl">15</strong>
+                <input type="range" id="l8-seqlen" min="3" max="40" value="15" style="width: 100%; display: block; margin-top: 4px;">
+            </label>
+
+            <label style="font-size: 0.9em; flex: 1; min-width: 180px;">
+                Learning rate: <strong id="l8-lr-lbl">0.20</strong>
+                <input type="range" id="l8-lr" min="0.05" max="0.50" step="0.05" value="0.20" style="width: 100%; display: block; margin-top: 4px;">
+            </label>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <button id="l8-train" type="button">Execute Training (20 Epochs)</button>
+            <button id="l8-reset" type="button">Reset Weights</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 16px; align-items: start;">
+            <div>
+                <p style="font-size: 0.88em; color: #475569; margin: 0 0 8px;">Model prediction vs. target sine wave</p>
+                <canvas id="l8-wave" width="520" height="150" style="border: 1px solid #cbd5e1; display: block; width: 100%; max-width: 520px;"></canvas>
+                <p style="font-size: 0.82em; color: #64748b; margin: 6px 0 0;">
+                    <span style="color:#16a34a; font-weight:600;">—</span> Target sine &nbsp;
+                    <span style="color:#2563eb; font-weight:600;">—</span> Model output
+                </p>
+            </div>
+            <div id="l8-output" style="font-family: monospace; font-size: 0.88em; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; line-height: 1.6;">
+                Epoch: 0 / 100<br>MSE: —
+            </div>
+        </div>
+
+        <p style="font-size: 0.88em; color: #475569; margin: 18px 0 8px;">Gradient magnitude at each timestep inside the BPTT window (earlier steps ← later steps)</p>
+        <canvas id="l8-grad" width="520" height="110" style="border: 1px solid #cbd5e1; display: block; width: 100%; max-width: 520px;"></canvas>
+        <div id="l8-grad-caption" style="font-size: 0.82em; color: #64748b; margin-top: 6px;"></div>
+    </div>
+  </section>
+
+  <section>
+<h2>Recommended Literature & Core Resources</h2>
+    <ul>
+        <li><strong>Understanding LSTM Networks (Christopher Olah, 2015):</strong> The definitive visual guide that masterfully explains the inner math and gating loops of LSTMs. <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank">Read post</a></li>
+        <li><strong>Long Short-Term Memory (Hochreiter & Schmidhuber, 1997):</strong> The landmark research paper that introduced the LSTM architecture and solved the vanishing gradient problem. <a href="https://dl.acm.org/doi/10.1162/neco.1997.9.8.1735" target="_blank">Access Paper Registry</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="CNN.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Convolutional Neural Networks</span>
+    </a>
+    <a class="pager__next" href="Review.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Review: Core Concepts and Structural Patterns</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+    (function() {
+        function on(id, evt, fn) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener(evt, fn);
+        }
+        function setText(id, txt) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        }
+
+        const L8_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+        function subUnicode(s) {
+            const map = {
+                '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+                '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+                't': 'ₜ', '-': '₋'
+            };
+            return String(s).split('').map(function(c) { return map[c] || c; }).join('');
+        }
+
+        function varLabel(base, sub) {
+            return base + subUnicode(sub);
+        }
+
+        function measureSub(ctx, base, sub, basePx, subPx) {
+            ctx.font = basePx + 'px ' + L8_FONT;
+            let w1 = ctx.measureText(base).width;
+            ctx.font = subPx + 'px ' + L8_FONT;
+            let w2 = ctx.measureText(String(sub)).width;
+            return { w1: w1, w2: w2, total: w1 + w2 };
+        }
+
+        function drawSub(ctx, base, sub, cx, y, opts) {
+            opts = opts || {};
+            let basePx = opts.basePx || 10;
+            let subPx = opts.subPx || Math.max(7, Math.round(basePx * 0.72));
+            let align = opts.align || 'center';
+            if (opts.color) ctx.fillStyle = opts.color;
+            ctx.textBaseline = 'alphabetic';
+            let m = measureSub(ctx, base, sub, basePx, subPx);
+            let x = align === 'center' ? cx - m.total / 2 : align === 'right' ? cx - m.total : cx;
+            ctx.textAlign = 'left';
+            ctx.font = basePx + 'px ' + L8_FONT;
+            ctx.fillText(base, x, y);
+            ctx.font = subPx + 'px ' + L8_FONT;
+            ctx.fillText(String(sub), x + m.w1, y + Math.round(subPx * 0.38));
+            if (align === 'center') ctx.textAlign = 'center';
+            return m.total;
+        }
+
+        function drawLabelParts(ctx, parts, cx, y, opts) {
+            opts = opts || {};
+            let basePx = opts.basePx || 10;
+            let subPx = opts.subPx || Math.max(7, Math.round(basePx * 0.72));
+            let align = opts.align || 'center';
+            ctx.textBaseline = 'alphabetic';
+            ctx.textAlign = 'left';
+            let totalW = 0;
+            parts.forEach(function(p) {
+                if (p.text) {
+                    ctx.font = basePx + 'px ' + L8_FONT;
+                    totalW += ctx.measureText(p.text).width;
+                } else {
+                    totalW += measureSub(ctx, p.base, p.sub, basePx, subPx).total;
+                }
+            });
+            let x = align === 'center' ? cx - totalW / 2 : align === 'right' ? cx - totalW : cx;
+            parts.forEach(function(p) {
+                ctx.fillStyle = p.color || opts.color || '#334155';
+                if (p.text) {
+                    ctx.font = basePx + 'px ' + L8_FONT;
+                    ctx.fillText(p.text, x, y);
+                    x += ctx.measureText(p.text).width;
+                } else {
+                    let m = measureSub(ctx, p.base, p.sub, basePx, subPx);
+                    ctx.font = basePx + 'px ' + L8_FONT;
+                    ctx.fillText(p.base, x, y);
+                    ctx.font = subPx + 'px ' + L8_FONT;
+                    ctx.fillText(String(p.sub), x + m.w1, y + Math.round(subPx * 0.38));
+                    x += m.total;
+                }
+            });
+            if (align === 'center') ctx.textAlign = 'center';
+        }
+
+        function loopAnimation(tick) {
+            function run() {
+                setTimeout(run, tick());
+            }
+            run();
+        }
+
+        function prepCanvas(canvas) {
+            if (!canvas) return null;
+            const dpr = window.devicePixelRatio || 1;
+            if (!canvas._l8LogicalW) {
+                canvas._l8LogicalW = parseInt(canvas.getAttribute('width'), 10);
+                canvas._l8LogicalH = parseInt(canvas.getAttribute('height'), 10);
+            }
+            const w = canvas._l8LogicalW;
+            const h = canvas._l8LogicalH;
+            if (!canvas._l8HiDpi) {
+                canvas.width = Math.round(w * dpr);
+                canvas.height = Math.round(h * dpr);
+                canvas._l8HiDpi = true;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+            return { ctx, w, h };
+        }
+
+        const FLOW_WORDS = ['The', 'cat', 'sat', 'on', 'the'];
+        const FLOW_PRED = ['cat', 'sat', 'on', 'the', 'mat'];
+        let flowStep = -1;
+
+        function drawStateFlowchart(highlight) {
+            let c = document.getElementById('l8-state-flow-canvas');
+            let prep = prepCanvas(c);
+            if (!prep) return;
+            let ctx = prep.ctx, CW = prep.w, CH = prep.h;
+
+            const leg = [
+                { color: '#dcfce7', stroke: '#16a34a', parts: [{ text: 'Observable ' }, { base: 'x', sub: 't' }] },
+                { color: '#dbeafe', stroke: '#2563eb', parts: [{ text: 'Hidden state ' }, { base: 'h', sub: 't' }] },
+                { color: '#ede9fe', stroke: '#7c3aed', parts: [{ text: 'Prediction ' }, { base: 'y', sub: 't' }] }
+            ];
+            const legW = leg.length * 155;
+            leg.forEach(function(L, i) {
+                let lx = (CW - legW) / 2 + i * 155;
+                ctx.fillStyle = L.color; ctx.strokeStyle = L.stroke;
+                ctx.fillRect(lx, 14, 14, 14); ctx.strokeRect(lx, 14, 14, 14);
+                drawLabelParts(ctx, L.parts, lx + 20, 25, { align: 'left', basePx: 11, color: '#475569' });
+            });
+
+            const T = FLOW_WORDS.length;
+            const cellW = 64, gap = 20, h0W = 44;
+            const rowW = h0W + 14 + T * cellW + (T - 1) * gap;
+            const startX = (CW - rowW) / 2;
+
+            const Y_PRED = 44, H_PRED = 28;
+            const Y_HID = 98, H_HID = 32;
+            const Y_IN = 178, H_IN = 32;
+
+            function drawBox(x, y, w, h, fill, stroke, lw) {
+                ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1;
+                ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+            }
+            function drawArrow(x1, y1, x2, y2, color, lw) {
+                ctx.strokeStyle = color; ctx.lineWidth = lw || 1.5;
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            }
+
+            let h0x = startX;
+            drawBox(h0x, Y_HID, h0W, H_HID,
+                highlight === 0 ? '#bfdbfe' : '#dbeafe', '#2563eb', highlight === 0 ? 2 : 1);
+            ctx.fillStyle = '#1e40af';
+            drawLabelParts(ctx, [{ base: 'h', sub: '0' }, { text: ' = 0' }], h0x + h0W / 2, Y_HID + H_HID / 2 + 4, { basePx: 11, color: '#1e40af' });
+
+            for (let t = 0; t < T; t++) {
+                let x = startX + h0W + 14 + t * (cellW + gap);
+                let active = highlight === t + 1;
+                let lw = active ? 2.5 : 1;
+                let midH = Y_HID + H_HID / 2;
+                let n = String(t + 1);
+
+                drawBox(x, Y_PRED, cellW, H_PRED, active ? '#ddd6fe' : '#ede9fe', '#7c3aed', lw);
+                drawLabelParts(ctx,
+                    [{ base: 'y', sub: n }, { text: ' \u2192 "' + FLOW_PRED[t] + '"' }],
+                    x + cellW / 2, Y_PRED + 17, { basePx: 10, color: '#5b21b6' });
+
+                drawBox(x, Y_HID, cellW, H_HID, active ? '#bfdbfe' : '#dbeafe', '#2563eb', lw);
+                drawSub(ctx, 'h', n, x + cellW / 2, midH + 4, { basePx: 10, color: '#1e40af' });
+
+                drawBox(x, Y_IN, cellW, H_IN, active ? '#bbf7d0' : '#dcfce7', '#16a34a', lw);
+                drawLabelParts(ctx,
+                    [{ base: 'x', sub: n }, { text: ' "' + FLOW_WORDS[t] + '"' }],
+                    x + cellW / 2, Y_IN + 20, { basePx: 10, color: '#14532d' });
+
+                if (t === 0) {
+                    drawArrow(h0x + h0W, midH, x, midH, active ? '#2563eb' : '#cbd5e1', active ? 2 : 1);
+                } else {
+                    let px = startX + h0W + 14 + (t - 1) * (cellW + gap);
+                    drawArrow(px + cellW, midH, x, midH, active ? '#2563eb' : '#cbd5e1', active ? 2 : 1);
+                }
+                drawArrow(x + cellW / 2, Y_IN, x + cellW / 2, Y_HID + H_HID, '#16a34a', 1.5);
+                drawArrow(x + cellW / 2, Y_HID, x + cellW / 2, Y_PRED + H_PRED, '#2563eb', 1.5);
+            }
+
+            ctx.textAlign = 'left'; ctx.lineWidth = 1;
+
+            let cap = document.getElementById('l8-flow-caption');
+            if (!cap) return;
+            if (highlight < 0) {
+                cap.textContent = 'Token-by-token lifecycle: green inputs feed each step, blue hidden states carry memory forward, purple outputs predict the next token.';
+            } else if (highlight === 0) {
+                cap.textContent = 't = 0: hidden state ' + varLabel('h', '0') + ' initialized to zero before any input arrives.';
+            } else if (highlight <= T) {
+                cap.textContent = 't = ' + highlight + ': read ' + varLabel('x', highlight) + ' ("' + FLOW_WORDS[highlight - 1] + '"), update ' + varLabel('h', highlight) + ', predict ' + varLabel('y', highlight) + ' \u2192 "' + FLOW_PRED[highlight - 1] + '".';
+            }
+        }
+
+        function tickFlow() {
+            flowStep++;
+            if (flowStep > FLOW_WORDS.length) flowStep = -1;
+            drawStateFlowchart(flowStep);
+            return flowStep < 0 ? 1400 : (flowStep === 0 ? 900 : 700);
+        }
+
+        const cellC = document.getElementById('l8-cell-canvas');
+        function drawRNNCell(hPrev, xVal, hVal, yVal, yLabel) {
+            if (!cellC) return;
+            let ctx = cellC.getContext('2d');
+            let W = cellC.width, H = cellC.height;
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+            function box(x, y, bw, bh, fill, stroke, lw) {
+                ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1;
+                ctx.fillRect(x, y, bw, bh); ctx.strokeRect(x, y, bw, bh);
+            }
+            function arrow(x1, y1, x2, y2, color, lw) {
+                ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            }
+
+            let cx = W / 2, cy = H / 2 + 8;
+            let rw = 320, rh = 68;
+            let sideW = 92, sideH = 52;
+            let lx = 28, ly = cy - sideH / 2;
+            let rx = W - 28 - sideW;
+
+            box(cx - rw / 2, cy - rh / 2, rw, rh, '#dbeafe', '#2563eb', 1.5);
+            ctx.fillStyle = '#1e40af'; ctx.font = 'bold 13px ' + L8_FONT; ctx.textAlign = 'center';
+            ctx.fillText('RNN Cell', cx, cy - 18);
+            drawLabelParts(ctx,
+                [{ base: 'h', sub: 't' }, { text: ' = tanh(' }, { base: 'W', sub: 'h' }, { text: '\u00b7h + ' }, { base: 'W', sub: 'x' }, { text: '\u00b7x + b)' }],
+                cx, cy + 10, { basePx: 12, subPx: 8, color: '#1e40af' });
+
+            box(lx, ly, sideW, sideH, '#dbeafe', '#2563eb', 1);
+            drawSub(ctx, 'h', 't-1', lx + sideW / 2, ly + 20, { basePx: 12, color: '#1e40af' });
+            ctx.font = '11px ' + L8_FONT; ctx.fillStyle = '#64748b'; ctx.textAlign = 'center';
+            ctx.fillText(hPrev.toFixed(2), lx + sideW / 2, ly + 40);
+
+            box(rx, ly, sideW, sideH, '#dbeafe', '#2563eb', 1);
+            drawSub(ctx, 'h', 't', rx + sideW / 2, ly + 20, { basePx: 12, color: '#1e40af' });
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(hVal.toFixed(2), rx + sideW / 2, ly + 40);
+
+            let yBoxY = ly - 58, yBoxH = 46;
+            box(rx, yBoxY, sideW, yBoxH, '#ede9fe', '#7c3aed', 1);
+            drawSub(ctx, 'y', 't', rx + sideW / 2, yBoxY + 18, { basePx: 11, color: '#5b21b6' });
+            if (yLabel) {
+                ctx.font = '11px ' + L8_FONT; ctx.fillStyle = '#5b21b6';
+                ctx.fillText(yLabel, rx + sideW / 2, yBoxY + 36);
+            }
+
+            let xBoxY = cy + rh / 2 + 22, xBoxH = 46, xBoxW = 76;
+            box(cx - xBoxW / 2, xBoxY, xBoxW, xBoxH, '#dcfce7', '#16a34a', 1);
+            drawSub(ctx, 'x', 't', cx, xBoxY + 18, { basePx: 12, color: '#14532d' });
+            if (xVal) {
+                ctx.font = '12px ' + L8_FONT; ctx.fillStyle = '#14532d';
+                ctx.fillText('"' + xVal + '"', cx, xBoxY + 36);
+            }
+
+            arrow(lx + sideW, cy, cx - rw / 2, cy, '#2563eb', 2);
+            arrow(cx + rw / 2, cy, rx, cy, '#2563eb', 2);
+            arrow(cx, cy + rh / 2, cx, xBoxY, '#16a34a', 1.5);
+            arrow(rx + sideW / 2, ly, rx + sideW / 2, yBoxY + yBoxH, '#7c3aed', 1.5);
+
+            ctx.textAlign = 'left'; ctx.lineWidth = 1;
+        }
+
+        const CELL_WORDS = ['The', 'cat', 'sat', 'on', 'the'];
+        const CELL_GUESS = ['cat', 'sat', 'on', 'the', 'mat'];
+        let cellStep = 0, cellH = 0, cellHPrev = 0;
+
+        function tickCell() {
+            if (cellStep > 0 && cellStep <= CELL_WORDS.length) {
+                cellHPrev = cellH;
+                cellH = Math.tanh(0.65 * cellH + 0.85 * (cellStep / 5));
+            }
+            let xLab = cellStep > 0 && cellStep <= CELL_WORDS.length ? CELL_WORDS[cellStep - 1] : '';
+            let yLab = cellStep > 0 && cellStep <= CELL_WORDS.length ? '"' + CELL_GUESS[cellStep - 1] + '"' : '';
+            drawRNNCell(cellStep > 1 ? cellHPrev : 0, xLab, cellStep > 0 ? cellH : 0, cellStep > 0 ? cellH : 0, yLab);
+            const pause = cellStep >= CELL_WORDS.length;
+            cellStep++;
+            if (cellStep > CELL_WORDS.length) { cellStep = 0; cellH = 0; cellHPrev = 0; }
+            return pause ? 1600 : (cellStep <= 1 ? 900 : 750);
+        }
+
+        const NP_WORDS = ['The', 'cat', 'sat', 'on', 'the'];
+        const NP_GUESS = ['cat', 'sat', 'on', 'the', 'mat'];
+        let npStep = 0, npH = 0;
+
+        function drawNextPred() {
+            let c = document.getElementById('l8-nextpred-canvas');
+            if (!c) return;
+            let ctx = c.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+
+            let ox = 30, wy = 28;
+            ctx.fillStyle = '#64748b'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText('Observable sequence (what we feed in):', ox, 16);
+            NP_WORDS.forEach((w, i) => {
+                let x = ox + i * 72;
+                let past = i < npStep;
+                let current = i === npStep - 1 && npStep > 0 && npStep <= NP_WORDS.length;
+                ctx.fillStyle = current ? '#bbf7d0' : past ? '#dcfce7' : '#f1f5f9';
+                ctx.strokeStyle = current ? '#16a34a' : '#cbd5e1';
+                ctx.lineWidth = current ? 2.5 : 1;
+                ctx.fillRect(x, wy, 62, 28); ctx.strokeRect(x, wy, 62, 28);
+                ctx.fillStyle = '#334155'; ctx.font = '11px sans-serif';
+                ctx.fillText(w, x + 14, wy + 18);
+            });
+            let px = ox + NP_WORDS.length * 72;
+            ctx.fillStyle = npStep > NP_WORDS.length ? '#ddd6fe' : '#faf5ff';
+            ctx.strokeStyle = '#7c3aed';
+            ctx.setLineDash(npStep > NP_WORDS.length ? [] : [4, 3]);
+            ctx.fillRect(px, wy, 62, 28); ctx.strokeRect(px, wy, 62, 28);
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#5b21b6';
+            ctx.fillText(npStep > NP_WORDS.length ? 'mat' : '?', px + 22, wy + 18);
+
+            drawLabelParts(ctx, [{ text: 'Hidden state ' }, { base: 'h', sub: 't' }, { text: ' (internal — not in the dataset):' }], ox, 82, { align: 'left', basePx: 11, color: '#64748b' });
+            let dims = [npH, npH * 0.7, npH * 0.45, -npH * 0.15].map(v => Math.max(-1, Math.min(1, v)));
+            let bw = 55, gap = 14, by = 95;
+            dims.forEach((v, i) => {
+                let x = ox + i * (bw + gap);
+                let h = Math.abs(v) * 40;
+                ctx.fillStyle = v >= 0 ? '#2563eb' : '#dc2626';
+                if (v >= 0) ctx.fillRect(x, 130 - h, bw, h); else ctx.fillRect(x, 130, bw, h);
+                ctx.strokeStyle = '#cbd5e1'; ctx.strokeRect(x, 90, bw, 80);
+                ctx.fillStyle = '#64748b'; ctx.font = '8px sans-serif';
+                ctx.fillText('dim ' + i, x + 14, 88);
+            });
+
+            drawLabelParts(ctx, [{ text: 'Output prediction ' }, { base: 'y', sub: 't' }, { text: ' (guess for next token):' }], 320, 82, { align: 'left', basePx: 11, color: '#64748b' });
+            ctx.fillStyle = '#ede9fe'; ctx.strokeStyle = '#7c3aed';
+            ctx.fillRect(320, 95, 120, 50); ctx.strokeRect(320, 95, 120, 50);
+            if (npStep > 0 && npStep <= NP_WORDS.length) {
+                ctx.fillStyle = '#5b21b6'; ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('"' + NP_GUESS[npStep - 1] + '"', 345, 128);
+            } else if (npStep > NP_WORDS.length) {
+                ctx.fillStyle = '#5b21b6'; ctx.font = 'bold 16px sans-serif';
+                ctx.fillText('"mat" ✓', 340, 128);
+            } else {
+                ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif';
+                ctx.fillText('—', 375, 125);
+            }
+
+            if (npStep > 0 && npStep <= NP_WORDS.length) {
+                ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(ox + (npStep - 1) * 72 + 31, wy + 28);
+                ctx.lineTo(ox + (npStep - 1) * 72 + 31, 75);
+                ctx.stroke();
+            }
+
+            let cap = document.getElementById('l8-nextpred-caption');
+            if (!cap) return;
+            if (npStep === 0) cap.textContent = varLabel('h', '0') + ' = 0 before the first token arrives.';
+            else if (npStep <= NP_WORDS.length) {
+                cap.textContent = 't = ' + npStep + ': read "' + NP_WORDS[npStep - 1] + '", update ' + varLabel('h', npStep) + ', predict "' + NP_GUESS[npStep - 1] + '".';
+            } else {
+                cap.textContent = 'Full prefix read — next token prediction: "mat".';
+            }
+        }
+
+        function tickNextPred() {
+            if (npStep > NP_WORDS.length) {
+                npStep = 0; npH = 0;
+            } else {
+                if (npStep > 0 && npStep <= NP_WORDS.length) {
+                    npH = Math.tanh(0.65 * npH + 0.85 * (npStep / 5));
+                }
+                npStep++;
+            }
+            drawNextPred();
+            return npStep > NP_WORDS.length ? 1800 : (npStep <= 1 ? 900 : 750);
+        }
+
+        const COUNT_SEQ = [1, 2, 3, 4, 5];
+        let countStep = 0, countH = 0;
+
+        function drawCountDemo() {
+            let barC = document.getElementById('l8-count-bars');
+            if (!barC) return;
+            let ctx = barC.getContext('2d'); ctx.clearRect(0, 0, barC.width, barC.height);
+            let dims = [countH, countH * 0.6, countH * 0.35, -countH * 0.2].map(v => Math.max(-1, Math.min(1, v)));
+            let bw = 60, gap = 12, ox = 20;
+            dims.forEach((v, i) => {
+                let x = ox + i * (bw + gap); let h = Math.abs(v) * 35;
+                ctx.fillStyle = v >= 0 ? '#2563eb' : '#dc2626';
+                if (v >= 0) ctx.fillRect(x, 50 - h, bw, h); else ctx.fillRect(x, 50, bw, h);
+                ctx.strokeStyle = '#cbd5e1'; ctx.strokeRect(x, 15, bw, 70);
+                ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif'; ctx.fillText('h[' + i + ']', x + 18, 12);
+            });
+
+            let seqEl = document.getElementById('l8-count-seq');
+            let cap = document.getElementById('l8-count-caption');
+            if (countStep === 0) {
+                if (seqEl) seqEl.textContent = '[ 1, 2, 3, 4, 5, ? ]';
+                if (cap) cap.textContent = 't = 0 — ' + varLabel('h', '0') + ' initialized to zero.';
+            } else if (countStep <= COUNT_SEQ.length) {
+                let parts = COUNT_SEQ.map((n, i) => i < countStep - 1 ? String(n) : (i === countStep - 1 ? '▶ ' + n : '?'));
+                if (seqEl) seqEl.textContent = '[ ' + parts.join(', ') + ', ? ]';
+                if (cap) cap.textContent = 't = ' + countStep + ': ' + varLabel('x', 't') + ' = ' + COUNT_SEQ[countStep - 1] + '. Hidden state updated.';
+            } else {
+                if (seqEl) seqEl.textContent = '[ 1, 2, 3, 4, 5 ] → y = 6';
+                if (cap) cap.textContent = 'Prediction: next value is 6 (increment pattern in ' + varLabel('h', 't') + ').';
+            }
+        }
+
+        function tickCount() {
+            if (countStep > COUNT_SEQ.length) {
+                countStep = 0; countH = 0;
+            } else {
+                if (countStep > 0 && countStep <= COUNT_SEQ.length) {
+                    countH = Math.tanh(0.7 * countH + 0.9 * (COUNT_SEQ[countStep - 1] / 5));
+                }
+                countStep++;
+            }
+            drawCountDemo();
+            return countStep > COUNT_SEQ.length ? 1600 : 600;
+        }
+
+        const BPTT_T = 8;
+        let bpttStep = -1;
+
+        let mode = 'rnn', seqLen = 15, epochs = 0, trainTimer = null;
+        let Wh = 0.2, Wx = 0.3, Wy = 0.6, bh = 0, by = 80;
+        let target = [], pred = [], lastGradMag = [];
+
+        const STEPS = 60;
+
+        const seqEl = document.getElementById('l8-seqlen');
+        const lrEl = document.getElementById('l8-lr');
+        const outEl = document.getElementById('l8-output');
+        const waveCanvas = document.getElementById('l8-wave');
+        const gradCanvas = document.getElementById('l8-grad');
+
+        function drawBPTT(highlight) {
+            let c = document.getElementById('l8-bptt-canvas'); if (!c) return;
+            let ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+            let cellW = 58, gap = 8, y = 50, startX = 20;
+            for (let t = 0; t < BPTT_T; t++) {
+                let x = startX + t * (cellW + gap);
+                ctx.fillStyle = '#f1f5f9'; ctx.strokeStyle = '#94a3b8';
+                ctx.fillRect(x, y, cellW, 36); ctx.strokeRect(x, y, cellW, 36);
+                ctx.fillStyle = '#334155'; ctx.textAlign = 'center';
+                drawSub(ctx, 't', String(t + 1), x + cellW / 2, y + 22, { basePx: 9, color: '#334155' });
+                let grad = Math.pow(0.72, BPTT_T - 1 - t); let barH = grad * 50;
+                ctx.fillStyle = grad < 0.2 ? '#fca5a5' : '#93c5fd';
+                ctx.fillRect(x + 8, y + 42, cellW - 16, barH);
+                if (t < BPTT_T - 1 && highlight >= 0 && t >= highlight) {
+                    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath();
+                    ctx.moveTo(x + cellW / 2, y + 36); ctx.lineTo(x + cellW / 2 + (cellW + gap) / 2, y - 12);
+                    ctx.lineTo(x + cellW + gap + cellW / 2, y + 36); ctx.stroke();
+                }
+            }
+            ctx.textAlign = 'left'; ctx.lineWidth = 1;
+            let cap = document.getElementById('l8-bptt-caption');
+            if (cap) {
+                if (highlight < 0) {
+                    cap.textContent = 'Bar height = gradient magnitude surviving at each time step (vanishing toward the left).';
+                } else {
+                    cap.textContent = 'BPTT step ' + (BPTT_T - highlight) + ': gradient flows from t=' + BPTT_T + ' back toward earlier steps.';
+                }
+            }
+        }
+
+        function tickBPTT() {
+            if (bpttStep < 0) bpttStep = BPTT_T;
+            bpttStep--;
+            drawBPTT(bpttStep);
+            if (bpttStep < 0) { bpttStep = -1; return 1400; }
+            return 450;
+        }
+
+        function genTarget() {
+            target = []; for (let i = 0; i < STEPS; i++) target.push(Math.sin(i * 0.18) * 55 + 85);
+        }
+        function forward() {
+            pred = []; let h = 0, c = 0;
+            for (let t = 0; t < STEPS; t++) {
+                let x = t === 0 ? 0 : (target[t - 1] - 85) / 55;
+                if (mode === 'lstm') {
+                    c = 0.85 * c + 0.9 * Math.tanh(Wx * x + bh); h = Math.tanh(Wh * c) * Wy;
+                } else h = Math.tanh(Wh * h + Wx * x + bh);
+                pred.push(h * 55 + by);
+            }
+        }
+        function trainEpoch(lr) {
+            let h = 0, c = 0, hTr = [], cTr = [], xTr = [];
+            for (let t = 0; t < STEPS; t++) {
+                let x = t === 0 ? 0 : (target[t - 1] - 85) / 55; xTr.push(x);
+                if (mode === 'lstm') {
+                    c = 0.85 * c + 0.9 * Math.tanh(Wx * x + bh); h = Math.tanh(Wh * c) * Wy;
+                } else h = Math.tanh(Wh * h + Wx * x + bh);
+                hTr.push(h); cTr.push(c);
+            }
+            let decay = mode === 'lstm' ? 0.96 : 0.72;
+            let gWh = 0, gWx = 0, gWy = 0, gBh = 0, gBy = 0;
+            lastGradMag = new Array(STEPS).fill(0);
+            let bpttStart = Math.max(0, STEPS - seqLen);
+            for (let t = STEPS - 1; t >= bpttStart; t--) {
+                let err = (hTr[t] * 55 + by - target[t]) / 55;
+                let scale = Math.pow(decay, STEPS - 1 - t);
+                let dh = err * Wy * (1 - hTr[t] * hTr[t]) * scale;
+                lastGradMag[t] = Math.abs(dh);
+                gWy += err * hTr[t] * scale; gBy += err * scale;
+                gWh += dh * (mode === 'lstm' ? cTr[t] : hTr[Math.max(0, t - 1)]) * scale;
+                gWx += dh * xTr[t] * scale; gBh += dh * scale;
+            }
+            let s = lr * 0.08; Wy -= s * gWy; by -= s * gBy * 55; Wh -= s * gWh; Wx -= s * gWx; bh -= s * gBh;
+        }
+
+        function updateGradCaption() {
+            let cap = document.getElementById('l8-grad-caption');
+            if (!cap) return;
+            if (mode === 'lstm') {
+                cap.textContent = 'LSTM (' + seqLen + '-step BPTT): gated memory slows gradient decay — earlier timesteps still receive useful signal even at longer windows.';
+            } else {
+                cap.textContent = 'Vanilla RNN (' + seqLen + '-step BPTT): repeated multiplication by W_h shrinks gradients toward earlier steps — increase the window to watch bars collapse.';
+            }
+        }
+
+        function drawWave() {
+            if (!waveCanvas) return;
+            let ctx = waveCanvas.getContext('2d');
+            ctx.clearRect(0, 0, waveCanvas.width, waveCanvas.height);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+
+            let padL = 28, padR = 10, padT = 12, padB = 22;
+            let plotW = waveCanvas.width - padL - padR;
+            let plotH = waveCanvas.height - padT - padB;
+            let yMin = 20, yMax = 150;
+
+            function yScale(v) {
+                return padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+            }
+            function xScale(i) {
+                return padL + (i / (STEPS - 1)) * plotW;
+            }
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padL, padT + plotH);
+            ctx.lineTo(padL + plotW, padT + plotH);
+            ctx.stroke();
+
+            function line(arr, color, w) {
+                ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath();
+                for (let i = 0; i < arr.length; i++) {
+                    let x = xScale(i), y = yScale(arr[i]);
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            line(target, '#16a34a', 2.5);
+            line(pred, '#2563eb', 2);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px ' + L8_FONT;
+            ctx.textAlign = 'left';
+            ctx.fillText('0', padL, waveCanvas.height - 6);
+            ctx.textAlign = 'right';
+            ctx.fillText(String(STEPS - 1), padL + plotW, waveCanvas.height - 6);
+        }
+
+        function drawGrad() {
+            if (!gradCanvas) return;
+            let ctx = gradCanvas.getContext('2d');
+            ctx.clearRect(0, 0, gradCanvas.width, gradCanvas.height);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, gradCanvas.width, gradCanvas.height);
+
+            let decay = mode === 'lstm' ? 0.94 : 0.72;
+            let bpttStart = STEPS - seqLen;
+            let mags = [];
+            let maxMag = 0;
+            for (let i = 0; i < seqLen; i++) {
+                let t = bpttStart + i;
+                let s = (lastGradMag.length && lastGradMag[t] > 0)
+                    ? lastGradMag[t]
+                    : Math.pow(decay, seqLen - 1 - i);
+                mags.push(s);
+                maxMag = Math.max(maxMag, s);
+            }
+            if (maxMag <= 0) maxMag = 1;
+
+            let padL = 28, padR = 12, padB = 22, padT = 10;
+            let plotW = gradCanvas.width - padL - padR;
+            let plotH = gradCanvas.height - padB - padT;
+            let spacing = plotW / seqLen;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padL, padT + plotH);
+            ctx.lineTo(padL + plotW, padT + plotH);
+            ctx.stroke();
+
+            for (let t = 0; t < seqLen; t++) {
+                let norm = mags[t] / maxMag;
+                let barH = Math.max(3, norm * (plotH - 4));
+                let x = padL + t * spacing + 2;
+                let bw = Math.max(4, spacing - 4);
+                ctx.fillStyle = norm < 0.15 ? '#fca5a5' : (mode === 'lstm' ? '#16a34a' : '#2563eb');
+                ctx.fillRect(x, padT + plotH - barH, bw, barH);
+            }
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px ' + L8_FONT;
+            ctx.textAlign = 'left';
+            ctx.fillText('t=' + (bpttStart + 1), padL, gradCanvas.height - 6);
+            ctx.textAlign = 'right';
+            ctx.fillText('t=' + STEPS, padL + plotW, gradCanvas.height - 6);
+            ctx.textAlign = 'left';
+            ctx.fillText('|∂L/∂h|', 4, padT + 12);
+        }
+
+        function render() {
+            forward();
+            let mse = 0;
+            for (let i = 0; i < STEPS; i++) { let d = target[i] - pred[i]; mse += d * d; }
+            mse /= STEPS;
+            if (outEl) outEl.innerHTML = 'Architecture: ' + (mode === 'lstm' ? 'LSTM' : 'Vanilla RNN') + '<br>BPTT window: ' + seqLen + '<br>Epoch: ' + epochs + ' / 100<br>MSE: ' + mse.toFixed(2);
+            drawWave(); drawGrad(); updateGradCaption();
+        }
+
+        function resetLab() {
+            if (trainTimer) { clearInterval(trainTimer); trainTimer = null; }
+            epochs = 0; Wh = 0.2; Wx = 0.3; Wy = 0.6; bh = 0; by = 80;
+            lastGradMag = [];
+            genTarget();
+            setText('l8-train', 'Execute Training (20 Epochs)');
+            render();
+        }
+
+        if (seqEl) seqEl.addEventListener('input', () => {
+            seqLen = parseInt(seqEl.value, 10);
+            setText('l8-seqlen-lbl', String(seqLen));
+            render();
+        });
+        if (lrEl) lrEl.addEventListener('input', () => {
+            setText('l8-lr-lbl', parseFloat(lrEl.value).toFixed(2));
+        });
+        on('l8-mode', 'change', (e) => { mode = e.target.value; resetLab(); });
+        on('l8-reset', 'click', resetLab);
+        on('l8-train', 'click', () => {
+            if (trainTimer) { clearInterval(trainTimer); trainTimer = null; setText('l8-train', 'Execute Training (20 Epochs)'); return; }
+            let n = 0;
+            setText('l8-train', 'Pause');
+            trainTimer = setInterval(() => {
+                if (n >= 20 || epochs >= 100) {
+                    clearInterval(trainTimer); trainTimer = null;
+                    setText('l8-train', 'Execute Training (20 Epochs)');
+                    return;
+                }
+                trainEpoch(parseFloat(lrEl ? lrEl.value : 0.2));
+                epochs++; n++; render();
+            }, 50);
+        });
+
+        drawStateFlowchart(-1);
+        drawRNNCell(0, '', 0, 0, '');
+        drawNextPred();
+        drawCountDemo();
+        drawBPTT(-1);
+        resetLab();
+
+        loopAnimation(tickFlow);
+        loopAnimation(tickCell);
+        loopAnimation(tickNextPred);
+        loopAnimation(tickCount);
+        loopAnimation(tickBPTT);
+    })();
+    </script>
+
+<script>
+    document.querySelectorAll('details').forEach(function(el) {
+        el.addEventListener('toggle', function() {
+            if (el.open && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+        });
+    });
+    </script>
+
+</body>
+</html>

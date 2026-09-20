@@ -1,0 +1,42 @@
+<!--
+    MATH NOTATION TEMPLATE
+
+    Use these patterns for inline and block math expressions.
+    These use HTML/Unicode since the course does not load MathJax or KaTeX.
+-->
+
+<!-- INLINE EQUATION: Use within a paragraph -->
+<span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">y = xW + b</span>
+
+<!-- BLOCK EQUATION SYSTEM: Use for multi-line derivations -->
+<p>
+    <font face="monospace">
+    Line_1 = expression_1<br>
+    Line_2 = expression_2<br>
+    Line_3 = expression_3
+    </font>
+</p>
+
+<!-- NAMED EQUATION with surrounding explanation -->
+<p>The transformation is expressed as:</p>
+<p><strong>y = xW + b</strong></p>
+<p>Where:</p>
+<ul>
+    <li><strong>x</strong> is DESCRIPTION with shape <strong>[ROWS, COLS]</strong>.</li>
+    <li><strong>W</strong> is DESCRIPTION with shape <strong>[ROWS, COLS]</strong>.</li>
+    <li><strong>b</strong> is DESCRIPTION with shape <strong>[ROWS, COLS]</strong>.</li>
+    <li><strong>y</strong> is DESCRIPTION with shape <strong>[ROWS, COLS]</strong>.</li>
+</ul>
+
+<!-- VECTOR NOTATION -->
+<p><strong>x = [x_1, x_2, x_3, ..., x_n]</strong></p>
+
+<!--
+    UNICODE REFERENCE for common math symbols:
+    Subscripts: x₁ x₂ x₃ ... x₉ x₀
+    Superscripts: x² x³
+    Greek: α β γ δ ε θ λ μ σ
+    Operators: × ÷ ± ≠ ≤ ≥ ∑ ∏ ∂ ∇ ∈ ∉ ⊂ ∩ ∪
+    Arrows: → ← ↔
+    Misc: ∞ √ ≈
+-->

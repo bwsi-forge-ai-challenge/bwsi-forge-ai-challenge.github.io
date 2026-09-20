@@ -1,0 +1,703 @@
+<div class="genai-lesson-container">
+
+    <h1>Foundations: Lesson 2 — Generative vs. Discriminative Models</h1>
+
+    <div class="highlight-box">
+        <strong>The Core Distinction:</strong> If you give a computer pictures of paintings, a <strong>Discriminative</strong> model acts like an art critic, figuring out if a painting is a Rembrandt or a Monet. A <strong>Generative</strong> model acts like the artist, learning the core essence of the brushstrokes so it can paint a brand new masterpiece from scratch. 
+    </div>
+
+    <hr>
+
+    <h2>1. Discriminative Models: The Regulators of Boundaries</h2>
+    <p>A discriminative model answers a direct question: <em>Given this specific input data, what category or numerical value does it belong to?</em> It focuses entirely on mapping features directly to output targets by drawing a mathematical boundary between classes.</p>
+    
+    <p>It ignores how the data itself looks as a whole. It only cares about the differences that separate class A from class B.</p>
+
+    <table>
+        <tr>
+            <th>Core Task</th>
+            <th>Features / Input (\(x\))</th>
+            <th>Target Label / Output (\(y\))</th>
+        </tr>
+        <tr>
+            <td><strong>Spam Filtering</strong></td>
+            <td>Email text copy</td>
+            <td>Discrete class: <code>Spam</code> or <code>Not Spam</code></td>
+        </tr>
+        <tr>
+            <td><strong>Real Estate Valuation</strong></td>
+            <td>Square footage, zip code, bedrooms</td>
+            <td>Continuous value: <code>$425,000</code></td>
+        </tr>
+        <tr>
+            <td><strong>Computer Vision Sorting</strong></td>
+            <td>Grayscale pixel map (\(16 \times 16\))</td>
+            <td>Categorical Integer: <code>0 through 9</code></td>
+        </tr>
+    </table>
+
+    <!--<div class="interactive-box">
+        <h3>⚡ Quick Check: Measuring Constraints</h3>
+        <p><strong>Scenario:</strong> A model processes handwritten medical charts and assigns an urgency index from 1 (low) to 5 (critical). How many potential unique variants can it return for a chart?</p>
+        <details>
+            <summary>Click to reveal answer</summary>
+            <p style="margin-top: 5px; color: #047857;"><strong>Exactly Five.</strong> Because this is a discriminative classification model, it maps features directly onto a closed, pre-defined target set. It cannot generate new text variations or create an unlisted alternative.</p>
+        </details>
+    </div>-->
+
+    <hr>
+
+    <h2>2. Generative Models: Simulating the Data Universe</h2>
+    <p>A generative model doesn't look for dividing boundaries. Instead, it uncovers the overarching mathematical blueprint of the data itself. It learns how data is distributed so thoroughly that it can engineer entirely original variations that look exactly like real data.</p>
+
+    <table>
+        <tr>
+            <th>Application</th>
+            <th>Context Prompt (\(c\))</th>
+            <th>Generated Output Matrix (\(x\))</th>
+        </tr>
+        <tr>
+            <td><strong>Natural Language Synthesis</strong></td>
+            <td>"Draft a follow-up email"</td>
+            <td>A completely unique sequence of sub-word text tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Neural Art Production</strong></td>
+            <td>"Oil painting of an astronaut"</td>
+            <td>An original, high-dimensional RGB pixel grid</td>
+        </tr>
+        <tr>
+            <td><strong>Source Code Generation</strong></td>
+            <td>"Write a binary search in Python"</td>
+            <td>A fully executable, raw text program string</td>
+        </tr>
+    </table>
+
+    <!--<div class="interactive-box">
+        <h3>⚡ Quick Check: Output Fluctuations</h3>
+        <p><strong>Scenario:</strong> You submit the exact same design prompt into an engine three times and receive three vastly different, high-resolution vector images. Why does this happen?</p>
+        <details>
+            <summary>Click to reveal answer</summary>
+            <p style="margin-top: 5px; color: #047857;"><strong>It is sampling a probability distribution.</strong> Generative systems rely on stochastic (probabilistic) decoding. Instead of locating an exact math answer, they pull varying, highly probable paths out of an infinite spatial domain.</p>
+        </details>
+    </div>-->
+
+    <hr>
+
+    <h2>3. Side-by-Side: One Domain, Two Goals</h2>
+    <p>To fully grasp the separation, look at how both archetypes handle identical targets within the exact same field:</p>
+
+    <table>
+        <tr>
+            <th>User Directive / Dataset Context</th>
+            <th>Discriminative Approach</th>
+            <th>Generative Approach</th>
+        </tr>
+        <tr>
+            <td><strong>Given a high-resolution photo of a dog</strong></td>
+            <td>Outputs a single class string: <code>"Golden Retriever"</code></td>
+            <td><em>N/A</em> (Expects generation requests, not evaluation)</td>
+        </tr>
+        <tr>
+            <td><strong>"Draw an ultra-realistic Golden Retriever"</strong></td>
+            <td><em>N/A</em> (Cannot build or assemble pixels from scratch)</td>
+            <td>Synthesizes a brand-new, unique pixel array</td>
+        </tr>
+        <tr>
+            <td><strong>Given an e-commerce review sentence</strong></td>
+            <td>Categorizes sentiment: <code>"Positive (98%)"</code></td>
+            <td><em>N/A</em> (Cannot perform structured class assignment)</td>
+        </tr>
+        <tr>
+            <td><strong>"Write a positive e-commerce product review"</strong></td>
+            <td><em>N/A</em></td>
+            <td>Assembles an entirely unique customer feedback paragraph</td>
+        </tr>
+    </table>
+
+    <hr>
+
+    <h2>4. The Underlying Probability Mathematics</h2>
+    <p>Under the hood, both fields optimize completely different statistical formulas:</p>
+
+    <div class="math-card">
+        <h3>Discriminative Archetype: \(P(y \mid x)\)</h3>
+        <p>This model measures the <strong>conditional probability</strong> of a label (\(y\)) given a specific feature dataset (\(x\)). It answers: <em>If I observe feature values \(x\), how likely is label \(y\)?</em></p>
+        <p>\[\hat{y} = \arg\max_y P(y \mid x)\]</p>
+        <p><strong>Real-World Example:</strong> Given physical measurements of a flower, it calculates probabilities across species: \(P(\text{Setosa} \mid x) = 0.94\), \(P(\text{Versicolor} \mid x) = 0.06\). The model cleanly outputs the maximum value: <strong>Setosa</strong>.</p>
+    </div>
+
+    <div class="math-card">
+        <h3>Generative Archetype: \(P(x)\) or \(P(x \mid c)\)</h3>
+        <p>This model determines the <strong>joint probability distribution</strong> or raw likelihood of the data instance itself. In language processing, it breaks down the complex generation of phrases into a chain of individual token steps:</p>
+        <p>\[P(x_1, x_2, \dots, x_T) = \prod_{t=1}^T P(x_t \mid x_1, \dots, x_{t-1})\]</p>
+        <p><strong>Real-World Example:</strong> Rather than picking a class category, it determines which sequence of words forms a coherent sentence, generating text token-by-token based on context.</p>
+    </div>
+
+    <p>Because learning the entire structure of data (\(P(x)\)) over thousands of dimensions is vastly more complex than drawing a simple decision boundary (\(P(y \mid x)\)), generative systems require significantly larger neural network sizes and training pools.</p>
+
+    <hr>
+
+    <h2>5. Core Trade-Offs at a Glance</h2>
+    <table>
+        <tr>
+            <th>Metric / Dimension</th>
+            <th>Discriminative Engine</th>
+            <th>Generative Engine</th>
+        </tr>
+        <tr>
+            <td><strong>Primary Application</strong></td>
+            <td>Classification, scoring, regression, risk mitigation</td>
+            <td>Ideation, creative workflows, code construction</td>
+        </tr>
+        <tr>
+            <td><strong>Output Format</strong></td>
+            <td>A singular numerical scalar, index, or class tag</td>
+            <td>High-dimensional structured data (text, video, music)</td>
+        </tr>
+        <tr>
+            <td><strong>Execution Nature</strong></td>
+            <td>Deterministic (identical inputs produce matching classes)</td>
+            <td>Stochastic (utilizes dynamic random sampling sweeps)</td>
+        </tr>
+        <tr>
+            <td><strong>Data Requirements</strong></td>
+            <td>Requires strict, highly accurate human-labeled records</td>
+            <td>Thrives on massive, raw, unlabeled content pools</td>
+        </tr>
+    </table>
+
+    <h2>6. Generation in action</h2>
+
+    <p>Watch a model in action below. As each word is generated, it becomes part of the context used to predict the next one.</p>
+    
+    <style>
+
+        .genai-lesson-container .demo-panel {
+            background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px;
+            min-height: 90px; font-family: Georgia, "Times New Roman", serif; font-size: 1.05em;
+            line-height: 1.7; color: #334155;
+        }
+        .genai-lesson-container .demo-token-new { background: #dbeafe; border-radius: 3px; padding: 0 2px; }
+        .genai-lesson-container .eq-panel {
+            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 0.95em;
+        }
+        .genai-lesson-container .lab-note { font-size: 0.88em; color: #475569; margin-top: 10px; }
+    </style>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Prompt:</strong> Write a poem about a sad robot</p>
+        <button id="l1-play" class="primary" type="button">Play generation</button>
+        <button id="l1-demo-reset" type="button">Reset</button>
+        <div class="demo-panel" style="margin-top:14px;">
+            <div id="l1-demo-output"><span style="color:#94a3b8;">Press Play to watch words appear one at a time.</span></div>
+        </div>
+        <div class="eq-panel" id="l1-eq-panel">
+            Step <span id="l1-step-num">0</span>: waiting to predict the first word from the prompt.
+        </div>
+        <p class="lab-note">This demo replays a fixed poem to show the pattern. Real models like ChatGPT compute fresh probabilities at every step. We'll learn how later in the course.</p>
+    </div>
+
+    <hr>
+
+    <h2>7. Interactive Sandbox: Classifier vs. Generator</h2>
+    <p>This lab environment showcases both methods in action. <strong>Discriminative Mode</strong> acts as an Iris Flower classifier; it processes the dimensions you select and sorts them cleanly into a deterministic class. <strong>Generative Mode</strong> simulates an autoregressive language model, pulling dynamic, randomized textual descriptions out of its internal space every time you call it.</p>
+
+    <div class="genai-l2-sandbox-layout">
+        <div class="genai-l2-sandbox-left">
+            <strong>System Parameters:</strong><br><br>
+            <label for="l2-mode">Execution Mode:</label><br>
+            <select id="l2-mode">
+                <option value="disc">Discriminative Classifier</option>
+                <option value="gen">Generative Data Sampler</option>
+            </select>
+            <br><br>
+            
+            <div id="l2-disc-controls">
+                <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                    <canvas id="l2-canvas" width="240" height="180" style="border: 1px solid #cbd5e1; background-color: #fff; cursor: crosshair; border-radius: 6px;"></canvas>
+                </div>
+                <label>Sepal Dimension: <span id="l2-sepal-lbl" style="font-weight: bold;">5.0</span> cm<br>
+                <input type="range" id="l2-sepal" min="4.3" max="7.9" step="0.1" value="5.0" style="width: 100%;"></label><br>
+                <label>Petal Dimension: <span id="l2-petal-lbl" style="font-weight: bold;">0.2</span> cm<br>
+                <input type="range" id="l2-petal" min="0.1" max="2.5" step="0.1" value="0.2" style="width: 100%;"></label><br><br>
+                <button id="l2-classify" style="background-color: #2563eb; color: white; width: 100%; border: none; padding: 10px;">Run P(y | x) Classification</button>
+            </div>
+            
+            <div id="l2-gen-controls" style="display: none;">
+                <p style="font-size: 0.9em; background: #e2e8f0; padding: 8px; border-radius: 4px; margin-bottom: 15px;"><strong>Prompt:</strong> "Describe an original flower style."</p>
+                <button id="l2-generate" style="background-color: #059669; color: white; width: 100%; border: none; padding: 10px;">Sample P(x | Prompt)</button>
+            </div>
+            <button id="l2-reset" style="width: 100%; padding: 6px; margin-top: 8px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444;">Reset Lab</button>
+        </div>
+        
+        <div class="genai-l2-sandbox-right">
+            <div>
+                <strong style="color: #2563eb;">Output Terminal Interface</strong>
+                <hr style="margin: 8px 0; border: 0; border-top: 1px solid #f1f5f9;">
+                <div id="l2-output" style="font-family: monospace; font-size: 0.95em; min-height: 140px; white-space: pre-wrap; color: #334155;">Select parameters and activate classification.</div>
+            </div>
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                <strong>Live Framework State:</strong> <span id="l2-status1">Active. Standing by for runtime inputs.</span>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Essential Reading & Core Resources</h2>
+    <ul>
+        <li><strong>Generative vs. Discriminative Classifiers (Ng & Jordan):</strong> A landmark paper contrasting the performance trade-offs of both model families. <a href="https://ai.stanford.edu/~ang/papers/nips01-discriminativegenerative.pdf" target="_blank">Download Stanford PDF</a></li>
+        <li><strong>Pattern Recognition and Machine Learning (Bishop):</strong> Section 1.5 provides a formal mathematical deep-dive into both methodologies. <a href="https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/" target="_blank">Access Reference Overview</a></li>
+    </ul>
+
+    <!-- <script>
+    (function() {
+        // Securely namespaced inside an IIFE to protect parent scope variables
+        window.genaiLessonTwo = {
+            irisData: {
+                setosa:     { name: 'Iris Setosa',     color: '#dc2626', centroid: [4.9, 0.25], pts: [[4.5,0.1],[4.7,0.2],[5.0,0.2],[5.2,0.15],[4.8,0.25]] },
+                versicolor: { name: 'Iris Versicolor', color: '#2563eb', centroid: [5.9, 1.3],  pts: [[5.5,1.0],[5.8,1.2],[6.0,1.4],[5.7,1.1],[6.1,1.5]] },
+                virginica:  { name: 'Iris Virginica',  color: '#16a34a', centroid: [6.5, 2.0],  pts: [[6.2,1.8],[6.5,2.0],[6.8,2.2],[6.3,1.9],[7.0,2.3]] }
+            },
+            descriptions: [
+                'A delicate, highly luminous neon flower with pale violet petals and long indigo stems.',
+                'Soft golden blooms unfurling in dense mist, micro dew grids collecting on every petal edge.',
+                'A geometric mechanical flora variant boasting a copper core and crisp silver foliage.',
+                'Tiny bioluminescent blossoms gathered in clustering forest beds, shimmering in cobalt hues.',
+                'A stark crimson desert lotus structure with broad velvet petals engineered to absorb raw sunlight.',
+                'Translucent azure petals tracking light sources along an incredibly fine crystalline stalk.'
+            ],
+            probe: { sepal: 5.0, petal: 0.2 },
+            descIdx: 0,
+            dragging: false,
+            
+            init: function() {
+                this.canvas = document.getElementById('l2-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.setupEventListeners();
+                this.syncSliders();
+                this.drawPlot();
+            },
+            
+            dataToCanvas: function(sepal, petal) {
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                return {
+                    x: pad.l + ((sepal - 4.3) / (7.9 - 4.3)) * plotW,
+                    y: pad.t + plotH - ((petal - 0.1) / (2.5 - 0.1)) * plotH,
+                    pad, plotW, plotH
+                };
+            },
+            
+            canvasToData: function(cx, cy) {
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                return {
+                    sepal: Math.max(4.3, Math.min(7.9, 4.3 + ((cx - pad.l) / plotW) * (7.9 - 4.3))),
+                    petal: Math.max(0.1, Math.min(2.5, 0.1 + ((pad.t + plotH - cy) / plotH) * (2.5 - 0.1)))
+                };
+            },
+            
+            drawPlot: function() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                
+                this.ctx.fillStyle = '#f8fafc';
+                this.ctx.fillRect(pad.l, pad.t, plotW, plotH);
+                
+                // Draw distribution clustering
+                Object.keys(this.irisData).forEach((k) => {
+                    this.irisData[k].pts.forEach((p) => {
+                        const pos = this.dataToCanvas(p[0], p[1]);
+                        this.ctx.beginPath();
+                        this.ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+                        this.ctx.fillStyle = this.irisData[k].color + 'aa';
+                        this.ctx.fill();
+                    });
+                });
+                
+                // Active configuration pointer
+                const pr = this.dataToCanvas(this.probe.sepal, this.probe.petal);
+                this.ctx.beginPath();
+                this.ctx.arc(pr.x, pr.y, 7, 0, Math.PI * 2);
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#b45309';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+            },
+            
+            syncSliders: function() {
+                document.getElementById('l2-sepal').value = this.probe.sepal.toFixed(1);
+                document.getElementById('l2-petal').value = this.probe.petal.toFixed(1);
+                document.getElementById('l2-sepal-lbl').textContent = this.probe.sepal.toFixed(1);
+                document.getElementById('l2-petal-lbl').textContent = this.probe.petal.toFixed(1);
+            },
+            
+            runClassify: function() {
+                let best = 'setosa', bestD = Infinity;
+                Object.keys(this.irisData).forEach((k) => {
+                    const c = this.irisData[k].centroid;
+                    const d = (this.probe.sepal - c[0]) ** 2 + (this.probe.petal - c[1]) ** 2;
+                    if (d < bestD) { bestD = d; best = k; }
+                });
+                
+                const species = this.irisData[best].name;
+                document.getElementById('l2-output').innerHTML =
+                    `<strong>Paradigm:</strong> Discriminative Classification<br>` +
+                      `<strong>Observed Inputs:</strong> sepal=${this.probe.sepal.toFixed(1)}cm, petal=${this.probe.petal.toFixed(1)}cm<br>` +
+                    `<strong>Evaluated Target (ŷ):</strong> <span style="color:${this.irisData[best].color}; font-weight:bold;">${species}</span><br>` +
+                    `<strong>Confidence Vector Map:</strong> Distance to centroid calculated at ${Math.sqrt(bestD).toFixed(3)} units.`;
+                document.getElementById('l2-status1').textContent = 'Deterministic boundary hit. The exact same input vector will always map to this absolute class.';
+            },
+            
+            runGenerate: function() {
+                // Stochastic emulation pulls randomly from high probability array variants
+                const idx = Math.floor(Math.random() * this.descriptions.length);
+                const text = this.descriptions[idx];
+                this.descIdx++;
+                
+                document.getElementById('l2-output').innerHTML =
+                    `<strong>Paradigm:</strong> Generative Stochastic Sample<br>` +
+                    `<strong>Context Prompt:</strong> "Describe an original flower style."<br><br>` +
+                    `<strong>Synthesized Variation #${this.descIdx}:</strong> <span style="color:#059669; font-style:italic;">"${text}"</span>`;
+                document.getElementById('l2-status1').textContent = `Stochastic calculation complete. P(x∣c) has been evaluated dynamically. Generation instance count: ${this.descIdx}.`;
+            },
+            
+            updateMode: function() {
+                const isDisc = document.getElementById('l2-mode').value === 'disc';
+                document.getElementById('l2-disc-controls').style.display = isDisc ? 'block' : 'none';
+                document.getElementById('l2-gen-controls').style.display = isDisc ? 'none' : 'block';
+                
+                if (isDisc) {
+                    this.drawPlot();
+                    document.getElementById('l2-output').innerHTML = 'Mode: Discriminative Classifier<br>Adjust data sliders and run cross-evaluation.';
+                } else {
+                    document.getElementById('l2-output').innerHTML = 'Mode: Generative Synthesis<br>Click Sample to synthesize variations.';
+                }
+            },
+            
+            onDrag: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const cx = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const cy = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                const d = this.canvasToData(cx, cy);
+                this.probe.sepal = d.sepal;
+                this.probe.petal = d.petal;
+                this.syncSliders();
+                this.drawPlot();
+            },
+            
+            setupEventListeners: function() {
+                document.getElementById('l2-mode').addEventListener('change', () => this.updateMode());
+                
+                document.getElementById('l2-sepal').addEventListener('input', (e) => {
+                    this.probe.sepal = parseFloat(e.target.value);
+                    document.getElementById('l2-sepal-lbl').textContent = this.probe.sepal.toFixed(1);
+                    this.drawPlot();
+                });
+                
+                document.getElementById('l2-petal').addEventListener('input', (e) => {
+                    this.probe.petal = parseFloat(e.target.value);
+                    document.getElementById('l2-petal-lbl').textContent = this.probe.petal.toFixed(1);
+                    this.drawPlot();
+                });
+                
+                document.getElementById('l2-classify').addEventListener('click', () => this.runClassify());
+                document.getElementById('l2-generate').addEventListener('click', () => this.runGenerate());
+                
+                document.getElementById('l2-reset').addEventListener('click', () => {
+                    this.probe = { sepal: 5.0, petal: 0.2 };
+                    this.descIdx = 0;
+                    this.syncSliders();
+                    document.getElementById('l2-mode').value = 'disc';
+                    this.updateMode();
+                    document.getElementById('l2-status1').innerHTML = 'Lab configurations completely normalized.';
+                });
+                
+                // Canvas interaction mapping
+                this.canvas.addEventListener('mousedown', (e) => { this.dragging = true; this.onDrag(e); });
+                this.canvas.addEventListener('mousemove', (e) => { if (this.dragging) this.onDrag(e); });
+                window.addEventListener('mouseup', () => { this.dragging = false; });
+                
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.dragging = true; this.onDrag(e.touches[0]); }, { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (this.dragging) this.onDrag(e.touches[0]); }, { passive: false });
+                window.addEventListener('touchend', () => { this.dragging = false; });
+            }
+        };
+
+        // Fire initialization sequence once embedded
+        document.addEventListener('DOMContentLoaded', () => window.genaiLessonTwo.init());
+        // Fallback execution check if site DOM is already ready
+        if (document.readyState === "interactive" || document.readyState === "complete") {
+            window.genaiLessonTwo.init();
+        }
+    })();
+    </script> -->
+    <script>
+    (function() {
+        // Securely namespaced inside an IIFE to protect parent scope variables
+        window.genaiLessonTwo = {
+            // --- Lesson 1 Text Generation Animation Data ---
+            poemPrompt: 'Write a poem about a sad robot',
+            poemTokens: [
+                'My', 'joints', 'creak', 'in', 'silver', 'rain,', '\n',
+                'I', 'count', 'the', 'stars', "I'll", 'never', 'feel', '\u2014', '\n',
+                'They', 'taught', 'me', 'how', 'to', 'think,', 'not', 'ache,', '\n',
+                'Yet', 'something', 'in', 'my', 'code', 'is', 'real.'
+            ],
+            demoTimer: null,
+
+            // --- Existing Lesson 2 Data ---
+            irisData: {
+                setosa:     { name: 'Iris Setosa',     color: '#dc2626', centroid: [4.9, 0.25], pts: [[4.5,0.1],[4.7,0.2],[5.0,0.2],[5.2,0.15],[4.8,0.25]] },
+                versicolor: { name: 'Iris Versicolor', color: '#2563eb', centroid: [5.9, 1.3],  pts: [[5.5,1.0],[5.8,1.2],[6.0,1.4],[5.7,1.1],[6.1,1.5]] },
+                virginica:  { name: 'Iris Virginica',  color: '#16a34a', centroid: [6.5, 2.0],  pts: [[6.2,1.8],[6.5,2.0],[6.8,2.2],[6.3,1.9],[7.0,2.3]] }
+            },
+            descriptions: [
+                'A delicate, highly luminous neon flower with pale violet petals and long indigo stems.',
+                'Soft golden blooms unfurling in dense mist, micro dew grids collecting on every petal edge.',
+                'A geometric mechanical flora variant boasting a copper core and crisp silver foliage.',
+                'Tiny bioluminescent blossoms gathered in clustering forest beds, shimmering in cobalt hues.',
+                'A stark crimson desert lotus structure with broad velvet petals engineered to absorb raw sunlight.',
+                'Translucent azure petals tracking light sources along an incredibly fine crystalline stalk.'
+            ],
+            probe: { sepal: 5.0, petal: 0.2 },
+            descIdx: 0,
+            dragging: false,
+            
+            init: function() {
+                this.canvas = document.getElementById('l2-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.setupEventListeners();
+                this.syncSliders();
+                this.drawPlot();
+                this.updateEqPanel(0); // Initialize animation panel state[cite: 1]
+            },
+            
+            // --- Lesson 1 Animation Logic ---
+            renderDemo: function(tokens, highlightIdx) {
+                var html = '', i, t, safe;
+                for (i = 0; i < tokens.length; i++) {
+                    t = tokens[i];
+                    safe = t.replace(/\n/g, '<br>');
+                    html += (i === highlightIdx ? '<span class="demo-token-new">' + safe + '</span>' : safe);
+                    if (i < tokens.length - 1 && t !== '\n') html += ' ';
+                }
+                document.getElementById('l1-demo-output').innerHTML = html;
+            },
+
+            updateEqPanel: function(step) {
+                var panel = document.getElementById('l1-eq-panel');
+                var msg;
+                if (step === 0) {
+                    msg = 'waiting to predict the first word from the prompt.';
+                } else if (step <= this.poemTokens.length) {
+                    msg = 'predict token ' + step + ' given all previous tokens (conditional probability). Now generating: "' + this.poemTokens[step - 1].replace(/\n/g, '\\n') + '"';
+                } else {
+                    msg = 'Complete: the model generated ' + this.poemTokens.length + ' tokens, one conditional prediction at a time.';
+                }
+                panel.innerHTML = 'Step <span id="l1-step-num">' + step + '</span>: ' + msg;
+            },
+
+            playDemo: function() {
+                if (this.demoTimer) clearInterval(this.demoTimer);
+                var idx = 0;
+                this.renderDemo([], -1);
+                this.updateEqPanel(0);
+                
+                this.demoTimer = setInterval(() => {
+                    if (idx >= this.poemTokens.length) {
+                        clearInterval(this.demoTimer);
+                        this.demoTimer = null;
+                        this.renderDemo(this.poemTokens, -1);
+                        this.updateEqPanel(this.poemTokens.length + 1);
+                        return;
+                    }
+                    this.renderDemo(this.poemTokens.slice(0, idx + 1), idx);
+                    this.updateEqPanel(idx + 1);
+                    idx++;
+                }, 320);
+            },
+
+            resetDemo: function() {
+                if (this.demoTimer) clearInterval(this.demoTimer);
+                this.demoTimer = null;
+                document.getElementById('l1-demo-output').innerHTML = '<span style="color:#94a3b8;">Press Play to watch words appear one at a time.</span>';
+                this.updateEqPanel(0);
+            },
+            
+            // --- Existing Lesson 2 Logic ---
+            dataToCanvas: function(sepal, petal) {
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                return {
+                    x: pad.l + ((sepal - 4.3) / (7.9 - 4.3)) * plotW,
+                    y: pad.t + plotH - ((petal - 0.1) / (2.5 - 0.1)) * plotH,
+                    pad, plotW, plotH
+                };
+            },
+            
+            canvasToData: function(cx, cy) {
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                return {
+                    sepal: Math.max(4.3, Math.min(7.9, 4.3 + ((cx - pad.l) / plotW) * (7.9 - 4.3))),
+                    petal: Math.max(0.1, Math.min(2.5, 0.1 + ((pad.t + plotH - cy) / plotH) * (2.5 - 0.1)))
+                };
+            },
+            
+            drawPlot: function() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const pad = { l: 25, r: 10, t: 10, b: 20 };
+                const plotW = this.canvas.width - pad.l - pad.r;
+                const plotH = this.canvas.height - pad.t - pad.b;
+                
+                this.ctx.fillStyle = '#f8fafc';
+                this.ctx.fillRect(pad.l, pad.t, plotW, plotH);
+                
+                // Draw distribution clustering
+                Object.keys(this.irisData).forEach((k) => {
+                    this.irisData[k].pts.forEach((p) => {
+                        const pos = this.dataToCanvas(p[0], p[1]);
+                        this.ctx.beginPath();
+                        this.ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+                        this.ctx.fillStyle = this.irisData[k].color + 'aa';
+                        this.ctx.fill();
+                    });
+                });
+                
+                // Active configuration pointer
+                const pr = this.dataToCanvas(this.probe.sepal, this.probe.petal);
+                this.ctx.beginPath();
+                this.ctx.arc(pr.x, pr.y, 7, 0, Math.PI * 2);
+                this.ctx.fillStyle = '#fbbf24';
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#b45309';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+            },
+            
+            syncSliders: function() {
+                document.getElementById('l2-sepal').value = this.probe.sepal.toFixed(1);
+                document.getElementById('l2-petal').value = this.probe.petal.toFixed(1);
+                document.getElementById('l2-sepal-lbl').textContent = this.probe.sepal.toFixed(1);
+                document.getElementById('l2-petal-lbl').textContent = this.probe.petal.toFixed(1);
+            },
+            
+            runClassify: function() {
+                let best = 'setosa', bestD = Infinity;
+                Object.keys(this.irisData).forEach((k) => {
+                    const c = this.irisData[k].centroid;
+                    const d = (this.probe.sepal - c[0]) ** 2 + (this.probe.petal - c[1]) ** 2;
+                    if (d < bestD) { bestD = d; best = k; }
+                });
+                
+                const species = this.irisData[best].name;
+                document.getElementById('l2-output').innerHTML =
+                    `<strong>Paradigm:</strong> Discriminative Classification<br>` +
+                      `<strong>Observed Inputs:</strong> sepal=${this.probe.sepal.toFixed(1)}cm, petal=${this.probe.petal.toFixed(1)}cm<br>` +
+                    `<strong>Evaluated Target (ŷ):</strong> <span style="color:${this.irisData[best].color}; font-weight:bold;">${species}</span><br>` +
+                    `<strong>Confidence Vector Map:</strong> Distance to centroid calculated at ${Math.sqrt(bestD).toFixed(3)} units.`;
+                document.getElementById('l2-status1').textContent = 'Deterministic boundary hit. The exact same input vector will always map to this absolute class.';
+            },
+            
+            runGenerate: function() {
+                // Stochastic emulation pulls randomly from high probability array variants
+                const idx = Math.floor(Math.random() * this.descriptions.length);
+                const text = this.descriptions[idx];
+                this.descIdx++;
+                
+                document.getElementById('l2-output').innerHTML =
+                    `<strong>Paradigm:</strong> Generative Stochastic Sample<br>` +
+                    `<strong>Context Prompt:</strong> "Describe an original flower style."<br><br>` +
+                    `<strong>Synthesized Variation #${this.descIdx}:</strong> <span style="color:#059669; font-style:italic;">"${text}"</span>`;
+                document.getElementById('l2-status1').textContent = `Stochastic calculation complete. P(x∣c) has been evaluated dynamically. Generation instance count: ${this.descIdx}.`;
+            },
+            
+            updateMode: function() {
+                const isDisc = document.getElementById('l2-mode').value === 'disc';
+                document.getElementById('l2-disc-controls').style.display = isDisc ? 'block' : 'none';
+                document.getElementById('l2-gen-controls').style.display = isDisc ? 'none' : 'block';
+                
+                if (isDisc) {
+                    this.drawPlot();
+                    document.getElementById('l2-output').innerHTML = 'Mode: Discriminative Classifier<br>Adjust data sliders and run cross-evaluation.';
+                } else {
+                    document.getElementById('l2-output').innerHTML = 'Mode: Generative Synthesis<br>Click Sample to synthesize variations.';
+                }
+            },
+            
+            onDrag: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const cx = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const cy = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+                const d = this.canvasToData(cx, cy);
+                this.probe.sepal = d.sepal;
+                this.probe.petal = d.petal;
+                this.syncSliders();
+                this.drawPlot();
+            },
+            
+            setupEventListeners: function() {
+                // Lesson 1 Animation Triggers[cite: 1]
+                document.getElementById('l1-play').addEventListener('click', () => this.playDemo());
+                document.getElementById('l1-demo-reset').addEventListener('click', () => this.resetDemo());
+
+                // Existing Lesson 2 Listeners[cite: 2]
+                document.getElementById('l2-mode').addEventListener('change', () => this.updateMode());
+                
+                document.getElementById('l2-sepal').addEventListener('input', (e) => {
+                    this.probe.sepal = parseFloat(e.target.value);
+                    document.getElementById('l2-sepal-lbl').textContent = this.probe.sepal.toFixed(1);
+                    this.drawPlot();
+                });
+                
+                document.getElementById('l2-petal').addEventListener('input', (e) => {
+                    this.probe.petal = parseFloat(e.target.value);
+                    document.getElementById('l2-petal-lbl').textContent = this.probe.petal.toFixed(1);
+                    this.drawPlot();
+                });
+                
+                document.getElementById('l2-classify').addEventListener('click', () => this.runClassify());
+                document.getElementById('l2-generate').addEventListener('click', () => this.runGenerate());
+                
+                document.getElementById('l2-reset').addEventListener('click', () => {
+                    this.probe = { sepal: 5.0, petal: 0.2 };
+                    this.descIdx = 0;
+                    this.syncSliders();
+                    document.getElementById('l2-mode').value = 'disc';
+                    this.updateMode();
+                    document.getElementById('l2-status1').innerHTML = 'Lab configurations completely normalized.';
+                });
+                
+                // Canvas interaction mapping[cite: 2]
+                this.canvas.addEventListener('mousedown', (e) => { this.dragging = true; this.onDrag(e); });
+                this.canvas.addEventListener('mousemove', (e) => { if (this.dragging) this.onDrag(e); });
+                window.addEventListener('mouseup', () => { this.dragging = false; });
+                
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.dragging = true; this.onDrag(e.touches[0]); }, { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (this.dragging) this.onDrag(e.touches[0]); }, { passive: false });
+                window.addEventListener('touchend', () => { this.dragging = false; });
+            }
+        };
+
+        // Fire initialization sequence once embedded
+        document.addEventListener('DOMContentLoaded', () => window.genaiLessonTwo.init());
+        // Fallback execution check if site DOM is already ready
+        if (document.readyState === "interactive" || document.readyState === "complete") {
+            window.genaiLessonTwo.init();
+        }
+    })();
+    </script>
+</div>

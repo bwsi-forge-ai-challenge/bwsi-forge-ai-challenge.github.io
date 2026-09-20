@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matrices · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Linear Algebra</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Linear Algebra</p>
+    <h1>Matrices</h1>
+  </header>
+
+  <section>
+<h2>1. What is a matrix?</h2>
+
+        <p>A matrix \(A\) \(\in\) \(\mathbb{R}^{m \times n}\) is a grid of real numbers with \(m\) rows and \(n\) columns. Entry \(a_{ij}\) sits at row \(i\), column \(j\):</p>
+
+        \[A = \begin{bmatrix} a_{11} & a_{12} & \cdots & a_{1n} \\ a_{21} & a_{22} & \cdots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \cdots & a_{mn} \end{bmatrix}\]
+
+        <p>A matrix can be read as a collection of column vectors (each column is a vector in \(\mathbb{R}^m\)) or row vectors (each row is a vector in \(\mathbb{R}^n\)). In a typical ML dataset, rows are samples and columns are features.</p>
+  </section>
+
+  <section>
+<h2>2. Basic operations</h2>
+
+        <h3>Addition</h3>
+
+        <p>Element-wise, both matrices must be the same size:</p>
+
+        \[\begin{bmatrix} 0 & 2 \\ 1 & 4 \end{bmatrix} + \begin{bmatrix} 3 & 1 \\ -3 & 2 \end{bmatrix} = \begin{bmatrix} 3 & 3 \\ -2 & 6 \end{bmatrix}\]
+
+        <h3>Scalar multiplication</h3>
+
+        <p>Multiply every entry by the scalar:</p>
+
+        \[2 \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} = \begin{bmatrix} 2 & 4 \\ 6 & 8 \end{bmatrix}\]
+
+        <h3>Transpose</h3>
+
+        <p>Swap rows and columns: \((A^T)_{ij} = A_{ji}\). An \(m \times n\) matrix becomes \(n \times m\):</p>
+
+        \[\begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}^T = \begin{bmatrix} 1 & 3 & 5 \\ 2 & 4 & 6 \end{bmatrix}\]
+
+        <p>Properties: \((A^T)^T = A\), \((A + B)^T = A^T + B^T\), \((AB)^T = B^T A^T\) (order reverses).</p>
+  </section>
+
+  <section>
+<h2>3. Matrix multiplication</h2>
+
+        <h3>Matrix-vector multiplication</h3>
+
+        <p>For \(A \in \mathbb{R}^{m \times n}\) and \(\vec{x} \in \mathbb{R}^n\), the product \(A\vec{x} \in \mathbb{R}^m\) is a linear combination of the columns of \(A\), weighted by entries of \(\vec{x}\):</p>
+
+        \[\begin{bmatrix} 0 & 2 \\ 1 & 4 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \end{bmatrix} = 1 \begin{bmatrix} 0 \\ 1 \end{bmatrix} + 2 \begin{bmatrix} 2 \\ 4 \end{bmatrix} = \begin{bmatrix} 0 \\ 1 \end{bmatrix} + \begin{bmatrix} 4 \\ 8 \end{bmatrix} = \begin{bmatrix} 4 \\ 9 \end{bmatrix}\]
+
+        <p>Equivalently, each entry of the output is the dot product of a row of \(A\) with \(\vec{x}\):</p>
+
+        \[\begin{bmatrix} 0 & 2 \\ 1 & 4 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \end{bmatrix} = \begin{bmatrix} 0 \cdot 1 + 2 \cdot 2 \\ 1 \cdot 1 + 4 \cdot 2 \end{bmatrix} = \begin{bmatrix} 4 \\ 9 \end{bmatrix}\]
+
+        <p>Size rule: \((m \times n) \cdot (n \times 1) = (m \times 1)\). Inner dimensions must match.</p>
+
+        <h3>Matrix-matrix multiplication</h3>
+
+        <p>For \(A \in \mathbb{R}^{m \times n}\) and \(B \in \mathbb{R}^{n \times p}\), entry \((i, j)\) of the result \(C = AB \in \mathbb{R}^{m \times p}\) is:</p>
+
+        \[c_{ij} = \sum_{k=1}^{n} a_{ik} \, b_{kj}\]
+
+        <p>Example:</p>
+
+        \[\begin{bmatrix} 0 & 2 \\ 1 & 4 \end{bmatrix} \begin{bmatrix} 1 & 3 \\ 2 & 1 \end{bmatrix} = \begin{bmatrix} (0 \cdot 1 + 2 \cdot 2) & (0 \cdot 3 + 2 \cdot 1) \\ (1 \cdot 1 + 4 \cdot 2) & (1 \cdot 3 + 4 \cdot 1) \end{bmatrix} = \begin{bmatrix} 0 + 4 & 0 + 2 \\ 1 + 8 & 3 + 4 \end{bmatrix} = \begin{bmatrix} 4 & 2 \\ 9 & 7 \end{bmatrix}\]
+
+        <p>Size rule: \((m \times n) \cdot (n \times p) = (m \times p)\).</p>
+
+        <p>Key properties: associative, distributive, <strong>NOT commutative</strong> (\(AB \neq BA\) in general). The transpose of a product reverses order: \((AB)^T = B^T A^T\).</p>
+  </section>
+
+  <section>
+<h2>4. Special matrices</h2>
+
+        <p><strong>Identity matrix</strong> (\(I_n\)): 1s on the diagonal, 0s elsewhere. \(AI = IA = A\) for any compatible \(A\).</p>
+
+        \[I_3 = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}\]
+
+        <p><strong>Zero matrix</strong>: all entries 0. Identity element for addition.</p>
+
+        <p><strong>Diagonal matrix</strong>: nonzero entries only on the main diagonal. Scales each dimension independently.</p>
+
+        <p><strong>Symmetric matrix</strong>: \(A = A^T\) (mirrored across diagonal). </p>
+
+        <p><strong>Triangular matrices</strong> (upper/lower): zeros below/above the diagonal.</p>
+  </section>
+
+  <section>
+<h2>5. Matrix inverse</h2>
+
+        <p>The inverse \(A^{-1}\) of a square matrix \(A \in \mathbb{R}^{n \times n}\) satisfies:</p>
+
+        \[A^{-1} A = A A^{-1} = I_n\]
+
+        <p>It undoes whatever transformation \(A\) applies. Given \(A\vec{x} = \vec{y}\), the solution is \(\vec{x} = A^{-1}\vec{y}\).</p>
+
+        <p>Example:</p>
+
+        \[A = \begin{bmatrix} 2 & 1 \\ 5 & 3 \end{bmatrix}, \quad A^{-1} = \begin{bmatrix} 3 & -1 \\ -5 & 2 \end{bmatrix}\]
+
+        <p>Multiplication details:</p>
+
+        \[A A^{-1} = \begin{bmatrix} 2 & 1 \\ 5 & 3 \end{bmatrix} \begin{bmatrix} 3 & -1 \\ -5 & 2 \end{bmatrix} = \begin{bmatrix} (2 \cdot 3 + 1 \cdot -5) & (2 \cdot -1 + 1 \cdot 2) \\ (5 \cdot 3 + 3 \cdot -5) & (5 \cdot -1 + 3 \cdot 2) \end{bmatrix} = \begin{bmatrix} 6 - 5 & -2 + 2 \\ 15 - 15 & -5 + 6 \end{bmatrix} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} = I_2\]
+
+        <h3>When does the inverse exist?</h3>
+
+        <p>A matrix is <strong>invertible</strong> (nonsingular) when its columns are linearly independent. A matrix is <strong>singular</strong> (noninvertible) when its columns are linearly dependent.</p>
+
+        <h3>Properties</h3>
+
+        <ul>
+            <li>\((A^{-1})^{-1} = A\)</li>
+            <li>\((AB)^{-1} = B^{-1} A^{-1}\) (order reverses)</li>
+            <li>\((A^T)^{-1} = (A^{-1})^T\)</li>
+            <li>\(I^{-1} = I\)</li>
+        </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="Vectors.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Vectors</span>
+    </a>
+    <a class="pager__next" href="SystemOfLinearEquations.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Systems of Linear Equations</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Regression and Gradient Descent · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Intro to ML</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Intro to ML</p>
+    <h1>Linear Regression and Gradient Descent</h1>
+    <p class="lede">Lesson 1 outlined the generalized optimization framework: data, model, loss, and iteration. This lesson implements that framework using its simplest variant: fitting a straight line to empirical data using <b>gradient descent</b>.</p>
+  </header>
+
+  <section>
+<h2>1. The line as a model</h2>
+    <p><b>Linear regression</b> estimates a continuous target value by calculating a weighted sum of the input features plus a constant offset. For a single independent variable <code>x</code>, the hypothesis takes the standard form:</p>
+    <p><strong>ŷ = mx + b</strong></p>
+    <ul>
+        <li><strong>m</strong> — <b>slope</b>: The rate of change in ŷ relative to a one-unit increase in x.</li>
+        <li><strong>b</strong> — <b>bias</b>: The baseline prediction when the input x equals zero, also known as the y-intercept.</li>
+        <li><strong>ŷ</strong> — The scalar output estimated by the model for a given value of x.</li>
+    </ul>
+
+    <h3>House prices</h3>
+    <p>Consider a sample dataset where a 1,400 sq ft property sells for $310,000 and a 2,100 sq ft property sells for $420,000. While physical dimensions alone do not definitively dictate real estate value—given unaccounted variables like location, age, and renovations—a linear fit provides a reliable baseline approximation. An optimized fit might yield the equation <code>price ≈ 95 × sqft + 180,000</code>, indicating that each additional square foot scales the valuation by $95 on average.</p>
+
+    <h3>Temperature over days</h3>
+    <p>Tracking daily high temperatures over a two-week period in early spring reveals an upward trajectory, despite minor daily fluctuations: day 1 records 52°F, day 7 reaches 58°F, and day 14 registers 64°F. A linear equation with a slope of +0.9°F per day and an intercept of 51°F effectively models this seasonal shift without requiring every empirical data point to intersect the line directly.</p>
+
+    <h3>Study hours and test scores</h3>
+    <p>An evaluation of twelve students shows a positive correlation between preparation time and performance. For instance, an individual who studied for 3 hours scores a 62, while another who prepared for 9 hours scores an 88. Although variance exists—such as two students dedicating 6 hours yet finishing 15 points apart—the regression line isolates the average trend from the expected statistical noise.</p>
+  </section>
+
+  <section>
+<h2>2. Mean Squared Error</h2>
+    <p>To optimize a model, we require a quantitative objective function that evaluates global prediction error. The <b>Mean Squared Error (MSE)</b> metric calculates the arithmetic mean of the squared differences between observed values and predictions across n observations:</p>
+    <p>
+        <span class="mono">
+        MSE = (1/n) Σᵢ (yᵢ - (mxᵢ + b))²
+        </span>
+    </p>
+    <p>Squaring the residuals serves two key mathematical functions: it eliminates negative signs so that errors on either side of the line accumulate positively, and it applies a progressive penalty to larger variances. A residual of 10 increases the error metric by 100, whereas a residual of 2 contributes only 4.</p>
+    <p>Geometrically, each data point's error corresponds to a vertical distance to the regression line. The square projected from this vertical segment represents that point's squared residual; because large variances produce exponentially larger areas, the optimization algorithm prioritizes minimizing these major deviations.</p>
+    <canvas id="l2-errorCanvas" width="360" height="220" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+
+    <h3>Why outliers pull the line</h3>
+    <p>If a dataset contains nine properties clustered tightly along a modest valuation trend and one anomalous estate valued at $900,000 where the neighborhood baseline suggests $620,000, the resulting $280,000 residual squares to 78,400,000,000. This single value can outscale the combined squared errors of the other nine observations. Consequently, gradient descent alters parameters m and b to reduce this massive individual error term, pulling the regression line toward the outlier and away from the dense cluster. While MSE is inherently sensitive to such anomalies, it remains the standard objective function because its surface is smooth and continuously differentiable.</p>
+  </section>
+
+  <section>
+<h2>3. Gradient descent</h2>
+    <p><b>Gradient descent</b> iteratively modifies parameters m and b to minimize the cost surface. The computed <b>gradient</b> ∇L establishes the vector of steepest ascent across the loss landscape; evaluating the negative gradient yields the direction of steepest descent. Conceptually, this mirrors navigating a terrain under zero visibility: by evaluating the local slope beneath your feet, you can take a controlled step downward, re-evaluate the local orientation, and repeat the process until the gradient approaches zero.</p>
+    <p>For a single training instance with prediction <code>ŷ = mx + b</code> and loss <code>L = (y − ŷ)²</code>, applying the partial differentiation chain rule yields:</p>
+    <p>
+        <span class="mono">
+        ∂L/∂m = −2x(y − mx − b)<br>
+        ∂L/∂b = −2(y − mx − b)
+        </span>
+    </p>
+    <p>Averaging these partial derivatives over all n instances and applying a scalar learning rate α establishes the parameter update steps:</p>
+    <p>
+        <span class="mono">
+        m ← m − α (∂MSE/∂m)<br>
+        b ← b − α (∂MSE/∂b)
+        </span>
+    </p>
+    <p>When predictions fall short of target values (y &gt; ŷ), the resulting update shifts parameters m and b upward. The hyperparameter α regulates the step magnitude: excessively conservative learning rates slow convergence, while excessively high learning rates cause the parameters to overshoot the minimum, resulting in systemic oscillation or divergence. The contour map below tracks the optimization trajectory as parameters descend toward the lowest point of the cost basin.</p>
+    <canvas id="l2-surfaceCanvas" width="360" height="220" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
+  </section>
+
+  <section>
+<h2>4. Interactive Sandbox: Fit a Line with Gradient Descent</h2>
+    <p>Interact with the scatter plot by adding points, selecting a domain preset, or introducing outliers. Adjust the learning rate hyperparameter to observe how individual gradient updates affect the trajectory of the Mean Squared Error curve.</p>
+
+    <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr bgcolor="#fafafa">
+            <td align="center" valign="top" style="padding: 20px;">
+                <strong>Data plot and controls</strong><br><br>
+                <canvas id="l2-mainCanvas" width="400" height="300" style="border: 2px solid #333; background-color: #fff; display: block; cursor: crosshair;"></canvas>
+                <br>
+                <br><br>
+                <label for="l2-lr"><strong>Learning rate (α):</strong> <span id="l2-lr-val">0.00100</span></label><br>
+                <input type="range" id="l2-lr" min="0.00005" max="0.01005" value="0.00105" step="0.00010" style="width: 100%; max-width: 400px;" oninput="l2UpdateLRLabel()">
+                <br><br>
+                <button onclick="l2TrainStep()" style="padding: 8px 15px; cursor: pointer; margin: 2px;">Take 1 step</button>
+                <button id="l2-auto-btn" onclick="l2ToggleAutoTrain()" style="padding: 8px 15px; cursor: pointer; margin: 2px;">Train (auto)</button>
+                <br><br>
+                <button id="l2-resetBtn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; width: 100%; max-width: 400px;">Reset</button>
+            </td>
+            <td valign="top" width="340" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Model output</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div id="l2-outputBox" style="font-family: monospace; font-size: 0.9em; min-height: 120px;">
+                    <div>Equation: ŷ = <span id="l2-val-m">0.00</span>x + <span id="l2-val-b">160</span></div>
+                    <div>MSE: <span id="l2-val-loss">0</span></div>
+                    <div>Points: <span id="l2-val-n">8</span></div>
+                </div>
+                <canvas id="l2-lossGraphCanvas" width="300" height="100" style="border: 1px solid #ccc; width: 100%; margin-top: 10px;"></canvas>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Status:</strong> <span id="l2-status">Add coordinates manually or select a data configuration. Stable parameters will minimize the objective function cleanly.</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </section>
+
+  <section>
+<h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Linear Regression (Stanford CS229):</strong> Formal lecture notes covering hypothesis parametrization, cost surfaces, and the analytical normal equation solution. <a href="https://cs229.stanford.edu/main_notes.pdf" target="_blank">CS229 Notes</a></li>
+        <li><strong>Gradient Descent (3Blue1Brown):</strong> Geometric and algebraic analysis detailing how vector partial derivatives inform coordinate adjustments on optimization manifolds. <a href="https://www.3blue1brown.com/lessons/gradient-descent" target="_blank">Gradient Descent Lesson</a></li>
+        <li><strong>scikit-learn LinearRegression:</strong> API documentation and reference source code demonstrating empirical weight calculation over standard matrix inputs. <a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html" target="_blank">sklearn.linear_model.LinearRegression</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="WhatIsML.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">What is ML?</span>
+    </a>
+    <a class="pager__next" href="Classificaition.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Classification and Logistic Regression</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+        const l2Presets = {
+            house: [
+                {x: 60, y: 250}, {x: 100, y: 210}, {x: 150, y: 220},
+                {x: 210, y: 150}, {x: 260, y: 160}, {x: 320, y: 110},
+                {x: 370, y: 120}, {x: 410, y: 70}
+            ],
+            temp: [
+                {x: 30, y: 240}, {x: 60, y: 235}, {x: 90, y: 228},
+                {x: 120, y: 225}, {x: 150, y: 218}, {x: 180, y: 215},
+                {x: 210, y: 208}, {x: 240, y: 200}, {x: 270, y: 198},
+                {x: 300, y: 190}, {x: 330, y: 185}, {x: 360, y: 178},
+                {x: 390, y: 172}
+            ],
+            study: [
+                {x: 50, y: 250}, {x: 80, y: 235}, {x: 110, y: 220},
+                {x: 130, y: 200}, {x: 160, y: 195}, {x: 190, y: 180},
+                {x: 220, y: 165}, {x: 250, y: 150}, {x: 280, y: 140},
+                {x: 310, y: 125}, {x: 340, y: 110}, {x: 370, y: 95}
+            ]
+        };
+
+        let l2Points = JSON.parse(JSON.stringify(l2Presets.house));
+        let l2_m = 0.0;
+        let l2_b = 160;
+        let l2LossHistory = [];
+        let l2IsTraining = false;
+        let l2TrainInterval = null;
+
+        function l2LoadPreset(name) {
+            if (l2IsTraining) l2ToggleAutoTrain();
+            l2Points = JSON.parse(JSON.stringify(l2Presets[name]));
+            l2_m = 0.0;
+            l2_b = 160;
+            l2LossHistory = [];
+            l2RefreshDisplay();
+            let labels = {house: "Real estate distribution profile verified.", temp: "Climatological matrix loaded.", study: "Academic metrics configuration applied."};
+            document.getElementById("l2-status").innerText = labels[name];
+        }
+
+        function l2AddOutlier() {
+            l2Points.push({x: 380, y: 30});
+            l2RefreshDisplay();
+            document.getElementById("l2-status").innerText = "Outlier coordinate inserted. Observe the regression vector skew to accommodate the high-variance element.";
+        }
+
+        function l2DrawStaticIllustrations() {
+            let c1 = document.getElementById("l2-errorCanvas");
+            if (c1) {
+                let ctx = c1.getContext("2d");
+                ctx.clearRect(0, 0, c1.width, c1.height);
+                ctx.strokeStyle = "#475569"; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(30, 185); ctx.lineTo(330, 45); ctx.stroke();
+                let px = 200, py = 70;
+                let lineY = 185 - (200 - 30) * (140 / 300);
+                let diff = lineY - py;
+                ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
+                ctx.fillRect(px, py, diff, diff);
+                ctx.strokeStyle = "#ef4444"; ctx.strokeRect(px, py, diff, diff);
+                ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, lineY); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = "#3b82f6";
+                ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI); ctx.fill();
+                ctx.fillStyle = "#64748b"; ctx.font = "11px sans-serif";
+                ctx.fillText("squared residual", px + 8, py + diff / 2);
+            }
+
+            let c2 = document.getElementById("l2-surfaceCanvas");
+            if (c2) {
+                let ctx = c2.getContext("2d");
+                ctx.clearRect(0, 0, c2.width, c2.height);
+                ctx.strokeStyle = "#cbd5e1";
+                for (let r = 12; r < 110; r += 14) {
+                    ctx.beginPath();
+                    ctx.ellipse(180, 120, r * 1.5, r * 0.75, Math.PI / 6, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+                ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(300, 55); ctx.lineTo(235, 95); ctx.lineTo(195, 115); ctx.lineTo(172, 128);
+                ctx.stroke();
+                ctx.fillStyle = "#16a34a";
+                ctx.beginPath(); ctx.arc(172, 128, 6, 0, 2 * Math.PI); ctx.fill();
+                ctx.fillStyle = "#64748b"; ctx.font = "10px sans-serif";
+                ctx.fillText("loss contours", 20, 20);
+                ctx.fillText("descent path", 240, 80);
+            }
+        }
+
+        function l2CalculateLoss() {
+            if (l2Points.length === 0) return 0;
+            let totalSqError = 0;
+            for (let i = 0; i < l2Points.length; i++) {
+                let p = l2Points[i];
+                let predictedY = l2_m * (p.x / 100) + l2_b;
+                let err = p.y - predictedY;
+                totalSqError += err * err;
+            }
+            return totalSqError / l2Points.length;
+        }
+
+        function l2UpdateLRLabel() {
+            let lrVal = parseFloat(document.getElementById("l2-lr").value);
+            document.getElementById("l2-lr-val").innerText = lrVal.toFixed(5);
+        }
+
+        function l2RefreshDisplay() {
+            document.getElementById("l2-val-m").innerText = (-l2_m / 10).toFixed(2);
+            document.getElementById("l2-val-b").innerText = Math.max(0, (320 - l2_b)).toFixed(0);
+            document.getElementById("l2-val-n").innerText = l2Points.length;
+            let curLoss = l2CalculateLoss();
+            document.getElementById("l2-val-loss").innerText = isNaN(curLoss) || !isFinite(curLoss) ? "DIVERGED" : Math.round(curLoss).toLocaleString();
+            l2RenderMainPlot();
+            l2RenderLossGraph();
+        }
+
+        function l2TrainStep() {
+            if (l2Points.length === 0) return;
+            let alpha = parseFloat(document.getElementById("l2-lr").value);
+            let d_m = 0, d_b = 0, N = l2Points.length;
+
+            for (let i = 0; i < N; i++) {
+                let p = l2Points[i];
+                let normX = p.x / 100;
+                let pred = l2_m * normX + l2_b;
+                let diff = p.y - pred;
+                d_m += (-2 / N) * normX * diff;
+                d_b += (-2 / N) * diff;
+            }
+
+            l2_m -= alpha * d_m;
+            l2_b -= alpha * d_b;
+
+            let curLoss = l2CalculateLoss();
+            if (isNaN(curLoss) || !isFinite(curLoss)) {
+                document.getElementById("l2-status").innerText = "Optimization failed: gradient divergence detected. Reduce α below 0.003 to stabilize.";
+            } else {
+                document.getElementById("l2-status").innerText = "Objective minimization active. Set α values high to isolate phase oscillations.";
+            }
+
+            l2LossHistory.push(curLoss);
+            if (l2LossHistory.length > 150) l2LossHistory.shift();
+            l2RefreshDisplay();
+        }
+
+        function l2ToggleAutoTrain() {
+            let btn = document.getElementById("l2-auto-btn");
+            if (l2IsTraining) {
+                clearInterval(l2TrainInterval);
+                l2IsTraining = false;
+                btn.innerText = "Train (auto)";
+            } else {
+                l2IsTraining = true;
+                btn.innerText = "Pause";
+                l2TrainInterval = setInterval(l2TrainStep, 40);
+            }
+        }
+
+        function l2ResetTraining() {
+            if (l2IsTraining) l2ToggleAutoTrain();
+            l2LoadPreset('house');
+            document.getElementById("l2-status").innerText = "State initialization complete. Add custom coordinates or re-evaluate presets.";
+        }
+
+        function l2RenderMainPlot() {
+            let canvas = document.getElementById("l2-mainCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = "#f1f5f9"; ctx.lineWidth = 1;
+            for (let g = 40; g < canvas.width; g += 40) {
+                ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(canvas.width, g); ctx.stroke();
+            }
+
+            if (l2Points.length > 0 && l2Points.length < 30 && Math.abs(l2_m) < 2000) {
+                l2Points.forEach(p => {
+                    let normX = p.x / 100;
+                    let predY = l2_m * normX + l2_b;
+                    let size = predY - p.y;
+                    if (Math.abs(size) > 1) {
+                        ctx.fillStyle = "rgba(239, 68, 68, 0.04)";
+                        ctx.fillRect(p.x, p.y, size, size);
+                        ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 1;
+                        ctx.strokeRect(p.x, p.y, size, size);
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, predY); ctx.stroke();
+                    }
+                });
+            }
+
+            ctx.fillStyle = "#2563eb";
+            l2Points.forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, 2 * Math.PI); ctx.fill();
+                ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.stroke();
+            });
+
+            if (!isNaN(l2_m) && !isNaN(l2_b) && Math.abs(l2_m) <10000) {
+                ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, l2_m * 0 + l2_b);
+                ctx.lineTo(canvas.width, l2_m * (canvas.width / 100) + l2_b);
+                ctx.stroke();
+            }
+        }
+
+        function l2RenderLossGraph() {
+            let canvas = document.getElementById("l2-lossGraphCanvas");
+            if (!canvas) return;
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (l2LossHistory.length < 2) {
+                ctx.fillStyle = "#94a3b8"; ctx.font = "11px sans-serif";
+                ctx.fillText("Loss metrics compile following optimization initialization.", 10, 55);
+                return;
+            }
+
+            let cleanLosses = l2LossHistory.filter(v => !isNaN(v) && isFinite(v));
+            if (cleanLosses.length < 2) {
+                ctx.fillStyle = "#dc2626"; ctx.font = "12px sans-serif";
+                ctx.fillText("Convergence failure. Scale down hyperparameters and re-initialize.", 10, 55);
+                return;
+            }
+
+            let maxVal = Math.max(...cleanLosses), minVal = Math.min(...cleanLosses);
+            let range = (maxVal - minVal) || 1;
+            ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < l2LossHistory.length; i++) {
+                if (isNaN(l2LossHistory[i]) || !isFinite(l2LossHistory[i])) continue;
+                let ratioX = i / (l2LossHistory.length - 1);
+                let x = 10 + ratioX * (canvas.width - 20);
+                let ratioY = (l2LossHistory[i] - minVal) / range;
+                let y = (canvas.height - 10) - ratioY * (canvas.height - 20);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.fillStyle = "#64748b"; ctx.font = "10px sans-serif";
+            ctx.fillText("MSE evaluation curve", 10, 14);
+        }
+
+        function l2HandleInput(e) {
+            let canvas = document.getElementById("l2-mainCanvas");
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let x = (clientX - rect.left) * (canvas.width / rect.width);
+            let y = (clientY - rect.top) * (canvas.height / rect.height);
+            l2Points.push({ x: x, y: y });
+            l2RefreshDisplay();
+        }
+
+        function l2Init() {
+            let canvas = document.getElementById("l2-mainCanvas");
+            let isActive = false;
+
+            canvas.addEventListener("mousedown", (e) => { isActive = true; l2HandleInput(e); });
+            canvas.addEventListener("mousemove", (e) => { if (isActive) l2HandleInput(e); });
+            window.addEventListener("mouseup", () => { isActive = false; });
+            canvas.addEventListener("touchstart", (e) => { e.preventDefault(); isActive = true; l2HandleInput(e); });
+            canvas.addEventListener("touchmove", (e) => { e.preventDefault(); if (isActive) l2HandleInput(e); });
+            window.addEventListener("touchend", () => { isActive = false; });
+
+            document.getElementById("l2-resetBtn").addEventListener("click", l2ResetTraining);
+            l2UpdateLRLabel();
+            l2DrawStaticIllustrations();
+            l2RefreshDisplay();
+        }
+
+        l2Init();
+    </script>
+
+</body>
+</html>

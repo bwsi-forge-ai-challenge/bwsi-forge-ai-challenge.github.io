@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prerequisites: Lesson 6 - The Full ML Pipeline · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Multi-Layer Perceptrons</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Multi-Layer Perceptrons</p>
+    <h1>Prerequisites: Lesson 6 - The Full ML Pipeline</h1>
+    <p class="lede">Lesson 5 detailed the mechanics of optimization over a <b>multi-layer perceptron</b> via forward propagation and backpropagation steps. However, optimizing a model architecture in isolation is insufficient for production. Engineering a reliable machine learning system requires nesting the network inside a repeatable engineering pipeline: data ingestion, preprocessing, partitioning, training, validation, and testing. This lesson maps out these operational phases, exploring the standard 70/15/15 cross-validation split, feature scaling, and regularization techniques designed to bound generalization error over high-capacity models.</p>
+  </header>
+
+  <section>
+<h2>1. From Raw Data to Feature Vectors</h2>
+    <p>
+Models only understand numbers, so we convert raw data into <b>feature vectors</b>.
+</p>
+
+<ul>
+    <li>A 16×16 image becomes a vector of 256 numbers</li>
+    <li>Categorical values are mapped to numbers</li>
+</ul>
+
+<p>The typical pipeline is:</p>
+
+<ol>
+    <li>Collect data</li>
+    <li>Split into train / validation / test sets</li>
+    <li>Clean and preprocess data</li>
+    <li>Train model</li>
+    <li>Validate performance</li>
+    <li>Test final performance</li>
+</ol>
+
+<p>
+Important: Never use test data during training or preprocessing.
+</p>
+  </section>
+
+  <section>
+<h2>2. Train / Validation / Test Split</h2>
+
+    <p>We partition our input datasets three seperate sections. For most datasets, engineers widely implement a <b>70% training / 15% validation / 15% test</b> split:</p>
+
+    <ul>
+        <li><b>Training set (70%)</b>: Used to learn patterns. We use this data to compute loss gradients and update parameters.</li>
+        <li><b>Validation set (15%)</b>: Used to tune settings (also called hyperparameter) like learning rate, model size and so on.</li>
+        <li><b>Test set (15%)</b>: Used only once at the end to ensure we get an unbiased estimation of how our model behaves in the real world.</li>
+    </ul>
+
+    <p>
+    If we accidentally use test data during training, we get <b>data leakage</b>, which makes results look better than they really are.
+    </p>
+  </section>
+
+  <section>
+<h2>3. Feature Normalization and Gradient Scaling</h2>
+    <!-- <p>When input features operate on disparate numeric intervals—such as pixel channels bounded by $[0, 255]$ placed alongside continuous indicators bounded by $[0, 1]$—the calculated loss gradients become asymmetric, favoring high-magnitude variables. Consequently, the effective parameter step size becomes scale-dependent, accelerating optimization along specific feature dimensions while stalls occur across others.</p>
+    <p><b>Z-score standardization</b> explicitly rescales independent feature vectors to zero mean and unit variance:</p>
+    <p><strong>x_norm = (x − μ) / σ</strong></p>
+    <p>Engineers extract the vectors $\mu$ and $\sigma$ <b>solely from the training split</b>, then apply those static matrices to out-of-sample validation and test arrays. Post-standardization, feature dimensions align to uniform geometric fields, enabling the optimization engine to descend along symmetric cost trajectories via a singular learning rate hyperparameter.</p>
+    <p>For example, a real estate regression matrix mapping 13 independent features might contain "room counts" bounded by 3–9 and "local tax metrics" varying from 200–700. Unscaled, the tax variable skews the gradient update vector. Standardization ensures both variables scale gradient adjustments proportionally.</p> -->
+
+    <p>
+    When input features are on very different scales—such as pixel values ranging from \([0, 255]\) and other features ranging from \([0, 1]\)-the learning process can become unbalanced. Features with larger values can overly influence the model, causing it to learn unevenly across dimensions. This can slow down learning or make optimization unstable.
+    </p>
+
+    <p><b>Z-score standardization</b> fixes this by rescaling each feature so they have a common scale:</p>
+
+    <p><strong>
+    \[
+    x_{\text{norm}} = \frac{x - \mu}{\sigma}
+    \]
+    </strong></p>
+
+    <p>
+    Here, \(\mu\) is the mean of the training data and \(\sigma\) is the standard deviation.
+    </p>
+
+    <p>
+    It is very important that \(\mu\) and \(\sigma\) are computed <b>only from the training data</b>, and then reused for validation and test data. This prevents information from leaking between datasets.
+    </p>
+
+    <p>
+    After standardization, all features are on a similar scale. This makes training more stable and helps the model learn at a similar rate across all features using a single learning rate.
+    </p>
+
+    <p>
+    For example, in a real estate model with 13 features, one feature might be the number of rooms (ranging from 3 to 9), while another might be local tax values (ranging from 200 to 700). Without scaling, the larger-valued feature would dominate learning. Standardization ensures both features contribute fairly to training.
+    </p>
+  </section>
+
+  <section>
+<h2>4. Overfitting Dynamics and Learning Curves</h2>
+    <p><b>Overfitting</b> defines a state where a machine learning model fits very well to the training set but doesn't do so well on the validation set. This can happen because the model learnt the noise in the training set instead of understanding the actual underlying data distribution. This divergence can be easily seen when inspecting <b>learning curves</b>—plots tracking training and validation error metrics across training:</p>
+    <ul>
+        <li><b>Convergent fit:</b> Training and validation error metrics decline together, stabilizing near an acceptable loss floor.</li>
+        <li><b>Overfitting:</b> Training error consistently falls toward zero while validation error flattens or even goes up. Training accuracy converges, whereas validation performance degrades.</li>
+        <li><b>Underfitting:</b> Both error trajectories stabilize at unacceptably high baselines, indicating that the model size or training duration is insufficient to understand the data.</li>
+    </ul>
+    <p>Large models overfit quickly when trained on a small datasets. The model uses its large parameter count to memorize individual training points rather than extracting generalized features.</p>
+    <p>Tracking training loss against validation loss across training steps serves as the primary indicator of this issue.</p>
+    <img 
+        src="https://miro.medium.com/1*_7OPgojau8hkiPUiHoGK_w.png"
+        alt="Overfitting vs Underfitting vs Robust Model"
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+  <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://medium.com/swlh/machine-learning-how-to-prevent-overfitting-fdf759cc00a9" target="_blank">
+            Machine Learning: How to Prevent Overfitting
+        </a>
+    </p>
+  </section>
+
+  <section>
+<h2>5. Regularization</h2>
+  <h3> L2 Regularization </h3>
+
+<p>Generalization error can be reduced by adding mathematical constraints that limit the capacity of the model’s individual weights.</p>
+
+<p>L2 regularization adds a quadratic penalty to the loss function based on the squared values of all individual weights:</p>
+
+<p><strong>\(L_{\text{total}} = L_{\text{data}} + \frac{\lambda}{2} \sum_{l} \sum_{i} \left(w_i^{(l)}\right)^2\)</strong></p>
+
+
+<p>The hyperparameter \(\lambda\) controls how strong this penalty is. It pushes individual weight values toward zero and encourages smoother, lower-variance decision boundaries. During backpropagation, the gradient includes an extra term \(-\lambda w\), which effectively scales each weight down at every update. This is why L2 regularization is also called <b>weight decay</b>. By limiting how large individual weights can grow, the model is less likely to form overly complex, high-frequency decision boundaries that fit noise in the data.</p>
+  <h3>Dropout</h3>
+
+<p>Large neural networks can sometimes become too dependent on specific neurons during training. When this happens, the model may memorize patterns in the training data instead of learning features that generalize well to new examples. Dropout is a regularization technique that randomly turns off a fraction of neurons during each training step.</p>
+
+<p>The probablity with which we turn off neuron (or similarly the expected fraction of neurons which are turned off) \(p\) is called the <b>dropout rate</b>. For example, if \(p = 0.5\), then each neuron has a 50% chance of being temporarily turned off during a training step.</p>
+
+<p>Because different neurons are removed at random each time, the network cannot rely too heavily on any single neuron. Instead, it must learn multiple ways to represent useful patterns in the data. This makes the model more robust and helps reduce overfitting. Note that dropout is only used during training. During inference (when making predictions), all neurons remain active so the full network can be used.</p>
+  </section>
+
+  <section>
+<!-- <h2>6. Learning Rate Dynamics and Convergence Stability</h2>
+    <p>The scalar learning rate hyperparameter $\alpha$ regulates gradient step sizing during weight updates: <strong>θ ← θ − α ∇L</strong>. This parameter acts on both normalization layers and regularization loops to dictate system convergence stability.</p>
+    <ul>
+        <li><b>High rates (α ≈ 0.5+):</b> The optimization vector overshoots cost minima, triggering unstable loss oscillations or catastrophic gradient divergence. The tracking metrics oscillate unevenly instead of descending smoothly.</li>
+        <li><b>Optimal rates (α ≈ 0.01–0.2):</b> Smooth, monotonic minimization occurs. Both training and validation error metrics decline symmetrically toward convergence.</li>
+        <li><b>Low rates (α ≈ 0.001):</b> Parameter update steps approach zero, extending optimization schedules excessively and stranding models far from optimal minima after long training epochs.</li>
+    </ul>
+    <p>Adaptive optimization algorithms such as Adam or RMSprop adjust the learning rate dynamically per parameter to accommodate heterogeneous feature profiles. However, these frameworks still show faster convergence when processing pre-standardized inputs. Hyperparameter cross-validation must be executed over the validation split, tuning $\alpha$ to achieve the lowest validation error floor rather than optimizing for training performance alone.</p>
+    <p>Optimizer selection (e.g., standard SGD, Momentum, or Adam) represents a standalone hyperparameter evaluated on validation splits. Adaptive optimizers like Adam show rapid early convergence using baseline parameters, whereas tuned Stochastic Gradient Descent (SGD) with momentum can yield superior generalization scaling across large feature domains. The operational principle remains constant: optimize over the training split, evaluate via validation tracking, and verify once against the test partition.</p> -->
+  </section>
+
+  <section>
+<h2>6. Learning Rate Dynamics and Convergence Stability</h2>
+
+<p>The scalar learning rate hyperparameter \(\alpha\) controls the size of each gradient update during training: <strong>\((\theta \leftarrow \theta - \alpha \nabla L)\)</strong>. This parameter affects both normalization layers and regularization behavior, and plays a key role in determining whether training converges stably.</p>
+
+<ul>
+    <li><b>High rates:</b> The optimization steps overshoot the minimum of the loss function, causing unstable oscillations or even divergence. Instead of smoothly decreasing, the loss fluctuates unpredictably.</li>
+    <li><b>Optimal rates:</b> The model converges smoothly. Both training and validation loss decrease steadily toward a minimum.</li>
+    <li><b>Low rates:</b> Updates become extremely small, making training very slow and potentially leaving the model far from an optimal solution even after many epochs.</li>
+</ul>
+
+<img 
+        src="https://www.bdhammel.com/assets/learning-rate/lr-types.png"
+        alt="Perceptron anatomy diagram"
+        style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
+    >
+  <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
+        Source:
+        <a href="https://spotintelligence.com/2024/02/19/learning-rate-machine-learning/" target="_blank">
+            Learning Rate Machine Learning
+        </a>
+    </p>
+
+<p>Adaptive optimizers such as Adam or RMSprop adjust the learning rate automatically for each parameter, helping handle features with different scales. However, they still perform better when inputs are pre-standardized. In practice, the learning rate \(\alpha\) should be tuned using the validation set to minimize validation error, rather than focusing only on training loss.</p>
+
+<p>Optimizer choice (e.g., SGD, Momentum, or Adam) is also a separate hyperparameter selected using validation performance. Adam often converges faster early in training with default settings, while carefully tuned SGD with momentum can achieve better generalization on large-scale problems. The general workflow remains the same: train on the training set, tune using validation, and evaluate once on the test set.</p>
+  </section>
+
+  <section>
+<h2>7. Interactive Sandbox: Training Pipeline Dashboard</h2>
+
+<p>This monitoring panel runs a 256\(\rightarrow\)40\(\rightarrow\)10 MLP on a synthetic digit dataset and executes the full machine learning pipeline: data splitting, optional z-score normalization, regularized optimization steps, and real-time learning curves. The training data includes hidden correlation shortcuts that are not present in the validation and test sets, showing how random correlations can cause poor generalization.</p>
+
+<p><strong>Instructions:</strong> Set the training split percentages, enable or disable standardization, adjust the base learning rate, choose dropout levels, and apply L2 regularization strength. Run the pipeline to observe performance over 120 training iterations. Compare the training loss curve (red) with the validation curve (blue). If training performance diverges from validation performance, increase regularization. Use higher \(\alpha\) values to create oscillations in training, or lower \(\alpha\) values to observe slower convergence.</p>
+
+
+    <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
+        <tr bgcolor="#fafafa">
+            <td align="center" valign="top" style="padding: 20px;">
+                <strong>Pipeline Controls</strong><br><br>
+                <label>Normalize features (z-score): <input type="checkbox" id="l6-norm" checked></label><br><br>
+                <label>Train split: <span id="l6-split-lbl">70</span>% (val/test ≈ 15% each)<br>
+                <input type="range" id="l6-split" min="40" max="85" value="70" step="5" style="width: 200px;"></label><br><br>
+                <label>Learning rate α: <span id="l6-lr-lbl">0.15</span><br>
+                <input type="range" id="l6-lr" min="0.05" max="0.60" step="0.05" value="0.15" style="width: 200px;"></label><br><br>
+                <label>Dropout: <span id="l6-drop-lbl">20</span>%<br>
+                <input type="range" id="l6-drop" min="0" max="60" step="10" value="20" style="width: 200px;"></label><br><br>
+                <label>L2 λ: <span id="l6-l2-lbl">0.01</span><br>
+                <input type="range" id="l6-l2" min="0" max="5" value="1" step="1" style="width: 200px;"></label><br><br>
+                <button id="l6-train-btn" style="padding: 8px 15px; font-weight: bold; cursor: pointer; width: 100%;">Run Pipeline</button>
+                <button id="l6-reset-btn" style="padding: 8px 15px; cursor: pointer; width: 100%; margin-top: 6px;">Reset</button>
+            </td>
+            <td valign="top" width="380" style="padding: 20px; background-color: #fff;">
+                <strong style="color: #1e40af;">Metrics and Learning Curves</strong>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <div id="l6-output" style="font-family: monospace; font-size: 0.9em; min-height: 80px;">
+                    Epoch: 0 / 120<br>
+                    Train accuracy: 0%<br>
+                    Validation accuracy: 0%<br>
+                    Test accuracy: locked<br>
+                    Pools: —
+                </div>
+                <canvas id="l6-loss-canvas" width="340" height="140" style="border: 1px solid #ccc; width: 100%; max-width: 340px; display: block; margin-top: 10px;"></canvas>
+                <div style="font-size: 0.8em; margin-top: 4px; color: #555;">
+                    <span style="color: #dc2626;">■</span> Train loss &nbsp;
+                    <span style="color: #2563eb;">■</span> Val loss
+                </div>
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
+                    <strong>Status:</strong> <span id="l6-status">Red vector indicates training loss metrics; blue trace marks validation performance. Divergences in the accuracy curves map directly to shortcut feature exploitation within the unregularized training parameters.</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </section>
+
+  <section>
+<h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>Scikit-learn Preprocessing Reference (scikit-learn developers):</strong> Technical documentation for data transformations, feature transformations in Python. <a href="https://scikit-learn.org/stable/modules/preprocessing.html" target="_blank">Preprocessing documentation</a></li>
+        <li><strong>Deep Learning, Chapter 7 — Regularization (Goodfellow, Bengio, Courville):</strong> Deep theoretical analysis covering various way we can use regularization for our models. <a href="https://www.deeplearningbook.org/contents/regularization.html" target="_blank">Chapter 7 online</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="MLP.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Multi-Layer Perceptrons and Backpropagation</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Multi-Layer Perceptrons</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+(function() {
+    const HIDDEN = 40;
+    const L2_VALUES = [0.0, 0.01, 0.02, 0.04, 0.06, 0.10];
+    let rawData = [], trainPool = [], valPool = [], testPool = [];
+    let trainLossHist = [], valLossHist = [];
+    let weights = [], biases = [];
+    let epoch = 0, interval = null;
+
+    const splitEl = document.getElementById('l6-split');
+    const normEl = document.getElementById('l6-norm');
+    const lrEl = document.getElementById('l6-lr');
+    const dropEl = document.getElementById('l6-drop');
+    const l2El = document.getElementById('l6-l2');
+    const outEl = document.getElementById('l6-output');
+    const statusEl = document.getElementById('l6-status');
+    const canvas = document.getElementById('l6-loss-canvas');
+
+    function genData() {
+        rawData = [];
+        for (let d = 0; d <= 9; d++) {
+            for (let v = 0; v < 6; v++) {
+                let px = new Array(256).fill(0);
+                let skew = (v - 3) * 0.35;
+                let scale = (d % 2 === 0) ? 80.0 : 1.5;
+                for (let r = 2; r < 14; r++) {
+                    for (let c = 2; c < 14; c++) {
+                        let idx = r * 16 + c;
+                        let nr = (r - 7.5) / 5.0 + skew, nc = (c - 7.5) / 5.0 + skew;
+                        let m = false;
+                        if (d === 0) m = Math.abs(Math.sqrt(nr*nr+nc*nc)-1)<0.2;
+                        else if (d === 1) m = Math.abs(nc)<0.15 && nr>-0.8 && nr<0.8;
+                        else if (d === 2) m = (nr<-0.4&&nc>-0.6&&nc<0.6)||(Math.abs(nr-nc)<0.2)||(nr>0.5);
+                        else if (d === 3) m = (Math.abs(nr*nr+nc*nc-0.8)<0.25&&nc>-0.1)||(Math.abs(nr)<0.1&&nc>-0.4);
+                        else if (d === 4) m = (Math.abs(nc-0.2)<0.1)||(Math.abs(nr-0.1)<0.1&&nc>-0.5&&nc<0.5)||(nc<-0.1&&nr<0.1);
+                        else if (d === 5) m = (nr<-0.5&&nc>-0.5)||(nc<-0.4&&nr<0)||(Math.abs(nr)<0.15&&nc<0.3)||(nc>0.3&&nr>0)||(nr>0.5&&nc<0.4);
+                        else if (d === 6) m = (nc<-0.4)||(nr>0.4)||(nr>-0.1&&nc>0.4)||(Math.abs(nr)<0.15);
+                        else if (d === 7) m = (nr<-0.6)||(Math.abs(nr+nc*0.7)<0.2);
+                        else if (d === 8) m = Math.abs(Math.abs(nr)-0.4)<0.2&&Math.abs(nc)<0.5||Math.abs(nc-0.4)<0.15||Math.abs(nc+0.4)<0.15;
+                        else if (d === 9) m = (nc>0.4)||(nr<-0.4)||(Math.abs(nr)<0.15)||(nc<-0.3&&nr<0);
+                        if (m) px[idx] = scale;
+                    }
+                }
+                rawData.push({ label: d, features: px });
+            }
+        }
+    }
+
+    function shuffle(a) {
+        let s = a.slice();
+        for (let i = s.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [s[i], s[j]] = [s[j], s[i]];
+        }
+        return s;
+    }
+
+    function stratifiedSplit(samples, ratio) {
+        let buckets = {};
+        samples.forEach(s => { (buckets[s.label] = buckets[s.label] || []).push(s); });
+        let train = [], val = [], test = [];
+        Object.values(buckets).forEach(bucket => {
+            let sh = shuffle(bucket), n = sh.length;
+            let tc = Math.max(1, Math.round(n * ratio));
+            let vc = Math.max(1, Math.round(n * 0.15));
+            if (tc + vc >= n) { tc = Math.max(1, n - 2); vc = 1; }
+            train.push(...sh.slice(0, tc));
+            val.push(...sh.slice(tc, tc + vc));
+            test.push(...sh.slice(tc + vc));
+        });
+        return { train: shuffle(train), val: shuffle(val), test: shuffle(test) };
+    }
+
+    function injectShortcuts(pool) {
+        pool.forEach((s, idx) => {
+            for (let d = 0; d < 10; d++) s.features[246 + d] = (s.label === d) ? 8.0 : 0.0;
+            s.features[240 + (idx % 6)] += 4.0 + idx * 0.05;
+        });
+    }
+
+    function processSplit() {
+        let ratio = parseInt(splitEl.value) / 100;
+        let working = JSON.parse(JSON.stringify(rawData));
+        let sp = stratifiedSplit(working, ratio);
+        trainPool = sp.train; valPool = sp.val; testPool = sp.test;
+        if (normEl.checked) {
+            for (let f = 0; f < 256; f++) {
+                let sum = 0;
+                trainPool.forEach(s => sum += s.features[f]);
+                let mean = sum / trainPool.length, varr = 0;
+                trainPool.forEach(s => varr += (s.features[f] - mean) ** 2);
+                let std = Math.sqrt(varr / trainPool.length) || 1;
+                [trainPool, valPool, testPool].forEach(p => p.forEach(s => { s.features[f] = (s.features[f] - mean) / std; }));
+            }
+        }
+        injectShortcuts(trainPool);
+    }
+
+    function initWeights() {
+        weights = [
+            Array.from({ length: HIDDEN }, () => Array.from({ length: 256 }, () => (Math.random() - 0.5) * Math.sqrt(2 / 256))),
+            Array.from({ length: 10 }, () => Array.from({ length: HIDDEN }, () => (Math.random() - 0.5) * Math.sqrt(2 / HIDDEN)))
+        ];
+        biases = [new Array(HIDDEN).fill(0), new Array(10).fill(0)];
+    }
+
+    function softmax(logits) {
+        let m = Math.max(...logits);
+        let ex = logits.map(z => Math.exp(z - m)), s = ex.reduce((a, b) => a + b, 0);
+        return ex.map(v => v / (s || 1));
+    }
+
+    function forward(feat, dropRate, training) {
+        let W1 = weights[0], B1 = biases[0];
+        let hiddenPre = [], hidden = [];
+        for (let h = 0; h < HIDDEN; h++) {
+            let sum = B1[h];
+            for (let c = 0; c < 256; c++) sum += W1[h][c] * feat[c];
+            hiddenPre.push(sum);
+            hidden.push(Math.tanh(sum));
+        }
+        let mask = hidden.map(() => true);
+        let keep = 1 - dropRate / 100;
+        if (training && dropRate > 0 && keep > 0) {
+            for (let h = 0; h < hidden.length; h++) {
+                mask[h] = Math.random() < keep;
+                hidden[h] = mask[h] ? hidden[h] / keep : 0;
+            }
+        }
+        let W2 = weights[1], B2 = biases[1];
+        let logits = [];
+        for (let r = 0; r < 10; r++) {
+            let sum = B2[r];
+            for (let h = 0; h < HIDDEN; h++) sum += W2[r][h] * hidden[h];
+            logits.push(sum);
+        }
+        return { probs: softmax(logits), feat, hidden, hiddenPre, mask };
+    }
+
+    function trainSample(res, label, lr, lambda, n) {
+        let dLog = [...res.probs];
+        dLog[label] -= 1;
+        let W2 = weights[1], B2 = biases[1];
+        let dH = new Array(HIDDEN).fill(0);
+        for (let r = 0; r < 10; r++) {
+            B2[r] -= lr * dLog[r] / n;
+            for (let h = 0; h < HIDDEN; h++) {
+                dH[h] += dLog[r] * W2[r][h];
+                W2[r][h] -= lr * (dLog[r] * res.hidden[h] / n + lambda * W2[r][h]);
+            }
+        }
+        let W1 = weights[0], B1 = biases[0];
+        for (let h = 0; h < HIDDEN; h++) {
+            if (!res.mask[h]) continue;
+            let dPre = dH[h] * (1 - Math.tanh(res.hiddenPre[h]) ** 2);
+            B1[h] -= lr * dPre / n;
+            for (let c = 0; c < 256; c++) W1[h][c] -= lr * (dPre * res.feat[c] / n + lambda * W1[h][c]);
+        }
+    }
+
+    function evaluate(pool, drop) {
+        let loss = 0, ok = 0;
+        pool.forEach(s => {
+            let p = forward(s.features, drop, false).probs;
+            loss -= Math.log(Math.max(1e-10, p[s.label]));
+            if (p.indexOf(Math.max(...p)) === s.label) ok++;
+        });
+        return { loss: loss / pool.length, acc: ok / pool.length };
+    }
+
+    function drawLoss() {
+        let ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (trainLossHist.length < 2) {
+            ctx.fillStyle = '#666';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Execute pipeline parameters to evaluate cross-validation error curves', 20, 70);
+            return;
+        }
+        let all = [...trainLossHist, ...valLossHist];
+        let maxV = Math.max(...all), minV = Math.min(...all), range = maxV - minV || 1;
+        function curve(hist, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < hist.length; i++) {
+                let x = 10 + (i / 120) * (canvas.width - 20);
+                let y = canvas.height - 10 - ((hist[i] - minV) / range) * (canvas.height - 20);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+        curve(trainLossHist, '#dc2626');
+        curve(valLossHist, '#2563eb');
+    }
+
+    function updateLabels() {
+        document.getElementById('l6-split-lbl').textContent = splitEl.value;
+        document.getElementById('l6-lr-lbl').textContent = parseFloat(lrEl.value).toFixed(2);
+        document.getElementById('l6-drop-lbl').textContent = dropEl.value;
+        document.getElementById('l6-l2-lbl').textContent = L2_VALUES[parseInt(l2El.value)].toFixed(2);
+    }
+
+    function renderOutput(trainAcc, valAcc, testAcc) {
+        outEl.innerHTML =
+            'Epoch: ' + epoch + ' / 120<br>' +
+            'Train accuracy: ' + Math.round(trainAcc * 100) + '%<br>' +
+            'Validation accuracy: ' + Math.round(valAcc * 100) + '%<br>' +
+            'Test accuracy: ' + (testAcc === null ? 'locked' : Math.round(testAcc * 100) + '%') + '<br>' +
+            'Pools: Train ' + trainPool.length + ' / Val ' + valPool.length + ' / Test ' + testPool.length;
+    }
+
+    function reset() {
+        if (interval) { clearInterval(interval); interval = null; }
+        document.getElementById('l6-train-btn').textContent = 'Run Pipeline';
+        epoch = 0;
+        trainLossHist = []; valLossHist = [];
+        processSplit();
+        initWeights();
+        renderOutput(0, 0, null);
+        statusEl.textContent = 'Red vector indicates training loss metrics; blue trace marks validation performance. Divergences in the accuracy curves map directly to shortcut feature exploitation within the unregularized training parameters.';
+        drawLoss();
+    }
+
+    function trainLoop() {
+        if (epoch >= 120) { reset(); return; }
+        if (interval) {
+            clearInterval(interval); interval = null;
+            document.getElementById('l6-train-btn').textContent = 'Run Pipeline';
+            return;
+        }
+        document.getElementById('l6-train-btn').textContent = 'Pause';
+        let lr = parseFloat(lrEl.value);
+        let drop = parseFloat(dropEl.value);
+        let lambda = L2_VALUES[parseInt(l2El.value)];
+        let prevTrLoss = null;
+        interval = setInterval(() => {
+            if (epoch >= 120) {
+                clearInterval(interval); interval = null;
+                document.getElementById('l6-train-btn').textContent = 'Complete';
+                let te = evaluate(testPool, 0);
+                renderOutput(evaluate(trainPool, 0).acc, evaluate(valPool, 0).acc, te.acc);
+                drawLoss();
+                return;
+            }
+            trainPool.forEach(s => {
+                let res = forward(s.features, drop, true);
+                trainSample(res, s.label, lr, lambda, trainPool.length);
+            });
+            let tr = evaluate(trainPool, 0), va = evaluate(valPool, 0);
+            epoch++;
+            trainLossHist.push(tr.loss); valLossHist.push(va.loss);
+            renderOutput(tr.acc, va.acc, null);
+            let gap = (tr.acc - va.acc) * 100;
+            let reg = drop + lambda * 100;
+            let lrVal = parseFloat(lrEl.value);
+            if (lrVal >= 0.50 && prevTrLoss !== null && Math.abs(tr.loss - prevTrLoss) > 0.3)
+                statusEl.textContent = 'Unstable execution threshold: parameters overshooting local minima. Reduce alpha coefficients to fix step variance.';
+            else if (lrVal <= 0.08 && epoch > 40 && tr.loss > 1.5)
+                statusEl.textContent = 'Low optimization velocity detected: step intervals close to zero. Scale up alpha bounds slightly.';
+            else if (gap > 25 && epoch > 15 && reg < 10)
+                statusEl.textContent = 'Overfitting identified: train array scores diverge from validation tracking limits. Step up structural dropout or L2 norms.';
+            else if (reg >= 12 && gap < 12 && epoch > 30)
+                statusEl.textContent = 'Regularization bounds active: narrowing the cross-validation variance space.';
+            prevTrLoss = tr.loss;
+            drawLoss();
+        }, 50);
+    }
+
+    splitEl.addEventListener('input', () => { updateLabels(); reset(); });
+    normEl.addEventListener('change', reset);
+    lrEl.addEventListener('input', updateLabels);
+    dropEl.addEventListener('input', updateLabels);
+    l2El.addEventListener('input', updateLabels);
+    document.getElementById('l6-train-btn').addEventListener('click', trainLoop);
+    document.getElementById('l6-reset-btn').addEventListener('click', reset);
+
+    genData();
+    updateLabels();
+    reset();
+})();
+</script>
+
+</body>
+</html>

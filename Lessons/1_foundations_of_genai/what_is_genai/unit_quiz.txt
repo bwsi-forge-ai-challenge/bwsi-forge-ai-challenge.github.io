@@ -1,0 +1,119 @@
+<problem>
+<multiplechoiceresponse>
+<label>A model is shown a photo and outputs "94% cat, 6% dog." A second model is asked to produce a brand-new cat image. Which statement correctly describes both?</label>
+<choicegroup type="MultipleChoice" shuffle="true">
+<choice correct="true">The first is discriminative, modeling \(P(y \mid x)\); the second is generative, modeling \(P(x)\) or \(P(x \mid c)\).</choice>
+<choice correct="false">The first is generative, modeling \(P(x)\); the second is discriminative, modeling \(P(y \mid x)\).</choice>
+<choice correct="false">Both are discriminative, since both assign probabilities to their outputs.</choice>
+<choice correct="false">The first is discriminative, modeling \(P(x \mid y)\); the second is generative, modeling \(P(y \mid x)\).</choice>
+</choicegroup>
+<solution>
+<div class="detailed-solution">
+<p>Explanation</p>
+<p>The input \(x\) is the image and the label \(y\) is the class. Assigning probability to labels <em>given</em> an observed input is the discriminative pattern, and the model picks \(\hat{y} = \arg\max_y P(y \mid x)\).</p>
+<p>Synthesizing a new image means modeling the structure of the data itself, \(P(x)\), or conditioned on a prompt, \(P(x \mid c)\). This is why generative models need far larger networks: learning the full data distribution across thousands of dimensions is much harder than learning a decision boundary.</p>
+</div>
+</solution>
+</multiplechoiceresponse>
+</problem>
+
+
+
+
+<problem>
+<p>
+A language model generates the sequence "the cat sat" one token at a time, assigning:
+</p>
+<ul>
+<li>\(P(\text{"the"}) = 0.40\)</li>
+<li>\(P(\text{"cat"} \mid \text{"the"}) = 0.30\)</li>
+<li>\(P(\text{"sat"} \mid \text{"the cat"}) = 0.50\)</li>
+</ul>
+
+<numericalresponse answer="0.06">
+<label>Using the chain rule \(P(x_1,\dots,x_T) = \prod_{t=1}^{T} P(x_t \mid x_1,\dots,x_{t-1})\), compute \(P(\text{"the cat sat"})\):</label>
+<responseparam type="tolerance" default="1%"/>
+<formulaequationinput/>
+</numericalresponse>
+
+<multiplechoiceresponse>
+<label>In practice, models compute \(\log P\) by summing \(\log P(x_t \mid x_{\lt t})\) rather than multiplying the probabilities directly. Why?</label>
+<choicegroup type="MultipleChoice" shuffle="true">
+<choice correct="true">A sequence of hundreds of tokens multiplies hundreds of numbers below 1, driving the product toward zero and causing numerical underflow; \(\log(ab) = \log a + \log b\) turns the product into a numerically stable sum.</choice>
+<choice correct="false">Taking logarithms makes the individual token probabilities more accurate.</choice>
+<choice correct="false">The chain rule is only valid for logarithms, not for raw probabilities.</choice>
+<choice correct="false">Logarithms convert the conditional probabilities into independent ones.</choice>
+</choicegroup>
+
+<solution>
+<div class="detailed-solution">
+<p>Explanation</p>
+<p>\(P(\text{"the cat sat"}) = (0.40)(0.30)(0.50) = 0.06\)</p>
+<p>This is the general multiplication rule from the probability unit applied repeatedly. Note that the tokens are <strong>not</strong> independent — each term is conditioned on everything generated so far — so multiplying unconditional probabilities would be wrong.</p>
+<p>Already at three tokens the probability is 0.06. At 500 tokens the product underflows to zero in floating point, so models sum log-probabilities instead. This sum is exactly what becomes the training loss later in the course.</p>
+</div>
+</solution>
+</multiplechoiceresponse>
+</problem>
+
+
+<problem>
+<multiplechoiceresponse>
+<label>You give an image generator the identical prompt three times and get three different images. You give the Iris classifier the identical measurements three times and get the same species each time. What best explains the difference?</label>
+<choicegroup type="MultipleChoice" shuffle="true">
+<choice correct="true">Generative decoding is stochastic — each run samples from a probability distribution — while the classifier deterministically returns \(\arg\max_y P(y \mid x)\).</choice>
+<choice correct="false">The image generator is malfunctioning; identical prompts should give identical images.</choice>
+<choice correct="false">The image generator was trained on more data, making it less stable.</choice>
+<choice correct="false">The classifier caches its previous answers and replays them.</choice>
+</choicegroup>
+<solution>
+<div class="detailed-solution">
+<p>Explanation</p>
+<p>Variation is a designed property, not a defect. The generator draws a sample from a distribution over possible outputs, so repeated runs explore different high-probability paths. Taking the \(\arg\max\) selects a single maximizing label, which is why the same input always produces the same class.</p>
+<p>This has a practical consequence: asking a model the same question twice and getting the same answer is <em>not</em> evidence that the answer is correct.</p>
+</div>
+</solution>
+</multiplechoiceresponse>
+</problem>
+
+<problem>
+<p>Asked "When was the Moon discovered?", a model replies:</p>
+<p><em>"The Moon was discovered in 1648 by the Italian astronomer Giovanni Riccioli, who was the first person to observe it through a telescope."</em></p>
+<p>The response is fluent and specific, and entirely false.</p>
+<multiplechoiceresponse>
+<label>What is this failure called, and what causes it?</label>
+<choicegroup type="MultipleChoice" shuffle="true">
+<choice correct="true">A hallucination — the model optimizes for statistically likely word sequences and has no mechanism to check claims against the world.</choice>
+<choice correct="false">Bias — the model over-represents European astronomers found in its training data.</choice>
+<choice correct="false">Overfitting — the model memorized an incorrect webpage word for word.</choice>
+<choice correct="false">A retrieval error — the model pulled the wrong entry from its fact database.</choice>
+</choicegroup>
+<solution>
+<div class="detailed-solution">
+<p>Explanation</p>
+<p>The answer has the <em>shape</em> of a correct historical fact: a date, a real astronomer, a nationality, an instrument. That template is extremely common in training text, so it scores as a highly probable continuation.</p>
+<p>Plausibility and truth are different targets, and training optimizes only the first. The model is not consulting a database — the "retrieval error" option describes a lookup step that does not exist in the pipeline.</p>
+</div>
+</solution>
+</multiplechoiceresponse>
+</problem>
+
+
+<problem>
+<multiplechoiceresponse>
+<label>A model reliably imitates Shakespeare and summarizes long articles well, yet miscounts the letters in "elephant" and gets 247 × 18 wrong. Which statement best explains this combination?</label>
+<choicegroup type="MultipleChoice" shuffle="true">
+<choice correct="true">The model learned which sequences are likely, not how to compute or verify; style and summarization are pattern-matching tasks, while counting and arithmetic require exact procedures the architecture does not perform.</choice>
+<choice correct="false">The failures are unrelated bugs that a larger training set would eliminate.</choice>
+<choice correct="false">The model performs arithmetic internally but rounds to save computation.</choice>
+<choice correct="false">Counting and arithmetic fail only when the question exceeds the context window.</choice>
+</choicegroup>
+<solution>
+<div class="detailed-solution">
+<p>Explanation</p>
+<p>Both the strengths and the failures follow from the same mechanism. Elizabethan diction and encyclopedic structure are statistical regularities that repeat across millions of documents, so they are learnable. Character counts and multi-digit products are not — the model operates on tokens rather than characters, and there is no calculator or symbolic logic module anywhere in the pipeline.</p>
+<p>This is why "a bigger dataset will fix it" is the wrong conclusion: the limitation is structural, which is also why verification with external tools matters for high-stakes outputs.</p>
+</div>
+</solution>
+</multiplechoiceresponse>
+</problem>

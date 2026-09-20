@@ -1,0 +1,380 @@
+<div class="genai-lesson-container">
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .highlight-box {
+            background: #f8fafc; border-left: 4px solid #3b82f6;
+            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .genai-lesson-container .interactive-box {
+            background: #f4faf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 20px; margin: 20px 0;
+        }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td {
+            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
+        }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container .eq-panel {
+            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 14px; margin: 16px 0;
+            font-family: Cambria, "Times New Roman", serif; font-size: 1.05em;
+        }
+        .genai-lesson-container .prompt-box {
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+            padding: 10px 14px; font-family: monospace; font-size: 0.9em; margin: 8px 0;
+        }
+        .genai-lesson-container .response-card {
+            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px;
+            margin: 12px 0; background: #fff; font-size: 0.95em; line-height: 1.65;
+        }
+        .genai-lesson-container .response-card h4 { margin: 0 0 8px; font-size: 0.92em; color: #1e3a8a; }
+        .genai-lesson-container .response-card.base { border-left: 4px solid #f59e0b; }
+        .genai-lesson-container .response-card.tuned { border-left: 4px solid #16a34a; }
+        .genai-lesson-container .diagram-wrap {
+            overflow-x: auto; margin: 16px 0; text-align: center;
+        }
+        .genai-lesson-container .diagram-wrap svg {
+            display: block; max-width: 100%; height: auto; margin: 0 auto;
+            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+        }
+        .genai-lesson-container figcaption {
+            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
+        }
+        .genai-lesson-container button {
+            padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+            background: white; border-radius: 6px; cursor: pointer;
+            font-weight: 500; color: #1e293b; font-size: 0.92em;
+        }
+        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
+        .genai-lesson-container button.correct { border-color: #16a34a; background: #dcfce7; }
+        .genai-lesson-container button.incorrect { border-color: #dc2626; background: #fef2f2; }
+        .genai-lesson-container .feedback {
+            margin-top: 12px; padding: 12px 14px; border-radius: 6px;
+            font-size: 0.92em; display: none;
+        }
+        .genai-lesson-container .feedback.show { display: block; }
+        .genai-lesson-container .feedback.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .genai-lesson-container .feedback.no { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .genai-lesson-container .reflect-label {
+            display: block; font-weight: 600; font-size: 0.92em; margin: 16px 0 6px; color: #334155;
+        }
+        .genai-lesson-container .reflect-input {
+            width: 100%; box-sizing: border-box; min-height: 80px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
+            font-size: 0.92em; line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container details { margin: 12px 0; }
+        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+        .genai-lesson-container var { font-style: italic; font-family: Cambria, "Times New Roman", serif; }
+        .genai-lesson-container .stat-pill {
+            display: inline-block; background: #e0e7ff; color: #3730a3;
+            padding: 2px 8px; border-radius: 4px; font-size: 0.88em; font-weight: 600;
+        }
+    </style>
+
+    <h1>How Do LLMs Actually Learn?</h1>
+
+    <p>ChatGPT feels like magic the first time you use it. But underneath, large language models (LLMs) are trained with the same core idea you already saw earlier: define a <strong>loss function</strong>, measure how wrong the model is, and use <strong>gradient descent</strong> to adjust parameters and reduce that loss.</p>
+
+    <p>The difference is scale. Instead of fitting a line to a few hundred housing prices, an LLM reads enormous amounts of text and adjusts <strong>billions</strong> of weights so it gets better at one deceptively simple task: <strong>predict the next token</strong>.</p>
+
+    <p>This lesson walks through where training data comes from, what pretraining and fine-tuning actually do, why RLHF exists, and why "bigger model + more data" keeps showing up in the news.</p>
+
+    <hr>
+
+    <h2>1. The Simple Idea at the Core</h2>
+
+    <p>Remember training a neural network in the prerequisites? You had:</p>
+    <ul>
+        <li>A <strong>model</strong> with parameters (weights)</li>
+        <li>A <strong>loss function</strong> that scores how bad the predictions are</li>
+        <li><strong>Gradient descent</strong> to nudge weights in the direction that lowers the loss</li>
+    </ul>
+
+    <p>LLM training uses the exact same loop. The task is just framed as language modeling:</p>
+
+    <div class="highlight-box">
+        <strong>Next-token prediction:</strong> Given some text so far, predict the token that comes next. Repeat across trillions of examples. No hidden magic — just pattern learning at massive scale.
+    </div>
+
+    <div class="eq-panel">
+        Given tokens \(x_1, x_2, x_{t - 1}\), the model outputs a probability for every possible next token.<br>
+        Loss = how far those probabilities are from the true next token (cross-entropy).<br>
+        Update weights with gradient descent. Repeat.
+    </div>
+
+    <p>Example: for the phrase "The cat sat on the" the model might assign high probability to <em>mat</em>, moderate probability to <em>floor</em>, and low probability to <em>airplane</em>. When it picks the wrong token, the loss is high; backpropagation adjusts attention weights, embedding tables, and feed-forward layers so similar contexts do better next time.</p>
+
+    <p>Everything else — reasoning-like answers, translation, coding help — emerges from getting very good at this one prediction game across diverse text.</p>
+
+    <hr>
+
+    <h2>2. Where Does the Training Data Come From?</h2>
+
+    <p>Pretraining data is mostly text scraped from the public internet and curated collections:</p>
+    <ul>
+        <li>Websites, encyclopedias, news, forums, blogs</li>
+        <li>Books and academic papers (where licensing allows)</li>
+        <li>Public code repositories</li>
+        <li>Reference material, Q&amp;A threads, documentation</li>
+    </ul>
+
+    <p><span class="stat-pill">Scale snapshot</span> GPT-3 was trained on roughly <strong>300 billion tokens</strong>. Modern frontier models often train on <strong>trillions</strong> of tokens — many passes over filtered, deduplicated subsets of the web.</p>
+
+    <p>Quantity alone is not enough. Training teams invest heavily in <strong>data quality</strong>:</p>
+    <ul>
+        <li><strong>Filtering</strong> — remove spam, boilerplate, low-quality pages</li>
+        <li><strong>Deduplication</strong> — the same article copied 10,000 times should not count 10,000 times</li>
+        <li><strong>Safety filtering</strong> — reduce blatantly harmful or toxic content where possible</li>
+        <li><strong>Mixing</strong> — balance code, prose, dialogue, and factual text so the model sees varied styles</li>
+    </ul>
+
+    <p>Bad data teaches bad habits. A model trained mostly on garbled forum spam will produce garbled forum spam — even with billions of parameters.</p>
+
+    <hr>
+
+    <h2>3. Pretraining: The Expensive, Slow Phase</h2>
+
+    <p><strong>Pretraining</strong> is the first and largest training stage. The model reads huge swaths of text and repeatedly adjusts its billions of parameters to minimize next-token prediction error.</p>
+
+    <ul>
+        <li><strong>Duration:</strong> weeks to months on large GPU/TPU clusters</li>
+        <li><strong>Cost:</strong> millions to tens of millions of dollars for frontier models</li>
+        <li><strong>Output:</strong> a <strong>base model</strong> — strong at continuing text, but not necessarily helpful or safe to chat with</li>
+    </ul>
+
+    <p>A base model is like a very well-read autocomplete engine. It has absorbed grammar, facts, coding patterns, and style — but it was never explicitly taught to follow instructions or refuse harmful requests.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 760 120" role="img" aria-label="Training pipeline from raw text to deployed assistant">
+            <defs>
+                <marker id="tt-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/>
+                </marker>
+            </defs>
+            <rect x="8" y="36" width="100" height="48" rx="6" fill="#fef3c7" stroke="#fbbf24"/>
+            <text x="58" y="56" text-anchor="middle" font-size="10" font-weight="600">Raw internet</text>
+            <text x="58" y="70" text-anchor="middle" font-size="9" fill="#64748b">text</text>
+            <line x1="108" y1="60" x2="128" y2="60" stroke="#64748b" marker-end="url(#tt-arr)"/>
+            <rect x="128" y="36" width="108" height="48" rx="6" fill="#dbeafe" stroke="#93c5fd"/>
+            <text x="182" y="56" text-anchor="middle" font-size="10" font-weight="600">Pretraining</text>
+            <text x="182" y="70" text-anchor="middle" font-size="9" fill="#64748b">next-token loss</text>
+            <line x1="236" y1="60" x2="256" y2="60" stroke="#64748b" marker-end="url(#tt-arr)"/>
+            <rect x="256" y="36" width="88" height="48" rx="6" fill="#e0e7ff" stroke="#a5b4fc"/>
+            <text x="300" y="56" text-anchor="middle" font-size="10" font-weight="600">Base</text>
+            <text x="300" y="70" text-anchor="middle" font-size="9" fill="#64748b">model</text>
+            <line x1="344" y1="60" x2="364" y2="60" stroke="#64748b" marker-end="url(#tt-arr)"/>
+            <rect x="364" y="36" width="108" height="48" rx="6" fill="#dcfce7" stroke="#86efac"/>
+            <text x="418" y="56" text-anchor="middle" font-size="10" font-weight="600">Fine-tuning</text>
+            <text x="418" y="70" text-anchor="middle" font-size="9" fill="#64748b">curated pairs</text>
+            <line x1="472" y1="60" x2="492" y2="60" stroke="#64748b" marker-end="url(#tt-arr)"/>
+            <rect x="492" y="36" width="88" height="48" rx="6" fill="#fce7f3" stroke="#f9a8d4"/>
+            <text x="536" y="56" text-anchor="middle" font-size="10" font-weight="600">RLHF</text>
+            <text x="536" y="70" text-anchor="middle" font-size="9" fill="#64748b">preferences</text>
+            <line x1="580" y1="60" x2="600" y2="60" stroke="#64748b" marker-end="url(#tt-arr)"/>
+            <rect x="600" y="36" width="148" height="48" rx="6" fill="#f0fdf4" stroke="#86efac"/>
+            <text x="674" y="56" text-anchor="middle" font-size="10" font-weight="600">Deployed assistant</text>
+            <text x="674" y="70" text-anchor="middle" font-size="9" fill="#64748b">ChatGPT-style product</text>
+        </svg>
+        <figcaption>The full path from scraped text to a product you can chat with. Pretraining does the heavy lifting; later stages shape behavior.</figcaption>
+    </figure>
+
+    <h3>Pretraining vs. Fine-Tuning at a Glance</h3>
+    <table>
+        <thead>
+            <tr><th></th><th>Pretraining</th><th>Fine-Tuning</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Typical cost</strong></td><td>Millions–tens of millions of USD</td><td>Thousands–low millions of USD</td></tr>
+            <tr><td><strong>Typical time</strong></td><td>Weeks to months</td><td>Days to weeks</td></tr>
+            <tr><td><strong>Data size</strong></td><td>Trillions of tokens (web-scale)</td><td>Thousands to millions of curated examples</td></tr>
+            <tr><td><strong>What it changes</strong></td><td>General language knowledge, grammar, facts, broad skills</td><td>Behavior: follow instructions, answer questions, adopt a tone</td></tr>
+            <tr><td><strong>Analogy</strong></td><td>Reading the entire library</td><td>Practicing specific job interviews</td></tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>4. From Base Model to Assistant: Fine-Tuning</h2>
+
+    <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence — because that is what "predict the next token" looked like on the internet.</p>
+
+    <div class="response-card base">
+        <h4>Base-model style (completion, not instruction-following)</h4>
+        <p><strong>Prompt:</strong> <span class="prompt-box" style="display:inline;margin:0;">Write a poem about the ocean.</span></p>
+        <p><strong>Output:</strong> Write a poem about the ocean. Write a poem about the sea. What rhymes with wave? Here are some tips for writing poetry: 1) Choose a theme 2) Pick a structure 3) …</p>
+    </div>
+
+    <div class="response-card tuned">
+        <h4>Instruction-tuned style (after fine-tuning)</h4>
+        <p><strong>Prompt:</strong> <span class="prompt-box" style="display:inline;margin:0;">Write a poem about the ocean.</span></p>
+        <p><strong>Output:</strong> Salt wind, slate sky,<br>Horizon blurs where gulls drift by.<br>Each wave repeats what none can keep —<br>The deep remembers, wide and slow.</p>
+    </div>
+
+    <p><strong>Fine-tuning</strong> adds a second training phase on curated examples of desired behavior — often prompt/response pairs written by humans or filtered from high-quality conversations:</p>
+    <ul>
+        <li>User asks a question → model should give a direct, helpful answer</li>
+        <li>User requests a format → model should follow it (bullets, JSON, short summary)</li>
+        <li>User asks for something unsafe → model should decline politely</li>
+    </ul>
+
+    <p>Fine-tuning is much cheaper than pretraining because the dataset is tiny by comparison and training runs for far fewer steps. You are not re-reading the whole internet — you are steering an already-capable model toward a product experience.</p>
+
+    <hr>
+
+    <h2>5. RLHF — Reinforcement Learning from Human Feedback (Conceptual)</h2>
+
+    <p>Even after fine-tuning, two answers can both be "valid" but one is clearer, kinder, or more accurate. <strong>RLHF</strong> (reinforcement learning from human feedback) adds a preference layer:</p>
+    <ol>
+        <li>Show humans several model responses to the same prompt</li>
+        <li>Ask them to rank responses from best to worst</li>
+        <li>Train a <strong>reward model</strong> to predict those human rankings</li>
+        <li>Nudge the LLM to produce outputs the reward model scores highly</li>
+    </ol>
+
+    <p>You do not need the RL math details here. The takeaway is simple: <strong>RLHF teaches the model what humans prefer</strong>, not just what text is most likely on the internet.</p>
+
+    <div class="highlight-box">
+        <strong>Why it matters:</strong> Pretraining data includes rude comments, misinformation, and toxic patterns. RLHF helps the deployed assistant be more polite, helpful, and cautious — even when pretraining exposed it to worse examples.
+    </div>
+
+    <hr>
+
+    <h2>6. Why Scale Matters (Scaling Laws)</h2>
+
+    <p>Researchers discovered something surprising: for a fixed architecture family, <strong>bigger models + more training data + more compute</strong> tend to produce smoothly better performance. Plot loss or benchmark score against model size and you often see a predictable downward curve — the famous <strong>scaling laws</strong>.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 520 260" role="img" aria-label="Simplified scaling law chart showing better performance as model size increases">
+            <line x1="60" y1="220" x2="480" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <line x1="60" y1="40" x2="60" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <text x="270" y="248" text-anchor="middle" font-size="11" fill="#475569">Model size (parameters) →</text>
+            <text x="22" y="130" text-anchor="middle" font-size="11" fill="#475569" transform="rotate(-90 22 130)">Performance ↑</text>
+            <text x="68" y="232" font-size="9" fill="#64748b">100M</text>
+            <text x="200" y="232" font-size="9" fill="#64748b">1B</text>
+            <text x="340" y="232" font-size="9" fill="#64748b">10B</text>
+            <text x="450" y="232" font-size="9" fill="#64748b">100B+</text>
+            <path d="M 80 200 C 180 190, 260 120, 440 55" fill="none" stroke="#2563eb" stroke-width="3"/>
+            <circle cx="80" cy="200" r="4" fill="#2563eb"/>
+            <circle cx="200" cy="165" r="4" fill="#2563eb"/>
+            <circle cx="340" cy="105" r="4" fill="#2563eb"/>
+            <circle cx="440" cy="55" r="4" fill="#2563eb"/>
+            <text x="400" y="48" font-size="10" fill="#1d4ed8" font-weight="600">frontier models</text>
+            <text x="320" y="95" font-size="9" fill="#64748b">emergent skills appear</text>
+        </svg>
+        <figcaption>Simplified trend: larger models trained on more data generally score better on hard benchmarks — which is why parameter counts and training tokens dominate AI headlines.</figcaption>
+    </figure>
+
+    <p>Nobody designed the model to "learn reasoning" as a separate module. Yet as scale increased, systems started passing exams, writing code, and translating languages — skills that were not explicitly labeled in the training data. That emergent behavior is a major reason labs keep investing in scale, even though it is expensive.</p>
+
+    <p>Scale is not infinite magic. Data runs out, costs explode, and diminishing returns appear. But the scaling-law mindset explains why GPT-4, Claude, Gemini, and Llama 3 announcements all emphasize <strong>parameters</strong>, <strong>training tokens</strong>, and <strong>compute budget</strong>.</p>
+
+    <hr>
+
+    <h2>7. Try It: Spot the Difference</h2>
+    <div class="interactive-box">
+        <p>Same prompt, two responses. One comes from a <strong>base / completion-style</strong> model; the other from an <strong>instruction-tuned</strong> assistant. Read both, guess which is which, then check your answer.</p>
+        <p><strong>Prompt:</strong></p>
+        <div class="prompt-box">Explain photosynthesis in two sentences for a 10-year-old.</div>
+
+        <div class="response-card" id="tt-guess-a">
+            <h4>Response A</h4>
+            <p>Explain photosynthesis in two sentences for a 10-year-old. Explain photosynthesis simply. What is photosynthesis? Photosynthesis is a process used by plants. Here are some related questions you might ask…</p>
+        </div>
+        <div class="response-card" id="tt-guess-b">
+            <h4>Response B</h4>
+            <p>Plants eat sunlight! They use it to turn water and air into sugar food and give us fresh oxygen to breathe. Without photosynthesis, Earth would not have the green plants or the oxygen we need.</p>
+        </div>
+
+        <p><strong>Which response is from the instruction-tuned assistant?</strong></p>
+        <button type="button" id="tt-btn-a">Response A</button>
+        <button type="button" id="tt-btn-b">Response B</button>
+        <div class="feedback ok" id="tt-fb-ok">
+            <strong>Correct.</strong> Response B follows the instruction (two simple sentences, kid-friendly tone). Response A keeps <em>continuing</em> the prompt like a autocomplete engine — repeating the question and listing meta-commentary instead of answering directly. That pattern is typical of base models before instruction fine-tuning.
+        </div>
+        <div class="feedback no" id="tt-fb-no">
+            <strong>Not quite.</strong> Look for which response actually <em>answers</em> the question in two sentences. Base models often repeat or extend the prompt; instruction-tuned models try to fulfill the request.
+        </div>
+    </div>
+
+    <hr>
+
+    <!--<h2>8. Reflect on the Pipeline</h2>
+    <div class="interactive-box">
+        <label class="reflect-label" for="tt-reflect-1">If you were training a customer service chatbot, what kind of fine-tuning examples would you want to collect?</label>
+        <textarea class="reflect-input" id="tt-reflect-1" placeholder="Think about tone, refund policies, escalation paths, multilingual support…"></textarea>
+        <details>
+            <summary>Sample ideas</summary>
+            <p>Curate thousands of realistic tickets: angry customer → calm apology + fix; shipping delay → tracking link + ETA; return request → policy-compliant steps; ambiguous question → clarifying follow-up. Include refusals for out-of-scope asks (medical/legal advice). Match your brand voice and mark ideal responses explicitly.</p>
+        </details>
+
+        <label class="reflect-label" for="tt-reflect-2">Why might RLHF prevent a model from saying something offensive, even if that pattern showed up during pretraining?</label>
+        <textarea class="reflect-input" id="tt-reflect-2" placeholder="Connect human rankings to what the model learns to optimize…"></textarea>
+        <details>
+            <summary>Sample answer</summary>
+            <p>Pretraining optimizes likelihood on raw web text — which includes slurs and insults. RLHF adds a second objective: humans rank polite, safe answers higher. The model is nudged toward responses that score well on that preference signal, even when a toxic completion would have been statistically likely from pretraining alone.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>LLM training is <strong>next-token prediction + gradient descent</strong>, scaled up — not a different species of machine learning.</li>
+        <li><strong>Pretraining</strong> on web-scale text builds a base model; it is slow, expensive, and general.</li>
+        <li><strong>Fine-tuning</strong> on curated examples teaches instruction-following and product behavior cheaply.</li>
+        <li><strong>RLHF</strong> aligns outputs with human preferences — helpful, harmless, honest — at a high level.</li>
+        <li><strong>Scaling laws</strong> explain why bigger models and more tokens keep winning benchmarks — until cost and data limits bite.</li>
+    </ul>
+
+    <hr>-->
+
+    <h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>Scaling Laws for Neural Language Models (Kaplan et al., 2020):</strong> The paper that popularized predictable power-law improvements with scale. <a href="https://arxiv.org/abs/2001.08361" target="_blank">arXiv</a></li>
+        <li><strong>Training language models to follow instructions with human feedback (Ouyang et al., 2022):</strong> InstructGPT / RLHF overview from OpenAI. <a href="https://arxiv.org/abs/2203.02155" target="_blank">arXiv</a></li>
+        <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> GPT-3 paper — scale and emergent behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv</a></li>
+    </ul>
+
+    <script>
+    (function () {
+        var btnA = document.getElementById('tt-btn-a');
+        var btnB = document.getElementById('tt-btn-b');
+        var fbOk = document.getElementById('tt-fb-ok');
+        var fbNo = document.getElementById('tt-fb-no');
+        if (!btnA || !btnB) return;
+
+        function resetButtons() {
+            btnA.classList.remove('correct', 'incorrect');
+            btnB.classList.remove('correct', 'incorrect');
+            fbOk.classList.remove('show');
+            fbNo.classList.remove('show');
+        }
+
+        btnA.addEventListener('click', function () {
+            resetButtons();
+            btnA.classList.add('incorrect');
+            btnB.classList.add('correct');
+            fbNo.classList.add('show');
+        });
+
+        btnB.addEventListener('click', function () {
+            resetButtons();
+            btnB.classList.add('correct');
+            btnA.classList.add('incorrect');
+            fbOk.classList.add('show');
+        });
+    })();
+    </script>
+</div>

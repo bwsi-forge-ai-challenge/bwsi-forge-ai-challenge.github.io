@@ -1,0 +1,113 @@
+{
+  "score": 95.0,
+  "output": "Graded notebook: rnn_assignment_solution.ipynb\nExecuted code cells: 4\nFixture corpus chars: 1,115,394\n",
+  "visibility": "visible",
+  "stdout_visibility": "visible",
+  "tests": [
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_dataset_getitem_shapes_and_types",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_dataset_last_valid_index",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_dataset_length",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_dataset_sliding_window_content",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_encode_empty_string",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 1 \u2014 encode & CharDataset: test_encode_returns_correct_indices",
+      "score": 5.0,
+      "max_score": 5.0,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 2 \u2014 CharRNN: test_forward_output_shapes",
+      "score": 8.75,
+      "max_score": 8.75,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 2 \u2014 CharRNN: test_forward_with_provided_hidden_state",
+      "score": 8.75,
+      "max_score": 8.75,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 2 \u2014 CharRNN: test_has_required_layers",
+      "score": 8.75,
+      "max_score": 8.75,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 2 \u2014 CharRNN: test_init_hidden_shape",
+      "score": 8.75,
+      "max_score": 8.75,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 3 \u2014 train_one_epoch & evaluate: test_evaluate_does_not_change_weights",
+      "score": 7.5,
+      "max_score": 7.5,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 3 \u2014 train_one_epoch & evaluate: test_evaluate_returns_finite_loss",
+      "score": 7.5,
+      "max_score": 7.5,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 3 \u2014 train_one_epoch & evaluate: test_train_one_epoch_returns_finite_loss",
+      "score": 7.5,
+      "max_score": 7.5,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "TODO 3 \u2014 train_one_epoch & evaluate: test_training_updates_weights",
+      "score": 7.5,
+      "max_score": 7.5,
+      "output": "Passed",
+      "visibility": "visible"
+    },
+    {
+      "name": "Reflection answers present (auto check)",
+      "score": 0.0,
+      "max_score": 5.0,
+      "output": "Reflection answer cell looks empty or too short. Write your answers in the markdown cell under Part 8.",
+      "visibility": "visible"
+    }
+  ]
+}

@@ -1,0 +1,480 @@
+<div class="genai-lesson-container">
+    <style>
+        .genai-lesson-container {
+            line-height: 1.6;
+            color: #1e293b;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
+        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
+        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+        .genai-lesson-container .highlight-box {
+            background: #f8fafc; border-left: 4px solid #3b82f6;
+            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .genai-lesson-container .interactive-box {
+            background: #f4faf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 20px; margin: 20px 0;
+        }
+        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .genai-lesson-container th, .genai-lesson-container td {
+            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
+        }
+        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+        .genai-lesson-container .eq-panel {
+            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+            border-radius: 6px; padding: 14px; margin: 16px 0;
+            font-family: Cambria, "Times New Roman", serif; font-size: 1.05em;
+        }
+        .genai-lesson-container .prompt-box {
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+            padding: 10px 14px; font-family: monospace; font-size: 0.9em; margin: 8px 0;
+        }
+        .genai-lesson-container .diagram-wrap {
+            overflow-x: auto; margin: 16px 0; text-align: center;
+        }
+        .genai-lesson-container .diagram-wrap svg {
+            display: block; max-width: 100%; height: auto; margin: 0 auto;
+            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+        }
+        .genai-lesson-container figcaption {
+            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
+        }
+        .genai-lesson-container button {
+            padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+            background: white; border-radius: 6px; cursor: pointer;
+            font-weight: 500; color: #1e293b; font-size: 0.92em;
+        }
+        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
+        .genai-lesson-container .feedback {
+            margin-top: 12px; padding: 12px 14px; border-radius: 6px;
+            font-size: 0.92em; display: none;
+        }
+        .genai-lesson-container .feedback.show { display: block; }
+        .genai-lesson-container .feedback.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .genai-lesson-container .reflect-label {
+            display: block; font-weight: 600; font-size: 0.92em; margin: 16px 0 6px; color: #334155;
+        }
+        .genai-lesson-container .reflect-input {
+            width: 100%; box-sizing: border-box; min-height: 80px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
+            font-size: 0.92em; line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container details { margin: 12px 0; }
+        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+        .genai-lesson-container var { font-style: italic; font-family: Cambria, "Times New Roman", serif; }
+        .genai-lesson-container .stat-pill {
+            display: inline-block; background: #e0e7ff; color: #3730a3;
+            padding: 2px 8px; border-radius: 4px; font-size: 0.88em; font-weight: 600;
+        }
+        .genai-lesson-container .compare-cols {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0;
+        }
+        @media (max-width: 640px) {
+            .genai-lesson-container .compare-cols { grid-template-columns: 1fr; }
+        }
+        .genai-lesson-container .compare-card {
+            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #fff;
+        }
+        .genai-lesson-container .compare-card h4 { margin: 0 0 10px; font-size: 0.95em; }
+        .genai-lesson-container .compare-card.short { border-top: 4px solid #f59e0b; }
+        .genai-lesson-container .compare-card.long { border-top: 4px solid #2563eb; }
+        .genai-lesson-container .msg {
+            font-size: 0.88em; padding: 8px 10px; border-radius: 6px; margin: 6px 0;
+        }
+        .genai-lesson-container .msg.user { background: #eff6ff; border: 1px solid #bfdbfe; }
+        .genai-lesson-container .msg.bot { background: #f8fafc; border: 1px solid #e2e8f0; }
+        .genai-lesson-container .msg.faded { opacity: 0.35; text-decoration: line-through; }
+        .genai-lesson-container .limit-bar-wrap {
+            background: #e2e8f0; border-radius: 6px; height: 22px; overflow: hidden; margin: 8px 0;
+        }
+        .genai-lesson-container .limit-bar {
+            height: 100%; border-radius: 6px 0 0 6px; transition: width 0.25s ease;
+            display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
+            font-size: 0.75em; font-weight: 600; color: #fff; min-width: 0;
+        }
+        .genai-lesson-container .limit-bar.safe { background: #16a34a; }
+        .genai-lesson-container .limit-bar.warn { background: #f59e0b; }
+        .genai-lesson-container .limit-bar.over { background: #dc2626; }
+        .genai-lesson-container .limit-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.88em; margin: 10px 0 4px;
+        }
+        .genai-lesson-container .limit-row span:last-child { font-weight: 600; color: #334155; }
+        .genai-lesson-container .cw-textarea {
+            width: 100%; box-sizing: border-box; min-height: 100px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.92em;
+            line-height: 1.5; resize: vertical;
+        }
+        .genai-lesson-container .cw-select {
+            width: 100%; max-width: 360px; padding: 8px; border: 1px solid #cbd5e1;
+            border-radius: 6px; font-size: 0.92em; margin: 8px 0;
+        }
+        .genai-lesson-container .footnote {
+            font-size: 0.85em; color: #64748b; margin-top: 8px;
+        }
+    </style>
+
+    <h1>Context Windows: How Much Can a Model Actually "See"?</h1>
+
+    <p>We have already learned that transformers use <strong>attention</strong> so every token can look at every other token in the input. That mechanism is powerful — but it only works inside a fixed boundary called the <strong>context window</strong>.</p>
+
+    <p>This is not an abstract detail. The moment you paste a long PDF, a big codebase, or months of chat history into an API call, you hit this limit. Understanding context windows is one of the first practical constraints you will run into in your assignments and in production apps.</p>
+
+    <hr>
+
+    <h2>1. What Is a Context Window?</h2>
+
+    <p>Remember attention from the tokens &amp; transformers unit? Each token computes a relevance score against <em>every other token</em> in the sequence. That "every token sees every token" property defines what the model can reason over <strong>right now</strong> — but only within a maximum length.</p>
+
+    <div class="highlight-box">
+        <strong>Definition:</strong> The <strong>context window</strong> is the maximum number of tokens (input + output combined) a model can process in a single forward pass. Input tokens, system prompts, retrieved documents, tool results, and the model's own generated reply all count toward the same budget.
+    </div>
+
+    <p>Common sizes have grown fast, but they are still finite:</p>
+    <ul>
+        <li><strong>GPT-3.5 era:</strong> ~4K tokens (roughly 3,000 words of English)</li>
+        <li><strong>GPT-4 (2023):</strong> 8K or 128K variants depending on the API tier</li>
+        <li><strong>Mid-2026 frontier models:</strong> many commercial APIs advertise 200K–1M+ tokens; specialized open-weight models push even higher (e.g., Llama 4 Scout at 10M advertised)</li>
+    </ul>
+
+    <p><span class="stat-pill">Rule of thumb</span> English prose averages about <strong>1.3 tokens per word</strong> (from Week 2 tokenization). A 128K window holds on the order of ~95,000 words — a long novel, but not an entire library.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 720 140" role="img" aria-label="Sliding context window over a long document">
+            <text x="20" y="22" font-size="11" fill="#475569" font-weight="600">Long document (many tokens) →</text>
+            <rect x="20" y="34" width="680" height="36" rx="4" fill="#f1f5f9" stroke="#cbd5e1"/>
+            <rect x="20" y="34" width="120" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="4 2"/>
+            <rect x="140" y="34" width="200" height="36" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+            <rect x="340" y="34" width="360" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8" stroke-dasharray="4 2"/>
+            <text x="80" y="56" text-anchor="middle" font-size="9" fill="#64748b">cut off</text>
+            <text x="240" y="56" text-anchor="middle" font-size="10" fill="#1d4ed8" font-weight="600">IN VIEW (context window)</text>
+            <text x="520" y="56" text-anchor="middle" font-size="9" fill="#64748b">cut off</text>
+            <path d="M 130 78 L 150 78 L 145 86 Z" fill="#2563eb"/>
+            <line x1="150" y1="78" x2="350" y2="78" stroke="#2563eb" stroke-width="1.5" marker-end="url(#cw-arr)"/>
+            <text x="250" y="98" text-anchor="middle" font-size="10" fill="#1e40af">Only tokens inside the window participate in attention</text>
+            <defs>
+                <marker id="cw-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6 Z" fill="#2563eb"/>
+                </marker>
+            </defs>
+            <rect x="140" y="108" width="200" height="18" rx="3" fill="#fef3c7" stroke="#fbbf24"/>
+            <text x="240" y="121" text-anchor="middle" font-size="9" fill="#92400e">Window slides forward as new tokens are added</text>
+        </svg>
+        <figcaption>A sliding window over a long document. Tokens outside the highlighted region are invisible — the model cannot attend to them, no matter how "smart" it is.</figcaption>
+    </figure>
+
+    <hr>
+
+    <h2>2. Why Isn't the Context Window Infinite?</h2>
+
+    <p>The bottleneck is attention itself. Standard self-attention compares <strong>every token to every other token</strong>. For a sequence of length <var>n</var>, that means roughly <var>n</var> × <var>n</var> pairwise interactions — called <strong>O(<var>n</var>²) complexity</strong>.</p>
+
+    <div class="eq-panel">
+        Sequence length ×2 → attention pairs ×4 → compute, GPU memory, and API cost all jump sharply.
+    </div>
+
+    <ul>
+        <li><strong>Compute:</strong> doubling context length roughly quadruples attention work (before optimizations)</li>
+        <li><strong>Memory:</strong> attention score matrices grow with sequence length; GPUs have finite RAM</li>
+        <li><strong>Cost:</strong> most APIs bill per token — longer context = higher price per request</li>
+    </ul>
+
+    <p>Researchers have invented tricks — sparse attention, sliding windows, ring attention, KV-cache compression — to stretch windows further. But physics and economics still cap what you can run in one shot. "Just make it infinite" is not a free knob.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 520 260" role="img" aria-label="O(n squared) compute cost as context length grows">
+            <line x1="60" y1="220" x2="480" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <line x1="60" y1="40" x2="60" y2="220" stroke="#334155" stroke-width="1.5"/>
+            <text x="270" y="248" text-anchor="middle" font-size="11" fill="#475569">Context length (tokens) →</text>
+            <text x="22" y="130" text-anchor="middle" font-size="11" fill="#475569" transform="rotate(-90 22 130)">Attention compute ↑</text>
+            <text x="68" y="232" font-size="9" fill="#64748b">4K</text>
+            <text x="180" y="232" font-size="9" fill="#64748b">32K</text>
+            <text x="300" y="232" font-size="9" fill="#64748b">128K</text>
+            <text x="430" y="232" font-size="9" fill="#64748b">1M</text>
+            <path d="M 80 210 Q 200 200, 280 120 T 440 50" fill="none" stroke="#dc2626" stroke-width="3"/>
+            <circle cx="80" cy="210" r="4" fill="#dc2626"/>
+            <circle cx="180" cy="185" r="4" fill="#dc2626"/>
+            <circle cx="300" cy="120" r="4" fill="#dc2626"/>
+            <circle cx="440" cy="50" r="4" fill="#dc2626"/>
+            <text x="350" y="95" font-size="9" fill="#991b1b">4× length → ~16× pairs</text>
+            <line x1="80" y1="210" x2="160" y2="210" stroke="#64748b" stroke-dasharray="3 3"/>
+            <line x1="160" y1="210" x2="160" y2="185" stroke="#64748b" stroke-dasharray="3 3"/>
+            <text x="118" y="200" font-size="8" fill="#64748b">2× length</text>
+            <text x="165" y="200" font-size="8" fill="#64748b">~4× compute</text>
+        </svg>
+        <figcaption>Simplified O(<var>n</var>²) scaling: each doubling of context length roughly quadruples attention work. That is why longer windows are slower and more expensive.</figcaption>
+    </figure>
+
+    <hr>
+
+    <h2>3. What Happens When You Exceed the Context Window?</h2>
+
+    <p>Behavior depends on the API and settings, but the outcome is always some form of <strong>loss</strong>:</p>
+    <ul>
+        <li><strong>Hard error:</strong> the request is rejected ("context length exceeded")</li>
+        <li><strong>Silent truncation:</strong> the oldest tokens are dropped from the beginning; the model never sees them</li>
+        <li><strong>Summarization middleware:</strong> your app compresses old messages before sending — quality depends on what you kept</li>
+    </ul>
+
+    <p>Practical impact: a model cannot "remember" an entire long conversation, book, or codebase if it exceeds the window. That is why production systems <strong>chunk</strong> documents, <strong>summarize</strong> old chat turns, or <strong>retrieve</strong> only relevant passages that it needs.</p>
+
+    <!--<div class="highlight-box">
+        <strong>Assignment preview:</strong> If you paste 200 pages into one prompt and the model "misses" facts from page 3, the model is not being careless — those tokens may simply not be in context anymore.
+    </div>-->
+
+    <hr>
+
+    <h2>4. Context Window vs. Actual Memory (Common Confusion)</h2>
+
+    <p>Students often conflate two very different ideas:</p>
+
+    <table>
+        <thead>
+            <tr><th></th><th>Context window</th><th>Permanent "memory"</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>What it is</strong></td>
+                <td>Temporary working space for one API call</td>
+                <td>Information stored in model weights or an external database</td>
+            </tr>
+            <tr>
+                <td><strong>Changes when you chat?</strong></td>
+                <td>Fills up with tokens you send; resets each new session unless you re-send history</td>
+                <td>Weights stay fixed unless the model is retrained; external DB persists until you delete it</td>
+            </tr>
+            <tr>
+                <td><strong>Analogy</strong></td>
+                <td>Whiteboard in front of you right now</td>
+                <td>What you learned in school (weights) + your notebook on the shelf (database)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>A large context window is <strong>not</strong> the same as the model "learning" your conversation. Once the session ends — or older tokens fall off the window — that information is gone unless you stored it elsewhere. Every new conversation starts fresh with the same pretrained weights.</p>
+
+    <hr>
+
+    <h2>5. Real-World Tradeoffs</h2>
+
+    <p>Bigger windows are convenient: paste a whole contract, dump a repo, or ship an entire thread. But tradeoffs are real:</p>
+    <ul>
+        <li><strong>Latency:</strong> more tokens → longer time to first token</li>
+        <li><strong>Cost:</strong> billed per token; 1M-token requests can cost dollars per call on frontier APIs</li>
+        <li><strong>Quality:</strong> advertised max context ≠ effective context — models may lose focus in the middle of very long inputs ("lost in the middle" effect)</li>
+    </ul>
+
+    <p>Mature applications manage context deliberately: keep recent messages verbatim, summarize older turns, retrieve only relevant chunks, and reserve output budget for the reply.</p>
+
+    <h3>Short window vs. long window (same conversation)</h3>
+    <div class="compare-cols">
+        <div class="compare-card short">
+            <h4>4K context window</h4>
+            <div class="msg user faded">Day 1: "My dog's name is Biscuit."</div>
+            <div class="msg bot faded">Got it — Biscuit is a great name!</div>
+            <div class="msg user">What's my dog's name?</div>
+            <div class="msg bot">I don't have that information. What is your dog's name?</div>
+            <p class="footnote">Early messages fell off the window. The model cannot recall Biscuit.</p>
+        </div>
+        <div class="compare-card long">
+            <h4>128K context window</h4>
+            <div class="msg user">Day 1: "My dog's name is Biscuit."</div>
+            <div class="msg bot">Got it — Biscuit is a great name!</div>
+            <div class="msg user">What's my dog's name?</div>
+            <div class="msg bot">Your dog's name is Biscuit.</div>
+            <p class="footnote">Full history still fits — but this request used ~100× more tokens (and cost) than the 4K case for the same answer.</p>
+        </div>
+    </div>
+
+    <!--<h3>Context window sizes across popular models</h3>
+    <p class="footnote">Snapshot as of mid-2026. Vendors update limits frequently — check documentation before building. <strong>Advertised max ≠ guaranteed quality</strong> at the upper bound.</p>
+    <table>
+        <thead>
+            <tr><th>Model</th><th>Max context (advertised)</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Llama 4 Scout (Meta)</td><td>10,000,000 tokens</td><td>Open-weight; self-hosted; largest advertised window</td></tr>
+            <tr><td>Gemini 3.1 / 3.2 Pro (Google)</td><td>1M–2M tokens</td><td>Tiered pricing often kicks in above ~200K input tokens</td></tr>
+            <tr><td>GPT-5.4 / GPT-5.5 (OpenAI)</td><td>~400K–1M tokens</td><td>128K max output on flagship tiers; legacy GPT-3.5 was 4K–16K</td></tr>
+            <tr><td>Claude Sonnet / Opus 4.6+ (Anthropic)</td><td>200K standard; 1M extended tier</td><td>Extended context may require specific API access</td></tr>
+            <tr><td>DeepSeek V4 Pro</td><td>1,000,000 tokens</td><td>Notable 384K max output in one call</td></tr>
+            <tr><td>DeepSeek-V3 (open-weight)</td><td>128,000 tokens</td><td>Widely deployed; much smaller than frontier closed APIs</td></tr>
+            <tr><td>GPT-4 (2023 reference)</td><td>8K / 32K / 128K</td><td>Illustrates how fast limits grew in two years</td></tr>
+            <tr><td>GPT-3.5-turbo (legacy)</td><td>4,096–16,384 tokens</td><td>Many course examples and older tutorials assume 4K</td></tr>
+        </tbody>
+    </table>-->
+
+    <hr>
+
+    <h2>6. Try It: Context Window Token Counter</h2>
+    <div class="interactive-box">
+        <p>Paste text below. This tool uses a <strong>GPT-style token estimate</strong> (~4 characters per token for English, matching the heuristic from Week 2). Compare your text against common context limits.</p>
+        <label class="reflect-label" for="cw-input">Your text</label>
+        <textarea class="cw-textarea" id="cw-input" placeholder="Paste a paragraph, email, code snippet, or chapter excerpt…">The cat sat on the mat. In Week 2 you learned that models break text into tokens before attention runs. Each token in the context window can attend to every other token — but only up to the model's limit.</textarea>
+
+        <p style="margin:12px 0 4px;"><strong>Estimated tokens:</strong> <span id="cw-count" style="font-size:1.2em;color:#1d4ed8;font-weight:700;">—</span>
+            &nbsp;·&nbsp; <strong>Words:</strong> <span id="cw-words">—</span>
+            &nbsp;·&nbsp; <strong>Chars:</strong> <span id="cw-chars">—</span></p>
+
+        <label class="reflect-label" for="cw-primary-limit">Primary comparison limit</label>
+        <select class="cw-select" id="cw-primary-limit">
+            <option value="4096">GPT-3.5 era — 4,096 tokens</option>
+            <option value="8192">GPT-4 8K — 8,192 tokens</option>
+            <option value="128000" selected>GPT-4 class — 128,000 tokens</option>
+            <option value="200000">Claude standard — 200,000 tokens</option>
+            <option value="1000000">Frontier 1M — 1,000,000 tokens</option>
+        </select>
+
+        <div class="limit-bar-wrap" title="Fill level vs selected limit">
+            <div class="limit-bar safe" id="cw-primary-bar" style="width:0%;"></div>
+        </div>
+        <p id="cw-primary-status" class="footnote">—</p>
+
+        <p style="margin-top:18px;font-weight:600;font-size:0.92em;">Compare against all common limits:</p>
+        <div id="cw-all-limits"></div>
+
+        <p class="footnote">This is an estimate, not an exact tokenizer count.</p>
+    </div>
+
+    <hr>
+
+    <!--<h2>7. Reflect on Context Limits</h2>
+    <div class="interactive-box">
+        <label class="reflect-label" for="cw-reflect-1">You want to build a chatbot that remembers your entire 3-month conversation history. What's the problem with just cramming everything into the context window every time?</label>
+        <textarea class="reflect-input" id="cw-reflect-1" placeholder="Think about token growth, cost, latency, truncation, and whether old messages still fit…"></textarea>
+        <details>
+            <summary>Sample answer</summary>
+            <p>Three months of daily chat could be hundreds of thousands or millions of tokens — far beyond most windows. Even on a 1M window, you'd pay for every token on every request, responses get slower, and you'd eventually hit the cap anyway. Older messages get truncated or dropped. Better approaches: summarize old threads, store facts in a database, retrieve only relevant past turns (RAG), or maintain a rolling window of recent messages plus a compressed memory.</p>
+        </details>
+
+        <label class="reflect-label" for="cw-reflect-2">Estimate: how many tokens is your favorite book? Would it fit inside a 128K context window?</label>
+        <textarea class="reflect-input" id="cw-reflect-2" placeholder="Look up word count × ~1.3 tokens/word, or paste an excerpt into the counter above…"></textarea>
+        <details>
+            <summary>Sample answer</summary>
+            <p><em>Harry Potter and the Sorcerer's Stone</em> ≈ 77,000 words × 1.3 ≈ <strong>100,000 tokens</strong> — it would fit in 128K with room for a system prompt and reply, but barely. <em>The Lord of the Rings</em> (single volume ~180K words) ≈ <strong>230K+ tokens</strong> — too large for 128K; you'd need chunking, summarization, or a larger window. Always leave headroom for the model's output.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>The <strong>context window</strong> is the max tokens (input + output) a model can attend over in one call — a direct consequence of attention's O(<var>n</var>²) cost.</li>
+        <li>Exceeding the window means <strong>truncation, failure, or forced summarization</strong> — not reliable long-term memory.</li>
+        <li>Context is <strong>temporary working space</strong>, not learning; weights do not change from your chat unless you fine-tune.</li>
+        <li>Bigger windows are convenient but <strong>slower, pricier</strong>, and not always equally usable at max length.</li>
+        <li>Production apps <strong>manage context</strong> — chunk, summarize, retrieve — instead of blindly pasting everything.</li>
+    </ul>
+
+    <hr>-->
+
+    <h2>Recommended Reading</h2>
+    <ul>
+        <li><strong>Lost in the Middle: How Language Models Use Long Contexts (Liu et al., 2023):</strong> Shows models often miss information buried in the middle of long inputs. <a href="https://arxiv.org/abs/2307.03172" target="_blank">arXiv</a></li>
+        <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> Original transformer paper — the source of O(<var>n</var>²) attention. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv</a></li>
+        <li><strong>OpenAI tiktoken:</strong> Count tokens exactly for OpenAI models. <a href="https://github.com/openai/tiktoken" target="_blank">GitHub</a></li>
+    </ul>
+
+    <script>
+    (function () {
+        var LIMITS = [
+            { label: 'GPT-3.5 (4K)', tokens: 4096 },
+            { label: 'GPT-4 8K', tokens: 8192 },
+            { label: 'GPT-4 128K class', tokens: 128000 },
+            { label: 'Claude 200K', tokens: 200000 },
+            { label: 'Frontier 1M', tokens: 1000000 }
+        ];
+
+        function estimateTokens(text) {
+            if (!text || !text.trim()) return 0;
+            var trimmed = text.trim();
+            var words = trimmed.match(/\S+/g);
+            var wordCount = words ? words.length : 0;
+            var charEstimate = Math.ceil(trimmed.length / 4);
+            var wordEstimate = Math.ceil(wordCount * 1.3);
+            return Math.max(charEstimate, wordEstimate, 1);
+        }
+
+        function formatNum(n) {
+            return n.toLocaleString();
+        }
+
+        function barClass(pct) {
+            if (pct > 100) return 'over';
+            if (pct > 80) return 'warn';
+            return 'safe';
+        }
+
+        function renderBar(containerId, count, limit) {
+            var bar = document.getElementById(containerId);
+            if (!bar) return;
+            var pct = limit > 0 ? (count / limit) * 100 : 0;
+            var displayPct = Math.min(pct, 100);
+            bar.style.width = Math.max(displayPct, count > 0 ? 2 : 0) + '%';
+            bar.className = 'limit-bar ' + barClass(pct);
+            bar.textContent = pct >= 8 ? Math.round(pct) + '%' : '';
+        }
+
+        function renderAllLimits(count) {
+            var el = document.getElementById('cw-all-limits');
+            if (!el) return;
+            var html = '';
+            LIMITS.forEach(function (lim) {
+                var pct = (count / lim.tokens) * 100;
+                var cls = barClass(pct);
+                var status = pct <= 100
+                    ? (pct > 80 ? 'Near limit' : 'Fits')
+                    : 'Exceeds by ' + formatNum(count - lim.tokens) + ' tokens';
+                html += '<div class="limit-row"><span>' + lim.label + ' (' + formatNum(lim.tokens) + ')</span><span>' + status + '</span></div>';
+                html += '<div class="limit-bar-wrap"><div class="limit-bar ' + cls + '" style="width:' +
+                    Math.min(pct, 100) + '%;"></div></div>';
+            });
+            el.innerHTML = html;
+        }
+
+        function updateCounter() {
+            var input = document.getElementById('cw-input');
+            var select = document.getElementById('cw-primary-limit');
+            if (!input) return;
+
+            var text = input.value;
+            var count = estimateTokens(text);
+            var words = text.trim().match(/\S+/g);
+            var wordCount = words ? words.length : 0;
+
+            document.getElementById('cw-count').textContent = formatNum(count);
+            document.getElementById('cw-words').textContent = formatNum(wordCount);
+            document.getElementById('cw-chars').textContent = formatNum(text.length);
+
+            var limit = parseInt(select.value, 10);
+            renderBar('cw-primary-bar', count, limit);
+
+            var statusEl = document.getElementById('cw-primary-status');
+            var pct = (count / limit) * 100;
+            if (count === 0) {
+                statusEl.textContent = 'Paste text to see how much of the selected window it would consume.';
+            } else if (pct <= 100) {
+                statusEl.textContent = 'Uses ' + formatNum(count) + ' of ' + formatNum(limit) + ' tokens (' +
+                    pct.toFixed(1) + '%). Leave room for the model\'s reply — output tokens count too.';
+            } else {
+                statusEl.textContent = 'Exceeds limit by ' + formatNum(count - limit) + ' tokens. You would need truncation, chunking, or a larger window.';
+            }
+
+            renderAllLimits(count);
+        }
+
+        var inputEl = document.getElementById('cw-input');
+        var selectEl = document.getElementById('cw-primary-limit');
+        if (inputEl) {
+            inputEl.addEventListener('input', updateCounter);
+            selectEl.addEventListener('change', updateCounter);
+            updateCounter();
+        }
+    })();
+    </script>
+</div>

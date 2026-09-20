@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Generation: Lesson 4 - Driving with Words</title>
+</head>
+<body>
+
+<div class="genai-lesson-container">
+<style>
+    .genai-lesson-container {
+        line-height: 1.65; color: #1e293b; max-width: 820px; margin: 0 auto; padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 1.5em; }
+    .genai-lesson-container h2 { color: #1e3a8a; margin-top: 36px; }
+    .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
+    .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+    .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .genai-lesson-container th, .genai-lesson-container td {
+        border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top;
+    }
+    .genai-lesson-container th { background: #f1f5f9; color: #334155; }
+    .genai-lesson-container code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
+    }
+    .genai-lesson-container pre {
+        background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: 6px;
+        overflow-x: auto; font-size: 0.82em; line-height: 1.5; margin: 14px 0;
+    }
+    .genai-lesson-container pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+    .genai-lesson-container .callout {
+        background: #f0fdf4; border-left: 4px solid #22c55e;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container .info-box, .genai-lesson-container .quiz {
+        background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 8px; padding: 14px 16px; margin: 18px 0;
+    }
+    .genai-lesson-container .quiz { background: #f4faf4; border-color: #bbf7d0; }
+    .genai-lesson-container .bridge {
+        background: #f1f5f9; border-radius: 8px; padding: 12px 14px;
+        margin: 20px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .roadmap {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 12px 14px; margin: 16px 0 8px; font-size: 0.9em;
+    }
+    .genai-lesson-container .roadmap ol { margin: 8px 0 0; padding-left: 1.3em; }
+    .genai-lesson-container .roadmap .here { font-weight: 700; color: #1e3a8a; }
+    .genai-lesson-container .eq-panel {
+        text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
+        border-radius: 6px; padding: 14px; margin: 16px 0;
+        font-family: Cambria, "Times New Roman", serif; font-size: 1.08em;
+    }
+    .genai-lesson-container .shape-trail {
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.88em;
+        background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 6px;
+        overflow-x: auto; margin: 12px 0;
+    }
+    .genai-lesson-container .worked {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+        padding: 14px 16px; margin: 16px 0; font-size: 0.95em;
+    }
+    .genai-lesson-container .interactive-box {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 18px 20px; margin: 22px 0; box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+    }
+    .genai-lesson-container .tool-box {
+        background: #fff7ed; border: 1px solid #fed7aa;
+        border-radius: 8px; padding: 16px 18px; margin: 20px 0;
+    }
+    .genai-lesson-container .warn-box {
+        background: #fffbeb; border-left: 4px solid #f59e0b;
+        padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
+    }
+    .genai-lesson-container button, .genai-lesson-container .chip {
+        padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
+        background: #fff; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b;
+        display: inline-block; font-size: 0.92em;
+    }
+    .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .genai-lesson-container button.active, .genai-lesson-container .chip.selected {
+        background: #dbeafe; border-color: #93c5fd; color: #1e3a8a;
+    }
+    .genai-lesson-container a { color: #2563eb; }
+    .genai-lesson-container details { margin: 12px 0; }
+    .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
+    .genai-lesson-container input[type="range"] { width: min(100%, 280px); vertical-align: middle; }
+    .genai-lesson-container .prob-row { display: flex; align-items: center; margin: 6px 0; font-size: 0.9em; }
+    .genai-lesson-container .prob-label { width: 150px; font-family: ui-monospace, Menlo, monospace; flex-shrink: 0; font-size: 0.85em; }
+    .genai-lesson-container .prob-bar-bg { flex: 1; background: #e2e8f0; border-radius: 4px; height: 16px; overflow: hidden; }
+    .genai-lesson-container .prob-bar { height: 100%; background: #2563eb; border-radius: 4px; transition: width 0.35s ease; }
+    .genai-lesson-container .prob-bar.warn { background: #94a3b8; }
+    .genai-lesson-container .prob-pct { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+    .genai-lesson-container ol.guided li { margin-bottom: 8px; }
+    .genai-lesson-container .panel {
+        background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 12px 14px;
+        font-family: ui-monospace, Menlo, monospace; font-size: 0.82em;
+        white-space: pre-wrap; margin: 12px 0;
+    }
+</style>
+
+    <h1>Driving with Words (Conditioning &amp; Coding Lab)</h1>
+
+    <div class="roadmap">
+        <strong>Unit roadmap — Teaching Computers to See and Paint</strong>
+        <ol>
+            <li>1. Pixels &amp; latent space</li>
+            <li>2. GANs (forger vs detective)</li>
+            <li>3. Diffusion basics (denoising)</li>
+            <li class="here">4. Text conditioning &amp; coding lab ← <em>you are here</em></li>
+            <li>5. Control, failure modes, prompt craft</li>
+        </ol>
+    </div>
+
+    <p><strong>Goal:</strong> Connect text embeddings to diffusion denoising through cross-attention, preview classifier-free guidance and DiT trends, steer a mock “next visual concept” chart, and run your first Hugging Face <code>diffusers</code> pipeline.</p>
+
+    <div class="bridge">
+        <strong>From Lesson 3:</strong> You watched a U-Net peel noise off a latent grid step by step — but without a prompt, the model only knows “make something plausible,” not <em>what</em> to paint.<br>
+        <strong>From Audio Lesson 4:</strong> MusicGen already steers generation with text embeddings via cross-attention. Stable Diffusion does the same move — text tokens become keys/values that magnetically pull each denoise step toward your prompt.<br>
+        <strong>Here:</strong> Same conditioning story, different canvas (latent pixels instead of codec tokens).
+    </div>
+
+    <hr>
+
+    <h2>1. Text as a magnetic field on the denoiser</h2>
+
+    <p>In Lesson 3 the denoiser predicted “slightly less noise” at every timestep. With conditioning, that prediction also asks: <em>does this latent patch look like my prompt?</em></p>
+
+    <p>Your prompt is tokenized and run through a <strong>text encoder</strong> (often a frozen CLIP or T5 transformer). You get a sequence of embedding vectors — one per token — that capture meaning (“golden retriever,” “oil painting,” “backlit”). Those vectors do not paint pixels directly. They <strong>bias</strong> the denoiser’s internal features so regions that match the words get reinforced and mismatches get suppressed.</p>
+
+    <div class="callout">
+        <strong>Metaphor:</strong> Imagine sculpting fog with a magnet labeled “castle.” Each denoise step is a gentle push; the text embedding is the magnet that keeps pulling the emerging shapes toward turrets and stone walls instead of random blobs.
+    </div>
+
+    <div class="eq-panel">
+        ε<sub>θ</sub>(x<sub>t</sub>, t, c) &nbsp; where c = text embeddings from your prompt
+    </div>
+
+    <p>At every diffusion step <code>t</code>, the noisy latent <code>x<sub>t</sub></code> and the text condition <code>c</code> enter the network together. Change the prompt → change <code>c</code> → different denoising trajectory → different final image.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: what moves?</h3>
+        <p><strong>Question:</strong> Does text conditioning happen once at the start, or at every denoise step?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">At <strong>every</strong> step. The text embeddings are cached, but cross-attention (or equivalent fusion) runs inside the U-Net/DiT on each forward pass — same spirit as MusicGen applying text <code>c</code> at every AR token step.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>2. Cross-attention: image queries, text keys/values</h2>
+
+    <p>Transformers you met in NLP use self-attention: every token talks to every token. In conditioned diffusion, the denoiser adds <strong>cross-attention</strong> layers:</p>
+
+    <ul>
+        <li><strong>Queries (Q)</strong> come from <em>image</em> feature maps inside the U-Net/DiT (“what am I looking at in this patch?”).</li>
+        <li><strong>Keys (K)</strong> and <strong>Values (V)</strong> come from <em>text</em> token embeddings (“what words should I align with?”).</li>
+    </ul>
+
+    <div class="worked">
+        <strong>One head, cartoon numbers.</strong> A spatial location in the latent might attend to prompt tokens like this:
+        <table>
+            <tr><th>Text token</th><th>Attention weight</th></tr>
+            <tr><td>"cyberpunk"</td><td>0.42</td></tr>
+            <tr><td>"neon"</td><td>0.31</td></tr>
+            <tr><td>"portrait"</td><td>0.18</td></tr>
+            <tr><td>other</td><td>0.09</td></tr>
+        </table>
+        The image query blends those text values → features shift toward neon edges and face-like structure. Different spatial queries attend to different words (sky patch → “sunset,” foreground → “dog”).
+    </div>
+
+    <div class="panel"># Inside one cross-attention block (conceptual)
+Q = W_q · image_features        # from noisy latent pathway
+K = W_k · text_embeddings       # from CLIP/T5 encoder
+V = W_v · text_embeddings
+Attn = softmax(Q K^T / sqrt(d))   # which words matter here?
+output = Attn · V + image_features</div>
+
+    <table>
+        <thead><tr><th></th><th>Audio (MusicGen)</th><th>Images (Stable Diffusion)</th></tr></thead>
+        <tbody>
+            <tr><td>What gets generated</td><td>Next codec tokens</td><td>Less-noisy latent patches</td></tr>
+            <tr><td>Condition c</td><td>Text (+ optional audio prefix)</td><td>Text prompt embeddings</td></tr>
+            <tr><td>Fusion mechanism</td><td>Cross-attn in transformer blocks</td><td>Cross-attn in U-Net / DiT blocks</td></tr>
+            <tr><td>Queries from</td><td>Audio token stream</td><td>Spatial image features</td></tr>
+            <tr><td>Keys/values from</td><td>Text encoder</td><td>Text encoder</td></tr>
+        </tbody>
+    </table>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: Q/K/V roles</h3>
+        <p><strong>Question:</strong> In cross-attention for image diffusion, where do queries come from, and where do keys and values come from?</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Queries from <strong>image/latent features</strong>; keys and values from <strong>text token embeddings</strong>. That lets each spatial location “look up” relevant words while denoising.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>3. Classifier-free guidance (CFG) — brief</h2>
+
+    <p>Training often randomly drops the text condition (replace with a “empty” embedding). At inference the model can run twice: once with your prompt, once unconditioned. <strong>Classifier-free guidance</strong> pushes the update toward the conditional prediction:</p>
+
+    <div class="eq-panel">
+        ε̂ = ε<sub>∅</sub> + w · (ε<sub>c</sub> − ε<sub>∅</sub>)
+    </div>
+
+    <p><code>w</code> is the guidance scale (often 7–12 in SD 1.5). Higher <code>w</code> → stronger prompt adherence, but too high → oversaturated colors, weird anatomy, or “burnt” contrast. You already saw the same linear blend on logits in Audio Lesson 4.</p>
+
+    <div class="warn-box">
+        <strong>Trade-off:</strong> CFG is not free quality — it doubles (or more) compute per step and can amplify failure modes. Lesson 5 covers when prompts still lose to dataset bias even with high <code>w</code>.
+    </div>
+
+    <hr>
+
+    <h2>4. Diffusion Transformers (DiT) — the 2024–2026 trend</h2>
+
+    <p>Classic Stable Diffusion used a <strong>U-Net</strong>: convolutional layers with skip connections, good at local textures. Long, detailed prompts (many adjectives, relationships, counts) stress how much text can steer conv features.</p>
+
+    <p><strong>Diffusion Transformers (DiT)</strong> replace the U-Net backbone with a transformer that patches the latent into tokens (like ViT). Cross-attention to text is native; scaling laws from LLMs transfer — bigger DiT + more data → better prompt following. SD 3, Flux, and many 2025–2026 systems use DiT-style backbones or hybrids.</p>
+
+    <div class="callout">
+        <strong>High-level takeaway:</strong> U-Net = local paintbrush; DiT = global scene planner with text cross-attn at every layer. You still denoise a latent; the architecture that predicts noise changed. Conditioning via text embeddings is the constant.
+    </div>
+
+    <hr>
+
+    <h2>5. Full shape trail: prompt → pixels</h2>
+
+    <div class="shape-trail">prompt: "a golden retriever in a sunlit castle courtyard, oil painting"
+  → Tokenizer → token IDs (L,)
+  → Text encoder (CLIP/T5) → text embeddings (L, d_text)  [cached]
+  → Sample random noise z ~ N(0,I) → latent x_T (h, w, c)
+
+For t = T … 1:
+  → U-Net or DiT(x_t, t, cross_attn(text_emb)) predicts noise ε
+  → Optional CFG blend with ε_∅
+  → Scheduler step → x_{t-1}
+
+  → Final latent x_0
+  → VAE decoder → RGB image (H, W, 3)</div>
+
+    <p>Watch this loop visually (no code required): <a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> — scrub timesteps and see how conditioning steers the emerging image.</p>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: trail order</h3>
+        <p><strong>Question:</strong> Put these in order: VAE decode, text encoder, denoise loop, tokenize prompt.</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">(1) Tokenize prompt → (2) text encoder → (3) denoise loop with cross-attn at each step → (4) VAE decode to pixels.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>6. Interactive: Prompt Steering Board (Images)</h2>
+
+    <p>Cartoon of “what visual concept gets boosted next” if the model were choosing among coarse buckets (not real SD logits — same pedagogy as the audio steering board). Pick tags for <strong>subject</strong>, <strong>style</strong>, and <strong>lighting</strong>; watch probability mass shift.</p>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Subject</strong></p>
+        <div id="tags-subject"></div>
+        <p><strong>Style</strong></p>
+        <div id="tags-style"></div>
+        <p><strong>Lighting</strong></p>
+        <div id="tags-light"></div>
+        <p style="font-size:0.9em;color:#64748b;">Active tags: <code id="active-prompt">(unconditioned)</code></p>
+        <button type="button" id="clear-tags">Clear all tags</button>
+
+        <p style="margin-top:16px;"><strong>Guidance scale (mock CFG)</strong> — w = <span id="cfg-val">1.0</span></p>
+        <input type="range" id="cfg-slider" min="100" max="250" value="100">
+
+        <h3 style="margin-bottom:8px;">Mock next visual concept probabilities</h3>
+        <div id="prob-chart"></div>
+        <p id="steer-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
+    </div>
+
+    <p style="font-size:0.92em;color:#475569;">Implementation: hand-tuned scores → softmax. Clearing tags restores a flat prior. Raising <code>w</code> sharpens the gap between top matches and everything else — mirroring CFG behavior.</p>
+
+    <hr>
+
+    <h2>7. Coding lab: Hugging Face Diffusers in Colab</h2>
+
+    <div class="tool-box">
+        <p style="margin-top:0;"><strong>Try first (no code):</strong>
+            <a href="https://huggingface.co/spaces/stabilityai/stable-diffusion" target="_blank" rel="noopener">Stable Diffusion Space</a> —
+            type a prompt, generate, notice how wording changes composition.</p>
+        <p><strong>Docs:</strong> <a href="https://huggingface.co/docs/diffusers" target="_blank" rel="noopener">Hugging Face Diffusers documentation</a></p>
+        <p><strong>Then code:</strong> Open a fresh <a href="https://colab.research.google.com/" target="_blank" rel="noopener">Google Colab</a> notebook. Enable a GPU runtime (<em>Runtime → Change runtime type → T4 GPU</em>) for reasonable speed. SD 1.5 is slow on CPU; for a quick CPU smoke test consider <code>stabilityai/sd-turbo</code> (few steps, lower quality).</p>
+
+        <ol class="guided">
+            <li>Install <code>diffusers</code>, <code>transformers</code>, <code>accelerate</code>, and <code>safetensors</code>.</li>
+            <li>Load a text-to-image pipeline (example below uses SD 1.5).</li>
+            <li>Set a prompt and negative prompt; run inference.</li>
+            <li>Save <code>result.images[0]</code> to disk and display in the notebook.</li>
+            <li>Experiment: change guidance scale, seed, and prompt adjectives — connect to §3 and the steering board.</li>
+        </ol>
+    </div>
+
+    <p><strong>Ready-to-paste Colab cell:</strong></p>
+    <pre><code># Cell 1 — install (restart runtime if Colab asks)
+!pip install -q diffusers transformers accelerate safetensors
+
+# Cell 2 — generate
+import torch
+from diffusers import StableDiffusionPipeline
+
+model_id = "runwayml/stable-diffusion-v1-5"
+# CPU-friendly alternative (fewer steps): "stabilityai/sd-turbo"
+
+pipe = StableDiffusionPipeline.from_pretrained(
+    model_id,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    safety_checker=None,
+)
+pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+
+prompt = "a golden retriever in a sunlit castle courtyard, oil painting, detailed"
+negative = "blurry, low quality, extra limbs"
+
+generator = torch.Generator(device=pipe.device).manual_seed(42)
+
+image = pipe(
+    prompt,
+    negative_prompt=negative,
+    num_inference_steps=25,
+    guidance_scale=7.5,
+    generator=generator,
+).images[0]
+
+image.save("my_first_sd.png")
+image</code></pre>
+
+    <div class="worked">
+        <strong>Shape trail in code:</strong> <code>pipe(prompt=...)</code> hides tokenization, text encoding, the denoise loop with cross-attention, and VAE decode — exactly the trail in §5. Parameters you touch map to concepts: <code>guidance_scale</code> → CFG weight; <code>num_inference_steps</code> → how many denoise iterations; <code>generator</code> seed → reproducible noise init.
+    </div>
+
+    <div class="quiz">
+        <h3 style="margin-top:0;">Check your knowledge: lab debugging</h3>
+        <p><strong>Question:</strong> Your Colab cell runs but takes 10+ minutes per image on CPU. Name two fixes.</p>
+        <details>
+            <summary>Show answer</summary>
+            <p style="margin-top:8px;color:#475569;">Enable a <strong>GPU</strong> runtime; switch to a <strong>lighter model</strong> (e.g. SD-Turbo) or fewer inference steps; reduce resolution if the pipeline exposes it.</p>
+        </details>
+    </div>
+
+    <hr>
+
+    <h2>8. Prompt patterns that match the steering board</h2>
+
+    <table>
+        <thead><tr><th>Board tags</th><th>Natural language prompt</th></tr></thead>
+        <tbody>
+            <tr><td>Dog + Realistic + Golden hour</td><td><code>a photorealistic golden retriever, warm sunset light, shallow depth of field</code></td></tr>
+            <tr><td>Castle + Fantasy art + Moonlit</td><td><code>fantasy illustration of a medieval castle, moonlit, mist, dramatic shadows</code></td></tr>
+            <tr><td>Portrait + Cyberpunk + Neon</td><td><code>cyberpunk character portrait, neon rim light, rain, high detail</code></td></tr>
+            <tr><td>(cleared tags)</td><td>Generic prior — vague prompt like <code>an image</code> gives mushy, dataset-average scenes.</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout">
+        <strong>You should now be able to:</strong> explain cross-attention’s Q/K/V roles; read the prompt→latent→decode trail; interpret CFG scale; shift mock concept probabilities with tags; and run a minimal Diffusers pipeline.
+    </div>
+
+    <div class="bridge">
+        <strong>Next — Lesson 5:</strong> Why hands sprout extra fingers, how ControlNet anchors structure, prompt engineering tricks, and unit capstone.<br>
+        → <a href="lesson5.html">Lesson 5: Tricks, Traps, and Six Fingers</a> · <a href="lesson3.html">← Lesson 3</a>
+    </div>
+
+    <hr>
+    <h2>Further reading</h2>
+    <ul>
+        <li><a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> — visual internals.</li>
+        <li>Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion).</li>
+        <li>Peebles &amp; Xie, Scalable Diffusion Models with Transformers (DiT).</li>
+        <li>Audio parallel: Intro to Audio Generation, Lesson 4 (MusicGen conditioning).</li>
+    </ul>
+
+</div>
+
+<script>
+(function () {
+    var TAGS = {
+        subject: ['Dog', 'Castle', 'Portrait', 'Landscape'],
+        style: ['Photorealistic', 'Oil painting', 'Cyberpunk', 'Fantasy art'],
+        light: ['Golden hour', 'Studio soft', 'Neon night', 'Overcast']
+    };
+    var selected = { subject: null, style: null, light: null };
+
+    var CONCEPTS = [
+        { id: 'dog_fur', label: 'dog_fur_texture', base: 0.07, like: { subject: ['Dog'], style: ['Photorealistic','Oil painting'], light: ['Golden hour','Studio soft'] } },
+        { id: 'castle_stone', label: 'castle_stone', base: 0.07, like: { subject: ['Castle'], style: ['Fantasy art','Oil painting'], light: ['Overcast','Golden hour'] } },
+        { id: 'face_skin', label: 'portrait_skin', base: 0.07, like: { subject: ['Portrait'], style: ['Photorealistic','Cyberpunk'], light: ['Studio soft','Neon night'] } },
+        { id: 'neon_edge', label: 'neon_rim_light', base: 0.06, like: { subject: ['Portrait','Landscape'], style: ['Cyberpunk'], light: ['Neon night'] } },
+        { id: 'mountain_mist', label: 'misty_horizon', base: 0.07, like: { subject: ['Landscape','Castle'], style: ['Fantasy art','Oil painting'], light: ['Overcast','Golden hour'] } },
+        { id: 'brush_stroke', label: 'oil_brush_stroke', base: 0.06, like: { subject: ['Dog','Castle','Portrait'], style: ['Oil painting'], light: [] } },
+        { id: 'generic_blob', label: 'generic_blob', base: 0.11, like: { subject: [], style: [], light: [] }, generic: true },
+        { id: 'random_texture', label: 'random_texture', base: 0.10, like: { subject: [], style: [], light: [] }, generic: true }
+    ];
+
+    function mountTags(group, elId) {
+        var el = document.getElementById(elId);
+        TAGS[group].forEach(function (t) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'chip';
+            b.textContent = t;
+            b.addEventListener('click', function () {
+                selected[group] = selected[group] === t ? null : t;
+                renderTags();
+                renderProbs();
+            });
+            el.appendChild(b);
+        });
+    }
+
+    function renderTags() {
+        var map = { subject: 'tags-subject', style: 'tags-style', light: 'tags-light' };
+        Object.keys(map).forEach(function (g) {
+            var parent = document.getElementById(map[g]);
+            Array.prototype.forEach.call(parent.querySelectorAll('.chip'), function (chip) {
+                chip.classList.toggle('selected', selected[g] === chip.textContent);
+            });
+        });
+        var parts = [];
+        if (selected.subject) parts.push(selected.subject);
+        if (selected.style) parts.push(selected.style);
+        if (selected.light) parts.push(selected.light);
+        document.getElementById('active-prompt').textContent = parts.length ? parts.join(' · ') : '(unconditioned)';
+    }
+
+    function getCfg() {
+        return parseInt(document.getElementById('cfg-slider').value, 10) / 100;
+    }
+
+    function scoreConcept(c) {
+        var score = c.base;
+        var any = selected.subject || selected.style || selected.light;
+        if (!any) return score;
+        var hits = 0, checks = 0;
+        ['subject', 'style', 'light'].forEach(function (g) {
+            if (!selected[g]) return;
+            checks++;
+            if (c.like[g].indexOf(selected[g]) >= 0) hits++;
+        });
+        if (c.generic) {
+            score *= any ? 0.35 : 1.0;
+        } else if (checks) {
+            score *= (0.35 + 1.65 * (hits / checks));
+        }
+        return Math.max(0.01, score);
+    }
+
+    function applyCfg(scored) {
+        var w = getCfg();
+        if (w <= 1.01) return scored;
+        var uncond = CONCEPTS.map(function (c) { return c.base; });
+        var uSum = uncond.reduce(function (a, b) { return a + b; }, 0);
+        return scored.map(function (row, i) {
+            var epsC = row.s;
+            var epsU = CONCEPTS[i].base / uSum;
+            var guided = epsU + w * (epsC - epsU);
+            return { c: row.c, s: Math.max(0.001, guided) };
+        });
+    }
+
+    function renderProbs() {
+        var raw = CONCEPTS.map(function (c) { return { c: c, s: scoreConcept(c) }; });
+        var scored = applyCfg(raw);
+        var sum = scored.reduce(function (a, b) { return a + b.s; }, 0);
+        scored.sort(function (a, b) { return b.s - a.s; });
+        var html = '';
+        scored.forEach(function (row) {
+            var pct = row.s / sum;
+            html += '<div class="prob-row"><span class="prob-label">' + row.c.label + '</span>' +
+                '<div class="prob-bar-bg"><div class="prob-bar' + (row.c.generic ? ' warn' : '') + '" style="width:' + (pct * 100) + '%"></div></div>' +
+                '<span class="prob-pct">' + (pct * 100).toFixed(1) + '%</span></div>';
+        });
+        document.getElementById('prob-chart').innerHTML = html;
+        var top = scored[0].c.label;
+        var any = selected.subject || selected.style || selected.light;
+        var w = getCfg();
+        document.getElementById('steer-note').textContent = any
+            ? 'Top concept “' + top + '”. CFG w=' + w.toFixed(1) + ' sharpens prompt-aligned concepts vs generic blobs.'
+            : 'No tags → flat prior; generic blobs compete freely. Raise w after adding tags to see CFG-like sharpening.';
+    }
+
+    mountTags('subject', 'tags-subject');
+    mountTags('style', 'tags-style');
+    mountTags('light', 'tags-light');
+
+    document.getElementById('clear-tags').addEventListener('click', function () {
+        selected = { subject: null, style: null, light: null };
+        renderTags();
+        renderProbs();
+    });
+    document.getElementById('cfg-slider').addEventListener('input', function () {
+        document.getElementById('cfg-val').textContent = getCfg().toFixed(1);
+        renderProbs();
+    });
+
+    renderTags();
+    renderProbs();
+})();
+</script>
+
+</body>
+</html>

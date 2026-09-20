@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partial Derivatives and the Gradient · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="wide">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Prerequisites</span>
+      <span>Calculus</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Prerequisites · Calculus</p>
+    <h1>Partial Derivatives and the Gradient</h1>
+    <p class="lede"> Until now, we have studied functions of a single variable, such as \(f(x)\). In many real-world problems, however, functions depend on more than one variable. </p>
+  </header>
+
+  <section>
+<p>
+For example, a surface might depend on two inputs:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)
+\]
+</div>
+
+<p>
+This could represent elevation on a landscape or temperature over a region.
+</p>
+  </section>
+
+  <section>
+<h2>1. What Is a Partial Derivative?</h2>
+
+<p>
+A <strong>partial derivative</strong> measures how a function changes when we change only one variable at a time, while keeping the other fixed.
+</p>
+
+<div class="math-box">
+\[
+\frac{\partial f}{\partial x}, \quad \frac{\partial f}{\partial y}
+\]
+</div>
+
+<p>
+As functions of 2 variables will require 3 dimensions to graph, we can think of it as slicing the surface:
+</p>
+
+<ul>
+<li>\(\frac{\partial f}{\partial x}\): slope when moving in the x-direction</li>
+<li>\(\frac{\partial f}{\partial y}\): slope when moving in the y-direction</li>
+</ul>
+  </section>
+
+  <section>
+<h2>Example: Partial Derivatives of a Simple Surface</h2>
+
+<p>
+Let’s compute the partial derivatives of the function:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)=x^2+y^2
+\]
+</div>
+
+<p>
+This function represents a smooth “bowl-shaped” surface.
+Every point on the surface has a slope in both the x-direction and y-direction.
+</p>
+
+
+<p>
+To compute \(\frac{\partial f}{\partial x}\), we treat \(y\) as a constant:
+</p>
+
+<div class="math-box">
+\[
+\frac{\partial}{\partial x}(x^2+y^2)=2x
+\]
+</div>
+
+<p>
+Now, to compute \(\frac{\partial f}{\partial y}\), treat \(x\) as constant:
+</p>
+
+<div class="math-box">
+\[
+\frac{\partial}{\partial y}(x^2+y^2)=2y
+\]
+</div>
+  </section>
+
+  <section>
+<h2>2. The Gradient</h2>
+
+<p>
+The <strong>gradient</strong> combines all partial derivatives into a vector:
+</p>
+
+<div class="math-box">
+\[
+\nabla f(x,y)=\left(\frac{\partial f}{\partial x}, \frac{\partial f}{\partial y}\right)
+\]
+</div>
+
+<p>
+The gradient points in the direction of the steepest increase of the function.
+</p>
+
+<p>
+More generally, for a function of \(n\) variables \(f(x_1,x_2,\ldots,x_n)\),
+</p>
+
+<div class="math-box">
+\[
+\nabla f(x_1,x_2,...,x_n)=\left(\frac{\partial f}{\partial x_1}, \frac{\partial f}{\partial x_2},\ldots, \frac{\partial f}{\partial x_n}\right)
+\]
+</div>
+  </section>
+
+  <section>
+<h2>3. The Multivariable Chain Rule</h2>
+
+<p>
+So far, we have assumed that the variables \(x\) and \(y\) change independently.
+However, in many applications they both depend on another variable, such as time.
+</p>
+
+<p>
+Suppose we have a function
+</p>
+
+<div class="math-box">
+\[
+f(x,y)
+\]
+</div>
+
+<p>
+where
+</p>
+
+<div class="math-box">
+\[
+x=x(t),
+\qquad
+y=y(t)
+\]
+</div>
+
+<p>
+As \(t\) changes, both \(x\) and \(y\) change simultaneously.
+To determine how quickly the function itself changes, we use the
+<strong>multivariable chain rule</strong>:
+</p>
+
+<div class="math-box">
+\[
+\frac{df}{dt}
+=
+\frac{\partial f}{\partial x}\frac{dx}{dt}
++
+\frac{\partial f}{\partial y}\frac{dy}{dt}
+\]
+</div>
+
+<p>
+Each partial derivative measures how sensitive the function is to one variable,
+while the derivatives \(\frac{dx}{dt}\) and \(\frac{dy}{dt}\) describe how quickly
+those variables are changing.
+</p>
+
+<p>
+Let's take a look at an example:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)=x^2+y^2
+\]
+</div>
+
+<p>
+where
+</p>
+
+<div class="math-box">
+\[
+x=t,
+\qquad
+y=t^2
+\]
+</div>
+
+<p>
+Now, what is \(\frac{df}{dt}\)? From our earlier work, the gradient is
+</p>
+
+<div class="math-box">
+\[
+\nabla f=(2x,2y).
+\]
+</div>
+
+<p>
+Since
+</p>
+
+<div class="math-box">
+\[
+\frac{dx}{dt}=1,
+\qquad
+\frac{dy}{dt}=2t,
+\]
+</div>
+
+<p>
+the chain rule gives
+</p>
+
+<div class="math-box">
+\[
+\frac{df}{dt}
+=
+2x(1)
++
+2y(2t).
+\]
+</div>
+
+<p>
+Substituting \(x=t\) and \(y=t^2\),
+</p>
+
+<div class="math-box">
+\[
+\frac{df}{dt}
+=
+2t+4t^3.
+\]
+</div>
+  </section>
+
+  <section>
+<h2>4. Interactive Gradient Plot: \(f(x,y)=x^2+y^2\)</h2>
+
+<p>
+The surface below represents the function discussed above:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)=x^2 + y^2
+\]
+</div>
+
+<p>
+Try moving your cursor along the surface. The arrow extending from it represents the gradient vector at that set of coordinates. What happens to the gradient vector as you move further away from the origin?
+</p>
+
+<canvas id="surface" width="700" height="450"></canvas>
+
+<div class="info-card">
+
+<h3>Local Information</h3>
+
+<p>
+\((x,y)=\) (<span id="px"></span>, <span id="py"></span>)
+\(\quad\quad f(x,y)\approx\) <span id="fz"></span>
+\(\quad\quad\nabla f(x,y)\approx\) (<span id="gx"></span>, <span id="gy"></span>)
+</p>
+
+</div>
+  </section>
+
+  <section>
+<h2>Example: An Asymmetric Surface</h2>
+
+<p>
+The previous example was very symmetric because the \(x\) and \(y\) terms were simply added together.
+Now consider a function where the variables interact:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)=x^2y
+\]
+</div>
+
+<p>
+Unlike the previous example, the slope in one direction now depends on the value of the other variable.
+This means the behavior of the surface changes depending on where you are. Let's calculate the partial derivatives with respect to \(x\) and \(y\):
+</p>
+
+<p>
+Treat \(y\) as a constant and differentiate only with respect to \(x\):
+</p>
+
+<div class="math-box">
+\[
+\frac{\partial}{\partial x}(x^2y)
+=
+2xy
+\]
+</div>
+
+<p>
+Notice that the result still contains \(y\).
+This means the slope in the \(x\)-direction changes depending on which horizontal slice (\(y\)-value) we are examining.
+</p>
+
+<p>
+Now treat \(x\) as constant:
+</p>
+
+<div class="math-box">
+\[
+\frac{\partial}{\partial y}(x^2y)
+=
+x^2
+\]
+</div>
+
+<p>
+Here the slope in the \(y\)-direction depends only on \(x\).
+For example, when \(x=0\), moving in the \(y\)-direction does not change the function at all. Therefore,
+</p>
+
+<div class="math-box">
+\[
+\nabla f(x,y)
+=
+\left(2xy,\;x^2\right)
+\]
+</div>
+
+<p>
+Unlike the bowl-shaped surface \(x^2+y^2\), the gradient here is no longer radially symmetric.
+Its direction and magnitude vary in more interesting ways because each component depends on the location in the plane.
+</p>
+
+<div class="info-card">
+<strong>Compare the two examples:</strong>
+
+<ul>
+<li>\(f(x,y)=x^2+y^2\) gives \(\nabla f=(2x,2y)\), where each partial depends only on its own variable.</li>
+<li>\(f(x,y)=x^2y\) gives \(\nabla f=(2xy,x^2)\), where the \(x\)-partial depends on both variables.</li>
+</ul>
+
+</div>
+  </section>
+
+  <section>
+<h2>5. Interactive Gradient Plot: \(f(x,y)=x^2y\)</h2>
+
+<p>
+Let's explore the above example with the interactive plot:
+</p>
+
+<div class="math-box">
+\[
+f(x,y)=x^2y
+\]
+</div>
+
+<p>
+Move your cursor around the plane. Notice how the gradient changes direction much more dramatically than for the bowl-shaped surface. In particular:
+</p>
+
+<ul>
+<li>Along the line \(x=0\), the gradient is zero.</li>
+<li>Above the x-axis (\(y\gt 0\)), the x-component of the gradient points outward.</li>
+<li>Below the x-axis (\(y\lt 0\)), the x-component reverses direction.</li>
+</ul>
+
+<canvas id="surface2" width="700" height="450"></canvas>
+
+<div class="info-card">
+
+<h3>Local Information</h3>
+
+<p>
+\((x,y)=\)
+(<span id="px2"></span>,<span id="py2"></span>)
+\(\quad\quad f(x,y)\approx\)
+<span id="fz2"></span>
+\(\quad\quad \nabla f(x,y)\approx\)
+(<span id="gx2"></span>,<span id="gy2"></span>)
+</p>
+
+</div>
+
+<div class="info-card">
+  <strong>Compare the two graphs:</strong>
+
+Notice that on both graphs, moving your cursor vertically results in the gradient vector tracing a line, while moving your cursor horizontally results in the gradient vector tracing a line for the first graph and a parabola for the second. Does this align with what you'd expect based on the gradients?
+</div>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="Derivatives.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Derivatives and Instantaneous Rate of Change</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Calculus</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+
+// ========================================
+// Shared Constants
+// ========================================
+
+const SCALE = 40;
+const ORIGIN_X = 350;
+const ORIGIN_Y = 225;
+const H = 0.01;
+
+// ========================================
+// Shared Utility Functions
+// ========================================
+
+// Numerical partial derivative
+function partial(f, x, y, variable){
+
+    if(variable === "x"){
+        return (f(x + H, y) - f(x - H, y)) / (2 * H);
+    }
+
+    return (f(x, y + H) - f(x, y - H)) / (2 * H);
+}
+
+// Convert mouse position to graph coordinates
+function getXY(canvas, evt){
+
+    const rect = canvas.getBoundingClientRect();
+
+    return{
+        x:(evt.clientX - rect.left - ORIGIN_X)/SCALE,
+        y:(ORIGIN_Y - (evt.clientY - rect.top))/SCALE
+    };
+}
+
+// ========================================
+// Draw Coordinate Axes
+// ========================================
+
+function drawAxes(ctx){
+
+    ctx.save();
+
+    ctx.strokeStyle="#444";
+    ctx.fillStyle="#444";
+    ctx.lineWidth=2;
+
+    // x-axis
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X-215,ORIGIN_Y);
+    ctx.lineTo(ORIGIN_X+215,ORIGIN_Y);
+    ctx.stroke();
+
+    // x arrow
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X+225,ORIGIN_Y);
+    ctx.lineTo(ORIGIN_X+215,ORIGIN_Y-5);
+    ctx.lineTo(ORIGIN_X+215,ORIGIN_Y+5);
+    ctx.closePath();
+    ctx.fill();
+  
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X-225,ORIGIN_Y);
+    ctx.lineTo(ORIGIN_X-215,ORIGIN_Y-5);
+    ctx.lineTo(ORIGIN_X-215,ORIGIN_Y+5);
+    ctx.closePath();
+    ctx.fill();
+
+    // y-axis
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X,ORIGIN_Y-215);
+    ctx.lineTo(ORIGIN_X,ORIGIN_Y+215);
+    ctx.stroke();
+
+    // y arrow
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X,ORIGIN_Y+225);
+    ctx.lineTo(ORIGIN_X-5,ORIGIN_Y+215);
+    ctx.lineTo(ORIGIN_X+5,ORIGIN_Y+215);
+    ctx.closePath();
+    ctx.fill();
+  
+    ctx.beginPath();
+    ctx.moveTo(ORIGIN_X,ORIGIN_Y-225);
+    ctx.lineTo(ORIGIN_X-5,ORIGIN_Y-215);
+    ctx.lineTo(ORIGIN_X+5,ORIGIN_Y-215);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tick marks
+    ctx.font="12px Arial";
+    ctx.fillStyle="#333";
+
+    for(let i=-5;i<=5;i++){
+
+        if(i===0) continue;
+
+        // x ticks
+        let x=ORIGIN_X+i*SCALE;
+
+        ctx.beginPath();
+        ctx.moveTo(x,ORIGIN_Y-5);
+        ctx.lineTo(x,ORIGIN_Y+5);
+        ctx.stroke();
+
+        ctx.textAlign="center";
+        ctx.textBaseline="top";
+        ctx.fillText(i,x,ORIGIN_Y+8);
+
+        // y ticks
+        let y=ORIGIN_Y-i*SCALE;
+
+        ctx.beginPath();
+        ctx.moveTo(ORIGIN_X-5,y);
+        ctx.lineTo(ORIGIN_X+5,y);
+        ctx.stroke();
+
+        ctx.textAlign="right";
+        ctx.textBaseline="middle";
+        ctx.fillText(i,ORIGIN_X-8,y);
+
+    }
+
+    // Axis labels
+    ctx.font="bold 14px Arial";
+
+    ctx.textAlign="center";
+    ctx.textBaseline="top";
+    ctx.fillText("x",ORIGIN_X+225,ORIGIN_Y+10);
+
+    ctx.save();
+    ctx.translate(ORIGIN_X-12,12);
+    ctx.fillText("y",30,-10);
+    ctx.restore();
+
+    ctx.restore();
+
+}
+
+// ========================================
+// Draw Gradient Arrow
+// ========================================
+
+function drawArrow(ctx,x,y,gx,gy,scaleFactor){
+
+    const cx=ORIGIN_X+x*SCALE;
+    const cy=ORIGIN_Y-y*SCALE;
+
+    const ex=cx+gx*scaleFactor*SCALE;
+    const ey=cy-gy*scaleFactor*SCALE;
+
+    ctx.strokeStyle="#000";
+    ctx.fillStyle="#000";
+    ctx.lineWidth=3;
+
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(ex,ey);
+    ctx.stroke();
+
+    const angle=Math.atan2(ey-cy,ex-cx);
+
+    const head=8;
+
+    ctx.beginPath();
+
+    ctx.moveTo(ex,ey);
+
+    ctx.lineTo(
+        ex-head*Math.cos(angle-Math.PI/6),
+        ey-head*Math.sin(angle-Math.PI/6)
+    );
+
+    ctx.lineTo(
+        ex-head*Math.cos(angle+Math.PI/6),
+        ey-head*Math.sin(angle+Math.PI/6)
+    );
+
+    ctx.closePath();
+    ctx.fill();
+
+}
+
+// ========================================
+// FIRST GRAPH
+// f(x,y)=x²+y²
+// ========================================
+
+const canvas=document.getElementById("surface");
+const ctx=canvas.getContext("2d");
+
+function f1(x,y){
+    return x*x+y*y;
+}
+
+function drawFirst(x,y){
+
+    ctx.clearRect(0,0,700,450);
+
+    // Background field
+
+    for(let i=-5;i<=5;i+=0.25){
+
+        for(let j=-5;j<=5;j+=0.25){
+
+            const z=f1(i,j);
+
+            const c=Math.min(255,z*15);
+
+            ctx.fillStyle=`rgb(${c},50,${255-c})`;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                ORIGIN_X+i*SCALE,
+                ORIGIN_Y-j*SCALE,
+                2,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+        }
+
+    }
+
+    drawAxes(ctx);
+
+    const gx=partial(f1,x,y,"x");
+    const gy=partial(f1,x,y,"y");
+
+    drawArrow(ctx,x,y,gx,gy,0.15);
+
+    document.getElementById("px").textContent=x.toFixed(2);
+    document.getElementById("py").textContent=y.toFixed(2);
+
+    document.getElementById("fz").textContent=f1(x,y).toFixed(2);
+
+    document.getElementById("gx").textContent=gx.toFixed(2);
+    document.getElementById("gy").textContent=gy.toFixed(2);
+
+}
+
+canvas.addEventListener("mousemove",(evt)=>{
+
+    const {x,y}=getXY(canvas,evt);
+
+    drawFirst(x,y);
+
+});
+
+drawFirst(0,0);
+
+// ========================================
+// SECOND GRAPH
+// f(x,y)=x²y
+// ========================================
+
+const canvas2 = document.getElementById("surface2");
+const ctx2 = canvas2.getContext("2d");
+
+function f2(x, y){
+    return x * x * y;
+}
+
+function drawSecond(x, y){
+
+    ctx2.clearRect(0, 0, 700, 450);
+
+    // ------------------------------------
+    // Background field
+    // ------------------------------------
+
+    for(let i = -5; i <= 5; i += 0.25){
+
+        for(let j = -5; j <= 5; j += 0.25){
+
+            const z = f2(i, j);
+
+            // Normalize to [-1,1]
+            const t = Math.max(-1, Math.min(1, z / 40));
+
+            let r, g, b;
+
+            if(t >= 0){
+
+                // Positive values: white → red
+                r = 255;
+                g = 255 * (1 - t);
+                b = 255 * (1 - t);
+
+            }else{
+
+                // Negative values: white → blue
+                r = 255 * (1 + t);
+                g = 255 * (1 + t);
+                b = 255;
+
+            }
+
+            ctx2.fillStyle = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+
+            ctx2.beginPath();
+
+            ctx2.arc(
+                ORIGIN_X + i * SCALE,
+                ORIGIN_Y - j * SCALE,
+                2,
+                0,
+                2 * Math.PI
+            );
+
+            ctx2.fill();
+
+        }
+
+    }
+
+    // Draw axes on top
+    drawAxes(ctx2);
+
+    // ------------------------------------
+    // Gradient
+    // ------------------------------------
+
+    const gx = partial(f2, x, y, "x");
+    const gy = partial(f2, x, y, "y");
+
+    drawArrow(ctx2, x, y, gx, gy, 0.25);
+
+    // ------------------------------------
+    // Update information panel
+    // ------------------------------------
+
+    document.getElementById("px2").textContent = x.toFixed(2);
+    document.getElementById("py2").textContent = y.toFixed(2);
+
+    document.getElementById("fz2").textContent = f2(x, y).toFixed(2);
+
+    document.getElementById("gx2").textContent=gx.toFixed(2);
+    document.getElementById("gy2").textContent=gy.toFixed(2);
+
+}
+
+// ========================================
+// Mouse Interaction
+// ========================================
+
+canvas2.addEventListener("mousemove", (evt) => {
+
+    const {x, y} = getXY(canvas2, evt);
+
+    drawSecond(x, y);
+
+});
+
+// Initial draw
+drawSecond(1, 1);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,443 @@
+/*
+ * F.O.R.G.E. AI Challenge - shared lesson stylesheet
+ *
+ * Every lesson page links this file. Page skeleton and component markup are
+ * documented in css/page-template.html.
+ *
+ * Contents
+ *   1. Design tokens (light + dark)
+ *   2. Base / typography
+ *   3. Site header and footer
+ *   4. Page layout
+ *   5. Content components (callout, table, code, figure, link list, access card)
+ *   6. Prev / next pager
+ *   7. Print
+ */
+
+/* 1. Design tokens ------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1b1f24;
+  --muted: #5b6672;
+  --border: #dde1e6;
+  --accent: #1f5fbf;
+  --accent-soft: #e8f0fc;
+  --code-bg: #eef1f5;
+
+  --note: #1f5fbf;
+  --note-bg: #e8f0fc;
+  --warn: #b25e00;
+  --warn-bg: #fff4e0;
+
+  --measure: 46rem;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1216;
+    --surface: #171b21;
+    --text: #e6e9ed;
+    --muted: #9aa5b1;
+    --border: #2a313a;
+    --accent: #6ea8ff;
+    --accent-soft: #1c2a40;
+    --code-bg: #20262e;
+
+    --note: #6ea8ff;
+    --note-bg: #1c2a40;
+    --warn: #f0b060;
+    --warn-bg: #3a2c14;
+  }
+}
+
+/* 2. Base / typography --------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.65 var(--font);
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0; }
+h1 { font-size: 2.1rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+
+p { margin: 0 0 1em; }
+
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, .brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { margin: 0 0 1em; padding-left: 1.4em; }
+li { margin-bottom: 0.4em; }
+li > ul, li > ol { margin-top: 0.4em; }
+
+strong { font-weight: 650; }
+
+/* 3. Site header and footer --------------------------------------------- */
+
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header__inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0.8rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.brand {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+.brand:hover { color: var(--accent); }
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.crumbs > * + *::before { content: "/"; margin: 0 0.5em; opacity: 0.6; }
+.crumbs a { color: var(--muted); text-decoration: none; }
+.crumbs a:hover { color: var(--accent); text-decoration: underline; }
+
+.site-footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.site-footer a { color: var(--muted); }
+
+/* 4. Page layout --------------------------------------------------------- */
+
+.page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 1rem;
+}
+
+.page-header { margin-bottom: 2rem; }
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lede {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+/* Each <section> is one topic; a rule between sections replaces bare <hr>s. */
+.page section {
+  padding-top: 1.75rem;
+  margin-top: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+.page section:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+
+/* 5. Content components -------------------------------------------------- */
+
+/* Callout: <aside class="callout callout--note|callout--warn"> */
+.callout {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1.1rem;
+  border-left: 4px solid var(--note);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--note-bg);
+}
+.callout > :last-child { margin-bottom: 0; }
+.callout__title {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  color: var(--note);
+}
+.callout--warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.callout--warn .callout__title { color: var(--warn); }
+
+/* Table: wrap in <div class="table-wrap"> so wide tables scroll, not the page. */
+.table-wrap {
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.table-wrap th, .table-wrap td { padding: 0.65rem 0.9rem; text-align: left; vertical-align: top; }
+.table-wrap thead th, .table-wrap tr:first-child > th {
+  background: var(--accent-soft);
+  font-weight: 650;
+}
+.table-wrap tr + tr td, .table-wrap tr + tr th { border-top: 1px solid var(--border); }
+
+/* Math (rendered by js/forge-math.js): long display equations scroll, not the page. */
+mjx-container[display="true"] {
+  margin: 1.1rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Code */
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font: 0.9em var(--mono);
+}
+pre {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  font: 0.9rem/1.5 var(--mono);
+}
+pre code { padding: 0; background: none; font: inherit; }
+
+/* Figure: <figure><img ...><figcaption>...</figcaption></figure> */
+figure { margin: 1.5rem 0; }
+figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+figcaption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* Link list: <ul class="link-list"> - for "Read more" / "Optional reading". */
+.link-list { list-style: none; padding: 0; }
+.link-list li {
+  margin: 0;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+}
+.link-list li:last-child { border-bottom: 1px solid var(--border); }
+.link-list .desc { display: block; color: var(--muted); font-size: 0.9rem; }
+
+/* Access card: join links and codes. <dl class="access-card"> of <dt>/<dd>. */
+.access-card {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.25rem;
+  margin: 1rem 0 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.access-card dt { color: var(--muted); font-weight: 600; }
+.access-card dd { margin: 0; }
+.access-card .code {
+  padding: 0.1em 0.5em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  font: 600 0.95rem var(--mono);
+  letter-spacing: 0.04em;
+}
+
+/* Lesson boxes. Used by the interactive lessons. */
+.math-box, .math-display, .equation-display, .info-card, .example,
+.highlight-box, .interactive-box, .control-card {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.math-box { background: var(--code-bg); border-color: transparent; }
+.math-display, .equation-display {
+  overflow-x: auto;
+  text-align: center;
+}
+.equation-display { min-height: 3.5rem; }
+.example, .highlight-box {
+  border-left: 4px solid var(--note);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.highlight-box { background: var(--note-bg); }
+.interactive-box { padding: 1.25rem; }
+.info-card > :last-child, .example > :last-child, .highlight-box > :last-child,
+.interactive-box > :last-child, .math-box > :last-child { margin-bottom: 0; }
+
+/* Interactive controls */
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.control-grid .control-card, .slider-row .control-card { margin: 0; }
+.control-card input[type="range"], .control-grid input[type="range"] { width: 100%; }
+.slider-row { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.25rem 0; }
+.slider-row .control-card { flex: 1 1 14rem; }
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.small { font-size: 0.95em; color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 0.95em; }
+
+button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+select, input[type="text"] {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+input[type="text"] { max-width: 100%; }
+canvas {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+summary { cursor: pointer; color: var(--accent); font-weight: 600; margin-top: 0.6rem; }
+
+/* Architecture flow with an underbrace label (CNN lesson). */
+.arch-flow-wrap { padding-bottom: 2.4em; }
+.arch-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em 0.55em;
+  font-size: 1.05em;
+}
+.arch-underbrace { position: relative; display: inline-block; }
+.arch-underbrace-annotation {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 3px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+}
+.arch-underbrace-bracket {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-width: calc(100% + 10px);
+  height: 7px;
+  border-bottom: 2px solid var(--muted);
+}
+.arch-underbrace-bracket::before, .arch-underbrace-bracket::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 7px;
+  background: var(--muted);
+}
+.arch-underbrace-bracket::before { left: 0; }
+.arch-underbrace-bracket::after { right: 0; }
+.arch-underbrace-label { margin-top: 3px; color: var(--muted); font-size: 0.82em; white-space: nowrap; }
+
+/* Pages with wide canvases: <body class="wide">. */
+body.wide { --measure: 58rem; }
+
+/* 6. Prev / next pager --------------------------------------------------- */
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.pager a {
+  flex: 1 1 14rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+}
+.pager a:hover { border-color: var(--accent); }
+.pager .pager__label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.pager .pager__title { display: block; font-weight: 600; }
+.pager .pager__next { text-align: right; }
+/* A lone "next" link still sits on the right. */
+.pager .pager__next:only-child { margin-left: auto; max-width: 50%; }
+
+/* Interactive demos were authored with fixed light colors in inline styles
+   (white panels, tinted boxes). In dark mode, keep the text on those panels
+   dark so it stays readable, and lift a few inline text colors. */
+@media (prefers-color-scheme: dark) {
+  .page [style*="background"], .page [bgcolor] { color: #1b1f24; }
+  .page [style*="color: #1e40af"], .page [style*="color: #2563eb"],
+  .page [style*="color: blue"] { color: var(--accent) !important; }
+  .page [style*="color: #666"], .page [style*="color: #555"], .page [style*="color: #475569"],
+  .page [style*="color: #64748b"], .page [style*="color:#475569"] { color: var(--muted) !important; }
+  .page [style*="color: #047857"] { color: #34d399 !important; }
+  .page [style*="color: #dc2626"] { color: #f87171 !important; }
+}
+
+/* 7. Print --------------------------------------------------------------- */
+
+@media print {
+  body { background: #fff; color: #000; }
+  .site-header, .pager { display: none; }
+  .page { max-width: none; padding: 0; }
+  a { color: inherit; }
+}
