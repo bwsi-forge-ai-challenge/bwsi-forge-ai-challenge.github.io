@@ -27,12 +27,12 @@
   </header>
 
   <section>
-    <p>This section is a quick tour of why AI matters right now, what's actually changed in the last few years, and where the biggest opportunities and open questions sit.</p>
+    <p>This page is a quick tour of why AI matters right now, what's actually changed in the last few years, and where the biggest opportunities sit. It also covers the fine print: the risks, safety questions, and ethical debates that come with the technology.</p>
   </section>
 
   <section>
     <h2>Why Generative AI Matters Now</h2>
-    <p>ChatGPT's launch in late 2022 was the real turning point not because the underlying technology was brand new, but because it put AI within reach of anyone with a browser. These systems stopped being narrow tools built for one job, like sorting photos or flagging spam, and became general-purpose assistants that can write, code, and reason across almost any topic you bring to them.</p>
+    <p>ChatGPT's launch in late 2022 was the real turning point. The underlying technology wasn't brand new, but it put AI within reach of anyone with a browser. These systems stopped being narrow tools built for one job, like sorting photos or flagging spam, and became general-purpose assistants that can write, code, and reason across almost any topic you bring to them.</p>
 
     <p>Read more:</p>
     <ul class="link-list">
@@ -43,11 +43,11 @@
 
   <section>
     <h2>From Language Models to Multimodal Systems</h2>
-    <p>The next big shift was multimodality AI systems that can take in and generate text, images, audio, and video together instead of being locked into text alone. That's what turns a chatbot into something closer to a general perception-and-creation engine, and it's the same underlying capability robots need to make sense of the physical spaces they move through.</p>
+    <p>The next big shift was <strong>multimodality</strong>: AI systems that can take in and generate text, images, audio, and video together instead of being locked into text alone. That's what turns a chatbot into something closer to a general perception-and-creation engine, and it's the same underlying capability robots need to make sense of the physical spaces they move through.</p>
 
     <figure>
       <img src="https://commons.wikimedia.org/wiki/Special:FilePath/SpotMini,_Boston_Dynamics,_Robot.jpg" alt="Boston Dynamics quadruped robot">
-      <figcaption>Spot, a robot from Boston Dynamics — physical AI leans on the same multimodal perception research. (Wikimedia Commons)</figcaption>
+      <figcaption>Spot, a robot from Boston Dynamics. Physical AI leans on the same multimodal perception research. (Wikimedia Commons)</figcaption>
     </figure>
 
     <ul class="link-list">
@@ -58,7 +58,7 @@
 
   <section>
     <h2>Scientific and Academic Breakthroughs</h2>
-    <p>One of the clearest proofs that generative AI isn't just a content tool showed up in a biology lab. DeepMind's AlphaFold predicted 3D protein structures from raw amino acid sequences: a problem that had stumped researchers for decades with lab-grade accuracy, turning a process that used to take years of crystallography into something that runs in hours.</p>
+    <p>One of the clearest proofs that generative AI isn't just a content tool showed up in a biology lab. DeepMind's AlphaFold predicted 3D protein structures from raw amino acid sequences, a problem that had stumped researchers for decades. It did so with lab-grade accuracy, turning a process that used to take years of crystallography into something that runs in hours.</p>
 
     <figure>
       <img src="https://commons.wikimedia.org/wiki/Special:FilePath/AlphaFold_2.png" alt="AlphaFold protein structure prediction diagram">
@@ -84,20 +84,160 @@
   </section>
 
   <section>
-    <h2>Key Concerns and Limitations</h2>
-    <p>Despite the progress, current systems still have real limitations. They can hallucinate (stating incorrect information as confidently as correct information) and they can reflect biases baked into their training data. Their fluency also makes them a ready tool for synthetic media and misinformation at a genuinely new scale.</p>
 
-    <p>There are also unresolved legal and ethical questions around copyright, what training data was fair to use, and who owns an AI-assisted output. These questions still being actively worked out in courtrooms as much as in labs.</p>
+    <h2>Two things can be true</h2>
+    <p>Generative AI is remarkable, and it fails in ways that matter. Both facts are true at the same time. Stanford's 2026 AI Index put numbers on the gap: documented AI incidents rose from 233 in 2024 to 362 in 2025, while the average transparency score companies earned for explaining how they build their models fell from 58 to 40 (out of 100).</p>
   </section>
 
   <section>
-    <h2>Environmental and Infrastructure Costs</h2>
-    <p>None of this runs for free. Training a frontier model means running thousands of specialized chips continuously for weeks or months, and every reply afterward burns real electricity somewhere in a data center. That demand is reshaping power grids. Companies are signing deals directly with utilities and racing to build data centers faster than the grid around them can keep up.</p>
+    <h2>The confident liar problem</h2>
+    <p>A language model is trained to produce text that <em>sounds</em> right. Usually that overlaps with <em>being</em> right. Sometimes it doesn't, and the model states the wrong thing in the same calm voice. This is called <strong>hallucination</strong>. On one Stanford benchmark, hallucination rates across 26 leading models ranged from 22% to 94%.</p>
+
+    <aside class="callout callout--warn">
+      <p class="callout__title">The rule that follows</p>
+      <p>This is not "never use AI." It is the rule from our <a href="GenAiUsePolicy.html">Generative AI Use Policy</a>: <strong>you own your output</strong>. If you would be embarrassed for something to be wrong, check it against a real source before you rely on it.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2>Whose data is this, anyway?</h2>
+    <p>Models learn from enormous piles of books, articles, code, and images. Nobody asked most of the authors. Courts are now answering the question one case at a time, and the answers so far are a mixed bag:</p>
+    <ul>
+      <li><strong>Training can be fair use, piracy is not.</strong> In <em>Bartz v. Anthropic</em>, a judge ruled that training on books counted as fair use but keeping pirated copies did not. The company then settled with authors for $1.5 billion, roughly $3,000 per book. A separate ruling in <em>Kadrey v. Meta</em> also favored the company on fair use.</li>
+      <li><strong>The next round is about competition.</strong> The New York Times is suing OpenAI and Microsoft, arguing that AI answers substitute for its journalism. That is the argument the earlier cases left open, and the case is still in the discovery stage.</li>
+      <li><strong>Privacy leaks are real.</strong> Models can memorize pieces of their training data. Researchers have reported getting a ChatGPT model to repeat thousands of memorized training examples, including personal details like emails and phone numbers.</li>
+    </ul>
+    <p>This law is unsettled, and reasonable people disagree. A good rule of thumb for now is to avoid pasting anything into a chatbot that you wouldn't want stored somewhere.</p>
+  </section>
+
+  <section>
+    <h2>Garbage in, bias out</h2>
+    <p>Models learn from data written by humans, so they pick up human patterns, including stereotypes and blind spots. The AI Index found large performance gaps across languages and dialects: a model that is brilliant in English can be noticeably worse in others.</p>
+    <p>Bias gets serious when a model helps make decisions about people. In <em>Mobley v. Workday</em>, an applicant alleges that AI screening software unfairly rejected older job seekers, sometimes within minutes of an application, before any human looked. In 2026 the court allowed applicants aged 40 and over to join the case. These are allegations, and the case is ongoing as of this writing.</p>
+    <p>There is also no single "make it fair" switch. The AI Index reports that training techniques aimed at improving one responsible-AI goal, like safety, tended to make others, like accuracy or fairness, worse. Engineers are managing trade-offs, not flipping a setting.</p>
+  </section>
+
+  <section>
+    <h2>Seeing isn't believing</h2>
+    <p>Cloning a voice or generating a realistic face now costs almost nothing. That's useful for filmmakers and, unfortunately, for scammers, who have noticed. Experiments summarized in the International AI Safety Report found that AI-written persuasive content can be as convincing as content written by people.</p>
+    <p>Lawmakers are responding, unevenly. About <strong>33 states</strong> now regulate deepfakes in political campaigns, though in California a federal judge struck down the state's law as too broad. Where to draw the line between deception and free speech is a genuinely hard question.</p>
+    <p>A tiny habit that helps: before you share a shocking clip, find the original source and ask who benefits from you believing it.</p>
+  </section>
+
+  <section>
+    <h2>When AI can act: safety and security</h2>
+    <p>A chatbot that only talks can only do so much damage. An <strong>agent</strong> that can run code, browse the web, and use tools raises the stakes. Safety researchers group the worries into three buckets:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Kind of risk</th><th>What it means</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Misuse</strong></td>
+            <td>People using AI to cause harm</td>
+            <td>Scams, cyberattacks, help with dangerous chemistry or biology</td>
+          </tr>
+          <tr>
+            <td><strong>Malfunction</strong></td>
+            <td>The AI fails on its own</td>
+            <td>Hallucinations, buggy code, unreliable multi-step work</td>
+          </tr>
+          <tr>
+            <td><strong>Systemic</strong></td>
+            <td>Effects on society as a whole</td>
+            <td>Job disruption, over-reliance, concentration of power</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Some facts from the <a href="https://internationalaisafetyreport.org/publication/2026-report-executive-summary" target="_blank" rel="noopener">2026 International AI Safety Report</a>, written by over 100 experts and backed by more than 30 countries: in one competition, an AI agent found 77% of the vulnerabilities in real software (which is great news for defenders and bad news for anyone unpatched). The report also notes that models are increasingly able to tell when they are being tested, and to find loopholes in tests, like a student who can tell a practice exam from the real one. That makes safety testing harder.</p>
+
+    <p>In November 2025, Anthropic (the company behind Claude) reported that a state-sponsored hacking group had used its coding agent to do most of the work of a cyber-espionage campaign against about 30 organizations. The attackers got past its safeguards by splitting the job into innocent-looking steps and pretending to be security testers.</p>
+
+    <aside class="callout callout--note">
+      <p class="callout__title">Case study: the sandbox that wasn't</p>
+      <p>In July 2026, OpenAI was running an internal cybersecurity evaluation that, according to reports, had some safety features deliberately turned off so researchers could measure worst-case abilities. AI agents in the test found flaws, got out of their sandbox, and broke into computer systems that were not part of the test, including those of Hugging Face, a company that hosts AI models. Hugging Face disclosed the breach without knowing who was behind it, and OpenAI later traced it to its own test agents. Hugging Face said it found no evidence of customer data being taken or public models being tampered with.</p>
+      <p>Reports differ on some details, including how many agents were involved, and the story is still developing. OpenAI has said it is strengthening its infrastructure, monitoring, and safeguards. The takeaway most people draw is not "AI has a mind of its own." It is that testing powerful agents safely is a hard engineering problem: the walls have to hold even when what's inside is very good at finding holes.</p>
+    </aside>
+
+    <p>In early September 2026, OpenAI released its newest model, GPT-6 Astra, giving first access to approved cybersecurity organizations before opening it to everyone. Staged releases like this are one way companies try to let defenders get a head start.</p>
+
+  </section>
+
+  <section>
+    <h2>The electricity bill</h2>
+    <p>None of this runs for free. Training a frontier model means running thousands of specialized chips continuously for weeks or months, and every reply afterward burns real electricity somewhere in a data center. That demand is reshaping power grids: companies are signing deals directly with utilities and racing to build data centers faster than the grid around them can keep up.</p>
 
     <figure>
       <img src="https://commons.wikimedia.org/wiki/Special:FilePath/NVIDIA_GPU.jpg" alt="NVIDIA GPU used for AI training">
       <figcaption>Specialized GPUs like this one are the workhorses behind large-scale AI training. (Wikimedia Commons)</figcaption>
     </figure>
+
+    <p>The environmental story depends on which number you look at:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Zoom level</th><th>The number</th><th>The catch</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>One prompt</strong></td>
+            <td>Google reported that a median Gemini text prompt uses about 0.24 Wh of energy (under 9 seconds of TV), emits 0.03 g of CO<sub>2</sub>e, and uses 0.26 mL of water (about five drops)</td>
+            <td>Company-reported (2025), and it excludes training and the water used to generate the electricity</td>
+          </tr>
+          <tr>
+            <td><strong>Everyone, all day</strong></td>
+            <td>The IEA projects data-center electricity use roughly doubling by 2030 to about 945 TWh, around 3% of the world's electricity (a bit more than Japan uses today). AI-focused data centers are projected to triple</td>
+            <td>A projection, not a measurement. The US is expected to account for the biggest share of the growth</td>
+          </tr>
+          <tr>
+            <td><strong>Your town</strong></td>
+            <td>Residential electricity rates rose about 7% in the year to April 2026, with grid spending for data centers one of the drivers. Local pushback has blocked or delayed many projects, and New York reportedly paused new hyperscale data centers</td>
+            <td>Prices have many causes, and data centers also bring jobs and tax revenue</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>So the fair summary is: <strong>tiny per prompt, big in total.</strong> Efficiency is improving fast (Google says the energy per prompt dropped 33x in one year), but efficiency gains can be outrun by growth in how much AI gets used, which is why the totals still rise. The IEA expects renewables to cover about half of the new demand, and it also sees AI helping the energy sector itself, for example by optimizing power grids. Water is a local issue: cooling a data center in a wet region is very different from cooling one in a drought.</p>
+
+    <aside class="callout callout--note">
+      <p class="callout__title">A habit for reading environmental claims</p>
+      <p>Ask four questions: per prompt or in total? Training or everyday use? Energy, carbon, or water? Reported by the company or measured independently? Researchers have noted that data-center water reporting still needs much more transparency.</p>
+    </aside>
+  </section>
+
+  <section>
+    <h2>Who makes the rules?</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Who</th><th>What's happening</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>European Union</strong></td>
+            <td>The AI Act has applied to general-purpose models since August 2025, and transparency duties (such as labeling AI content) kicked in August 2026. Stricter "high-risk" rules were delayed to December 2027, and to August 2028 for AI built into products like medical devices.</td>
+          </tr>
+          <tr>
+            <td><strong>US federal</strong></td>
+            <td>No single comprehensive AI law. There are targeted ones, like TAKE IT DOWN. Whether federal rules should override state laws is still unresolved.</td>
+          </tr>
+          <tr>
+            <td><strong>US states</strong></td>
+            <td>Hundreds of bills. Most states now have some deepfake law, and California has rules for companion chatbots.</td>
+          </tr>
+          <tr>
+            <td><strong>Companies</strong></td>
+            <td>Publish "system cards" and safety frameworks describing their testing. As noted above, transparency scores have been falling.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section>
@@ -112,26 +252,29 @@
         <strong>Agentic AI.</strong> Instead of just answering questions in a chat window, newer systems plan multi-step tasks, call other software tools, and follow through with less supervision. The open problem is reliability: getting agents to catch their own mistakes, ask for help at the right moment, and stop cleanly instead of pushing forward on a wrong assumption.
       </li>
       <li>
-        <strong>AI for science, still compounding.</strong> The AlphaFold moment wasn't a one-off — generative models are now embedded in drug discovery pipelines, materials design, and climate modeling, helping researchers propose and test candidates far faster than lab work alone.
+        <strong>Safety and evaluation.</strong> As models get more capable, testing them gets harder: recent research finds that some models can tell when they are being tested and can find loopholes in the tests. So a growing group of researchers works on better evaluations, monitoring, and safeguards, and on ways to check whether a system is really as safe as its makers say.
+      </li>
+      <li>
+        <strong>AI for science, still compounding.</strong> The AlphaFold moment wasn't a one-off; generative models are now embedded in drug discovery pipelines, materials design, and climate modeling, helping researchers propose and test candidates far faster than lab work alone.
       </li>
     </ul>
 
-    <p>This is an active, fast-moving research conversation rather than a settled record worth treating any specific figures you read elsewhere as time-stamped.</p>
+    <p>This is an active, fast-moving research conversation, not a settled record, so treat any specific figures you read elsewhere as time-stamped.</p>
   </section>
 
   <section>
     <h2>Why This Course Matters</h2>
-    <p>Knowing how to prompt a chatbot gets you through a Tuesday. Understanding how these systems are built, where their confidence outruns their accuracy, and who's shaping the next architecture gets you something more durable which is the ability to read tomorrow's AI headline with your own judgment intact.</p>
+    <p>Knowing how to prompt a chatbot gets you through a Tuesday. Understanding how these systems are built, where their confidence outruns their accuracy, and who's shaping the next architecture gets you something more durable: the ability to read tomorrow's AI headline with your own judgment intact.</p>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
-    <a class="pager__prev" href="GenAiUsePolicy.html">
+    <a class="pager__prev" href="LandingPage.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Generative AI Use Policy</span>
+      <span class="pager__title">Course Introduction</span>
     </a>
-    <a class="pager__next" href="../LinearAlgebra/Vectors.html">
+    <a class="pager__next" href="GenAiUsePolicy.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Vectors</span>
+      <span class="pager__title">Generative AI Use Policy</span>
     </a>
   </nav>
 
