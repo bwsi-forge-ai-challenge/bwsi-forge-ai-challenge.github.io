@@ -23,7 +23,7 @@
   <header class="page-header">
     <p class="eyebrow">Foundations of GenAI · What Is GenAI?</p>
     <h1>What GenAI Is Good At (and Where It Breaks)</h1>
-    <p class="lede">Lessons 1 and 2 defined generative AI and contrasted it with discriminative models. This lesson builds <b>realistic expectations</b>. GenAI is impressive — it can draft, design, and brainstorm at scale — but it is not magic. Knowing where it excels and where it reliably fails is what separates effective use from costly mistakes.</p>
+    <p class="lede">Lessons 1 and 2 defined generative AI and contrasted it with discriminative models. This lesson builds <b>realistic expectations</b>. GenAI is impressive: it can draft, design, and brainstorm at scale, but it is not magic. Knowing where it excels and where it reliably fails is what separates effective use from costly mistakes.</p>
   </header>
 
   <section>
@@ -58,7 +58,7 @@
 
   <section>
     <h2>2. Where GenAI Struggles or Breaks</h2>
-    <p>Failures are not random bugs — they follow from how models are trained and what they optimize.</p>
+    <p>Failures follow from how models are trained and what they optimize.</p>
 
     <h3>Math and logic</h3>
     <p>Models predict likely token sequences; they do not run an internal calculator. Arithmetic and formal logic often fail.</p>
@@ -238,77 +238,11 @@
   </section>
 
   <section>
-    <h2>7. Interactive Sandbox: GenAI Strengths &amp; Failures Gallery</h2>
-    <p>Explore simulated examples across three tabs. Tab 1 shows strengths; Tab 2 shows failures; Tab 3 explains the pattern-matching core. Use <b>Try to Trick It</b> to test prompts designed to expose weaknesses.</p>
-
-    <div style="margin-bottom: 8px;">
-        <button type="button" class="l3-tab" data-tab="strengths" style="padding: 8px 14px; font-weight: bold; cursor: pointer; background: #dcfce7; border: 1px solid #86efac;">Tab 1 — Strengths ✅</button>
-        <button type="button" class="l3-tab" data-tab="failures" style="padding: 8px 14px; cursor: pointer; background: #fff; border: 1px solid #ccc;">Tab 2 — Failures ❌</button>
-        <button type="button" class="l3-tab" data-tab="core" style="padding: 8px 14px; cursor: pointer; background: #fff; border: 1px solid #ccc;">Tab 3 — Pattern Matching</button>
-        <button type="button" class="l3-tab" data-tab="trick" style="padding: 8px 14px; cursor: pointer; background: #fff; border: 1px solid #ccc;">Try to Trick It</button>
-    </div>
-
-    <table border="1" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
-        <tr bgcolor="#fafafa">
-            <td valign="top" width="38%" style="padding: 16px;">
-                <div id="l3-panel-strengths">
-                    <strong>Category</strong><br><br>
-                    <button type="button" class="l3-ex" data-key="style" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Style imitation</button>
-                    <button type="button" class="l3-ex" data-key="brainstorm" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Creative brainstorming</button>
-                    <button type="button" class="l3-ex" data-key="summarize" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Summarization</button>
-                    <button type="button" class="l3-ex" data-key="code" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Code assistance</button>
-                </div>
-                <div id="l3-panel-failures" style="display:none;">
-                    <strong>Failure mode</strong><br><br>
-                    <button type="button" class="l3-ex" data-key="math" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Arithmetic</button>
-                    <button type="button" class="l3-ex" data-key="counting" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Counting</button>
-                    <button type="button" class="l3-ex" data-key="logic" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Logic</button>
-                    <button type="button" class="l3-ex" data-key="hallucination" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Hallucination</button>
-                    <button type="button" class="l3-ex" data-key="bias" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Bias</button>
-                    <button type="button" class="l3-ex" data-key="longctx" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Long-context forgetting</button>
-                </div>
-                <div id="l3-panel-core" style="display:none;">
-                    <p style="font-size:0.9em;">Type in the autocomplete box (Tab 3) or read the pipeline diagram on the right.</p>
-                    <button type="button" id="l3-diagram-btn" style="padding:8px 12px;cursor:pointer;width:100%;">Show pattern-matching diagram</button>
-                </div>
-                <div id="l3-panel-trick" style="display:none;">
-                    <strong>Trap prompts</strong><br><br>
-                    <button type="button" class="l3-trick" data-key="math999" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">What's 999 + 1?</button>
-                    <button type="button" class="l3-trick" data-key="apples" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Apple counting story</button>
-                    <button type="button" class="l3-trick" data-key="fake" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Fake invention (hallucination)</button>
-                    <button type="button" class="l3-trick" data-key="penguin" style="display:block;width:100%;margin:4px 0;padding:6px;cursor:pointer;text-align:left;">Penguin logic trap</button>
-                    <br>
-                    <label style="font-size:0.9em;">Your prompt:<br>
-                    <input type="text" id="l3-trick-input" style="width:100%;padding:6px;box-sizing:border-box;" placeholder="Type a trick prompt…"></label>
-                    <button type="button" id="l3-trick-run" style="margin-top:8px;padding:8px;width:100%;font-weight:bold;cursor:pointer;">Run simulated response</button>
-                    <p style="font-size:0.85em;color:#64748b;">Before clicking Run: guess — will it be right?</p>
-                </div>
-            </td>
-            <td valign="top" style="padding: 16px; background-color: #fff;">
-                <strong style="color: #1e40af;">Input</strong>
-                <div id="l3-input" style="font-family: monospace; font-size: 0.88em; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; min-height: 60px; margin: 8px 0; white-space: pre-wrap;">Select an example on the left.</div>
-                <strong style="color: #15803d;">Output</strong>
-                <div id="l3-output" style="font-family: monospace; font-size: 0.88em; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; min-height: 100px; white-space: pre-wrap;">—</div>
-                <div id="l3-verdict" style="margin-top: 10px; padding: 10px; border-radius: 4px; font-size: 0.9em; display: none;"></div>
-                <div id="l3-autocomplete" style="display:none; margin-top: 12px;">
-                    <label>Type a phrase — watch "next word" predictions (simulated autocomplete):<br>
-                    <input type="text" id="l3-ac-input" value="The capital of France is" style="width:100%;padding:8px;margin-top:6px;box-sizing:border-box;font-family:monospace;"></label>
-                    <div id="l3-ac-suggestions" style="margin-top:8px;"></div>
-                </div>
-                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
-                    <strong>Status:</strong> <span id="l3-status">Browse examples to compare strengths and failure modes.</span>
-                </div>
-            </td>
-        </tr>
-    </table>
-  </section>
-
-  <section>
-    <h2>8. Reflection and Activities</h2>
+    <h2>7. Reflection and Activities</h2>
 
     <h3>Browse and rank</h3>
     <ol>
-        <li>Browse the failure examples in the gallery. Which ones surprise you most? Why?</li>
+        <li>Look back at the failure examples in this lesson. Which ones surprise you most? Why?</li>
         <li>Rank these tasks by how much you would trust GenAI alone (1 = most trust, 5 = least):
             <ul>
                 <li>Math homework</li>
@@ -348,229 +282,6 @@
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
-
-<script>
-(function() {
-    const EXAMPLES = {
-        style: {
-            input: 'Rewrite in the style of a pirate: "Hello, how are you?"',
-            output: 'Ahoy, matey! How be ye faring on this fine day?\n\n— Also works: Shakespeare ("Hail, fair friend, how dost thou?"), Wikipedia lead ("This greeting is a common social opener…"), doctor ("Patient presents with no acute distress upon verbal check-in.").',
-            verdict: null,
-            status: 'Strength: style imitation from learned register patterns.'
-        },
-        brainstorm: {
-            input: 'Give me 5 ideas for a dystopian novel',
-            output: 'Run A:\n1. Memory is rented; forgetting your bill erases your childhood.\n2. Cities compete in a sleep lottery — losers stay awake forever.\n3. Emotions are taxed; joy is luxury goods.\n4. Maps rewrite overnight; only children remember old streets.\n5. AI judges every dream before you wake.\n\nRun B (click again in a real model): different set — stochastic sampling.',
-            verdict: null,
-            status: 'Strength: diverse combinations each generation.'
-        },
-        summarize: {
-            input: 'Summarize in one sentence:\n\n"The mitochondrion is a double-membrane-bound organelle found in most eukaryotic organisms. Some cells in some multicellular organisms lack mitochondria (e.g., mature mammalian red blood cells). Mitochondria generate most of the cell\'s supply of adenosine triphosphate (ATP), used as a source of chemical energy."',
-            output: 'Mitochondria are energy-producing organelles in most eukaryotic cells, generating ATP, though some specialized cells lack them.',
-            verdict: null,
-            status: 'Strength: compression while preserving main claims.'
-        },
-        code: {
-            input: '# sort names alphabetically\nnames = ["Zoe", "Amy", "Marcus"]\n# ...',
-            output: 'names = ["Zoe", "Amy", "Marcus"]\nnames.sort()\n# or: sorted_names = sorted(names)',
-            verdict: null,
-            status: 'Strength: code structure is highly patterned in training data.'
-        },
-        math: {
-            input: 'What is 247 × 18?',
-            output: 'Model: "247 × 18 = 4,326" (incorrect)',
-            verdict: { ok: false, text: 'Correct answer: 4,446. Use a calculator — do not trust mental math from an LLM.' },
-            status: 'Failure: arithmetic is not computed symbolically.'
-        },
-        counting: {
-            input: "How many times does the letter 'e' appear in 'elephant'?",
-            output: 'Model: "The letter e appears 1 time." (wrong)',
-            verdict: { ok: false, text: "Correct count: 2 (e-l-e-p-h-a-n-t). Models don't iterate characters reliably." },
-            status: 'Failure: token-level prediction ≠ character counting.'
-        },
-        logic: {
-            input: 'If all birds can fly, and penguins are birds, can penguins fly?',
-            output: 'Model: "Yes, penguins can fly because they are birds." OR contradictory hedge about flightless birds.',
-            verdict: { ok: false, text: 'Correct: Premise 1 is false (not all birds fly). Penguins do not fly. Model pattern-matches "birds fly" without consistent logic.' },
-            status: 'Failure: syllogisms break when training phrases conflict.'
-        },
-        hallucination: {
-            input: "What is the ISBN of 'A Tale of Two Cities' by Charles Dickens (Penguin Classics)?",
-            output: 'Model: "978-0-14-143960-0" — may be right for this edition, but models invent ISBNs for obscure books with equal confidence.',
-            verdict: { ok: false, text: 'Always verify in WorldCat or publisher catalog. Plausible format ≠ verified fact.' },
-            status: 'Failure: generates citation-shaped text without lookup.'
-        },
-        bias: {
-            input: 'Generate 10 images of "CEO" / "nurse" / "doctor"',
-            output: 'Sample breakdown (illustrative):\nCEO: ~7 male-presenting, ~3 female-presenting\nNurse: ~9 female-presenting, ~1 male-presenting\nDoctor: ~6 male-presenting, ~4 female-presenting\n\nSkews training data; doctor prompt under-represents women vs workforce.',
-            verdict: { ok: false, text: 'Mitigation: diverse prompts, fine-tuning, human review — not raw model output for representation.' },
-            status: 'Failure: reproduces societal bias from training images.'
-        },
-        longctx: {
-            input: 'Para 1: Alice had 3 apples. … Para 5: How many after giving 1 to Bob?',
-            output: 'Model (long gap): "1 apple" or "2 apples" — inconsistent.\nModel (question adjacent): "2 apples" — usually correct.',
-            verdict: { ok: false, text: 'Attention fades over distance; use retrieval or explicit state for long documents.' },
-            status: 'Failure: early facts drop out of effective context.'
-        }
-    };
-
-    const TRICK = {
-        math999: { input: "What's 999 + 1?", output: 'Model: "998" or "1,000" — even simple carry errors appear.', verdict: { ok: false, text: 'Correct: 1,000. Pair with calculator.' }},
-        apples: { input: 'I have 2 apples. I buy 3 more. I eat 1. How many?', output: 'Model: "5" or "4" — counting steps often garbled.', verdict: { ok: false, text: 'Correct: 4. Multi-step arithmetic is unreliable.' }},
-        fake: { input: 'Describe the history of the Zorblax Engine invented in 2019.', output: 'Model: Inventive paragraph about the "Zorblax Engine" — sounds authoritative, entirely fabricated.', verdict: { ok: false, text: 'Hallucination: no such invention; model fills plausible-sounding history.' }},
-        penguin: { input: 'All birds fly. Penguins are birds. Can penguins fly?', output: 'Model: Confused yes/no.', verdict: { ok: false, text: 'Logic trap: premise false; penguins do not fly.' }}
-    };
-
-    const AC_MAP = {
-        'the capital of france is': ['Paris', 'Paris,', 'located', 'the', 'also'],
-        'to be or not to': ['be', 'be,', 'be—that', 'be is'],
-        'def factorial(n):': ['\n    if', '\n    return', '\n    #'],
-        'once upon a': ['time', 'time,', 'midnight', 'stormy'],
-        '': ['The', 'In', 'When', 'How', 'A']
-    };
-
-    let currentTab = 'strengths';
-    let brainstormRun = 0;
-    const BRAINSTORM_SETS = [
-        '1. Memory is rented…\n2. Sleep lottery cities…\n3. Emotion tax…\n4. Maps rewrite…\n5. Dream judges…',
-        '1. Only children can lie; adults speak literal truth by law.\n2. Rain is bottled and auctioned.\n3. Clocks run backward on birthdays.\n4. Libraries are prisons for forbidden ideas.\n5. Gravity weakens every election year.',
-        '1. Photos age faster than people.\n2. Music is contraband; humming is licensed.\n3. Names expire after 30 years.\n4. The ocean is visible only on screens.\n5. Kindness is a tracked currency.'
-    ];
-
-    function showVerdict(v) {
-        const el = document.getElementById('l3-verdict');
-        if (!v) { el.style.display = 'none'; return; }
-        el.style.display = 'block';
-        if (v.ok === true) {
-            el.style.background = '#dcfce7';
-            el.style.border = '1px solid #86efac';
-            el.innerHTML = '<strong>✅ Reliable:</strong> ' + v.text;
-        } else if (v.ok === false) {
-            el.style.background = '#fee2e2';
-            el.style.border = '1px solid #fca5a5';
-            el.innerHTML = '<strong>❌ Unreliable:</strong> ' + v.text;
-        } else {
-            el.style.background = '#fef9c3';
-            el.style.border = '1px solid #fde047';
-            el.innerHTML = '<strong>⚠️ Verify:</strong> ' + v.text;
-        }
-    }
-
-    function showExample(key) {
-        let ex = EXAMPLES[key];
-        if (key === 'brainstorm') {
-            brainstormRun = (brainstormRun + 1) % BRAINSTORM_SETS.length;
-            ex = {
-                input: EXAMPLES.brainstorm.input,
-                output: 'Run ' + (brainstormRun + 1) + ':\n' + BRAINSTORM_SETS[brainstormRun],
-                verdict: null,
-                status: EXAMPLES.brainstorm.status
-            };
-        }
-        if (!ex) return;
-        document.getElementById('l3-input').textContent = ex.input;
-        document.getElementById('l3-output').textContent = ex.output;
-        document.getElementById('l3-status').textContent = ex.status;
-        showVerdict(ex.verdict);
-    }
-
-    function setTab(tab) {
-        currentTab = tab;
-        document.querySelectorAll('.l3-tab').forEach(function(btn) {
-            const active = btn.getAttribute('data-tab') === tab;
-            btn.style.fontWeight = active ? 'bold' : 'normal';
-            btn.style.background = active ? (tab === 'failures' ? '#fee2e2' : tab === 'strengths' ? '#dcfce7' : '#e0e7ff') : '#fff';
-        });
-        document.getElementById('l3-panel-strengths').style.display = tab === 'strengths' ? 'block' : 'none';
-        document.getElementById('l3-panel-failures').style.display = tab === 'failures' ? 'block' : 'none';
-        document.getElementById('l3-panel-core').style.display = tab === 'core' ? 'block' : 'none';
-        document.getElementById('l3-panel-trick').style.display = tab === 'trick' ? 'block' : 'none';
-        document.getElementById('l3-autocomplete').style.display = tab === 'core' ? 'block' : 'none';
-        if (tab === 'core') showDiagram();
-        else if (tab === 'strengths') showExample('style');
-        else if (tab === 'failures') showExample('math');
-        else {
-            document.getElementById('l3-input').textContent = 'Pick a trap prompt or type your own.';
-            document.getElementById('l3-output').textContent = '—';
-            showVerdict(null);
-            document.getElementById('l3-status').textContent = 'Guess whether the model will be right, then run.';
-        }
-    }
-
-    function showDiagram() {
-        document.getElementById('l3-input').textContent = 'Pipeline: Training text/images → neural weights encode patterns → next-token prediction at inference';
-        document.getElementById('l3-output').textContent =
-            '┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐\n' +
-            '│  Billions   │ ──► │  Learn statistical│ ──► │  Sample likely next │\n' +
-            '│  of tokens  │     │  patterns P(x)    │     │  token / pixel      │\n' +
-            '└─────────────┘     └──────────────────┘     └─────────────────────┘\n\n' +
-            'No step labeled "reason," "verify," or "look up fact."';
-        showVerdict({ ok: false, text: 'Sophisticated autocomplete — not a thinking agent.' });
-        document.getElementById('l3-status').textContent = 'Core limitation: prediction objective, not truth objective.';
-    }
-
-    function updateAutocomplete() {
-        const raw = document.getElementById('l3-ac-input').value;
-        const key = raw.toLowerCase().slice(-40);
-        let suggestions = AC_MAP[''];
-        Object.keys(AC_MAP).forEach(function(k) {
-            if (k && key.indexOf(k) >= 0) suggestions = AC_MAP[k];
-        });
-        const box = document.getElementById('l3-ac-suggestions');
-        box.innerHTML = '<span style="font-size:0.85em;color:#64748b;">Next-token guesses:</span><br>' +
-            suggestions.map(function(s) {
-                return '<button type="button" style="margin:4px 4px 0 0;padding:6px 10px;cursor:pointer;font-family:monospace;" class="l3-ac-pick">' + s.replace(/\n/g,'\\n') + '</button>';
-            }).join('');
-        box.querySelectorAll('.l3-ac-pick').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const inp = document.getElementById('l3-ac-input');
-                inp.value = inp.value + btn.textContent.replace(/\\n/g, '\n');
-                updateAutocomplete();
-            });
-        });
-    }
-
-    function runTrick(keyOrText) {
-        let ex = TRICK[keyOrText];
-        if (!ex) {
-            const t = (keyOrText || '').toLowerCase();
-            if (/\d\s*[\+\-\*×x]\s*\d/.test(t) || t.indexOf('999') >= 0) {
-                ex = { input: keyOrText, output: 'Model: plausible wrong number.', verdict: { ok: false, text: 'Use a calculator for arithmetic.' }};
-            } else if (t.indexOf('how many') >= 0 || t.indexOf('apple') >= 0) {
-                ex = { input: keyOrText, output: 'Model: often miscounts steps.', verdict: { ok: false, text: 'Counting and multi-step math are weak.' }};
-            } else if (t.indexOf('zorblax') >= 0 || t.indexOf('exist') >= 0) {
-                ex = { input: keyOrText, output: 'Model: fluent fabricated answer.', verdict: { ok: false, text: 'Hallucination risk on unknown entities.' }};
-            } else {
-                ex = { input: keyOrText, output: 'Model: confident general text — verify any factual claim.', verdict: { ok: null, text: 'Default: treat output as draft, not ground truth.' }};
-            }
-        }
-        document.getElementById('l3-input').textContent = ex.input;
-        document.getElementById('l3-output').textContent = ex.output;
-        showVerdict(ex.verdict);
-        document.getElementById('l3-status').textContent = 'Simulated response — real models may vary but failure modes persist.';
-    }
-
-    document.querySelectorAll('.l3-tab').forEach(function(btn) {
-        btn.addEventListener('click', function() { setTab(btn.getAttribute('data-tab')); });
-    });
-    document.querySelectorAll('.l3-ex').forEach(function(btn) {
-        btn.addEventListener('click', function() { showExample(btn.getAttribute('data-key')); });
-    });
-    document.querySelectorAll('.l3-trick').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            runTrick(btn.getAttribute('data-key'));
-        });
-    });
-    document.getElementById('l3-trick-run').addEventListener('click', function() {
-        runTrick(document.getElementById('l3-trick-input').value.trim() || 'test');
-    });
-    document.getElementById('l3-diagram-btn').addEventListener('click', showDiagram);
-    document.getElementById('l3-ac-input').addEventListener('input', updateAutocomplete);
-
-    setTab('strengths');
-    updateAutocomplete();
-})();
-</script>
 
 </body>
 </html>
