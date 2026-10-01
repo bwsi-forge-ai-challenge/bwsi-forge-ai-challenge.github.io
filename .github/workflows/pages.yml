@@ -39,8 +39,9 @@ jobs:
           mkdir _site
           rsync -a --exclude '.git' --exclude '.github' --exclude '_site' --exclude '.DS_Store' ./ _site/
           while IFS= read -r p; do
-            [ -n "$p" ] && rm -rf "_site/$p"
+            if [ -n "$p" ]; then rm -rf "_site/$p"; fi
           done <<< "$UNPUBLISHED"
+          test ! -e "_site/Lessons/1_foundations_of_genai"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
