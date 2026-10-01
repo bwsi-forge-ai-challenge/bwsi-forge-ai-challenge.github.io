@@ -1,16 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Transformers: Putting It All Together</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transformers: Putting It All Together · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
 </head>
-<body>
+<body class="genai">
 
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Tokens, Embeddings &amp; Transformers</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Tokens, Embeddings &amp; Transformers</p>
     <h1>Transformers: Putting It All Together</h1>
+    <p class="lede">Lessons 1–3 covered tokenization, embeddings, and attention in isolation. A <b>transformer</b> stacks these pieces into a trainable system that reads a token sequence and predicts what comes next. This lesson walks through the full pipeline — from text to logits — and shows how autoregressive models like GPT generate one token at a time.</p>
+  </header>
 
-    <p>Lessons 1–3 covered tokenization, embeddings, and attention in isolation. A <b>transformer</b> stacks these pieces into a trainable system that reads a token sequence and predicts what comes next. This lesson walks through the full pipeline — from text to logits — and shows how autoregressive models like GPT generate one token at a time.</p>
-
-    <hr>
-
+  <section>
     <h2>1. Architecture Overview</h2>
     <p>A transformer processes text through repeated <b>layers</b>. Each layer applies self-attention (tokens exchange information) plus a feed-forward network (per-token refinement). GPT-3 stacks <b>96</b> such layers; GPT-2 small uses <b>12</b>.</p>
     <p>Training objective: predict the <b>next token</b>. At inference, sample or argmax one token, append it, repeat.</p>
@@ -31,9 +47,9 @@
             </td>
         </tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. The Full Pipeline: "The cat sat"</h2>
     <ol>
         <li><b>Tokenize:</b> <span style="font-family:monospace;">["The", " cat", " sat"]</span> → IDs <span style="font-family:monospace;">[50, 3277, 2521]</span></li>
@@ -45,9 +61,9 @@
         <li><b>Softmax:</b> probabilities over all next tokens</li>
         <li><b>Sample / argmax:</b> e.g. <b>" on"</b> → sequence becomes "The cat sat on"</li>
     </ol>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. Inside One Transformer Block</h2>
     <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Step</th><th>Component</th><th>What it does</th><th>Shape</th></tr>
@@ -75,9 +91,9 @@
     </svg>
 
     <p><b>Depth intuition:</b> early layers often capture local syntax; deeper layers integrate semantics and task-specific patterns. Representations refine layer by layer — not a strict partition, but a useful mental model.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Autoregressive Generation</h2>
     <p>GPT-style models are <b>decoder-only</b> and <b>causal</b>: when predicting token <i>t</i>, attention is masked so position <i>t</i> cannot see future tokens. Generation loop:</p>
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;font-family:monospace;font-size:0.88em;">
@@ -87,9 +103,9 @@
         <tr><td>3</td><td>The cat sat on the</td><td>mat</td></tr>
     </table>
     <p>Stop at max length or a special end-of-text token.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>5. Transformers vs RNNs</h2>
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Property</th><th>RNN / LSTM</th><th>Transformer</th></tr>
@@ -98,9 +114,9 @@
         <tr><td>Scale</td><td>Harder to scale to huge data</td><td>Scaling laws favor bigger models + data</td></tr>
         <tr><td>Attention</td><td>Hand-designed gates</td><td>Learned softmax attention</td></tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>6. Limitations and Quirks</h2>
     <ul>
         <li><b>Context window:</b> fixed max length (e.g. 4K–128K tokens). Beyond that → truncate, summarize, or chunk.</li>
@@ -109,9 +125,9 @@
         <li><b>O(n²) attention:</b> long sequences are compute-heavy.</li>
         <li><b>Causal masking (GPT):</b> cannot look ahead during training; encoder-decoder models (T5) use bidirectional encoding on input.</li>
     </ul>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>7. Sizes and Scales</h2>
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Model</th><th>Params</th><th>Layers</th><th>Hidden size</th></tr>
@@ -133,9 +149,9 @@
             </td>
         </tr>
     </table>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>8. Interactive Sandbox: Transformer Walkthrough</h2>
     <p>Simulated GPT-2-style pipeline with illustrative logits and attention. Shapes and IDs match Lesson 1–3 examples where possible.</p>
 
@@ -213,8 +229,6 @@
         <strong>Status:</strong> <span id="tf-status">Choose a tab to explore the full transformer stack.</span>
     </div>
 
-    <hr>
-
     <!--<h2>9. Activities</h2>
     <ol>
         <li><strong>Token-by-token:</strong> Generate from "The cat sat on" — when does output stop making sense?</li>
@@ -223,14 +237,32 @@
         <li><strong>Attention shift:</strong> In Layer Evolution, compare layer 1 vs layer 12 — what changed?</li>
         <li><strong>Weird prompt:</strong> Try "The pizza was a sentient" and generate several tokens.</li>
     </ol>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Recommended Learning Resources</h2>
     <ul>
         <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> GPT-3 scale and behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv paper</a></li>
         <li><strong>Scaling Laws for Neural Language Models (Kaplan et al., 2020):</strong> Parameter/data scaling trends. <a href="https://arxiv.org/abs/2001.08361" target="_blank">arXiv paper</a></li>
     </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson3_attention.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Attention: The Key Innovation</span>
+    </a>
+    <a class="pager__next" href="../training_&amp;_tradeoffs/lesson1_how_do_llms_actually_learn.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">How Do LLMs Actually Learn?</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
 
 <script>
 (function() {

@@ -1,138 +1,41 @@
-<div class="genai-lesson-container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Is Generative AI? · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
 
-    <style>
-        .genai-lesson-container {
-            line-height: 1.6;
-            color: #1e293b;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 32px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-        .genai-lesson-container .highlight-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
-        .genai-lesson-container .interactive-box { background: #f4faf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top; }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container button { padding: 8px 12px; margin: 4px 2px 4px 0; border: 1px solid #cbd5e1; background: white; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b; }
-        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
-        .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-        .genai-lesson-container button.primary:hover { background: #1d4ed8; }
-        .genai-lesson-container button.correct { border-color: #16a34a; background: #dcfce7; }
-        .genai-lesson-container figure { margin: 16px 0; }
-        .genai-lesson-container figure.figure-wide {
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-        }
-        .genai-lesson-container figure img { display: block; max-width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .genai-lesson-container figure.figure-wide img {
-            max-width: none;
-            width: 100%;
-            min-width: 520px;
-        }
-        .genai-lesson-container figure audio {
-            display: block; width: 100%; max-width: 560px; margin: 8px 0;
-        }
-        .genai-lesson-container figcaption { font-size: 0.85em; color: #64748b; margin-top: 8px; }
-        .genai-lesson-container figure video {
-            display: block; width: 100%; max-width: 560px; margin: 0 auto;
-            border: 1px solid #cbd5e1; border-radius: 6px;
-        }
-        .genai-lesson-container .timeline-item {
-            border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 20px 0; background: #fff;
-        }
-        .genai-lesson-container .timeline-item h3 { margin-top: 0; color: #1e3a8a; }
-        .genai-lesson-container .timeline-year { font-size: 0.85em; color: #64748b; font-weight: 600; letter-spacing: 0.03em; }
-        .genai-lesson-container .demo-panel {
-            background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px;
-            min-height: 90px; font-family: Georgia, "Times New Roman", serif; font-size: 1.05em;
-            line-height: 1.7; color: #334155;
-        }
-        .genai-lesson-container .demo-token-new { background: #dbeafe; border-radius: 3px; padding: 0 2px; }
-        .genai-lesson-container .eq-panel {
-            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 0.95em;
-        }
-        .genai-lesson-container .lab-note { font-size: 0.88em; color: #475569; margin-top: 10px; }
-        .genai-lesson-container .prob-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 0.88em; }
-        .genai-lesson-container .prob-label { width: 80px; font-family: monospace; flex-shrink: 0; }
-        .genai-lesson-container .prob-track { flex: 1; height: 16px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-        .genai-lesson-container .prob-fill { height: 100%; background: #3b82f6; border-radius: 3px; }
-        .genai-lesson-container .prob-fill.chosen { background: #16a34a; }
-        .genai-lesson-container .prob-pct { width: 44px; text-align: right; color: #64748b; flex-shrink: 0; }
-        .genai-lesson-container .guess-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-        .genai-lesson-container .mask-blank {
-            display: inline-block; background: #fef3c7; border: 2px dashed #f59e0b;
-            padding: 2px 10px; border-radius: 4px; font-weight: 600;
-        }
-        .genai-lesson-container .chatbot-steps { margin: 12px 0 16px 1.2em; padding: 0; }
-        .genai-lesson-container .chatbot-steps li { margin: 8px 0; }
-        .genai-lesson-container .prompt-trial {
-            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; margin: 14px 0; background: #fff;
-        }
-        .genai-lesson-container .prompt-trial h4 { margin: 0 0 6px; font-size: 0.95em; color: #1e3a8a; }
-        .genai-lesson-container .prompt-trial .trial-type { font-size: 0.82em; color: #64748b; margin: 0 0 8px; }
-        .genai-lesson-container .prompt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; margin-top: 8px; }
-        .genai-lesson-container .prompt-row .prompt-box { flex: 1; min-width: 200px; margin: 0; }
-        .genai-lesson-container .reflect-label {
-            display: block; font-weight: 600; font-size: 0.92em; margin: 14px 0 6px; color: #334155;
-        }
-        .genai-lesson-container .reflect-input {
-            width: 100%; box-sizing: border-box; min-height: 72px; padding: 10px 12px;
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.92em;
-            line-height: 1.5; resize: vertical;
-        }
-        .genai-lesson-container .reflect-checklist { margin: 12px 0 0; padding: 0; list-style: none; }
-        .genai-lesson-container .reflect-checklist li { margin: 8px 0; font-size: 0.92em; }
-        .genai-lesson-container .reflect-checklist label { cursor: pointer; }
-        .genai-lesson-container button.copied { border-color: #16a34a; background: #dcfce7; }
-        .genai-lesson-container .modality-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;
-        }
-        @media (max-width: 640px) { .genai-lesson-container .modality-grid { grid-template-columns: 1fr; } }
-        .genai-lesson-container .prompt-box {
-            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
-            padding: 10px 14px; font-family: monospace; font-size: 0.9em; margin: 8px 0;
-        }
-        .genai-lesson-container .example-block { margin: 20px 0; }
-        .genai-lesson-container .modality-card {
-            border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #fff;
-        }
-        .genai-lesson-container .modality-card h3 { margin-top: 0; font-size: 1.05em; }
-        .genai-lesson-container .modality-card .tool-name { font-size: 0.88em; color: #64748b; margin-bottom: 8px; }
-        .genai-lesson-container .modality-cards {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 16px 0;
-        }
-        .genai-lesson-container .timeline-arrow { text-align: center; color: #94a3b8; font-size: 1.4em; margin: 4px 0; line-height: 1; }
-        .genai-lesson-container .wrong-answer {
-            background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;
-            padding: 12px 14px; font-size: 0.95em; color: #7f1d1d; margin: 10px 0;
-        }
-        .genai-lesson-container .wrong-answer strong { color: #b91c1c; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
-        .genai-lesson-container .math-details-toggle {
-            margin: 16px 0; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 0.92em; color: #475569;
-        }
-        .genai-lesson-container .math-details-toggle[open] { background: #fff; padding-bottom: 16px; }
-        .genai-lesson-container .math-details-toggle summary { font-weight: 600; outline: none; margin-bottom: 4px; }
-    </style>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>What Is GenAI?</span>
+    </nav>
+  </div>
+</header>
 
-    <h1>Chapter 1: What Is Generative AI?</h1>
+<main class="page">
 
-    <p>Imagine asking your computer to write a story, create a logo, compose a song, or help explain a difficult homework problem. Not long ago, those kinds of tasks would have seemed impossible for a computer. Today, they can often be done in just a few seconds.</p>
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · What Is GenAI?</p>
+    <h1>What Is Generative AI?</h1>
+    <p class="lede">Imagine asking your computer to write a story, create a logo, compose a song, or help explain a difficult homework problem. Not long ago, those kinds of tasks would have seemed impossible for a computer. Today, they can often be done in just a few seconds.</p>
+  </header>
 
+  <section>
     <p>What changed? Modern AI systems can do more than recognize or organize information. They can <strong>create</strong> something entirely new. That's where the term <strong>Generative AI</strong> comes from.</p>
 
     <p>You've probably already used a generative AI tool, whether it was asking ChatGPT a question, generating an image from a short prompt, or getting help writing an email. Instead of simply looking up an existing answer, these systems generate a new response based on what they've learned from large amounts of data.</p>
 
     <p>In this chapter, you'll learn what makes generative AI different from earlier types of AI, what kinds of problems it can solve, and why it has become one of the fastest-growing technologies in the world.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. What Does "Generate" Actually Mean?</h2>
 
     <p>When people first hear about AI, it's easy to think of it as a smarter version of a search engine. After all, both can answer questions and provide information.</p>
@@ -171,9 +74,9 @@
             <figcaption>Sample generated by Meta's MusicGen from the prompt above—percussion, brass, and strings created together, not copied from a recording.</figcaption>
         </figure>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. A Different Kind of AI</h2>
     
     <p>Not all AI systems do the same job. Before generative AI became popular, most AI was designed to recognize patterns and make decisions, not create new content.</p>
@@ -227,9 +130,9 @@
         </div>
         <p class="lab-note">This demo replays a fixed poem to show the pattern. Real models like ChatGPT compute fresh probabilities at every step. We'll learn how later in the course.</p>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. Why Is Everyone Talking About Generative AI?</h2>
     
     <p>Artificial intelligence has been part of our everyday lives for years, even if we didn't always notice it. Long before tools like ChatGPT became popular, AI was quietly helping power many of the apps and services people use every day.</p>
@@ -327,14 +230,14 @@
             <figcaption>Sora sample (OpenAI): entirely generated from a text command requesting a kangaroo strolling in Mumbai at sunset.</figcaption>
         </figure>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. How Is This Different from Searching the Internet?</h2>
     
     <p>It's common to think of ChatGPT as "Google that talks back," but the two tools are designed for completely different purposes.</p>
     
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Search Engine</th>
             <th>Generative AI</th>
@@ -355,16 +258,16 @@
             <td><strong>Retrieves information</strong></td>
             <td><strong>Generates information</strong></td>
         </tr>
-    </table>
+    </table></div>
     
     <p>That doesn't mean one is better than the other—they're useful for different tasks.</p>
     
     <p>If you want to find the official rules for a game, check today's weather, or read a specific news article, a search engine is usually the best choice because it points you directly to primary historical sources.</p>
     
     <p>If you want help writing an essay, explaining a difficult concept, brainstorming ideas, or creating an image from your imagination, generative AI is often the better tool because it creates something brand new instead of simply finding static information.</p>
-    
-    <hr>
+  </section>
 
+  <section>
     <h2>5. Is Generative AI Always Correct?</h2>
     
     <p>Generative AI can produce impressive answers, but that doesn't mean every answer is accurate. These models are designed to predict what is statistically most likely to come next, not to check whether every statement matches real-world truth.</p>
@@ -384,9 +287,9 @@
     <p style="margin-top: 16px;">This example highlights an essential limitation of generative AI. The model isn't cross-checking a live database or checking an encylopedia before it spits out characters. It is simply generating words matching structural language patterns.</p>
     
     <p>That's why it's always critical to verify important information, especially when you're using AI for school assignments, code deployments, medical queries, or financial decisions.</p>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>6. What Kinds of Generative AI Exist?</h2>
 
     <div class="modality-cards">
@@ -425,9 +328,9 @@
             <p>Generate and explain software code while you work.</p>
         </div>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>7. Try It Yourself</h2>
 
     <h3>Guess the next word</h3>
@@ -459,7 +362,7 @@
             <h4>1. Math question</h4>
             <p class="trial-type">Multi-step arithmetic—you can verify the final dollar amount with a calculator.</p>
             <div class="prompt-row">
-                <div class="prompt-box" id="l1-prompt-math">A store buys a jacket for $48, marks it up by 35%, then puts it on sale for 20% off the marked price. After the discount, an 8% sales tax is added. What does the customer pay? Show every step and give a final amount rounded to the nearest cent.</div>
+                <div class="prompt-box" id="l1-prompt-math">A store buys a jacket for \$48, marks it up by 35%, then puts it on sale for 20% off the marked price. After the discount, an 8% sales tax is added. What does the customer pay? Show every step and give a final amount rounded to the nearest cent.</div>
                 <button type="button" class="l1-copy-prompt" data-target="l1-prompt-math">Copy prompt</button>
             </div>
         </div>
@@ -500,9 +403,9 @@
         </ul>
         <p id="l1-reflect-status" class="lab-note"></p>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>8. What Will We Learn in This Course?</h2>
     
     <p>This chapter introduced the big idea behind generative AI: instead of simply recognizing information, these models can create new text, images, music, code, and more.</p>
@@ -521,15 +424,33 @@
     <p>We'll build up these ideas one step at a time, starting with the fundamentals before exploring the models behind today's most powerful AI systems.</p>
     
     <p>For now, remember one key idea: <strong>Generative AI learns patterns from data so it can create something new, rather than simply identifying or classifying what it sees.</strong></p>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>Further Exploration</h2>
     <ul>
         <li><strong>Jay Alammar's Illustrated AI blog:</strong> Friendly visual guides to Transformers, GPT, and diffusion. <a href="https://jalammar.github.io/" target="_blank">jalammar.github.io</a></li>
     </ul>
+  </section>
 
-    <script>
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../../0_prerequisites/DeepDiveIntoSelectedModel/UnitQuiz.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Unit Quiz: Deep Dive</span>
+    </a>
+    <a class="pager__next" href="lesson2_generative_vs_discriminative_models.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Generative vs. Discriminative Models</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
     function initLesson1() {
         var PROMPT = 'Write a poem about a sad robot';
         var POEM = [
@@ -751,4 +672,6 @@
         initLesson1();
     }
     </script>
-</div>
+
+</body>
+</html>

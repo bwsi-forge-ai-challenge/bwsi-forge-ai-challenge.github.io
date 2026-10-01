@@ -1,14 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Attention: The Key Innovation</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attention: The Key Innovation · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
 </head>
-<body>
+<body class="genai">
 
-<div class="genai-lesson-container">
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Tokens, Embeddings &amp; Transformers</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Tokens, Embeddings &amp; Transformers</p>
     <h1>Attention: The Key Innovation</h1>
-    <hr>
-    
+    <p class="lede">Attention lets a model connect each word to the other words in a sentence that help explain it. This lesson builds it up from the intuition to the math of queries, keys and values.</p>
+  </header>
+
+  <section>
     <p>Think about reading a story. Early on, you're introduced to a character named Alice. Dozens of pages later, you read the sentence, "She opened the door." Without thinking about it, you know that "she" refers to Alice. Even though many pages separate the two, your brain quickly connects them.</p>
     
     <p>Language is full of these long-distance connections. We naturally figure out which words relate to one another and use that context to understand what's being said.</p>
@@ -21,9 +40,9 @@
         <figcaption>Self-attention lets a later word pull information from an earlier one. Here <em>it</em> links to <em>animal</em>, just as <em>She</em> would link to <em>Alice</em> in our opening example.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>1. Let's Start With a Problem</h2>
     
     <p>Take a look at this sentence:</p>
@@ -42,9 +61,9 @@
     <div class="highlight-box" style="background:#f8fafc;border-left:4px solid #3b82f6;padding:15px;margin:20px 0;">
         <strong>The challenge:</strong> The meaning of a word depends on its context. If an AI only looks at one word at a time, or only pays attention to a few nearby words, it can easily misunderstand the sentence. We need a way for every word to find and use the other words that matter, even if they're far apart.
     </div>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>2. Why Couldn't The RNN Model Handle This?</h2>
     
     <p>Previously, you learned about <strong>Recurrent Neural Networks (RNNs)</strong>. An RNN reads a sentence one word at a time, moving from left to right while carrying a hidden "memory" of everything it has seen so far.</p>
@@ -76,9 +95,9 @@
     <p>This is closely related to a training issue called the <strong>vanishing gradient problem</strong>, which you learned about in a previous lesson. In practice, it makes learning long-range relationships much more difficult.</p>
     
     <p><strong>Attention</strong> takes a completely different approach. Instead of relying on a memory that gets passed from one word to the next, every word can directly look at the other words in the sentence whenever it needs more context. It doesn't matter whether those words are right next to each other or many words apart.</p>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>3. The Big Idea: Every Word Asks a Question</h2>
     
     <p>Before we introduce the math behind attention, let's build some intuition.</p>
@@ -116,9 +135,9 @@
         <figcaption>To understand one word (here, the first word in the sentence), the model compares its Query against every Key and assigns higher scores to more helpful neighbors — the same idea as <em>bank</em> scoring <em>executive</em> highly.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>4. Turning the Idea Into Math (Gently)</h2>
     
     <p>Now that you have the intuition, let's see how a computer actually performs attention. The good news is that the process is much simpler than it might sound. We'll build it one step at a time.</p>
@@ -185,7 +204,7 @@
   \[\alpha_{ij} = \frac{e^{s'_{ij}}}{Z_i}\]
 
     \[Z_i = \sum_{j} e^{s'_{ij}}\]
-    </div>
+    
     <p>Each weight \(\alpha_{ij}\) is between 0 and 1, and for a fixed row <var>i</var> the weights add up to 1. Dividing by \(\sqrt{d_k}\) keeps the dot products from growing too large (this scaling appears in the original Transformer paper).</p>
 
     <h3>Step 4: Combine information from the important words</h3>
@@ -230,9 +249,9 @@
         <figcaption>The four steps combined in matrix form: Q, K, V → scores → softmax → weighted sum of V.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
-    
-    <hr>    
+  </section>
 
+  <section>
     <h2>5. Walking Through a Real Example</h2>
     
     <p>Let's see what attention looks like in practice using the sentence:</p>
@@ -321,9 +340,9 @@
         </ul>
         <p style="margin-bottom:0;font-size:0.92em;color:#64748b;">You do not need to memorize every symbol. The key takeaway: attention = <em>weighted lookup</em> over the sentence, learned from data.</p>
     </div>
-    
-    <hr>    
+  </section>
 
+  <section>
     <h2>6. Why Does Attention Work So Well?</h2>
     
     <p>Attention solved several problems that had limited earlier language models. Here are some of the biggest advantages.</p>
@@ -344,9 +363,9 @@
         <figcaption>Every word in the sentence flows through the same encoder layer in parallel — self-attention first, then a feed-forward network — which is why Transformers scale well on GPUs.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
-    
-    <hr>
-    
+  </section>
+
+  <section>
     <h2>7. Looking at a Sentence from More Than One Perspective</h2>
     
     <p>So far, we've described attention as if there were only one attention mechanism. In reality, modern Transformers use <strong>multiple attention heads</strong> at the same time.</p>
@@ -371,9 +390,9 @@
         <figcaption>Multi-head attention runs several Q/K/V projections in parallel, then concatenates and projects the results into one combined representation. Scroll horizontally on narrow screens to read all step labels.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
-    
-    <hr>    
+  </section>
 
+  <section>
     <h2>8. One More Piece: How Does the Model Know Word Order?</h2>
     
     <p>So far, we've seen how attention decides <em>which</em> words are important. But there's one important question left:</p>
@@ -414,9 +433,9 @@
     <p style="font-size:0.9em;color:#64748b;">
     Each position in the sentence is assigned its own numerical encoding. This positional information is added to the word embedding before the attention mechanism begins, allowing the model to distinguish between identical words that appear in different places.
     </p>
-    
-    <hr>    
+  </section>
 
+  <section>
     <h2>9. Try It Yourself: Self-Attention Visualizer</h2>
     <p>This activity runs a real <strong>MiniLM</strong> encoder (22M-parameter BERT-style model) in your browser using <a href="https://huggingface.co/docs/transformers.js" target="_blank">Transformers.js</a>. It uses the model’s <strong>WordPiece tokenizer</strong> and real learned <strong>Query–Key attention</strong> from the final layer (averaged across 12 heads).</p>
 
@@ -437,9 +456,9 @@
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:4px;font-size:0.9em;margin-top:12px;">
         <strong>What to look for:</strong> Subword pieces like <span style="font-family:monospace;">bank</span> or <span style="font-family:monospace;">##ed</span> are separate tokens. Attention patterns come from trained weights—not hand rules—so they may differ from our textbook examples, especially on ambiguous words.
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Recommended Learning Resources</h2>
     <ul>
         <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> The original research paper that introduced this idea. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv paper</a></li>
@@ -447,6 +466,24 @@
         <li><strong>BERTViz:</strong> An interactive tool for visualizing attention in real, full-size models. <a href="https://github.com/jessevig/bertviz" target="_blank">GitHub</a></li>
         <li><strong>Attention? Attention! (Lilian Weng):</strong> A deeper survey of different attention mechanisms used in deep learning. <a href="https://lilianweng.github.io/posts/2018-06-24-attention/" target="_blank">Blog post</a></li>
     </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson2_embeddings.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Embeddings: Meaning in Vector Space</span>
+    </a>
+    <a class="pager__next" href="lesson4_transformers.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Transformers: Putting It All Together</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
 
 <script>
 (function () {
@@ -670,8 +707,6 @@
     boot();
 })();
 </script>
-
-</div>
 
 </body>
 </html>

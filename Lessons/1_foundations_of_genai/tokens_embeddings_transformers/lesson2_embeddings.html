@@ -1,60 +1,41 @@
-<div class="genai-lesson-container">
-    <!--<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embeddings: Meaning in Vector Space · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
 
-    <style>
-        /* Scoped to isolate block parameters from your main parent template */
-        .genai-lesson-container { 
-            line-height: 1.6; 
-            color: #1e293b; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 30px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 20px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0; }
-        .genai-lesson-container code { font-family: monospace; background-color: #f1f5f9; padding: 2px 5px; border-radius: 4px; font-size: 0.9em; color: #0f172a; }
-        
-        /* Layout Elements & Alert Boxes */
-        .genai-lesson-container .highlight-box { background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
-        .genai-lesson-container .interactive-box { background-color: #f4faf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .genai-lesson-container .math-card { background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; margin: 15px 0; }
-        
-        /* Scoped Data Representation Tables */
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .genai-lesson-container th, .genai-lesson-container td { border: 1px solid #cbd5e1; padding: 12px; text-align: left; }
-        .genai-lesson-container th { background-color: #f1f5f9; color: #334155; }
-        
-        /* Form Components & Buttons */
-        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: bold; margin-top: 10px; }
-        .genai-lesson-container button { padding: 8px 12px; margin: 4px 2px; border: 1px solid #cbd5e1; background: white; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b; }
-        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
-        .genai-lesson-container select { padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #1e293b; }
-        .genai-lesson-container input[type="text"] { padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; color: #1e293b; }
-        
-        /* Component Configurations for Sandbox Split Interface */
-        .genai-em-tab-wrapper { margin: 25px 0 10px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
-        .genai-sandbox-card { border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background: white; }
-        .genai-split-layout { display: flex; flex-direction: row; min-height: 340px; }
-        .genai-layout-left { flex: 1; padding: 20px; background-color: #f8fafc; border-right: 1px solid #cbd5e1; }
-        .genai-layout-right { flex: 1.3; padding: 20px; background: white; }
-        
-        @media (max-width: 650px) {
-            .genai-split-layout { flex-direction: column; }
-            .genai-layout-left { border-right: none; border-bottom: 1px solid #cbd5e1; }
-        }
-    </style>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Tokens, Embeddings &amp; Transformers</span>
+    </nav>
+  </div>
+</header>
 
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Tokens, Embeddings &amp; Transformers</p>
     <h1>Embeddings: Meaning in Vector Space</h1>
+    <p class="lede">Token IDs are index numbers with no meaning of their own. This lesson shows how embeddings turn each token into a vector, so that words with related meanings end up close together.</p>
+  </header>
+
+  <section>
+    <!--<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>-->
 
     <!-- <div class="highlight-box"> -->
         <strong>The Mathematical Dilemma:</strong> In the previous lesson, we transformed raw text tokens into standard index integers. However, numerical tokens are inherently empty values. To a model, Token ID 5000 and Token ID 5001 are isolated indices lacking any internal notion of relational context or similarity. To achieve true understanding, we must shift away from sequential numbers toward <strong>Embeddings</strong>: continuous, multi-dimensional floating-point vectors that map semantic relationships cleanly across a shared spatial geometry. Note that everything we are talking about in this section is in regards to text-to-text generation.
     <!-- </div> -->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. The Limitation of Arbitrary Integer Spaces</h2>
     <p>When compiling a basic token text dictionary, vocabulary words receive numerical indicators based entirely on structural sequencing or dataset appearance sorting. This creates major semantic issues:</p>
     <ul>
@@ -72,9 +53,9 @@
             <p style="margin-top: 5px; color: #047857;"><strong>Absolutely Not.</strong> Dictionary index sorting is purely a baseline tracking method. Real semantic relationship definitions come exclusively from learned spatial position metrics inside embedding weight arrays, entirely separate from the root integer tracking number.</p>
         </details>
     </div> -->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. Building Dense Feature Representations</h2>
     <p>An embedding matrix is a large, trainable lookup system. When given a token ID, it serves as a pointer to extract a precise vector of real numbers. While historical baseline configurations like GPT-2 utilized <strong>768 dimensions</strong> per token, enterprise frontier LLMs scale up to <strong>4,096 to 8,192+ dimensions</strong>.</p>
 
@@ -86,7 +67,7 @@
         <span style="background:#dcfce7; padding:4px 8px; border-radius:4px; font-family:monospace; font-weight:bold;">[0.82, 0.61, -0.15, ...]</span>
     </div>
 
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Token Input Target</th>
             <th>Assigned Token ID</th>
@@ -107,16 +88,16 @@
             <td><code>1203</code></td>
             <td><code>[-0.55, -0.48,  0.05, -0.33,  0.22 ]</code></td>
         </tr>
-    </table>
+    </table></div>
 
     <p>Crucially, these dimensional metrics are <strong>never programmed by hand</strong>. They are optimized dynamically via gradient descent updates during training. Individual coordinates do not align with isolated, human-labeled concepts like "gender" or "temperature." Instead, the complete combination of dimensions wraps deep mathematical relationships from text patterns into a dense geometric profile.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. The Geometry of Meaning</h2>
     <p>In this high-dimensional space, proximity mirrors semantics. Tokens that frequently share adjacent sentence structures in training data are progressively updated until their target vectors cluster close together.</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Concept Coordinate</th>
             <th>Illustrative Spatial Position Coordinates</th>
@@ -137,15 +118,15 @@
             <td><code>(-0.5, -0.5)</code></td>
             <td>fruit, carrot, food, orchard</td>
         </tr>
-    </table>
+    </table></div>
 
     <!-- <div style="display: flex; justify-content: center; flex-direction: column; align-items: center; margin: 20px 0;">
         <canvas id="em-static-plot" width="420" height="240" style="border:1px solid #cbd5e1; background:#fff; border-radius:6px;"></canvas>
         <span style="font-size:0.85em; color:#64748b; margin-top:5px;">2D Projection Preview: Royalty clusters (blue), human identities (green), and produce (orange).</span>
     </div> -->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Mathematical Analogies</h2>
     <p>Because these positions are standard numerical coordinates, we can perform vector arithmetic on word meanings. The classic example is:</p>
     <p style="text-align: center; font-size: 1.1em; font-weight: bold; color: #1e3a8a;">\[\vec{v}_{\text{king}} - \vec{v}_{\text{man}} + \vec{v}_{\text{woman}} \approx \vec{v}_{\text{queen}}\]</p>
@@ -175,19 +156,17 @@
             </ul>
         </div>
     </div>
+  </section>
 
-    <hr>
-
-    <hr>
-
+  <section>
     <h2>5. Contextualized Evolution: Navigating Homonyms</h2>
     <p>A major limitation of basic dictionary embeddings is their static nature: an isolated word token receives exactly one vector entry. This breaks when managing words with multiple meanings:</p>
     <p style="text-align: center; font-style: italic;">How can we map the word <strong>"bank"</strong> in both "river bank" and "investment bank"?</p>
     
     <p><strong>The Transformer Core Fix:</strong> While a word always pulls the same base lookup vector initial coordinates, subsequent internal <strong>Self-Attention Layers</strong> mathematically modify the initial state based on surrounding text context. This dynamically shifts the base coordinates toward the appropriate financial or nature neighborhoods before evaluating meaning.</p>
 
-    <table>
-        <tr bgcolor="#f1f5f9">
+    <div class="table-wrap"><table>
+        <tr>
             <th>Context String</th>
             <th>Dynamic Real-Time Vector Drift Response</th>
         </tr>
@@ -199,10 +178,10 @@
             <td>"I sat on the <strong>bank</strong> of the winding river."</td>
             <td>Vector coordinates drift toward the nature and geography cluster.</td>
         </tr>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>6. Interactive Sandbox: Deep Embedding Workspace</h2>
     <p>Explore how an AI interprets meaning. Select an identity word below to track its spatial coordinates, or combine vectors to solve semantic math formulas in real-time!</p>
 
@@ -251,14 +230,32 @@
             </td>
         </tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>7. Core Reading List</h2>
     <ul>
         <li><strong>Efficient Estimation of Word Representations in Vector Space (Word2Vec - Mikolov et al., 2013):</strong> The foundational research paper that proved semantic analogies could be computed using vector math. <a href="https://arxiv.org/abs/1301.3781" target="_blank">Download arXiv Paper</a></li>
         <li><strong>GloVe: Global Vectors for Word Representation (Pennington et al., 2014):</strong> Demonstrates how global matrix co-occurrence metrics map clean spatial structures. <a href="https://nlp.stanford.edu/projects/glove/" target="_blank">Access Stanford Project Page</a></li>
     </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson1_tokenization.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Tokenization: Breaking Text Into Pieces</span>
+    </a>
+    <a class="pager__next" href="lesson3_attention.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Attention: The Key Innovation</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
 
 <script>
 (function() {
@@ -466,4 +463,6 @@
     updateMap();
 })();
 </script>
-</div>
+
+</body>
+</html>

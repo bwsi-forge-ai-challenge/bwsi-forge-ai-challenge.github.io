@@ -1,95 +1,38 @@
-<div class="genai-lesson-container">
-    <style>
-        .genai-lesson-container {
-            line-height: 1.6;
-            color: #1e293b;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-        .genai-lesson-container .highlight-box {
-            background: #f8fafc; border-left: 4px solid #3b82f6;
-            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
-        }
-        .genai-lesson-container .assignment-box {
-            background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
-        }
-        .genai-lesson-container .interactive-box {
-            background: #f4faf4; border: 1px solid #bbf7d0;
-            border-radius: 8px; padding: 20px; margin: 20px 0;
-        }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td {
-            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
-        }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container .diagram-wrap {
-            overflow-x: auto; margin: 16px 0; text-align: center;
-        }
-        .genai-lesson-container .diagram-wrap svg {
-            display: block; max-width: 100%; height: auto; margin: 0 auto;
-            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
-        }
-        .genai-lesson-container figcaption {
-            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
-        }
-        .genai-lesson-container .question-card {
-            border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;
-            margin: 14px 0; background: #fff;
-        }
-        .genai-lesson-container .question-card h3 { margin-top: 0; font-size: 1.05em; color: #1e3a8a; }
-        .genai-lesson-container .question-num {
-            display: inline-block; background: #dbeafe; color: #1e40af;
-            font-size: 0.78em; font-weight: 700; padding: 2px 8px;
-            border-radius: 4px; margin-bottom: 8px; letter-spacing: 0.04em;
-        }
-        .genai-lesson-container .reflect-label {
-            display: block; font-weight: 600; font-size: 0.92em; margin: 14px 0 6px; color: #334155;
-        }
-        .genai-lesson-container .reflect-input {
-            width: 100%; box-sizing: border-box; min-height: 72px; padding: 10px 12px;
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
-            font-size: 0.92em; line-height: 1.5; resize: vertical;
-        }
-        .genai-lesson-container details { margin: 10px 0; }
-        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; font-size: 0.92em; }
-        .genai-lesson-container .step-list {
-            counter-reset: ftstep; list-style: none; padding: 0; margin: 16px 0;
-        }
-        .genai-lesson-container .step-list li {
-            counter-increment: ftstep; position: relative; padding: 0 0 16px 44px; margin: 0;
-        }
-        .genai-lesson-container .step-list li::before {
-            content: counter(ftstep); position: absolute; left: 0; top: 0;
-            width: 28px; height: 28px; line-height: 28px; text-align: center;
-            background: #2563eb; color: #fff; border-radius: 50%; font-size: 0.85em; font-weight: 700;
-        }
-        .genai-lesson-container .project-card {
-            border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px;
-            margin: 16px 0; background: #fafafa;
-        }
-        .genai-lesson-container .project-card h4 { margin: 0 0 8px; color: #0f172a; }
-        .genai-lesson-container .footnote { font-size: 0.85em; color: #64748b; margin-top: 8px; }
-        .genai-lesson-container ol { padding-left: 1.4em; }
-        .genai-lesson-container li { margin-bottom: 6px; }
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Putting It Together: Choosing the Right Model · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body class="genai">
 
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Training &amp; Tradeoffs</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Training &amp; Tradeoffs</p>
     <h1>Putting It Together: Choosing the Right Model</h1>
+    <p class="lede">Lessons 1–3 covered three pillars of real-world LLM decisions: <strong>how models are trained</strong>, <strong>how much context they can see</strong>, and <strong>what speed and cost you pay</strong>. This lesson ties those threads into one practical framework — the same kind of thinking you'll use in the upcoming hands-on assignment.</p>
+  </header>
 
-    <p>Lessons 1–3 covered three pillars of real-world LLM decisions: <strong>how models are trained</strong>, <strong>how much context they can see</strong>, and <strong>what speed and cost you pay</strong>. This lesson ties those threads into one practical framework — the same kind of thinking you'll use in the upcoming hands-on assignment.</p>
-
+  <section>
     <div class="assignment-box">
         <strong>Before the assignment:</strong> You will fine-tune a model, track experiments, and compare runs. This page is your cheat sheet for <em>why</em> those choices matter — not just <em>how</em> to click through a notebook.
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. Three Questions to Ask Before Choosing a Model</h2>
 
     <p>Every product decision starts with constraints. Before you pick "GPT-4" or "fine-tune Llama" by default, run through these three questions:</p>
@@ -118,7 +61,7 @@
         <p>Don't use a sledgehammer for a thumbtack. Start small, measure, escalate only when metrics justify it.</p>
     </div>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Question</th><th>Lean smaller / cheaper when…</th><th>Lean bigger / fine-tuned when…</th></tr>
         </thead>
@@ -139,10 +82,10 @@
                 <td>Multi-hop reasoning, novel domain jargon, strict style</td>
             </tr>
         </tbody>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. Base Model vs. Fine-Tuned — When Do You Need Which?</h2>
 
     <p>From Lesson 1: a <strong>base model</strong> (or a general instruction-tuned API like ChatGPT) already absorbed broad language knowledge during pretraining. A <strong>fine-tuned model</strong> gets extra training on <em>your</em> examples to specialize behavior.</p>
@@ -288,9 +231,9 @@
 </svg>
         <figcaption>Decision tree: prompt-first, fine-tune only when you have a narrow gap and enough data. Model size is a separate axis.</figcaption>
     </figure>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. What Fine-Tuning Looks Like in Practice</h2>
 
     <p>Fine-tuning is not mysterious — it's the same gradient-descent loop from Lesson 1, just on a small curated dataset and for far fewer steps than pretraining.</p>
@@ -303,7 +246,7 @@
         <li><strong>Log everything</strong> — hyperparameters, loss curves, eval scores — so you can compare runs and reproduce what worked.</li>
     </ol>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Phase</th><th>Pretraining (Lesson 1)</th><th>Fine-tuning (your assignment)</th></tr>
         </thead>
@@ -313,12 +256,12 @@
             <tr><td>Weight changes</td><td>Large, from random init</td><td>Small nudges on a capable base</td></tr>
             <tr><td>Success metric</td><td>Low general loss</td><td>High score on <em>your</em> task eval</td></tr>
         </tbody>
-    </table>
+    </table></div>
 
     <p>Fine-tuning involves lots of trial and error: learning rate too high → model diverges; too low → no improvement; too many epochs → overfits your tiny set. That is why experiment tracking is not optional — it is how professionals remember what they already tried.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Introducing Weights &amp; Biases (W&amp;B)</h2>
 
     <p><strong>Weights &amp; Biases</strong> (W&amp;B) is an experiment-tracking platform used across industry and research. When you fine-tune in the assignment, you'll log runs to W&amp;B and see dashboards like the mockup below.</p>
@@ -430,13 +373,33 @@
     <div class="assignment-box">
         <strong>Next up:</strong> Hands-on fine-tuning. You will build a dataset, train a model, log runs to W&amp;B, and compare results. Return to this page if you get stuck on <em>whether</em> to change the model vs. the learning rate vs. the data.
     </div>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Recommended Reading</h2>
     <ul>
         <li><strong>Weights &amp; Biases documentation:</strong> <a href="https://docs.wandb.ai/" target="_blank">docs.wandb.ai</a> — quickstart for logging training runs</li>
         <li><strong>OpenAI fine-tuning guide:</strong> Practical notes on when fine-tuning helps vs. prompting. <a href="https://platform.openai.com/docs/guides/fine-tuning" target="_blank">OpenAI docs</a></li>
         <li><strong>Hugging Face Transformers fine-tuning tutorial:</strong> Code-level walkthrough aligned with many classroom assignments. <a href="https://huggingface.co/docs/transformers/training" target="_blank">HF docs</a></li>
     </ul>
-</div>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson3_latency_and_cost.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Latency and Cost: Why Bigger Isn’t Always Better</span>
+    </a>
+    <a class="pager__next" href="lesson5_assignment.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Assignment: Download, Run, and Fine-Tune a Real Model</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

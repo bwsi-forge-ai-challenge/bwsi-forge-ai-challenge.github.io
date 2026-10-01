@@ -1,104 +1,36 @@
-<div class="genai-lesson-container">
-    <style>
-        .genai-lesson-container {
-            line-height: 1.6;
-            color: #1e293b;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-        .genai-lesson-container .highlight-box {
-            background: #f8fafc; border-left: 4px solid #3b82f6;
-            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
-        }
-        .genai-lesson-container .interactive-box {
-            background: #f4faf4; border: 1px solid #bbf7d0;
-            border-radius: 8px; padding: 20px; margin: 20px 0;
-        }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td {
-            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
-        }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container .eq-panel {
-            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 6px; padding: 14px; margin: 16px 0;
-            font-family: Cambria, "Times New Roman", serif; font-size: 1.05em;
-        }
-        .genai-lesson-container .diagram-wrap {
-            overflow-x: auto; margin: 16px 0; text-align: center;
-        }
-        .genai-lesson-container .diagram-wrap svg {
-            display: block; max-width: 100%; height: auto; margin: 0 auto;
-            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
-        }
-        .genai-lesson-container figcaption {
-            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
-        }
-        .genai-lesson-container .reflect-label {
-            display: block; font-weight: 600; font-size: 0.92em; margin: 16px 0 6px; color: #334155;
-        }
-        .genai-lesson-container .reflect-input {
-            width: 100%; box-sizing: border-box; min-height: 80px; padding: 10px 12px;
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
-            font-size: 0.92em; line-height: 1.5; resize: vertical;
-        }
-        .genai-lesson-container details { margin: 12px 0; }
-        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
-        .genai-lesson-container var { font-style: italic; font-family: Cambria, "Times New Roman", serif; }
-        .genai-lesson-container .stat-pill {
-            display: inline-block; background: #e0e7ff; color: #3730a3;
-            padding: 2px 8px; border-radius: 4px; font-size: 0.88em; font-weight: 600;
-        }
-        .genai-lesson-container .compare-cols {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0;
-        }
-        @media (max-width: 640px) {
-            .genai-lesson-container .compare-cols { grid-template-columns: 1fr; }
-        }
-        .genai-lesson-container .compare-card {
-            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #fff;
-        }
-        .genai-lesson-container .compare-card h4 { margin: 0 0 10px; font-size: 0.95em; }
-        .genai-lesson-container .compare-card.local { border-top: 4px solid #16a34a; }
-        .genai-lesson-container .compare-card.api { border-top: 4px solid #2563eb; }
-        .genai-lesson-container .footnote {
-            font-size: 0.85em; color: #64748b; margin-top: 8px;
-        }
-        .genai-lesson-container .lc-input {
-            width: 100%; max-width: 200px; padding: 8px 10px; border: 1px solid #cbd5e1;
-            border-radius: 6px; font-size: 0.92em; box-sizing: border-box;
-        }
-        .genai-lesson-container .lc-row {
-            display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0;
-        }
-        .genai-lesson-container .lc-field { flex: 1; min-width: 140px; }
-        .genai-lesson-container .lc-result {
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 14px; margin-top: 14px;
-        }
-        .genai-lesson-container .lc-result-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.92em;
-        }
-        .genai-lesson-container .lc-result-row:last-child { border-bottom: none; }
-        .genai-lesson-container .lc-cost { font-weight: 700; color: #1d4ed8; }
-        .genai-lesson-container .lc-cost.high { color: #dc2626; }
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latency and Cost: Why Bigger Isn’t Always Better · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body class="genai">
 
-    <h1>Latency and Cost: Why Bigger Isn't Always Better</h1>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Training &amp; Tradeoffs</span>
+    </nav>
+  </div>
+</header>
 
-    <p>Lessons 1 and 2 covered <em>how</em> models are trained and <em>how much</em> text they can see at once. This lesson is about the decision you face every time you pick a model: <strong>how fast</strong> will it respond, and <strong>how much</strong> will it cost?</p>
+<main class="page">
 
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Training &amp; Tradeoffs</p>
+    <h1>Latency and Cost: Why Bigger Isn’t Always Better</h1>
+    <p class="lede">Lessons 1 and 2 covered <em>how</em> models are trained and <em>how much</em> text they can see at once. This lesson is about the decision you face every time you pick a model: <strong>how fast</strong> will it respond, and <strong>how much</strong> will it cost?</p>
+  </header>
+
+  <section>
     <p>Before your assignment — and before building anything real — you need a framework for matching model size to task complexity. The smartest model is rarely the right default.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. What Is Latency?</h2>
 
     <p><strong>Latency</strong> is the time between sending a prompt and receiving a useful response. Users feel it immediately: a chatbot that pauses for 5 seconds before every reply feels broken, even if the answer is perfect.</p>
@@ -131,12 +63,12 @@
             <line x1="530" y1="100" x2="530" y2="55" stroke="#2563eb" stroke-dasharray="3 2"/>
             <circle cx="530" cy="100" r="6" fill="#16a34a"/>
             <text x="530" y="125" text-anchor="middle" font-size="9" fill="#64748b">Done</text>
-            <text x="340" y="145" text-anchor="middle" font-size="10" fill="#475569">User waits through <em>both</em> phases — TTFT is especially noticeable in chat UIs</text>
+            <text x="340" y="145" text-anchor="middle" font-size="10" fill="#475569">User waits through <tspan font-style="italic">both</tspan> phases — TTFT is especially noticeable in chat UIs</text>
         </svg>
         <figcaption>Latency breakdown: TTFT (thinking before speaking) plus generation time (speaking speed). Longer outputs multiply the second phase.</figcaption>
     </figure>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Model tier (illustrative)</th><th>Typical TTFT</th><th>Typical throughput</th><th>Feel</th></tr>
         </thead>
@@ -146,11 +78,11 @@
             <tr><td>Large (e.g., Claude Sonnet)</td><td>~700 ms–1.5 s</td><td>30–60 tok/s</td><td>Noticeable on long replies</td></tr>
             <tr><td>Frontier (e.g., Claude Opus, GPT-5 class)</td><td>~1–3 s</td><td>20–40 tok/s</td><td>Powerful but patient users only</td></tr>
         </tbody>
-    </table>
+    </table></div>
     <p class="footnote">Numbers vary by region, provider load, prompt length, and batching. Treat as order-of-magnitude guides, not guarantees.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. What Drives Cost?</h2>
 
     <p>Most hosted LLM APIs charge <strong>per token</strong>. From Lesson 2: tokens are the billing unit, not words or characters.</p>
@@ -170,7 +102,7 @@
 
     <h3>Illustrative API pricing (mid-2026 list prices)</h3>
     <p class="footnote">Vendors change prices frequently. These are for comparison and classroom estimation — check official pricing pages before production decisions.</p>
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Tier</th><th>Example model</th><th>Input $/M tokens</th><th>Output $/M tokens</th></tr>
         </thead>
@@ -180,7 +112,7 @@
             <tr><td>Medium–large</td><td>Claude Sonnet 4.6</td><td>$3.00</td><td>$15.00</td></tr>
             <tr><td>Frontier</td><td>Claude Opus 4.6 / GPT-5 class</td><td>$5.00</td><td>$25.00</td></tr>
         </tbody>
-    </table>
+    </table></div>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 520 260" role="img" aria-label="Cost per million tokens across model tiers">
@@ -204,9 +136,9 @@
         </svg>
         <figcaption>Output token cost across tiers (illustrative mid-2026 list prices). Input follows the same pattern at lower absolute numbers.</figcaption>
     </figure>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. The Core Tradeoff: Quality vs. Speed vs. Cost</h2>
 
     <p>You rarely get all three. The mental model is a triangle — push toward one corner and the others suffer:</p>
@@ -234,14 +166,14 @@
         <li><strong>Huge model:</strong> slow, expensive, but much more capable and reliable on complex work</li>
         <li><strong>There is no free lunch</strong> — "best model for everything" does not exist</li>
     </ul>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Matching the Model to the Task</h2>
 
     <p>The assignment skill — and the production skill — is <strong>right-sizing</strong>:</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Task type</th><th>Complexity</th><th>Typical tier</th><th>Why</th></tr>
         </thead>
@@ -250,7 +182,7 @@
             <tr><td>Summarization, Q&amp;A over docs, email drafting</td><td>Medium</td><td>Medium (Haiku / Sonnet)</td><td>Needs coherence but not deep reasoning chains</td></tr>
             <tr><td>Multi-step reasoning, code generation, research synthesis</td><td>High</td><td>Large / frontier</td><td>Mistakes compound; quality matters more than marginal cost</td></tr>
         </tbody>
-    </table>
+    </table></div>
 
     <p>Real companies often run a <strong>mix</strong>: a cheap model triages or filters millions of requests; an expensive model handles only the hard cases that pass through. This is called a <strong>cascade</strong> or <strong>router</strong> pattern.</p>
 
@@ -297,9 +229,9 @@
         </svg>
         <figcaption>Decision flowchart: task complexity drives model tier. When in doubt, start small and upgrade only where quality fails.</figcaption>
     </figure>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>5. Local Models vs. API Models</h2>
 
     <p>Your assignment will likely use <strong>open-source models running locally</strong> (e.g., smaller Llama or GPT-2 variants). Hosted APIs are the other path. Both are valid — they optimize different corners of the triangle.</p>
@@ -330,9 +262,9 @@
     <!--<div class="highlight-box">
         <strong>Assignment preview:</strong> Downloading and running a smaller open-weight model locally teaches you the full stack — tokenization, inference, latency on your own hardware — without racking up API bills. Tradeoff: you will not match GPT-5 quality on a MacBook, and that is the point.
     </div>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>6. Why This Matters for Real Products</h2>
 
     <p>At scale, small per-request differences become enormous:</p>
@@ -344,9 +276,9 @@
     <p>A spam filter processing 10 million emails daily cannot afford frontier-model pricing on every message. A legal research tool handling 50 complex queries per day <em>can</em> afford Opus — because volume is low and mistake cost is high.</p>
 
     <p>Product teams constantly ask: <em>"Do we need the smartest model, or does a cheaper one work well enough?"</em> The answer is almost always task-dependent — which is why this framework matters before you write your first API call.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <!--<h2>7. Try It: Monthly Cost Calculator</h2>
     <div class="interactive-box">
         <p>Estimate monthly API spend across four illustrative tiers. Adjust the inputs — numbers update instantly.</p>
@@ -415,8 +347,26 @@
         <li><strong>Anthropic Claude Pricing:</strong> Input/output rates and prompt caching discounts. <a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank">Claude Platform Docs</a></li>
         <li><strong>FrugalGPT (Chen et al., 2023):</strong> How to combine models of different sizes to cut cost without losing quality. <a href="https://arxiv.org/abs/2305.05176" target="_blank">arXiv</a></li>
     </ul>
+  </section>
 
-    <script>
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson2_context_window.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Context Windows: How Much Can a Model Actually “See”?</span>
+    </a>
+    <a class="pager__next" href="lesson4_putting_it_all_together_choosing_the_right_model.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Putting It Together: Choosing the Right Model</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
     (function () {
         var TIERS = [
             { name: 'Small — GPT-4o mini', input: 0.15, output: 0.60 },
@@ -504,4 +454,6 @@
         updateCalculator();
     })();
     </script>
-</div>
+
+</body>
+</html>

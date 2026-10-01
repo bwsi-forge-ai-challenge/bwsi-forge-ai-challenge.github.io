@@ -1,19 +1,45 @@
-<div class="genai-lesson-container">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generative vs. Discriminative Models · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
 
-    <h1>Foundations: Lesson 2 — Generative vs. Discriminative Models</h1>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>What Is GenAI?</span>
+    </nav>
+  </div>
+</header>
 
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · What Is GenAI?</p>
+    <h1>Generative vs. Discriminative Models</h1>
+    <p class="lede">Some models learn to tell categories apart; others learn what the data itself looks like so they can create new examples. This lesson compares the two, the probabilities each one models, and the tradeoffs between them.</p>
+  </header>
+
+  <section>
     <div class="highlight-box">
         <strong>The Core Distinction:</strong> If you give a computer pictures of paintings, a <strong>Discriminative</strong> model acts like an art critic, figuring out if a painting is a Rembrandt or a Monet. A <strong>Generative</strong> model acts like the artist, learning the core essence of the brushstrokes so it can paint a brand new masterpiece from scratch. 
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. Discriminative Models: The Regulators of Boundaries</h2>
     <p>A discriminative model answers a direct question: <em>Given this specific input data, what category or numerical value does it belong to?</em> It focuses entirely on mapping features directly to output targets by drawing a mathematical boundary between classes.</p>
     
     <p>It ignores how the data itself looks as a whole. It only cares about the differences that separate class A from class B.</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Core Task</th>
             <th>Features / Input (\(x\))</th>
@@ -34,7 +60,7 @@
             <td>Grayscale pixel map (\(16 \times 16\))</td>
             <td>Categorical Integer: <code>0 through 9</code></td>
         </tr>
-    </table>
+    </table></div>
 
     <!--<div class="interactive-box">
         <h3>⚡ Quick Check: Measuring Constraints</h3>
@@ -44,13 +70,13 @@
             <p style="margin-top: 5px; color: #047857;"><strong>Exactly Five.</strong> Because this is a discriminative classification model, it maps features directly onto a closed, pre-defined target set. It cannot generate new text variations or create an unlisted alternative.</p>
         </details>
     </div>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. Generative Models: Simulating the Data Universe</h2>
     <p>A generative model doesn't look for dividing boundaries. Instead, it uncovers the overarching mathematical blueprint of the data itself. It learns how data is distributed so thoroughly that it can engineer entirely original variations that look exactly like real data.</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Application</th>
             <th>Context Prompt (\(c\))</th>
@@ -71,7 +97,7 @@
             <td>"Write a binary search in Python"</td>
             <td>A fully executable, raw text program string</td>
         </tr>
-    </table>
+    </table></div>
 
     <!--<div class="interactive-box">
         <h3>⚡ Quick Check: Output Fluctuations</h3>
@@ -81,13 +107,13 @@
             <p style="margin-top: 5px; color: #047857;"><strong>It is sampling a probability distribution.</strong> Generative systems rely on stochastic (probabilistic) decoding. Instead of locating an exact math answer, they pull varying, highly probable paths out of an infinite spatial domain.</p>
         </details>
     </div>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. Side-by-Side: One Domain, Two Goals</h2>
     <p>To fully grasp the separation, look at how both archetypes handle identical targets within the exact same field:</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>User Directive / Dataset Context</th>
             <th>Discriminative Approach</th>
@@ -113,10 +139,10 @@
             <td><em>N/A</em></td>
             <td>Assembles an entirely unique customer feedback paragraph</td>
         </tr>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. The Underlying Probability Mathematics</h2>
     <p>Under the hood, both fields optimize completely different statistical formulas:</p>
 
@@ -135,11 +161,11 @@
     </div>
 
     <p>Because learning the entire structure of data (\(P(x)\)) over thousands of dimensions is vastly more complex than drawing a simple decision boundary (\(P(y \mid x)\)), generative systems require significantly larger neural network sizes and training pools.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>5. Core Trade-Offs at a Glance</h2>
-    <table>
+    <div class="table-wrap"><table>
         <tr>
             <th>Metric / Dimension</th>
             <th>Discriminative Engine</th>
@@ -165,26 +191,14 @@
             <td>Requires strict, highly accurate human-labeled records</td>
             <td>Thrives on massive, raw, unlabeled content pools</td>
         </tr>
-    </table>
+    </table></div>
 
+  </section>
+
+  <section>
     <h2>6. Generation in action</h2>
 
     <p>Watch a model in action below. As each word is generated, it becomes part of the context used to predict the next one.</p>
-    
-    <style>
-
-        .genai-lesson-container .demo-panel {
-            background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px;
-            min-height: 90px; font-family: Georgia, "Times New Roman", serif; font-size: 1.05em;
-            line-height: 1.7; color: #334155;
-        }
-        .genai-lesson-container .demo-token-new { background: #dbeafe; border-radius: 3px; padding: 0 2px; }
-        .genai-lesson-container .eq-panel {
-            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 6px; padding: 12px; margin-top: 12px; font-size: 0.95em;
-        }
-        .genai-lesson-container .lab-note { font-size: 0.88em; color: #475569; margin-top: 10px; }
-    </style>
 
     <div class="interactive-box">
         <p style="margin-top:0;"><strong>Prompt:</strong> Write a poem about a sad robot</p>
@@ -198,9 +212,9 @@
         </div>
         <p class="lab-note">This demo replays a fixed poem to show the pattern. Real models like ChatGPT compute fresh probabilities at every step. We'll learn how later in the course.</p>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>7. Interactive Sandbox: Classifier vs. Generator</h2>
     <p>This lab environment showcases both methods in action. <strong>Discriminative Mode</strong> acts as an Iris Flower classifier; it processes the dimensions you select and sorts them cleanly into a deterministic class. <strong>Generative Mode</strong> simulates an autoregressive language model, pulling dynamic, randomized textual descriptions out of its internal space every time you call it.</p>
 
@@ -236,16 +250,16 @@
             <div>
                 <strong style="color: #2563eb;">Output Terminal Interface</strong>
                 <hr style="margin: 8px 0; border: 0; border-top: 1px solid #f1f5f9;">
-                <div id="l2-output" style="font-family: monospace; font-size: 0.95em; min-height: 140px; white-space: pre-wrap; color: #334155;">Select parameters and activate classification.</div>
+                <div id="l2-output" style="font-family: monospace; font-size: 0.95em; min-height: 140px; white-space: pre-wrap; color: var(--text);">Select parameters and activate classification.</div>
             </div>
             <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
                 <strong>Live Framework State:</strong> <span id="l2-status1">Active. Standing by for runtime inputs.</span>
             </div>
         </div>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Essential Reading & Core Resources</h2>
     <ul>
         <li><strong>Generative vs. Discriminative Classifiers (Ng & Jordan):</strong> A landmark paper contrasting the performance trade-offs of both model families. <a href="https://ai.stanford.edu/~ang/papers/nips01-discriminativegenerative.pdf" target="_blank">Download Stanford PDF</a></li>
@@ -441,7 +455,26 @@
         }
     })();
     </script> -->
-    <script>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson1_introduction_to_genai.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">What Is Generative AI?</span>
+    </a>
+    <a class="pager__next" href="lesson3_what_is_genai_good_at_And_where_it_breaks.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">What GenAI Is Good At (and Where It Breaks)</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
     (function() {
         // Securely namespaced inside an IIFE to protect parent scope variables
         window.genaiLessonTwo = {
@@ -700,4 +733,6 @@
         }
     })();
     </script>
-</div>
+
+</body>
+</html>

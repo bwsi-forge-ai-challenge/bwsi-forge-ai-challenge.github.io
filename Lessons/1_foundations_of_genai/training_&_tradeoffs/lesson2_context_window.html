@@ -1,132 +1,36 @@
-<div class="genai-lesson-container">
-    <style>
-        .genai-lesson-container {
-            line-height: 1.6;
-            color: #1e293b;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-        .genai-lesson-container .highlight-box {
-            background: #f8fafc; border-left: 4px solid #3b82f6;
-            padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;
-        }
-        .genai-lesson-container .interactive-box {
-            background: #f4faf4; border: 1px solid #bbf7d0;
-            border-radius: 8px; padding: 20px; margin: 20px 0;
-        }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td {
-            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
-        }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container .eq-panel {
-            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 6px; padding: 14px; margin: 16px 0;
-            font-family: Cambria, "Times New Roman", serif; font-size: 1.05em;
-        }
-        .genai-lesson-container .prompt-box {
-            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
-            padding: 10px 14px; font-family: monospace; font-size: 0.9em; margin: 8px 0;
-        }
-        .genai-lesson-container .diagram-wrap {
-            overflow-x: auto; margin: 16px 0; text-align: center;
-        }
-        .genai-lesson-container .diagram-wrap svg {
-            display: block; max-width: 100%; height: auto; margin: 0 auto;
-            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
-        }
-        .genai-lesson-container figcaption {
-            font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; text-align: center;
-        }
-        .genai-lesson-container button {
-            padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
-            background: white; border-radius: 6px; cursor: pointer;
-            font-weight: 500; color: #1e293b; font-size: 0.92em;
-        }
-        .genai-lesson-container button:hover { background: #f8fafc; border-color: #94a3b8; }
-        .genai-lesson-container .feedback {
-            margin-top: 12px; padding: 12px 14px; border-radius: 6px;
-            font-size: 0.92em; display: none;
-        }
-        .genai-lesson-container .feedback.show { display: block; }
-        .genai-lesson-container .feedback.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-        .genai-lesson-container .reflect-label {
-            display: block; font-weight: 600; font-size: 0.92em; margin: 16px 0 6px; color: #334155;
-        }
-        .genai-lesson-container .reflect-input {
-            width: 100%; box-sizing: border-box; min-height: 80px; padding: 10px 12px;
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit;
-            font-size: 0.92em; line-height: 1.5; resize: vertical;
-        }
-        .genai-lesson-container details { margin: 12px 0; }
-        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
-        .genai-lesson-container var { font-style: italic; font-family: Cambria, "Times New Roman", serif; }
-        .genai-lesson-container .stat-pill {
-            display: inline-block; background: #e0e7ff; color: #3730a3;
-            padding: 2px 8px; border-radius: 4px; font-size: 0.88em; font-weight: 600;
-        }
-        .genai-lesson-container .compare-cols {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0;
-        }
-        @media (max-width: 640px) {
-            .genai-lesson-container .compare-cols { grid-template-columns: 1fr; }
-        }
-        .genai-lesson-container .compare-card {
-            border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; background: #fff;
-        }
-        .genai-lesson-container .compare-card h4 { margin: 0 0 10px; font-size: 0.95em; }
-        .genai-lesson-container .compare-card.short { border-top: 4px solid #f59e0b; }
-        .genai-lesson-container .compare-card.long { border-top: 4px solid #2563eb; }
-        .genai-lesson-container .msg {
-            font-size: 0.88em; padding: 8px 10px; border-radius: 6px; margin: 6px 0;
-        }
-        .genai-lesson-container .msg.user { background: #eff6ff; border: 1px solid #bfdbfe; }
-        .genai-lesson-container .msg.bot { background: #f8fafc; border: 1px solid #e2e8f0; }
-        .genai-lesson-container .msg.faded { opacity: 0.35; text-decoration: line-through; }
-        .genai-lesson-container .limit-bar-wrap {
-            background: #e2e8f0; border-radius: 6px; height: 22px; overflow: hidden; margin: 8px 0;
-        }
-        .genai-lesson-container .limit-bar {
-            height: 100%; border-radius: 6px 0 0 6px; transition: width 0.25s ease;
-            display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
-            font-size: 0.75em; font-weight: 600; color: #fff; min-width: 0;
-        }
-        .genai-lesson-container .limit-bar.safe { background: #16a34a; }
-        .genai-lesson-container .limit-bar.warn { background: #f59e0b; }
-        .genai-lesson-container .limit-bar.over { background: #dc2626; }
-        .genai-lesson-container .limit-row {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.88em; margin: 10px 0 4px;
-        }
-        .genai-lesson-container .limit-row span:last-child { font-weight: 600; color: #334155; }
-        .genai-lesson-container .cw-textarea {
-            width: 100%; box-sizing: border-box; min-height: 100px; padding: 10px 12px;
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.92em;
-            line-height: 1.5; resize: vertical;
-        }
-        .genai-lesson-container .cw-select {
-            width: 100%; max-width: 360px; padding: 8px; border: 1px solid #cbd5e1;
-            border-radius: 6px; font-size: 0.92em; margin: 8px 0;
-        }
-        .genai-lesson-container .footnote {
-            font-size: 0.85em; color: #64748b; margin-top: 8px;
-        }
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Windows: How Much Can a Model Actually “See”? · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body class="genai">
 
-    <h1>Context Windows: How Much Can a Model Actually "See"?</h1>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Training &amp; Tradeoffs</span>
+    </nav>
+  </div>
+</header>
 
-    <p>We have already learned that transformers use <strong>attention</strong> so every token can look at every other token in the input. That mechanism is powerful — but it only works inside a fixed boundary called the <strong>context window</strong>.</p>
+<main class="page">
 
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Training &amp; Tradeoffs</p>
+    <h1>Context Windows: How Much Can a Model Actually “See”?</h1>
+    <p class="lede">We have already learned that transformers use <strong>attention</strong> so every token can look at every other token in the input. That mechanism is powerful — but it only works inside a fixed boundary called the <strong>context window</strong>.</p>
+  </header>
+
+  <section>
     <p>This is not an abstract detail. The moment you paste a long PDF, a big codebase, or months of chat history into an API call, you hit this limit. Understanding context windows is one of the first practical constraints you will run into in your assignments and in production apps.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>1. What Is a Context Window?</h2>
 
     <p>Remember attention from the tokens &amp; transformers unit? Each token computes a relevance score against <em>every other token</em> in the sequence. That "every token sees every token" property defines what the model can reason over <strong>right now</strong> — but only within a maximum length.</p>
@@ -167,9 +71,9 @@
         </svg>
         <figcaption>A sliding window over a long document. Tokens outside the highlighted region are invisible — the model cannot attend to them, no matter how "smart" it is.</figcaption>
     </figure>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. Why Isn't the Context Window Infinite?</h2>
 
     <p>The bottleneck is attention itself. Standard self-attention compares <strong>every token to every other token</strong>. For a sequence of length <var>n</var>, that means roughly <var>n</var> × <var>n</var> pairwise interactions — called <strong>O(<var>n</var>²) complexity</strong>.</p>
@@ -209,9 +113,9 @@
         </svg>
         <figcaption>Simplified O(<var>n</var>²) scaling: each doubling of context length roughly quadruples attention work. That is why longer windows are slower and more expensive.</figcaption>
     </figure>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. What Happens When You Exceed the Context Window?</h2>
 
     <p>Behavior depends on the API and settings, but the outcome is always some form of <strong>loss</strong>:</p>
@@ -226,14 +130,14 @@
     <!--<div class="highlight-box">
         <strong>Assignment preview:</strong> If you paste 200 pages into one prompt and the model "misses" facts from page 3, the model is not being careless — those tokens may simply not be in context anymore.
     </div>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Context Window vs. Actual Memory (Common Confusion)</h2>
 
     <p>Students often conflate two very different ideas:</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th></th><th>Context window</th><th>Permanent "memory"</th></tr>
         </thead>
@@ -254,12 +158,12 @@
                 <td>What you learned in school (weights) + your notebook on the shelf (database)</td>
             </tr>
         </tbody>
-    </table>
+    </table></div>
 
     <p>A large context window is <strong>not</strong> the same as the model "learning" your conversation. Once the session ends — or older tokens fall off the window — that information is gone unless you stored it elsewhere. Every new conversation starts fresh with the same pretrained weights.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>5. Real-World Tradeoffs</h2>
 
     <p>Bigger windows are convenient: paste a whole contract, dump a repo, or ship an entire thread. But tradeoffs are real:</p>
@@ -308,9 +212,9 @@
             <tr><td>GPT-3.5-turbo (legacy)</td><td>4,096–16,384 tokens</td><td>Many course examples and older tutorials assume 4K</td></tr>
         </tbody>
     </table>-->
+  </section>
 
-    <hr>
-
+  <section>
     <h2>6. Try It: Context Window Token Counter</h2>
     <div class="interactive-box">
         <p>Paste text below. This tool uses a <strong>GPT-style token estimate</strong> (~4 characters per token for English, matching the heuristic from Week 2). Compare your text against common context limits.</p>
@@ -340,9 +244,9 @@
 
         <p class="footnote">This is an estimate, not an exact tokenizer count.</p>
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <!--<h2>7. Reflect on Context Limits</h2>
     <div class="interactive-box">
         <label class="reflect-label" for="cw-reflect-1">You want to build a chatbot that remembers your entire 3-month conversation history. What's the problem with just cramming everything into the context window every time?</label>
@@ -379,8 +283,26 @@
         <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> Original transformer paper — the source of O(<var>n</var>²) attention. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv</a></li>
         <li><strong>OpenAI tiktoken:</strong> Count tokens exactly for OpenAI models. <a href="https://github.com/openai/tiktoken" target="_blank">GitHub</a></li>
     </ul>
+  </section>
 
-    <script>
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson1_how_do_llms_actually_learn.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">How Do LLMs Actually Learn?</span>
+    </a>
+    <a class="pager__next" href="lesson3_latency_and_cost.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Latency and Cost: Why Bigger Isn’t Always Better</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
     (function () {
         var LIMITS = [
             { label: 'GPT-3.5 (4K)', tokens: 4096 },
@@ -477,4 +399,6 @@
         }
     })();
     </script>
-</div>
+
+</body>
+</html>

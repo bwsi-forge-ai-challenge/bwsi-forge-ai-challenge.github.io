@@ -1,16 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Foundations: Lesson 3 - What GenAI Is Good At (and Where It Breaks)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What GenAI Is Good At (and Where It Breaks) · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
 </head>
-<body>
+<body class="genai">
 
-    <h1>Foundations: Lesson 3 - What GenAI Is Good At (and Where It Breaks)</h1>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>What Is GenAI?</span>
+    </nav>
+  </div>
+</header>
 
-    <p>Lessons 1 and 2 defined generative AI and contrasted it with discriminative models. This lesson builds <b>realistic expectations</b>. GenAI is impressive — it can draft, design, and brainstorm at scale — but it is not magic. Knowing where it excels and where it reliably fails is what separates effective use from costly mistakes.</p>
+<main class="page">
 
-    <hr>
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · What Is GenAI?</p>
+    <h1>What GenAI Is Good At (and Where It Breaks)</h1>
+    <p class="lede">Lessons 1 and 2 defined generative AI and contrasted it with discriminative models. This lesson builds <b>realistic expectations</b>. GenAI is impressive — it can draft, design, and brainstorm at scale — but it is not magic. Knowing where it excels and where it reliably fails is what separates effective use from costly mistakes.</p>
+  </header>
 
+  <section>
     <h2>1. What GenAI Is Great At</h2>
     <p>Generative models learn statistical structure from massive datasets. When the task is "produce text or images that look like good examples of this type," they are often remarkably capable.</p>
 
@@ -38,9 +54,9 @@
     <h3>Code assistance</h3>
     <p>Source code is highly structured. Models trained on repositories learn syntax, idioms, and common bug fixes.</p>
     <p>Example: a comment <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">// sort this array ascending</span> above incomplete code → a plausible completion using <span style="font-family: monospace; background-color: #eee; padding: 2px 4px;">.sort()</span> or a sorting algorithm.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>2. Where GenAI Struggles or Breaks</h2>
     <p>Failures are not random bugs — they follow from how models are trained and what they optimize.</p>
 
@@ -74,9 +90,9 @@
     <h3>Hallucination</h3>
     <p>The model generates text that <i>looks</i> like a correct answer — citations, phone numbers, ISBNs — with no mechanism to verify truth.</p>
     <p>Example: "What is the phone number of John Smith in Austin?" → a confident 10-digit number that is fabricated.</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>3. The Core Limitation</h2>
     <p><b>GenAI is a pattern matcher and remixer, not a reasoner.</b> It learned what good text and images look like by seeing billions of examples. It can interpolate (blend known patterns) and extrapolate (extend them), but it cannot truly compute, verify facts against the world, or access real-time information unless connected to external tools.</p>
     <p><b>Analogy:</b> Imagine autocomplete on your phone — but trained on the entire internet. It can complete sophisticated paragraphs because it has seen so many continuations. It is still predicting the next token from patterns, not thinking step by step inside a reasoning engine.</p>
@@ -91,9 +107,9 @@
             </td>
         </tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>4. Why These Limitations Exist (Intuitive)</h2>
     <ul>
         <li><b>Models learn from data, not from understanding.</b> Weights encode correlations in text and pixels, not grounded world models.</li>
@@ -101,9 +117,9 @@
         <li><b>Inside the model: matrix multiplications.</b> Billions of parameters transform inputs to outputs; there is no symbolic logic module.</li>
         <li><b>Architecture matters.</b> The next unit on transformers will show why long-context drift and shallow reasoning are tied to how attention works — not accidental bugs you can patch away with a bigger dataset alone.</li>
     </ul>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>5. At-a-Glance: Strengths vs Failures</h2>
     <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#dcfce7">
@@ -134,9 +150,9 @@
             </td>
         </tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>6. Visual Case Studies</h2>
     <p>These panels simulate typical model behavior. In production, always verify high-stakes outputs.</p>
 
@@ -219,9 +235,9 @@
         <tr><td>3</td><td>Therefore penguins have feathers.</td><td>✅ Usually agrees</td></tr>
         <tr><td>4</td><td>All birds can fly. Penguins are birds. Can penguins fly?</td><td>❌ Often confused — mixes "has feathers" with "can fly," contradicts step 1 premise or hallucinates exceptions</td></tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>7. Interactive Sandbox: GenAI Strengths &amp; Failures Gallery</h2>
     <p>Explore simulated examples across three tabs. Tab 1 shows strengths; Tab 2 shows failures; Tab 3 explains the pattern-matching core. Use <b>Try to Trick It</b> to test prompts designed to expose weaknesses.</p>
 
@@ -285,9 +301,9 @@
             </td>
         </tr>
     </table>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>8. Reflection and Activities</h2>
 
     <h3>Browse and rank</h3>
@@ -304,9 +320,9 @@
         </li>
         <li>What is one thing ChatGPT should <b>never</b> do without human experts and verified tools? (Common answers: diagnosis, legal advice, unsupervised financial decisions.)</li>
     </ol>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Recommended Learning Resources</h2>
     <ul>
         <li><strong>On the Dangers of Stochastic Parrots (Bender et al., 2021):</strong> Discusses limitations, bias, and environmental costs of large language models. <a href="https://doi.org/10.1145/3442188.3445922" target="_blank">ACM FAccT paper</a></li>
@@ -314,6 +330,24 @@
         <li><strong>Sparks of Artificial General Intelligence (Bubeck et al., 2023):</strong> Early GPT-4 report balancing impressive behavior with systematic failures. <a href="https://arxiv.org/abs/2303.12712" target="_blank">arXiv paper</a></li>
         <li><strong>Retrieval-Augmented Generation (Lewis et al., 2020):</strong> Architecture pattern that pairs generation with external knowledge to reduce hallucination. <a href="https://arxiv.org/abs/2005.11401" target="_blank">arXiv paper</a></li>
     </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson2_generative_vs_discriminative_models.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Generative vs. Discriminative Models</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: What Is GenAI?</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
 
 <script>
 (function() {

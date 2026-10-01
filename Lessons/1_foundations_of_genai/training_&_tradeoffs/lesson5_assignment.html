@@ -1,61 +1,32 @@
-<div class="genai-lesson-container">
-    <style>
-        .genai-lesson-container {
-            line-height: 1.6;
-            color: #1e293b;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 35px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0; }
-        .genai-lesson-container .assignment-box {
-            background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
-        }
-        .genai-lesson-container .deliverable-box {
-            background: #f0fdf4; border: 1px solid #bbf7d0;
-            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
-        }
-        .genai-lesson-container .warning-box {
-            background: #fffbeb; border-left: 4px solid #f59e0b;
-            padding: 14px 16px; margin: 20px 0; border-radius: 0 8px 8px 0;
-        }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td {
-            border: 1px solid #cbd5e1; padding: 12px; text-align: left; vertical-align: top;
-        }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
-        }
-        .genai-lesson-container pre {
-            background: #0f172a; color: #e2e8f0; padding: 14px 16px;
-            border-radius: 8px; overflow-x: auto; font-size: 0.88em; line-height: 1.5;
-        }
-        .genai-lesson-container ol.checklist { padding-left: 1.2em; }
-        .genai-lesson-container ol.checklist li { margin-bottom: 8px; }
-        .genai-lesson-container .part-header {
-            display: inline-block; background: #1e3a8a; color: #fff;
-            font-size: 0.78em; font-weight: 700; padding: 4px 10px;
-            border-radius: 4px; margin-bottom: 10px; letter-spacing: 0.04em;
-        }
-        .genai-lesson-container .explain-box {
-            background: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
-        }
-        .genai-lesson-container .explain-box h3 { margin-top: 0; }
-        .genai-lesson-container a { color: #2563eb; }
-    </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment: Download, Run, and Fine-Tune a Real Model · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+</head>
+<body class="genai">
 
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Foundations of GenAI</span>
+      <span>Training &amp; Tradeoffs</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Foundations of GenAI · Training &amp; Tradeoffs</p>
     <h1>Assignment: Download, Run, and Fine-Tune a Real Model</h1>
+    <p class="lede">This assignment applies everything from this unit in one hands-on workflow. You will load a small open-source model, see how a <strong>base</strong> model behaves, fine-tune it on a narrow task, log runs to <strong>Weights &amp; Biases</strong>, and compare results.</p>
+  </header>
 
-    <p>This assignment applies everything from this unit in one hands-on workflow. You will load a small open-source model, see how a <strong>base</strong> model behaves, fine-tune it on a narrow task, log runs to <strong>Weights &amp; Biases</strong>, and compare results.</p>
-
+  <section>
     <div class="explain-box">
         <h3>What are you actually doing?</h3>
         <p>You are <strong>not</strong> pretraining a model from scratch (that takes months and millions of dollars). You are:</p>
@@ -70,7 +41,7 @@
 
     <div class="explain-box">
         <h3>Key terms (quick reference)</h3>
-        <table>
+        <div class="table-wrap"><table>
             <tr><th>Term</th><th>Meaning</th></tr>
             <tr><td><strong>Hugging Face</strong></td><td>Website + Python library where models and tokenizers are shared. You download <code>distilgpt2</code> from here.</td></tr>
             <tr><td><strong>Tokenizer</strong></td><td>Turns text into numbers (tokens) the model understands.</td></tr>
@@ -79,7 +50,7 @@
             <tr><td><strong>Loss</strong></td><td>Training error score. Should go <strong>down</strong> over time.</td></tr>
             <tr><td><strong>Learning rate</strong></td><td>How big each weight update is. You will try two different values and compare.</td></tr>
             <tr><td><strong>Weights &amp; Biases (W&amp;B)</strong></td><td>Free experiment-tracking site. Records loss curves and settings for each training run. See below.</td></tr>
-        </table>
+        </table></div>
     </div>
 
     <div class="explain-box">
@@ -101,9 +72,9 @@
         <strong>Starter notebook:</strong> <code>FORGE-AI-Challenge/1_foundations_of_genai/fine_tune_assignment.ipynb</code><br>
         <strong>Environment:</strong> Google Colab recommended (free GPU). Local Python works if you have PyTorch + ~2 GB RAM.
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Before You Start</h2>
     <ol>
         <li>Open <code>FORGE-AI-Challenge/1_foundations_of_genai/fine_tune_assignment.ipynb</code> in Colab or locally.</li>
@@ -116,9 +87,9 @@
     <div class="warning-box">
         <strong>Model choice:</strong> The template defaults to <code>distilgpt2</code> (~82M parameters). It trains in minutes on Colab. You may substitute another small causal LM (e.g. <code>gpt2</code>, <code>sshleifer/tiny-gpt2</code>) if your instructor approves — keep it small so two W&amp;B runs finish in class time.
     </div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2><span class="part-header">PART 1</span><br>Download and Run a Pretrained Model</h2>
 
     <p><strong>Goal:</strong> See what a raw model does <em>before</em> any customization. No training in this part — just download, load, and generate.</p>
@@ -142,9 +113,9 @@ Write a haiku about rain.</pre>
     <blockquote style="margin:12px 0;padding:12px 16px;background:#f8fafc;border-left:4px solid #3b82f6;">
         Try a prompt requiring the model to follow an instruction. Does it comply, or does it just continue the text? Why might that be, based on what you learned about base models vs. fine-tuned models?
     </blockquote>
+  </section>
 
-    <hr>
-
+  <section>
     <h2><span class="part-header">PART 2</span><br>Prepare a Small Fine-Tuning Dataset</h2>
 
     <p><strong>Goal:</strong> Build teaching material for the model. Each row is an <strong>input</strong> (what a user types) and an <strong>output</strong> (the answer you want). Fine-tuning learns from these pairs — the model never sees your task rules written in English, only your examples.</p>
@@ -165,7 +136,7 @@ Write a haiku about rain.</pre>
 
     <p>The notebook includes ~25 starter pairs for a <strong>casual → formal business English</strong> task. You must add at least <strong>25 more</strong> (TODO in Part 2) or replace the task entirely with your own 50+ pairs.</p>
 
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Input (casual)</th><th>Output (formal)</th></tr>
         </thead>
@@ -174,10 +145,10 @@ Write a haiku about rain.</pre>
             <tr><td>sry im late</td><td>I apologize for my tardiness.</td></tr>
             <tr><td>thx for the help</td><td>Thank you for your assistance.</td></tr>
         </tbody>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2><span class="part-header">PART 3</span><br>Fine-Tune the Model</h2>
 
     <p><strong>Goal:</strong> Run gradient descent on your examples (same core idea as Week 1) for a few minutes. The model starts from pretrained weights and nudges them toward your task. You run <strong>two experiments</strong> with different learning rates and log both to W&amp;B.</p>
@@ -190,7 +161,7 @@ Write a haiku about rain.</pre>
 {your target output}</pre>
 
     <h3>Hyperparameters to set (TODO in notebook)</h3>
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Setting</th><th>Typical starting range</th><th>Notes</th></tr>
         </thead>
@@ -199,7 +170,7 @@ Write a haiku about rain.</pre>
             <tr><td>Epochs</td><td>2 – 5</td><td>More epochs → overfit risk on tiny data</td></tr>
             <tr><td>Batch size</td><td>4 – 8</td><td>Lower if you hit out-of-memory errors</td></tr>
         </tbody>
-    </table>
+    </table></div>
 
     <h3>Weights &amp; Biases requirements</h3>
     <ol class="checklist">
@@ -210,9 +181,9 @@ Write a haiku about rain.</pre>
     </ol>
 
     <p>After training, load your best checkpoint for Part 4. The notebook saves checkpoints under <code>./finetuned-model-run1</code> (and run 2 if you train twice).</p>
+  </section>
 
-    <hr>
-
+  <section>
     <h2><span class="part-header">PART 4</span><br>Evaluate and Reflect</h2>
 
     <p><strong>Goal:</strong> Prove whether fine-tuning helped. Use prompts the model never saw during training. Compare base vs fine-tuned side by side, read your W&amp;B loss curves, and connect the experience to Lessons 1–4 in writing.</p>
@@ -233,9 +204,9 @@ Write a haiku about rain.</pre>
         <li><strong>How long did fine-tuning take?</strong> Estimate how that compares to pretraining (Lesson 1: weeks/months, trillions of tokens, millions of dollars).</li>
         <li><strong>Tradeoffs:</strong> What did your small model give up vs. what a frontier model (e.g. GPT-4 class) might provide instead?</li>
     </ol>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Deliverables</h2>
     <div class="deliverable-box">
         <ol class="checklist">
@@ -247,7 +218,7 @@ Write a haiku about rain.</pre>
     </div>
 
     <h3>Grading rubric (guide for self-check)</h3>
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Criterion</th><th>Meets expectations when…</th></tr>
         </thead>
@@ -258,12 +229,12 @@ Write a haiku about rain.</pre>
             <tr><td>Evaluation</td><td>Clear before/after examples on held-out prompts</td></tr>
             <tr><td>Reflection</td><td>Connects experience to Lessons 1–4 (pretrain, fine-tune, cost, context)</td></tr>
         </tbody>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Troubleshooting</h2>
-    <table>
+    <div class="table-wrap"><table>
         <thead>
             <tr><th>Issue</th><th>Try this</th></tr>
         </thead>
@@ -273,14 +244,30 @@ Write a haiku about rain.</pre>
             <tr><td>Loss not decreasing</td><td>Try higher LR slightly; check dataset formatting; verify labels are not all padding</td></tr>
             <tr><td>Model ignores task after fine-tune</td><td>More epochs or examples; ensure prompt format at inference matches training format</td></tr>
         </tbody>
-    </table>
+    </table></div>
+  </section>
 
-    <hr>
-
+  <section>
     <h2>Recommended Reading</h2>
     <ul>
         <li><strong>Hugging Face fine-tuning tutorial:</strong> <a href="https://huggingface.co/docs/transformers/training" target="_blank">Training docs</a></li>
         <li><strong>W&amp;B Hugging Face integration:</strong> <a href="https://docs.wandb.ai/guides/integrations/huggingface" target="_blank">Integration guide</a></li>
         <li><strong>DistilGPT-2 model card:</strong> <a href="https://huggingface.co/distilgpt2" target="_blank">huggingface.co/distilgpt2</a></li>
     </ul>
-</div>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson4_putting_it_all_together_choosing_the_right_model.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Putting It Together: Choosing the Right Model</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>
