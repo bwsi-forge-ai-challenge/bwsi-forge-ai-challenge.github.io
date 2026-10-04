@@ -129,7 +129,7 @@
 
     <p><strong>Interactive Demo: Watch the Filter Scan:</strong> Below is a 16×16 image with a vertical edge-detection kernel. Use the sliders to change <strong>kernel size</strong> (3×3 or 5×5), <strong>stride</strong>, and <strong>padding</strong>—watch how the output feature map shrinks or grows. <strong>Draw directly on the input grid</strong> to sketch a pattern, then press <strong>Play</strong> or <strong>Step</strong> to see how the dot products build the output in real time.</p>
     
-    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; width:100%;">
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; color: #0f172a; width:100%;">
         <tr>
             <td align="center" valign="top" style="padding: 12px; width: 300px;">
                 <div id="l7-conv-in-lbl" style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px; min-height: 1.2em;">Input 16×16 (Draw Canvas)</div>
@@ -158,7 +158,7 @@
                 <div style="width:110px; height:110px; flex-shrink:0;">
                 <canvas id="l7-conv-kernel" width="110" height="110" style="display:block; width:110px; height:110px; border: 1px solid #94a3b8; background: #fff;"></canvas>
                 </div>
-                <div id="l7-conv-math" class="math-display" style="margin-top: 8px; padding: 10px; font-size: 0.9em; min-height: 52px;">Press Play or Step</div>
+                <div id="l7-conv-math" class="math-display" style="margin-top: 8px; padding: 10px; font-size: 0.9em; min-height: 52px; background: #fff; color: #0f172a; border-color: #cbd5e1;">Press Play or Step</div>
                 <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     <button id="l7-conv-play">Play</button>
                     <button id="l7-conv-step">Step</button>
@@ -229,7 +229,7 @@
 
     <p><strong>Max Pooling in Real Time:</strong> Press play below to watch a 2×2 window downsample an 8×8 feature map, condensing information into a dense 4×4 summary matrix.</p>
     
-    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; width:100%;">
+    <table style="border-collapse: collapse; border: 1px solid #cbd5e1; margin: 15px 0; background-color: #f8fafc; color: #0f172a; width:100%;">
         <tr>
             <td align="center" valign="top" style="padding: 12px;">
                 <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px;">Feature Map 8×8</div>
@@ -241,7 +241,7 @@
                 <canvas id="l7-pool-out" width="120" height="120" style="border: 2px solid #334155; background: #fff;"></canvas>
             </td>
             <td valign="top" style="padding: 12px;">
-                <div id="l7-pool-math" class="math-display" style="margin:0 0 10px 0; padding:10px; font-size:0.95em;">\(\max(3,\, 7,\, 2,\, 5) = 7\)</div>
+                <div id="l7-pool-math" class="math-display" style="margin:0 0 10px 0; padding:10px; font-size:0.95em; background: #fff; color: #0f172a; border-color: #cbd5e1;">\(\max(3,\, 7,\, 2,\, 5) = 7\)</div>
                 <div style="display:flex; gap:4px;">
                     <button id="l7-pool-play">Play</button>
                     <button id="l7-pool-step">Step</button>
