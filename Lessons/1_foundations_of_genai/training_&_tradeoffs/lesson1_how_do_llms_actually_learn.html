@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How Do LLMs Actually Learn? · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
 </head>
 <body class="genai">
@@ -46,7 +47,7 @@
     <p>LLM training uses the exact same loop. The task is just framed as language modeling:</p>
 
     <div class="highlight-box">
-        <strong>Next-token prediction:</strong> Given some text so far, predict the token that comes next. Repeat across trillions of examples. No hidden magic — just pattern learning at massive scale.
+        <strong>Next-token prediction:</strong> Given some text so far, predict the token that comes next. Repeat across trillions of examples. 
     </div>
 
     <div class="eq-panel">
@@ -217,6 +218,29 @@
         <figcaption>Simplified trend: larger models trained on more data generally score better on hard benchmarks — which is why parameter counts and training tokens dominate AI headlines.</figcaption>
     </figure>
 
+    <h3>What the scaling laws actually say</h3>
+    <p>"Scaling laws" refers to two main results. Both describe the model's <strong>loss</strong> (how wrong its next-token predictions are, from section 1) rather than benchmark scores, because loss can be measured precisely.</p>
+
+    <p><strong>1. Loss falls as a power law (Kaplan et al., OpenAI, 2020).</strong> When a model is not held back by the other two factors, its loss depends on the number of parameters \(N\), the number of training tokens \(D\), and the training compute \(C\) in the same simple way:</p>
+    \[ L(N) \approx \left(\frac{N_c}{N}\right)^{0.076} \qquad L(D) \approx \left(\frac{D_c}{D}\right)^{0.095} \qquad L(C) \approx \left(\frac{C_c}{C}\right)^{0.050} \]
+    <p>Here \(N_c\), \(D_c\), and \(C_c\) are constants fitted from experiments. These are <strong>power laws</strong>: each time you multiply model size by the same factor, loss drops by the same <em>percentage</em>. Because the exponents are small, the gains are steady but expensive. Making a model 10&#215; bigger cuts loss by only about 16%, since \(10^{-0.076} \approx 0.84\). Plotted on log-scale axes, each law is a straight line, and these lines held across more than seven orders of magnitude of model size. That predictability is what lets a lab test small models cheaply and forecast how a large one will perform before spending millions to train it.</p>
+
+    <p><strong>2. Grow data as fast as model size (Hoffmann et al., DeepMind, 2022, the "Chinchilla" paper).</strong> Training compute is roughly</p>
+    \[ C \approx 6 \, N \, D \]
+    <p>floating-point operations, so a fixed budget forces a trade-off between a bigger model and more training data. The Chinchilla study found that for the lowest loss at a given budget, parameters and tokens should grow <em>in equal proportion</em>, at about <strong>20 training tokens per parameter</strong>. Many earlier models were far too large for the amount of data they saw. DeepMind showed this by training <strong>Chinchilla</strong> (70B parameters, 1.4 trillion tokens) with the same compute as their earlier <strong>Gopher</strong> (280B parameters, 300 billion tokens). Chinchilla was 4&#215; smaller and outperformed Gopher on nearly every benchmark.</p>
+
+    <div class="highlight-box">
+        <p><strong>Worked example: GPT-3.</strong> GPT-3 has 175 billion parameters and was trained on 300 billion tokens. Its training compute was about \(6 \times 175\text{B} \times 300\text{B} \approx 3 \times 10^{23}\) operations. That is under 2 tokens per parameter. By the Chinchilla rule, a model that size calls for about \(20 \times 175\text{B} = 3.5\) trillion tokens, more than 10&#215; what GPT-3 actually saw.</p>
+    </div>
+
+    <p><strong>How labs use these laws today.</strong> The Chinchilla rule minimizes the cost of <em>training</em>. But a popular model then answers millions of requests, and a smaller model is cheaper and faster for every one of them (the next two lessons cover this cost). So many recent models are deliberately trained well past 20 tokens per parameter. Meta's Llama 3 8B, for example, was trained on about 15 trillion tokens, close to 1,900 tokens per parameter. Training costs more up front, but the result is a small model that performs like a much larger one.</p>
+
+    <details>
+        <summary>Check your understanding: Chinchilla</summary>
+        <p><strong>Question:</strong> You have the budget to train a 10-billion-parameter model. Using the Chinchilla rule, about how many training tokens should you use, and roughly how much compute will training take?</p>
+        <p><strong>Answer:</strong> About \(20 \times 10\text{B} = 200\) billion tokens, and \(C \approx 6 \times 10\text{B} \times 200\text{B} = 1.2 \times 10^{22}\) operations.</p>
+    </details>
+
     <p>Nobody designed the model to "learn reasoning" as a separate module. Yet as scale increased, systems started passing exams, writing code, and translating languages — skills that were not explicitly labeled in the training data. That emergent behavior is a major reason labs keep investing in scale, even though it is expensive.</p>
 
     <p>Scale is not infinite magic. Data runs out, costs explode, and diminishing returns appear. But the scaling-law mindset explains why GPT-4, Claude, Gemini, and Llama 3 announcements all emphasize <strong>parameters</strong>, <strong>training tokens</strong>, and <strong>compute budget</strong>.</p>
@@ -284,6 +308,7 @@
     <h2>Recommended Reading</h2>
     <ul>
         <li><strong>Scaling Laws for Neural Language Models (Kaplan et al., 2020):</strong> The paper that popularized predictable power-law improvements with scale. <a href="https://arxiv.org/abs/2001.08361" target="_blank">arXiv</a></li>
+        <li><strong>Training Compute-Optimal Large Language Models (Hoffmann et al., 2022):</strong> The "Chinchilla" paper behind the 20-tokens-per-parameter rule. <a href="https://arxiv.org/abs/2203.15556" target="_blank">arXiv</a></li>
         <li><strong>Training language models to follow instructions with human feedback (Ouyang et al., 2022):</strong> InstructGPT / RLHF overview from OpenAI. <a href="https://arxiv.org/abs/2203.02155" target="_blank">arXiv</a></li>
         <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> GPT-3 paper — scale and emergent behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv</a></li>
     </ul>

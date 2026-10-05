@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Embeddings: Meaning in Vector Space · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
 </head>
 <body class="genai">
@@ -132,6 +133,11 @@
     <p style="text-align: center; font-size: 1.1em; font-weight: bold; color: #1e3a8a;">\[\vec{v}_{\text{king}} - \vec{v}_{\text{man}} + \vec{v}_{\text{woman}} \approx \vec{v}_{\text{queen}}\]</p>
     
     <p>By subtracting the vector for <code>"man"</code> from <code>"king"</code>, the model mathematically strips away the masculine trait while retaining the core royal attribute. Adding the vector for <code>"woman"</code> then moves the coordinates to the closest spatial point matching a feminine royal identity: <code>"queen"</code>.</p>
+
+    <div class="highlight-box">
+        <p><strong>Linear representation hypothesis:</strong> the idea that a model stores high-level concepts, such as gender, royalty, or plural vs. singular, as <em>directions</em> in its embedding space. Moving a vector along one of these directions changes that one concept while leaving the rest of the meaning mostly intact.</p>
+        <p>This is why the arithmetic above works. <code>"king"</code> − <code>"queen"</code> and <code>"man"</code> − <code>"woman"</code> point in nearly the same direction (a "gender" direction), so swapping one for the other in a sum shifts gender and nothing else. It is called a <em>hypothesis</em> because it holds well for many concepts but not all, and the results are approximate: <code>"king" − "man" + "woman"</code> lands <em>closest</em> to <code>"queen"</code>, not exactly on it. The pattern was first reported for word2vec embeddings (Mikolov et al., 2013) and is still actively studied in modern LLMs.</p>
+    </div>
 
     <div style="display: flex; flex-direction: row; gap: 20px; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin: 20px 0; justify-content: space-around;">
         <div style="max-width: 300px; width: 100%;">

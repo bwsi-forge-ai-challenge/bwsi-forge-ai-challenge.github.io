@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tokenization: Breaking Text Into Pieces · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
 </head>
 <body class="genai">
 
@@ -23,7 +24,7 @@
   <header class="page-header">
     <p class="eyebrow">Foundations of GenAI · Tokens, Embeddings &amp; Transformers</p>
     <h1>Tokenization: Breaking Text Into Pieces</h1>
-    <p class="lede">The <em>what_is_genai</em> unit explained what generative models do. This unit opens the hood: text must become numbers before a neural network can process it. <b>Tokenization</b> is that first step — and its design choices ripple through training cost, context limits, multilingual behavior, and even what the model finds "easy" to learn.</p>
+    <p class="lede">The previous unit explained what generative models do. This unit opens the hood: text must become numbers before a neural network can process it. <b>Tokenization</b> is that first step. Its design choices ripple through training cost, context limits, multilingual behavior, and even what the model finds "easy" to learn.</p>
   </header>
 
   <section>
@@ -70,7 +71,7 @@
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Text fragment</th><th>Typical tokenization</th><th>Token count</th></tr>
         <tr><td>"hello"</td><td>one word token</td><td>1</td></tr>
-        <tr><td>"unhappily"</td><td>["un", "happy", "ly"]</td><td>3</td></tr>
+        <tr><td>"unhappily"</td><td>["un", "happ", "ily"]</td><td>3</td></tr>
         <tr><td>"!"</td><td>one punctuation token</td><td>1</td></tr>
         <tr><td>"New York"</td><td>may be one token if frequent in training data</td><td>1 or 2</td></tr>
     </table>
@@ -111,14 +112,14 @@
         <li>Find the single most common adjacent pair and merge them together into a brand-new, single token.</li>
         <li>Repeat this loop thousands of times until your total vocabulary reach its target cap size (typically around 32,000 to 50,000 unique tokens).</li>
     </ol>
-    <p><b>The Result:</b> Common words like <span style="font-family: monospace;">"happy"</span> stay as a single token. A rare variant like <span style="font-family: monospace;">"unhappily"</span> automatically splits into reusable components: <span style="font-family: monospace;">["un", "happy", "ly"]</span>. If it encounters a completely fabricated word like <span style="font-family: monospace;">"unxyz"</span>, it won't crash or throw an unknown token error; it simply handles it cleanly as <span style="font-family: monospace;">["un", "xyz"]</span>.</p>
+    <p><b>The Result:</b> Common words like <span style="font-family: monospace;">"happy"</span> stay as a single token. A rare variant like <span style="font-family: monospace;">"unhappily"</span> automatically splits into reusable components: <span style="font-family: monospace;">["un", "happ", "ily"]</span>. If it encounters a completely fabricated word like <span style="font-family: monospace;">"unxyz"</span>, it won't crash or throw an unknown token error; it simply handles it cleanly as <span style="font-family: monospace;">["un", "xyz"]</span>.</p>
 
     <h3>Scheme comparison: "unhappily"</h3>
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Scheme</th><th>Tokens</th><th>Count</th><th>Core Trade-off</th></tr>
         <tr><td>Character</td><td style="font-family: monospace;">[u, n, h, a, p, p, i, l, y]</td><td>9</td><td>Tiny vocabulary, but massive sequence lengths.</td></tr>
         <tr><td>Word</td><td style="font-family: monospace;">[unhappily]</td><td>1</td><td>Short sequences, but massive vocabulary prone to missing new words.</td></tr>
-        <tr><td>Subword (BPE-style)</td><td style="font-family: monospace;">[un, happy, ly]</td><td>3</td><td>Balanced vocabulary size; handles unseen words elegantly.</td></tr>
+        <tr><td>Subword (BPE-style)</td><td style="font-family: monospace;">[un, happ, ily]</td><td>3</td><td>Balanced vocabulary size; handles unseen words elegantly.</td></tr>
     </table>
 
     <div style="margin: 14px 0;">
@@ -137,9 +138,11 @@
         <tr><td>0</td><td>u n h a p p i l y</td><td>Start purely with base characters.</td></tr>
         <tr><td>1</td><td>u n h a <b>pp</b> i l y</td><td>Merge most frequent pair: <b>p + p &rarr; pp</b></td></tr>
         <tr><td>2</td><td>u n <b>ha</b> pp i l y</td><td>Merge next most frequent pair: <b>h + a &rarr; ha</b></td></tr>
-        <tr><td>3</td><td>u n <b>hap</b> py i l y</td><td>Merge existing token with adjacent character: <b>ha + p &rarr; hap</b></td></tr>
-        <tr><td>...</td><td>...</td><td>Continues searching for structural trends across the text...</td></tr>
-        <tr><td>Final</td><td><b>un</b> + <b>happy</b> + <b>ly</b></td><td>Optimized down to 3 highly reusable subword tokens.</td></tr>
+        <tr><td>3</td><td>u n <b>happ</b> i l y</td><td>Merge two existing tokens: <b>ha + pp &rarr; happ</b></td></tr>
+        <tr><td>4</td><td><b>un</b> happ i l y</td><td>Merge next most frequent pair: <b>u + n &rarr; un</b></td></tr>
+        <tr><td>5</td><td>un happ <b>il</b> y</td><td>Merge next most frequent pair: <b>i + l &rarr; il</b></td></tr>
+        <tr><td>6</td><td>un happ <b>ily</b></td><td>Merge existing token with adjacent character: <b>il + y &rarr; ily</b></td></tr>
+        <tr><td>Final</td><td><b>un</b> + <b>happ</b> + <b>ily</b></td><td>Optimized down to 3 highly reusable subword tokens. Each merge joins two whole neighboring tokens; a merged token is never split again.</td></tr>
     </table>
 
     <!-- <table border="1" cellpadding="10" cellspacing="0" bgcolor="#f4faf4" width="100%" style="border-collapse: collapse; border: 1px solid #ccc;">
@@ -362,7 +365,7 @@
 
     const BPE_DICTIONARY = {
         3: {
-            'unhappily': ['un', 'happy', 'ly'],
+            'unhappily': ['un', 'happ', 'ily'],
             'eating': ['eating'],
             'banana': ['banana'],
             'mat': ['mat'],
