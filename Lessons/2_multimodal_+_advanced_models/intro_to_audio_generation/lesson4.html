@@ -227,11 +227,11 @@ Audio Token Stream a_&lt;t ───────────┴─────�
 
 <figure>
 <img src="assets/m4_musicgen_arch.png" alt="Text encoder, audio tokens, transformer decoder, audio decoder">
-<figcaption><strong>Figure.</strong> MusicGen-style stack: text encoder + audio tokens → transformer decoder (causal self-attention + cross-attention) → audio decoder → waveform. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> MusicGen-style stack: text encoder + audio tokens → transformer decoder (causal self-attention + cross-attention) → audio decoder → waveform. Original figure: Kreuk et al., <a href="https://arxiv.org/abs/2209.15352" target="_blank" rel="noopener">&ldquo;AudioGen: Textually Guided Audio Generation&rdquo;</a>, 2022. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
 </figure>
 <figure>
 <img src="assets/m4_diffusion_cond.png" alt="Three DiT conditioning block designs">
-<figcaption><strong>Figure.</strong> Three ways a condition \(c\) can enter a generative block: adaptive layer-norm, extra cross-attention, or concatenate on the sequence. MusicGen uses cross-attention; diffusion transformers often use adaLN. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Three ways a condition \(c\) can enter a generative block: adaptive layer-norm, extra cross-attention, or concatenate on the sequence. MusicGen uses cross-attention; diffusion transformers often use adaLN. Original figure: Peebles &amp; Xie, <a href="https://arxiv.org/abs/2212.09748" target="_blank" rel="noopener">&ldquo;Scalable Diffusion Models with Transformers (DiT)&rdquo;</a>, 2023. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
 </figure>
 
 <h3>The Cross-Attention Mechanism</h3>

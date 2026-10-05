@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BWSI F.O.R.G.E. AI Challenge</title>
+<script src="js/theme.js"></script>
 <style>
   :root {
     --bg: #f6f7f9;
@@ -15,7 +16,7 @@
     --accent-soft: #e8f0fc;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #0f1216;
       --card: #171b21;
       --text: #e6e9ed;
@@ -25,6 +26,15 @@
       --accent-soft: #1c2a40;
     }
   }
+  :root[data-theme="dark"] {
+    --bg: #0f1216;
+    --card: #171b21;
+    --text: #e6e9ed;
+    --muted: #9aa5b1;
+    --border: #2a313a;
+    --accent: #6ea8ff;
+    --accent-soft: #1c2a40;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -32,7 +42,8 @@
     color: var(--text);
     font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 20px 64px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 64px; }
+  .theme-bar { display: flex; justify-content: flex-end; margin-bottom: 24px; }
   header { margin-bottom: 32px; }
   h1 { margin: 0 0 8px; font-size: 2rem; line-height: 1.2; }
   header p { margin: 0; color: var(--muted); max-width: 60ch; }
@@ -87,6 +98,7 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="theme-bar" data-theme-slot></div>
   <header>
     <h1>BWSI F.O.R.G.E. AI Challenge</h1>
     <p>A 6-month program that takes you from the mathematical foundations of machine learning to building, evaluating, and deploying generative AI systems.</p>

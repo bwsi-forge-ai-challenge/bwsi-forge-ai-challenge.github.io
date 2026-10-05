@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prerequisites: Lesson 6 - The Full ML Pipeline · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
 </head>
 <body class="wide">
@@ -180,10 +181,7 @@ Important: Never use test data during training or preprocessing.
         style="border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto;"
     >
   <p style="text-align: center; font-size: 0.9em; color: #666; margin-top: 5px;">
-        Source:
-        <a href="https://spotintelligence.com/2024/02/19/learning-rate-machine-learning/" target="_blank">
-            Learning Rate Machine Learning
-        </a>
+        Source: Ben Hammel, <a href="https://www.bdhammel.com/learning-rates/" target="_blank" rel="noopener">What learning rate should I use?</a>
     </p>
 
 <p>Adaptive optimizers such as Adam or RMSprop adjust the learning rate automatically for each parameter, helping handle features with different scales. However, they still perform better when inputs are pre-standardized. In practice, the learning rate \(\alpha\) should be tuned using the validation set to minimize validation error, rather than focusing only on training loss.</p>

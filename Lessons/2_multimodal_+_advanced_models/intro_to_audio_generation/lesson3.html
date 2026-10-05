@@ -223,7 +223,7 @@ Reconstructed Waveform x̂ (T samples)</pre>
 
 <figure>
 <img src="assets/m4_rvq.png" alt="Encoder, residual quantizer, decoder, and discriminator">
-<figcaption><strong>Figure.</strong> EnCodec-style codec: waveform → convolutional encoder → stacked vector quantizers → decoder. Extra losses compare waveforms, spectrograms, and a multi-scale discriminator. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> EnCodec-style codec: waveform → convolutional encoder → stacked vector quantizers → decoder. Extra losses compare waveforms, spectrograms, and a multi-scale discriminator. Original figure: Défossez et al., <a href="https://arxiv.org/abs/2210.13438" target="_blank" rel="noopener">&ldquo;High Fidelity Neural Audio Compression (EnCodec)&rdquo;</a>, 2022. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
 </figure>
 
 <h3>1. The Encoder (\(E\))</h3>
@@ -318,7 +318,7 @@ Final Quantized Reconstruction: ẑ = e⁽¹⁾ + e⁽²⁾ + e⁽³⁾ + e⁽�
 
 <figure>
 <img src="assets/m4_quantized_lm.png" alt="Residual codebooks across time steps">
-<figcaption><strong>Figure.</strong> Residual codebooks: rows \(k_1\ldots k_4\) are the \(K\) books; columns are time frames. Each column is one frame’s RVQ IDs. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Residual codebooks: rows \(k_1\ldots k_4\) are the \(K\) books; columns are time frames. Each column is one frame’s RVQ IDs. Original figure: Copet et al., <a href="https://arxiv.org/abs/2306.05284" target="_blank" rel="noopener">&ldquo;Simple and Controllable Music Generation (MusicGen)&rdquo;</a>, 2023. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
 </figure>
 
 <h3>The Coarse-to-Fine Hierarchy</h3>
@@ -379,7 +379,7 @@ Codebook 4:    &lt;pad&gt;  &lt;pad&gt;  &lt;pad&gt;  k4,0   k4,1   k4,2</pre>
 
 <figure>
 <img src="assets/m4_codebook_delay.png" alt="MusicGen delay pattern across residual codebooks">
-<figcaption><strong>Figure.</strong> Delay pattern: coarse books lead fine books across time steps; zeros/padding on the left keep that ordering. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Delay pattern: coarse books lead fine books across time steps; zeros/padding on the left keep that ordering. Original figure: Copet et al., <a href="https://arxiv.org/abs/2306.05284" target="_blank" rel="noopener">&ldquo;Simple and Controllable Music Generation (MusicGen)&rdquo;</a>, 2023. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
 </figure>
 
 <h3>Why Delay Matters</h3>
