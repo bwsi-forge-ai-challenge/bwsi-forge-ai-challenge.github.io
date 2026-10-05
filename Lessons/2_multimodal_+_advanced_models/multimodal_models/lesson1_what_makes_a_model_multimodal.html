@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Makes a Model Multimodal? · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Multimodal Models</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Multimodal Models</p>
+    <h1>What Makes a Model Multimodal?</h1>
+    <p class="lede">Every model in the Foundations module read and wrote text. People, though, see, hear, and speak. This lesson shows how a model can work with images and sound by turning them into the same thing it already understands: sequences of vectors.</p>
+  </header>
+
+  <section>
+    <h2>1. Modalities Are Different Shapes of Data</h2>
+    <p>A <strong>modality</strong> is a kind of input or output: text, images, audio, video, and so on. A <strong>multimodal model</strong> takes in or produces more than one modality, for example a model that answers questions about a photo, or one that turns a written description into music.</p>
+    <p>The challenge is that each modality arrives as a very different shape of data:</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Modality</th><th>Raw form</th><th>Example shape</th><th>What one number means</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Text</td><td>A sequence of token IDs</td><td><code>[12]</code> for a 12-token sentence</td><td>Which word piece (Foundations, Lesson 1)</td></tr>
+            <tr><td>Image</td><td>A grid of pixels with 3 color channels</td><td><code>[3 &#215; 224 &#215; 224]</code> = 150,528 numbers</td><td>How red, green, or blue one dot is</td></tr>
+            <tr><td>Audio</td><td>A sequence of air-pressure samples</td><td><code>[160,000]</code> for 10 seconds at 16 kHz</td><td>Air pressure at one instant</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>A single word token already carries meaning. A single pixel or audio sample does not: one red dot tells you almost nothing, and the same is true of one instant of sound. Meaning in images and audio lives in <em>patterns</em> across thousands of numbers. So the first job of a multimodal model is to turn those raw numbers into meaningful units.</p>
+  </section>
+
+  <section>
+    <h2>2. The Common Move: Turn Everything Into Tokens</h2>
+    <p>Recall the pipeline from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html">Transformers: Putting It All Together</a>. Once text is a sequence of embedding vectors, the transformer blocks do not care where those vectors came from. Multimodal models exploit this. Each modality gets its own <strong>encoder</strong>, a network that turns raw data into a sequence of embedding vectors, which the transformer then processes like word tokens.</p>
+
+    <h3>Images become patches</h3>
+    <p>The <strong>Vision Transformer (ViT)</strong> cuts an image into a grid of small squares called <strong>patches</strong>, typically 16 &#215; 16 pixels. A 224 &#215; 224 image becomes a 14 &#215; 14 grid, which is 196 patches. Each patch is flattened and multiplied by a learned matrix to produce one embedding vector, exactly like looking up a token's embedding. A position vector is added so the model knows where each patch sat in the image, just as position vectors tell a language model the order of words.</p>
+    <p class="eq-panel">Image <code>[3 &#215; 224 &#215; 224]</code> &rarr; 196 patches &rarr; <code>[196 &#215; d]</code> patch embeddings</p>
+
+    <h3>Audio becomes spectrogram frames</h3>
+    <p>Raw audio is far too long to feed in directly. Ten seconds at 16,000 samples per second is 160,000 numbers. Speech models such as OpenAI's <strong>Whisper</strong> first convert the sound into a <strong>spectrogram</strong>, a picture of which frequencies are present at each moment, and then treat short slices of it as tokens. Whisper reads 30-second chunks as an 80-band log-Mel spectrogram and turns each chunk into 1,500 embedding vectors. The audio deep dive later in this module explains spectrograms in detail.</p>
+    <p class="eq-panel">Audio <code>[480,000]</code> samples (30 s) &rarr; spectrogram <code>[80 &#215; 3,000]</code> &rarr; <code>[1,500 &#215; d]</code> audio embeddings</p>
+
+    <p>After this step, a sentence, a photo, and a voice clip are all the same kind of object: a sequence of vectors with shape <code>[number of tokens &#215; d]</code>. Everything you learned about attention now applies to all three.</p>
+
+    <details>
+        <summary>Check your understanding: patches</summary>
+        <p><strong>Question:</strong> A ViT uses 16 &#215; 16 patches on a 384 &#215; 384 image. How many patch tokens does it produce?</p>
+        <p><strong>Answer:</strong> 384 &#247; 16 = 24 patches per side, so 24 &#215; 24 = 576 tokens. Higher-resolution images cost more tokens, just as longer text does.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>3. A Shared Space for Meaning</h2>
+    <p>Encoders turn each modality into vectors, but an image encoder and a text encoder trained separately would place their vectors in unrelated spaces. A picture of a dog and the word <code>"dog"</code> would have no reason to land near each other. To connect modalities, we want a <strong>shared embedding space</strong>: one space where the image of a dog and the caption "a photo of a dog" end up close together.</p>
+    <p>You already know this idea from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson2_embeddings.html">Embeddings</a>, where words with similar meanings sit near each other. A shared space extends it across modalities.</p>
+
+    <h3>CLIP: learning a shared space from captions</h3>
+    <p>OpenAI's <strong>CLIP</strong> (2021) trains an image encoder and a text encoder together on about 400 million image&ndash;caption pairs collected from the internet. The training method is called <strong>contrastive learning</strong>:</p>
+    <ol>
+        <li>Take a batch of \(N\) images and their \(N\) captions.</li>
+        <li>Encode all of them and compute the cosine similarity between every image and every caption, giving an \(N \times N\) grid of scores.</li>
+        <li>Train both encoders so the \(N\) correct pairs, on the diagonal of the grid, score high and every mismatched pair scores low.</li>
+    </ol>
+    \[ \text{similarity}(\text{image}, \text{text}) = \cos(\theta) = \frac{\mathbf{v}_{\text{image}} \cdot \mathbf{v}_{\text{text}}}{\lVert \mathbf{v}_{\text{image}} \rVert \, \lVert \mathbf{v}_{\text{text}} \rVert} \]
+    <p>No one labels the images with categories. The captions people already wrote on the web are the supervision. The result is a space where you can compare any image with any piece of text by measuring how close their vectors are.</p>
+
+    <div class="interactive-box" id="mm-clip">
+        <p style="margin-top:0;"><strong>Try it: a contrastive similarity grid.</strong> Each row is an image and each column is a caption. Click a caption to see how well it matches each image. Training pushes the diagonal up and everything else down.</p>
+        <div id="mm-clip-captions" class="guess-row"></div>
+        <div id="mm-clip-grid"></div>
+        <p class="lab-note" id="mm-clip-note">Similarity values are illustrative, chosen to look like a trained CLIP model.</p>
+    </div>
+
+    <h3>What a shared space makes possible</h3>
+    <ul>
+        <li><strong>Zero-shot classification.</strong> To classify a photo without any training, embed captions such as "a photo of a cat" and "a photo of a dog", and pick the one closest to the image.</li>
+        <li><strong>Search across modalities.</strong> Type a text query and retrieve the closest images, or the reverse.</li>
+        <li><strong>Measuring how well an image matches text.</strong> The similarity score itself is a useful metric. You will use exactly this in Project 1 to measure how much meaning survives each step of a chain.</li>
+        <li><strong>Guiding generators.</strong> Text-to-image models use text encoders, often from CLIP, to steer what they draw.</li>
+    </ul>
+    <p>The same recipe works for other pairs of modalities. <strong>CLAP</strong> learns a shared space for audio and text, and Meta's <strong>ImageBind</strong> links six modalities, including images, text, and audio, into one space by pairing each with images.</p>
+
+    <details>
+        <summary>Check your understanding: the training grid</summary>
+        <p><strong>Question:</strong> A CLIP training batch has 32,768 image&ndash;caption pairs. How many similarity scores are in the grid, and how many of them should training push <em>up</em>?</p>
+        <p><strong>Answer:</strong> 32,768 &#215; 32,768, about 1.07 billion scores. Only the 32,768 on the diagonal, the true pairs, are pushed up; all the others are pushed down. Large batches give the model many hard negatives to learn from.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>4. Three Ways Models Combine Modalities</h2>
+    <p>Almost every multimodal system you will meet is built in one of three ways. They reuse the encoders and the transformer you already know, and differ in where the modalities meet.</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Design</th><th>How it works</th><th>Good for</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Shared embedding space</strong></td><td>Separate encoders, trained so matching inputs land close together</td><td>Search, classification, similarity scores</td><td>CLIP, CLAP, ImageBind</td></tr>
+            <tr><td><strong>Encoder + language model</strong></td><td>An image or audio encoder produces vectors; a small learned projection maps them into the language model's token space, and the language model reads them like extra words</td><td>Describing images, answering questions about them, transcribing speech</td><td>LLaVA, Whisper</td></tr>
+            <tr><td><strong>Conditioned generator</strong></td><td>A generator for one modality is steered by embeddings of another through cross-attention</td><td>Making images, music, or speech from a text prompt</td><td>Stable Diffusion, MusicGen</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>The middle row is worth a closer look, because it is how most chatbots "see". <strong>LLaVA</strong>, for example, passes an image through CLIP's image encoder, multiplies each patch vector by a learned matrix so it has the same size as a word embedding, and places those vectors in front of the text prompt. The language model then attends to image patches and words together. To the transformer, the picture is just a few hundred extra tokens.</p>
+    <p>The bottom row is the subject of the two deep dives in this module: the <strong>audio</strong> deep dive shows how MusicGen turns text into sound, and the <strong>image</strong> deep dive shows how diffusion models turn text into pictures.</p>
+  </section>
+
+  <section>
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>Each modality has its own raw shape. An <strong>encoder</strong> turns it into a sequence of embedding vectors so a transformer can process it.</li>
+        <li>Images become <strong>patch</strong> tokens; audio becomes <strong>spectrogram</strong> frames.</li>
+        <li><strong>Contrastive learning</strong>, as in CLIP, builds a <strong>shared embedding space</strong> where matching images and text land close together. Cosine similarity in that space measures how well two things match.</li>
+        <li>Multimodal systems combine modalities through a shared space, an encoder feeding a language model, or a generator conditioned on another modality.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://openai.com/index/clip/" target="_blank" rel="noopener">CLIP: Connecting text and images (OpenAI)</a>
+          <span class="desc">The announcement post, with examples of zero-shot classification.</span></li>
+        <li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Learning Transferable Visual Models From Natural Language Supervision (Radford et al., 2021)</a>
+          <span class="desc">The CLIP paper.</span></li>
+        <li><a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">An Image is Worth 16x16 Words (Dosovitskiy et al., 2020)</a>
+          <span class="desc">The Vision Transformer paper that introduced image patches as tokens.</span></li>
+        <li><a href="https://arxiv.org/abs/2304.08485" target="_blank" rel="noopener">Visual Instruction Tuning (Liu et al., 2023)</a>
+          <span class="desc">The LLaVA paper, showing how an image encoder is connected to a language model.</span></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../../1_foundations_of_genai/training_&amp;_tradeoffs/UnitQuiz.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Unit Quiz: Training &amp; Tradeoffs</span>
+    </a>
+    <a class="pager__next" href="lesson2_crossing_between_modalities.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Crossing Between Modalities</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+(function () {
+    var IMAGES = ['🐕 Dog on a beach', '🍕 Pizza slice', '🚗 Red car', '🌄 Mountain sunset'];
+    var CAPTIONS = ['a dog running on sand', 'a slice of cheese pizza', 'a red sports car', 'sunset over mountains'];
+    // Rows: images, columns: captions. Illustrative cosine similarities.
+    var SIM = [
+        [0.31, 0.12, 0.10, 0.15],
+        [0.11, 0.33, 0.09, 0.08],
+        [0.09, 0.10, 0.30, 0.12],
+        [0.16, 0.07, 0.11, 0.32]
+    ];
+    var chosen = 0;
+    var capBox = document.getElementById('mm-clip-captions');
+    var grid = document.getElementById('mm-clip-grid');
+    var note = document.getElementById('mm-clip-note');
+
+    CAPTIONS.forEach(function (c, j) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = '"' + c + '"';
+        b.addEventListener('click', function () { chosen = j; render(); });
+        capBox.appendChild(b);
+    });
+
+    function render() {
+        Array.prototype.forEach.call(capBox.children, function (b, j) {
+            b.className = j === chosen ? 'active' : '';
+        });
+        grid.innerHTML = '';
+        var best = 0;
+        IMAGES.forEach(function (img, i) {
+            if (SIM[i][chosen] > SIM[best][chosen]) best = i;
+        });
+        IMAGES.forEach(function (img, i) {
+            var p = SIM[i][chosen];
+            var row = document.createElement('div');
+            row.className = 'prob-row';
+            row.innerHTML = '<span class="prob-label" style="width:170px;font-family:inherit;"></span><div class="prob-track"><div class="prob-fill"></div></div><span class="prob-pct"></span>';
+            row.querySelector('.prob-label').textContent = img;
+            var fill = row.querySelector('.prob-fill');
+            fill.style.width = Math.round(p / 0.35 * 100) + '%';
+            if (i === best) fill.className = 'prob-fill chosen';
+            row.querySelector('.prob-pct').textContent = p.toFixed(2);
+            grid.appendChild(row);
+        });
+        note.textContent = 'Closest image: ' + IMAGES[best].slice(3) + '. Even the best match scores only about 0.3: CLIP similarities are small numbers, and what matters is how the correct pair compares with the others. Values are illustrative.';
+    }
+    render();
+})();
+</script>
+
+</body>
+</html>

@@ -24,6 +24,8 @@ concurrency:
 env:
   UNPUBLISHED: |
     Lessons/1_foundations_of_genai
+    Lessons/2_multimodal_+_advanced_models
+    Assignments/2_multimodal_+_advanced_models
 
 jobs:
   deploy:

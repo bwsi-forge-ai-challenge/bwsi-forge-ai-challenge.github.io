@@ -1,167 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Intro to Audio Generation: Lesson 4 - Steering the AI</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steering the AI: Conditioning and Guidance · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
 </head>
-<body>
+<body class="genai">
 
-<div class="genai-lesson-container">
-<script>
-window.MathJax = {
-    tex: {
-        inlineMath: [['\\(', '\\)'], ['$', '$']],
-        displayMath: [['\\[', '\\]'], ['$$', '$$']],
-        processEscapes: true
-    }
-};
-</script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Deep Dive: Audio Generation</span>
+    </nav>
+  </div>
+</header>
 
-    <style>
+<main class="page">
 
-        .genai-lesson-container {
-            line-height: 1.65; color: #1e293b; max-width: 820px; margin: 0 auto; padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .genai-lesson-container h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 10px; font-size: 1.5em; }
-        .genai-lesson-container h2 { color: #1e3a8a; margin-top: 36px; }
-        .genai-lesson-container h3 { color: #0f172a; margin-top: 22px; }
-        .genai-lesson-container hr { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
-        .genai-lesson-container table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        .genai-lesson-container th, .genai-lesson-container td {
-            border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top;
-        }
-        .genai-lesson-container th { background: #f1f5f9; color: #334155; }
-        .genai-lesson-container code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;
-        }
-        .genai-lesson-container .callout {
-            background: #f0fdf4; border-left: 4px solid #22c55e;
-            padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
-        }
-        .genai-lesson-container .info-box, .genai-lesson-container .quiz {
-            background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 8px; padding: 14px 16px; margin: 18px 0;
-        }
-        .genai-lesson-container .quiz { background: #f4faf4; border-color: #bbf7d0; }
-        .genai-lesson-container .primer-box {
-            background: #faf5ff; border: 1px solid #e9d5ff;
-            border-radius: 8px; padding: 14px 16px; margin: 18px 0;
-        }
-        .genai-lesson-container .tool-box {
-            background: #fff7ed; border: 1px solid #fed7aa;
-            border-radius: 8px; padding: 16px 18px; margin: 20px 0;
-        }
-        .genai-lesson-container .warn-box {
-            background: #fffbeb; border-left: 4px solid #f59e0b;
-            padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0;
-        }
-        .genai-lesson-container .eq-panel {
-            text-align: center; background: #eff6ff; border: 1px solid #bfdbfe;
-            border-radius: 6px; padding: 14px; margin: 16px 0;
-            font-family: Cambria, "Times New Roman", serif; font-size: 1.08em;
-        }
-        .genai-lesson-container .worked {
-            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 14px 16px; margin: 16px 0; font-size: 0.95em;
-        }
-        .genai-lesson-container .shape-trail {
-            font-family: ui-monospace, Menlo, monospace; font-size: 0.88em;
-            background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 6px;
-            overflow-x: auto; margin: 12px 0;
-        }
-        .genai-lesson-container .roadmap {
-            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 12px 14px; margin: 16px 0 8px; font-size: 0.9em;
-        }
-        .genai-lesson-container .roadmap ol { margin: 8px 0 0; padding-left: 1.3em; }
-        .genai-lesson-container .roadmap .here { font-weight: 700; color: #1e3a8a; }
-        .genai-lesson-container .bridge {
-            background: #f1f5f9; border-radius: 8px; padding: 12px 14px;
-            margin: 20px 0; font-size: 0.95em;
-        }
-        .genai-lesson-container .interactive-box {
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-            padding: 18px 20px; margin: 22px 0; box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
-        }
-        .genai-lesson-container .calc-box {
-            background: #fff; border: 1px dashed #94a3b8; border-radius: 8px;
-            padding: 14px 16px; margin: 16px 0;
-        }
-        .genai-lesson-container figure { margin: 20px 0; text-align: center; }
-        .genai-lesson-container figure img {
-            display: block; max-width: 100%; height: auto; margin: 0 auto;
-            border: 1px solid #e2e8f0; border-radius: 6px; background: #fff;
-        }
-        .genai-lesson-container figcaption { font-size: 0.88em; color: #64748b; margin-top: 8px; line-height: 1.5; }
-        .genai-lesson-container button, .genai-lesson-container .chip {
-            padding: 8px 14px; margin: 4px 6px 4px 0; border: 1px solid #cbd5e1;
-            background: #fff; border-radius: 6px; cursor: pointer; font-weight: 500; color: #1e293b;
-            display: inline-block; font-size: 0.92em;
-        }
-        .genai-lesson-container button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-        .genai-lesson-container button.active, .genai-lesson-container .chip.selected {
-            background: #dbeafe; border-color: #93c5fd; color: #1e3a8a;
-        }
-        .genai-lesson-container a { color: #2563eb; }
-        .genai-lesson-container canvas {
-            display: block; width: 100%; max-width: 100%; background: #0f172a;
-            border-radius: 6px; margin-top: 10px;
-        }
-        .genai-lesson-container .viz-label { font-size: 0.85em; font-weight: 600; color: #64748b; margin-top: 12px; }
-        .genai-lesson-container details { margin: 12px 0; }
-        .genai-lesson-container summary { cursor: pointer; color: #2563eb; font-weight: 600; }
-        .genai-lesson-container .panel, .genai-lesson-container .token-stream, .genai-lesson-container .log {
-            background: #0f172a; color: #e2e8f0; border-radius: 6px; padding: 12px 14px;
-            font-family: ui-monospace, Menlo, monospace; font-size: 0.82em;
-            white-space: pre-wrap; min-height: 80px; margin-top: 10px;
-        }
-        .genai-lesson-container input[type="range"] { width: min(100%, 360px); vertical-align: middle; }
-        .genai-lesson-container input[type="text"], .genai-lesson-container input[type="number"] {
-            padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95em;
-        }
-        .genai-lesson-container .prob-row { display: flex; align-items: center; margin: 6px 0; font-size: 0.9em; }
-        .genai-lesson-container .prob-label { width: 140px; font-family: ui-monospace, Menlo, monospace; flex-shrink: 0; }
-        .genai-lesson-container .prob-bar-bg { flex: 1; background: #e2e8f0; border-radius: 4px; height: 16px; overflow: hidden; }
-        .genai-lesson-container .prob-bar { height: 100%; background: #2563eb; border-radius: 4px; transition: width 0.35s ease; }
-        .genai-lesson-container .prob-bar.warn { background: #94a3b8; }
-        .genai-lesson-container .prob-pct { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
-        .genai-lesson-container .pipe-stage {
-            display: inline-block; padding: 10px 12px; margin: 4px; border-radius: 8px;
-            border: 2px solid #cbd5e1; background: #f8fafc; font-size: 0.85em; font-weight: 600;
-            min-width: 100px; text-align: center; transition: all 0.3s;
-        }
-        .genai-lesson-container .pipe-stage.on { border-color: #2563eb; background: #dbeafe; color: #1e3a8a; }
-        .genai-lesson-container .pipe-stage.done { border-color: #16a34a; background: #dcfce7; }
-        .genai-lesson-container .pipe-arrow { color: #94a3b8; font-weight: 700; }
-        .genai-lesson-container ol.guided li { margin-bottom: 8px; }
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Audio Generation</p>
+    <h1>Steering the AI: Conditioning and Guidance</h1>
+    <p class="lede">In Lesson 3, we turned continuous audio waveforms into discrete streams of neural codec tokens.</p>
+  </header>
 
-    </style>
-<h1>Lesson 4: Steering the AI (Conditioning Mechanisms &amp; Guidance)</h1>
-
-<p>In Lesson 3, we turned continuous audio waveforms into discrete streams of neural codec tokens.</p>
-<p>An unconstrained autoregressive Transformer trained on these tokens will generate audio that sounds like a random walk through its training distribution. It might drift from a classical piano sonata into heavy metal guitar feedback, followed by a snippet of spoken podcast dialogue.</p>
+  <section>
+    <p>An unconstrained autoregressive Transformer trained on these tokens will generate audio that sounds like a random walk through its training distribution. It might drift from a classical piano sonata into heavy metal guitar feedback, followed by a snippet of spoken podcast dialogue.</p>
 <p>To build useful generative models, we need a mathematical steering wheel.</p>
 <p><strong>Conditioning</strong> is the mechanism that reshapes the probability distribution at every single autoregressive step. Instead of sampling from a generic prior \(P(a_t \mid a_{&lt;t})\), we condition generation on an external control signal \(c\):</p>
 <div class="eq-panel">\[ P(a_t \mid a_{1}, \dots, a_{t-1}, \mathbf{c}) \]</div>
 <p>Where \(\mathbf{c}\) can be a natural language prompt (<code>"lo-fi hip hop beat with warm piano"</code>), an audio prefix (continuing an existing 3-second recording), a melody pitch contour, or an empty set (\(\emptyset\)).</p>
+  </section>
 
-<hr>
-
-<div class="roadmap"><strong>Course Roadmap — Intro to Audio Generation</strong>
+  <section>
+    <div class="roadmap"><strong>Deep Dive Roadmap: Audio Generation</strong>
 <ol>
-<li>1. <strong>Sound as Waveforms &amp; Spectrograms</strong></li>
-<li>2. <strong>Recipes (MIDI) vs. Records (Raw Audio)</strong></li>
-<li>3. <strong>Audio Tokens &amp; Neural Codecs (EnCodec, SoundStream, DAC)</strong></li>
-<li class="here">4. <strong>Conditioning Mechanisms: Steering Audio Models</strong> <em>(You are here)</em></li>
-<li>5. <strong>Modern Architectures (AudioCraft, Diffusion Models) &amp; Evaluation</strong></li>
+<li><strong>Sound as Waveforms &amp; Spectrograms</strong></li>
+<li><strong>Recipes (MIDI) vs. Records (Raw Audio)</strong></li>
+<li><strong>Audio Tokens &amp; Neural Codecs (EnCodec, SoundStream, DAC)</strong></li>
+<li class="here"><strong>Conditioning Mechanisms: Steering Audio Models</strong> <em>(You are here)</em></li>
+<li><strong>Modern Architectures (AudioCraft, Diffusion Models) &amp; Evaluation</strong></li>
 </ol>
 </div>
+  </section>
 
-<hr>
-
-<h2>1. How Conditioning Reshapes the Softmax Distribution</h2>
+  <section>
+    <h2>1. How Conditioning Reshapes the Softmax Distribution</h2>
 <p>At any generation step \(t\), the final linear layer of an audio language model outputs a vector of raw, unnormalized scores called <strong>logits</strong> (\(z_1, z_2, \dots, z_V\)) across the vocabulary of \(V\) codebook entries.</p>
 <p>The model converts these logits into a valid probability distribution using the <strong>Softmax function</strong>:</p>
 <div class="eq-panel">\[ P(a_t = i \mid a_{&lt;t}, \mathbf{c}) = \frac{\exp(z_i)}{\sum_{j=1}^{V} \exp(z_j)} \]</div>
@@ -173,7 +61,7 @@ window.MathJax = {
 
 <h4>Case A: Unconditioned Generation (\(\mathbf{c} = \emptyset\))</h4>
 <p>When no condition is supplied, the network relies on its baseline training priors. The logits are nearly uniform:</p>
-<table>
+<div class="table-wrap"><table>
 <tr><th>Token (\(i\))</th><th>Logit (\(z_i\))</th><th>Exponential \(\exp(z_i)\)</th><th>Probability \(P(i)\)</th></tr>
 <tr><td><code>soft_pad</code></td><td>\(1.0\)</td><td>\(\exp(1.0) \approx 2.718\)</td><td>\(\mathbf{19.4\%}\)</td></tr>
 <tr><td><code>guitar_pluck</code></td><td>\(1.2\)</td><td>\(\exp(1.2) \approx 3.320\)</td><td>\(\mathbf{23.7\%}\)</td></tr>
@@ -181,12 +69,12 @@ window.MathJax = {
 <tr><td><code>brush_kit</code></td><td>\(1.1\)</td><td>\(\exp(1.1) \approx 3.004\)</td><td>\(\mathbf{21.5\%}\)</td></tr>
 <tr><td><code>glitch_noise</code></td><td>\(1.0\)</td><td>\(\exp(1.0) \approx 2.718\)</td><td>\(\mathbf{19.4\%}\)</td></tr>
 <tr><td><strong>Total Sum</strong></td><td>—</td><td>\(\sum \approx 13.986\)</td><td><strong>\(100.0\%\)</strong></td></tr>
-</table>
+</table></div>
 <p>The distribution is diffuse. The sampler is almost equally likely to emit a chill synth pad, a drum brush, or a distorted riff.</p>
 
 <h4>Case B: Conditioned on Prompt \(\mathbf{c} = \text{"Heavy Metal, Electric Guitar"}\)</h4>
 <p>Through cross-attention to the prompt, the network injects strong positive energy into guitar/metal tokens (\(\Delta z = +2.0\)) and suppresses calm/acoustic tokens (\(\Delta z = -1.0\)):</p>
-<table>
+<div class="table-wrap"><table>
 <tr><th>Token (\(i\))</th><th>Conditioned Logit (\(z_i\))</th><th>Exponential \(\exp(z_i)\)</th><th>Probability \(P(i)\)</th></tr>
 <tr><td><code>soft_pad</code></td><td>\(1.0 - 1.0 = \mathbf{0.0}\)</td><td>\(\exp(0.0) = 1.000\)</td><td>\(\mathbf{3.3\%}\)</td></tr>
 <tr><td><code>guitar_pluck</code></td><td>\(1.2 - 1.0 = \mathbf{0.2}\)</td><td>\(\exp(0.2) \approx 1.221\)</td><td>\(\mathbf{4.0\%}\)</td></tr>
@@ -194,7 +82,7 @@ window.MathJax = {
 <tr><td><code>brush_kit</code></td><td>\(1.1 - 1.0 = \mathbf{0.1}\)</td><td>\(\exp(0.1) \approx 1.105\)</td><td>\(\mathbf{3.6\%}\)</td></tr>
 <tr><td><code>glitch_noise</code></td><td>\(1.0 + 1.0 = \mathbf{2.0}\)</td><td>\(\exp(2.0) \approx 7.389\)</td><td>\(\mathbf{24.1\%}\)</td></tr>
 <tr><td><strong>Total Sum</strong></td><td>—</td><td>\(\sum \approx 30.670\)</td><td><strong>\(100.0\%\)</strong></td></tr>
-</table>
+</table></div>
 <p>Because exponentiation acts multiplicatively, shifting the logit of <code>distorted_riff</code> up to \(2.8\) causes its probability mass to jump from <strong>\(15.9\%\) to \(53.6\%\)</strong>, heavily biasing the autoregressive engine toward the desired genre.</p>
 
 <div class="interactive-box">
@@ -204,10 +92,10 @@ window.MathJax = {
 <div id="sm-bars"></div>
 <p class="status" id="sm-sum" style="font-size:0.88em;color:#64748b;"></p>
 </div>
+  </section>
 
-<hr>
-
-<h2>2. Text Conditioning via Cross-Attention</h2>
+  <section>
+    <h2>2. Text Conditioning via Cross-Attention</h2>
 <p>In production systems like Meta's <strong>MusicGen</strong>, text instructions are not concatenated as prefix tokens in the main sequence. Instead, text conditioning is injected via <strong>Cross-Attention</strong> layers embedded within every Transformer decoder block.</p>
 <pre class="shape-trail">Text Prompt: "Calm lo-fi piano"
    │
@@ -246,10 +134,10 @@ Audio Token Stream a_&lt;t ───────────┴─────�
 </li>
 </ol>
 <p>This formulation allows the model to dynamically look up relevant tokens from the prompt at every step. When generating a solo section, the queries attend heavily to <code>"piano"</code>; when laying down the rhythmic groove, they attend to <code>"lo-fi beat"</code>.</p>
+  </section>
 
-<hr>
-
-<h2>3. Audio Prompting &amp; Continuation: Working with Prefixes</h2>
+  <section>
+    <h2>3. Audio Prompting &amp; Continuation: Working with Prefixes</h2>
 <p>Conditioning is not limited to text. In <strong>Audio Continuation</strong>, the model extends an existing audio snippet while preserving its key, tempo, and timbre.</p>
 <p>Because neural codecs represent audio as a regular grid of \((F \times K)\) discrete indices, audio conditioning is exact:</p>
 <ol>
@@ -277,10 +165,10 @@ Frame 0      Frame 1      ...  Frame F   Frame F+1    Frame F+2    ...
 <li>New Token Steps: \(300\text{ frames} \times 4\text{ codebooks} = \mathbf{1,200\text{ tokens}}\)</li>
 <li>Total Sequence Length: \(800 + 1,200 = \mathbf{2,000\text{ tokens}}\)</li>
 </ul>
+  </section>
 
-<hr>
-
-<h2>4. Classifier-Free Guidance (CFG): Amplifying Adherence</h2>
+  <section>
+    <h2>4. Classifier-Free Guidance (CFG): Amplifying Adherence</h2>
 <p>Even with cross-attention, autoregressive models often under-index on prompt conditioning. Left to standard sampling, the model may default to generic pop progressions rather than following nuanced prompt instructions like <code>"ambient drone with microtonal flute"</code>.</p>
 <p><strong>Classifier-Free Guidance (CFG)</strong> forces the model to adhere strictly to its conditioning signal without requiring a separate classifier network.</p>
 
@@ -311,10 +199,10 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 <li><strong>\(w = 3.0\text{ to }5.0\) (Sweet Spot):</strong> Noticeable boost in prompt adherence, cleaner instrumental separation, and tighter rhythmic fidelity.</li>
 <li><strong>\(w &gt; 8.0\) (Over-guidance):</strong> The logit distribution becomes overly peaked, leading to metallic high-frequency artifacts, repetitive musical loops, and dynamic range clipping.</li>
 </ul>
+  </section>
 
-<hr>
-
-<h2>5. Sampling Strategies: Temperature and Nucleus (Top-p)</h2>
+  <section>
+    <h2>5. Sampling Strategies: Temperature and Nucleus (Top-p)</h2>
 <p>Once guided logits \(z_{\text{guided}}\) are computed, the final discrete token is sampled using two key hyperparameters:</p>
 
 <h3>1. Temperature (\(\tau\))</h3>
@@ -335,17 +223,17 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 <li>Renormalize the remaining probabilities and sample exclusively from this subset.</li>
 </ol>
 <p>Setting \(p = 0.90\) eliminates improbable acoustic tokens (preventing sudden glitchy transients) while preserving expressive variance.</p>
+  </section>
 
-<hr>
-
-<h2>6. Comparison of Conditioning Paradigms Across Audio Generation</h2>
-<table>
+  <section>
+    <h2>6. Comparison of Conditioning Paradigms Across Audio Generation</h2>
+<div class="table-wrap"><table>
 <tr><th>Paradigm</th><th>Input Condition \(\mathbf{c}\)</th><th>Injection Method</th><th>Strengths</th><th>Limitations</th></tr>
 <tr><td><strong>Text Conditioning</strong></td><td>Natural language string</td><td>Cross-attention over frozen text embeddings (T5, CLAP)</td><td>Highly expressive; accessible to non-musicians</td><td>Coarse control; cannot specify exact note pitches or rhythms</td></tr>
 <tr><td><strong>Audio Prefix (Continuation)</strong></td><td>Pre-existing waveform snippet</td><td>Direct concatenation of encoded codec tokens</td><td>Seamless transitions; preserves exact audio fidelity and timbre</td><td>Limited to extending linear chronology</td></tr>
 <tr><td><strong>Symbolic Conditioning (Melody)</strong></td><td>MIDI pitch matrix or chromagram</td><td>Feature map addition or cross-attention</td><td>Precise control over pitch contours and harmony</td><td>Requires musical knowledge to write explicit input melodies</td></tr>
 <tr><td><strong>Multi-Modal Steering</strong></td><td>Text prompt + Audio reference</td><td>Joint cross-attention + prefix caching</td><td>Directs global style via text while anchoring instrumentation via audio</td><td>High risk of prompt conflict (e.g., <code>"smooth jazz"</code> prompt over death metal drums)</td></tr>
-</table>
+</table></div>
 
 <div class="interactive-box">
 <strong>Lab: Prompt Steering Board</strong>
@@ -367,22 +255,22 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 <p style="margin-top:0;"><strong>Try it live:</strong> <a href="https://huggingface.co/spaces/facebook/MusicGen" target="_blank" rel="noopener">MusicGen on Hugging Face</a></p>
 <p>Compare a specific prompt (e.g. <code>calm lo-fi hip hop, dusty drums, warm electric piano</code>) against a vague one (<code>music</code>) and listen for how conditioning strength shows up in the output.</p>
 </div>
+  </section>
 
-<hr>
-
-<h2>7. Troubleshooting Generative Failure Modes</h2>
-<table>
+  <section>
+    <h2>7. Troubleshooting Generative Failure Modes</h2>
+<div class="table-wrap"><table>
 <tr><th>Failure Symptom</th><th>Underlying Cause</th><th>Corrective Action</th></tr>
 <tr><td><strong>Generic, bland audio output</strong></td><td>Low CFG scale (\(w \approx 1.0\)) or overly broad prompt</td><td>Increase CFG scale to \(w = 3.5\text{–}5.0\); add specific instrumentation, tempo, and genre descriptors.</td></tr>
 <tr><td><strong>Harsh metallic noise / distortion</strong></td><td>Over-guidance from excessively high CFG (\(w &gt; 8.0\))</td><td>Reduce guidance scale to \(w = 3.0\text{–}4.0\).</td></tr>
 <tr><td><strong>Model repeats a single bar indefinitely</strong></td><td>Temperature too low (\(\tau &lt; 0.5\)) causing mode collapse</td><td>Increase temperature to \(\tau = 0.8\text{–}1.0\), or increase Top-\(p\) to \(0.95\).</td></tr>
 <tr><td><strong>Audio ignores continuation prefix</strong></td><td>Prefix too short (e.g., \(\lt 1.0\text{ s}\)) or mismatch in sample rate</td><td>Provide at least \(3.0\text{ to }5.0\text{ seconds}\) of clean prefix audio.</td></tr>
 <tr><td><strong>Total musical chaos / out-of-tune notes</strong></td><td>Sampling temperature too high (\(\tau &gt; 1.4\)) or Top-\(p\) unbound</td><td>Lower temperature to \(\tau = 0.85\) and set Top-\(p = 0.90\).</td></tr>
-</table>
+</table></div>
+  </section>
 
-<hr>
-
-<h2>Knowledge Verification</h2>
+  <section>
+    <h2>Knowledge Verification</h2>
 
 <div class="quiz">
 <strong>1. Dual-Forward Pass Arithmetic with CFG</strong>
@@ -422,10 +310,10 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 </ol>
 </details>
 </div>
+  </section>
 
-<hr>
-
-<h2>Key Takeaways &amp; What's Next</h2>
+  <section>
+    <h2>Key Takeaways &amp; What's Next</h2>
 <ul>
 <li><strong>Conditioning shifts logits:</strong> External controls (prompts, audio prefixes) bias the pre-Softmax logits toward desired codebook indices.</li>
 <li><strong>Cross-attention enables continuous prompt querying:</strong> Audio queries attend to frozen text key-value embeddings throughout the generation process.</li>
@@ -442,15 +330,23 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 <li>Classifier-Free Guidance (Ho &amp; Salimans) — same linear mix used in image diffusion, applied here to token logits</li>
 </ul>
 </div>
+  </section>
 
-<table border="0" width="100%" style="margin-top:30px;">
-<tr>
-<td align="left"><button onclick="window.location.href='lesson3.html'" style="padding: 10px 20px; cursor: pointer;">Previous: Lesson 3</button></td>
-<td align="right"><button onclick="window.location.href='lesson5.html'" style="padding: 10px 20px; cursor: pointer; font-weight: bold;">Next: Lesson 5 — Architectures &amp; Evaluation</button></td>
-</tr>
-</table>
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson3.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">The Sound Dictionary: Audio Tokenization and Neural Codecs</span>
+    </a>
+    <a class="pager__next" href="lesson5.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Under the Hood of Real Audio AI</span>
+    </a>
+  </nav>
+</main>
 
-</div>
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
 
 <script>
 (function () {

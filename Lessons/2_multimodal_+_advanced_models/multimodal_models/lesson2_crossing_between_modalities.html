@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crossing Between Modalities · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Multimodal Models</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Multimodal Models</p>
+    <h1>Crossing Between Modalities</h1>
+    <p class="lede">The last lesson showed how images, text, and audio all become vectors. This lesson maps every way to convert one modality into another, the kind of model that handles each direction, and why some directions lose information while others have to invent it.</p>
+  </header>
+
+  <section>
+    <h2>1. The Conversion Map</h2>
+    <p>With three modalities, image, text, and audio, there are six one-way conversions. Each one is a named task with its own family of models. Text sits in the middle of the map because it is the best-supported modality: almost every model can read or write it.</p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="-70 0 740 380" role="img" aria-label="Triangle of three modalities, image, text, and audio, with labeled arrows in both directions between each pair" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs>
+          <marker id="cm-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker>
+        </defs>
+        <g text-anchor="middle" font-size="15" font-weight="700" fill="#1b1f24">
+          <rect x="230" y="20" width="140" height="50" rx="10" fill="#dbeafe" stroke="#2563eb"/>
+          <text x="300" y="51">Text</text>
+          <rect x="40" y="300" width="140" height="50" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+          <text x="110" y="331">Image</text>
+          <rect x="420" y="300" width="140" height="50" rx="10" fill="#fef3c7" stroke="#d97706"/>
+          <text x="490" y="331">Audio</text>
+        </g>
+        <g stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#cm-a)">
+          <line x1="95" y1="296" x2="232" y2="78"/>
+          <line x1="262" y1="74" x2="125" y2="294"/>
+          <line x1="505" y1="296" x2="368" y2="78"/>
+          <line x1="338" y1="74" x2="475" y2="294"/>
+          <line x1="186" y1="318" x2="414" y2="318"/>
+          <line x1="414" y1="334" x2="186" y2="334"/>
+        </g>
+        <g font-size="12.5" fill="#334155">
+          <text x="150" y="168" text-anchor="end">&#8593; captioning</text>
+          <text x="150" y="186" text-anchor="end">&#8595; text-to-image</text>
+          <text x="450" y="168" text-anchor="start">&#8595; text-to-speech / music</text>
+          <text x="450" y="186" text-anchor="start">&#8593; speech recognition</text>
+          <text x="300" y="310" text-anchor="middle">image-to-audio (rare)</text>
+          <text x="300" y="352" text-anchor="middle">audio-to-image (rare)</text>
+        </g>
+      </svg>
+      <figcaption>The six conversions between image, text, and audio. Direct image&ndash;audio conversion is rare; systems usually go through text.</figcaption>
+    </figure>
+
+    <div class="interactive-box" id="cm-explorer">
+        <p style="margin-top:0;"><strong>Explore the map.</strong> Pick a direction to see the task, how models do it, and open models you can run yourself.</p>
+        <div id="cm-buttons" class="guess-row"></div>
+        <h3 id="cm-title" style="margin-top:0.5rem;"></h3>
+        <p id="cm-how"></p>
+        <p id="cm-models" class="small"></p>
+        <p id="cm-link" class="small"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. How Each Direction Works</h2>
+    <p>Every conversion reuses pieces you have already met. What changes is which modality the encoder reads and which modality the decoder writes.</p>
+
+    <h3>Image &rarr; text: captioning</h3>
+    <p>A vision encoder turns the image into patch vectors, and a text decoder generates a caption one token at a time while attending to those patches through cross-attention. This is the <strong>encoder-decoder</strong> transformer from the Foundations module, with an image encoder in place of a text encoder. Small captioning models such as <strong>BLIP</strong> write one short sentence. Larger <strong>vision-language models</strong> (VLMs) such as SmolVLM or Qwen2-VL can follow instructions like "describe this image in detail" or "list every object".</p>
+
+    <h3>Text &rarr; image: diffusion</h3>
+    <p>A text encoder turns the prompt into vectors, and a <strong>diffusion model</strong> starts from random noise and removes it step by step, using cross-attention to the prompt vectors to decide what to draw. <strong>Stable Diffusion</strong> is the standard open example; <strong>SD-Turbo</strong> is a version distilled to produce an image in a single step, fast enough for a free Colab GPU. The image deep dive in this module covers diffusion in detail.</p>
+
+    <h3>Audio &rarr; text: speech recognition</h3>
+    <p><strong>Automatic speech recognition</strong> (ASR) is captioning for sound. <strong>Whisper</strong> converts audio to a spectrogram, encodes it, and decodes the transcript token by token. It was trained on 680,000 hours of audio paired with transcripts, so it handles accents and background noise well, but it can still mishear names, numbers, and words that sound alike.</p>
+    <p>Speech recognition only works for <em>speech</em>. To describe non-speech audio, such as a dog barking or a piano piece, you need an <strong>audio captioning</strong> model, or a shared audio&ndash;text space like <strong>CLAP</strong> that scores how well candidate descriptions match the sound.</p>
+
+    <h3>Text &rarr; audio: speech and music</h3>
+    <p><strong>Text-to-speech</strong> (TTS) models predict an acoustic representation of the text, usually a spectrogram, and a <strong>vocoder</strong> turns that into a waveform. Open examples include Meta's <strong>MMS-TTS</strong>, which supports over 1,100 languages, and Suno's <strong>Bark</strong>. To generate music or sound effects instead of speech, models such as Meta's <strong>MusicGen</strong> predict audio codec tokens conditioned on the text, which the audio deep dive explains.</p>
+
+    <h3>Image &harr; audio: usually through text</h3>
+    <p>Few models convert directly between images and sound, because there is little paired training data: the internet has billions of captioned images but few images paired with matching audio. In practice, systems go image &rarr; text &rarr; audio. A shared embedding space such as ImageBind can still <em>retrieve</em> a matching sound for an image, even though it cannot generate one.</p>
+  </section>
+
+  <section>
+    <h2>3. Compressing and Inventing</h2>
+    <p>The directions on the map are not equally hard, and they fail in different ways. The key question is how much information each side holds.</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Direction type</th><th>Example</th><th>What happens to information</th><th>Typical failure</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Many-to-one</strong> (understanding)</td><td>Image &rarr; caption</td><td>Compressed. Many different images fit the same caption, so details are thrown away.</td><td>Leaves out colors, counts, positions, or text in the image</td></tr>
+            <tr><td><strong>One-to-many</strong> (generation)</td><td>Caption &rarr; image</td><td>Invented. A caption fits many images, so the model must make up every detail the text did not mention.</td><td>Adds details that were never there; wrong counts or spelling</td></tr>
+            <tr><td><strong>Nearly one-to-one</strong></td><td>Text &rarr; speech &rarr; text</td><td>Mostly preserved. Spoken words map back to written words.</td><td>Mishears names, numbers, homophones; loses punctuation and capitalization</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>A short caption of a photo is a huge compression. A 512 &#215; 512 color image holds 786,432 numbers, while a ten-word caption is about a dozen tokens. When a text-to-image model expands that caption back into a picture, it fills the gap with whatever is most typical in its training data. Ask for "a dog on a beach" and you will get a plausible dog on a plausible beach, but probably not the breed, pose, or weather from the original photo.</p>
+
+    <div class="highlight-box">
+        <p><strong>Every conversion is a prediction.</strong> A model never recovers "the" answer; it picks one likely output. Understanding directions pick the most likely <em>summary</em>, and generation directions pick one likely <em>example</em>. Both are guesses shaped by training data.</p>
+    </div>
+
+    <details>
+        <summary>Check your understanding: which way loses more?</summary>
+        <p><strong>Question:</strong> You caption a photo of three red apples on a wooden table and get "a bowl of fruit". Then you generate an image from that caption. Name two details likely to change, and say which step caused each change.</p>
+        <p><strong>Answer:</strong> The count ("three") and color ("red") were dropped by the captioning step, which compresses. A bowl, other fruit, or a different table were invented by the generation step, which must fill in everything the caption left out.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>4. Choosing a Model for Each Link</h2>
+    <p>For each direction there are many models, trading quality against size and speed, exactly the tradeoffs from the Training &amp; Tradeoffs unit. These open models all run on a free Google Colab GPU and are good starting points for Project 1:</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Link</th><th>Small and fast</th><th>Larger and more capable</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Image &rarr; text</td><td><code>Salesforce/blip-image-captioning-base</code></td><td><code>HuggingFaceTB/SmolVLM-Instruct</code>, <code>microsoft/Florence-2-base</code></td></tr>
+            <tr><td>Text &rarr; image</td><td><code>stabilityai/sd-turbo</code> (1 step)</td><td><code>stabilityai/sdxl-turbo</code></td></tr>
+            <tr><td>Speech &rarr; text</td><td><code>openai/whisper-base</code></td><td><code>openai/whisper-small</code></td></tr>
+            <tr><td>Text &rarr; speech</td><td><code>facebook/mms-tts-eng</code></td><td><code>suno/bark-small</code></td></tr>
+            <tr><td>Text &rarr; music</td><td><code>facebook/musicgen-small</code></td><td><code>facebook/musicgen-medium</code></td></tr>
+            <tr><td>Audio &harr; text matching</td><td><code>laion/clap-htsat-unfused</code></td><td>&mdash;</td></tr>
+        </tbody>
+    </table></div>
+    <p class="small">These are model IDs on the <a href="https://huggingface.co/models" target="_blank" rel="noopener">Hugging Face Hub</a>, where you can read each model's card for its size, license, and example code.</p>
+  </section>
+
+  <section>
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>Image, text, and audio give six conversion directions. Text is the hub; direct image&ndash;audio conversion is rare.</li>
+        <li>Captioning and speech recognition use an encoder for the input modality and a text decoder. Text-to-image and text-to-audio use a generator conditioned on text embeddings.</li>
+        <li>Understanding directions <strong>compress</strong> and drop details. Generation directions <strong>invent</strong> details the input did not specify.</li>
+        <li>Every conversion is a prediction, not a lossless translation. The next lesson asks what happens when you chain several of them.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://huggingface.co/tasks" target="_blank" rel="noopener">Hugging Face Tasks</a>
+          <span class="desc">One page per task, including image-to-text, text-to-image, speech recognition, and text-to-speech, with demos and recommended models.</span></li>
+        <li><a href="https://openai.com/index/whisper/" target="_blank" rel="noopener">Introducing Whisper (OpenAI)</a>
+          <span class="desc">How Whisper was trained and where it is robust.</span></li>
+        <li><a href="https://arxiv.org/abs/2201.12086" target="_blank" rel="noopener">BLIP: Bootstrapping Language-Image Pre-training (Li et al., 2022)</a>
+          <span class="desc">The captioning model used as the starter in Project 1.</span></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson1_what_makes_a_model_multimodal.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">What Makes a Model Multimodal?</span>
+    </a>
+    <a class="pager__next" href="lesson3_chaining_models_and_what_gets_lost.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Chaining Models and What Gets Lost</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+(function () {
+    var D = [
+        { k: 'Image → Text', t: 'Captioning / visual question answering',
+          how: 'A vision encoder turns the image into patch vectors; a text decoder writes a description token by token, attending to the patches.',
+          models: 'BLIP, SmolVLM, Florence-2, Qwen2-VL, LLaVA', link: 'Project 1 station: Describe.' },
+        { k: 'Text → Image', t: 'Text-to-image generation',
+          how: 'A text encoder embeds the prompt; a diffusion model removes noise step by step, steered by the prompt through cross-attention.',
+          models: 'Stable Diffusion, SD-Turbo, SDXL-Turbo, FLUX', link: 'Project 1 station: Draw. Covered in the image deep dive.' },
+        { k: 'Audio → Text', t: 'Speech recognition (or audio captioning)',
+          how: 'Audio becomes a spectrogram; an encoder reads it and a text decoder writes the transcript. Non-speech sounds need an audio captioning model or CLAP.',
+          models: 'Whisper (speech), CLAP (matching sounds to descriptions)', link: 'Project 1 station: Listen.' },
+        { k: 'Text → Audio', t: 'Text-to-speech, or text-to-music',
+          how: 'Speech models predict a spectrogram that a vocoder turns into a waveform. Music models predict audio codec tokens conditioned on the text.',
+          models: 'MMS-TTS, Bark (speech); MusicGen, AudioLDM, Stable Audio Open (music and sound)', link: 'Project 1 station: Speak. Covered in the audio deep dive.' },
+        { k: 'Image → Audio', t: 'Rare: usually goes through text',
+          how: 'Little paired image–sound data exists, so systems caption the image and then generate audio from the caption. Shared spaces like ImageBind can retrieve matching sounds.',
+          models: 'Pipelines of the models above; ImageBind for retrieval', link: 'A possible Project 1 extension.' },
+        { k: 'Audio → Image', t: 'Rare: usually goes through text',
+          how: 'Transcribe or describe the audio, then generate an image from that text.',
+          models: 'Pipelines of the models above', link: 'This is one full round of the Project 1 telephone game.' }
+    ];
+    var box = document.getElementById('cm-buttons');
+    var sel = 0;
+    D.forEach(function (d, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = d.k;
+        b.addEventListener('click', function () { sel = i; render(); });
+        box.appendChild(b);
+    });
+    function render() {
+        Array.prototype.forEach.call(box.children, function (b, i) { b.className = i === sel ? 'active' : ''; });
+        var d = D[sel];
+        document.getElementById('cm-title').textContent = d.k + ': ' + d.t;
+        document.getElementById('cm-how').textContent = d.how;
+        document.getElementById('cm-models').textContent = 'Models: ' + d.models;
+        document.getElementById('cm-link').textContent = d.link;
+    }
+    render();
+})();
+</script>
+
+</body>
+</html>

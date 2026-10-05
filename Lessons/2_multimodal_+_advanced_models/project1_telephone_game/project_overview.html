@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 1: The Multimodal Telephone Game · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Project 1</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Project 1</p>
+    <h1>Project 1: The Multimodal Telephone Game</h1>
+    <p class="lede">With a partner, you will build a chain of AI models that passes a message from image to text to speech and back to an image, again and again, then measure exactly how and where the meaning drifts. At the end, the whole class plays one giant game of telephone across every team's models.</p>
+  </header>
+
+  <section>
+    <div class="assignment-box">
+        <strong>Weight:</strong> 20% of your final grade<br>
+        <strong>Team size:</strong> 2 students (see <a href="teams_milestones_and_submission.html">Teams, Milestones, and Submission</a>)<br>
+        <strong>Length:</strong> about 3 weeks, with three Gradescope submissions and a live Game Day<br>
+        <strong>Environment:</strong> Google Colab with a free GPU, using open models from Hugging Face<br>
+        <strong>Starter notebook:</strong> <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/project1_telephone_game.ipynb" download="project1_telephone_game.ipynb">project1_telephone_game.ipynb</a>
+    </div>
+    <p>This project ties together the whole module. The <em>Multimodal Models</em> lessons explained how models convert between modalities and what gets lost; the audio and image deep dives explained how the generators work. Now you will build a working multimodal pipeline, run controlled experiments on it, and explain the results.</p>
+  </section>
+
+  <section>
+    <h2>1. The Game</h2>
+    <p>In the children's game of telephone, a message is whispered from person to person, and the version that comes out the end is often very different from the one that went in. In this project, the "people" are AI models, and each one passes the message to the next in a different modality.</p>
+    <p>One <strong>round</strong> of your game uses four <strong>stations</strong>:</p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 640 210" role="img" aria-label="One round: an image goes to Describe, which writes text; Speak turns the text into audio; Listen turns the audio into text; Draw turns that text into a new image, which starts the next round" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs><marker id="pa" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs>
+        <g text-anchor="middle" font-size="13" fill="#1b1f24">
+          <rect x="10" y="40" width="100" height="44" rx="8" fill="#dcfce7" stroke="#16a34a"/><text x="60" y="67">Image</text>
+          <rect x="140" y="40" width="100" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="190" y="61" font-weight="700">Describe</text><text x="190" y="76" font-size="10.5" fill="#475569">image &#8594; text</text>
+          <rect x="270" y="40" width="100" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="320" y="61" font-weight="700">Speak</text><text x="320" y="76" font-size="10.5" fill="#475569">text &#8594; audio</text>
+          <rect x="400" y="40" width="100" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="450" y="61" font-weight="700">Listen</text><text x="450" y="76" font-size="10.5" fill="#475569">audio &#8594; text</text>
+          <rect x="530" y="40" width="100" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="580" y="61" font-weight="700">Draw</text><text x="580" y="76" font-size="10.5" fill="#475569">text &#8594; image</text>
+        </g>
+        <g stroke="#475569" stroke-width="1.6" fill="none" marker-end="url(#pa)">
+          <line x1="110" y1="62" x2="138" y2="62"/><line x1="240" y1="62" x2="268" y2="62"/><line x1="370" y1="62" x2="398" y2="62"/><line x1="500" y1="62" x2="528" y2="62"/>
+          <path d="M580,84 V150 H60 V86"/>
+        </g>
+        <text x="320" y="170" text-anchor="middle" font-size="12" fill="#475569">The new image starts the next round. Play at least 5 rounds.</text>
+      </svg>
+      <figcaption>One round of the telephone game. Text crosses the speech link in both directions, so every round passes through image, text, and audio.</figcaption>
+    </figure>
+
+    <p>Run several rounds and you get a <strong>chain</strong>: the original image, then every caption, audio clip, transcript, and new image along the way. Your job is to build the chain, measure it, and explain it.</p>
+  </section>
+
+  <section>
+    <h2>2. What You Will Build</h2>
+
+    <h3>Part A: Four stations</h3>
+    <p>Each station is one Python function with a fixed interface, so that any team's station can plug into any other team's chain. The starter notebook defines these signatures and a <code>check_stations()</code> function that tests them.</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Station</th><th>Function</th><th>Returns</th><th>Starter model</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Describe</td><td><code>describe(image)</code></td><td>A caption, at most 60 words</td><td><code>Salesforce/blip-image-captioning-base</code></td></tr>
+            <tr><td>Speak</td><td><code>speak(text)</code></td><td>Mono audio array and its sample rate</td><td><code>facebook/mms-tts-eng</code></td></tr>
+            <tr><td>Listen</td><td><code>listen(audio, sample_rate)</code></td><td>A transcript</td><td><code>openai/whisper-base</code></td></tr>
+            <tr><td>Draw</td><td><code>draw(text)</code></td><td>A 512 &#215; 512 RGB image</td><td><code>stabilityai/sd-turbo</code></td></tr>
+        </tbody>
+    </table></div>
+    <p>You may use any open model for any station, and you are encouraged to try more than one. The starter models are small enough for a free Colab GPU and are tested with the notebook.</p>
+
+    <h3>Part B: The game loop</h3>
+    <p>Write <code>run_telephone(start_image, rounds)</code>, which plays the game and records every artifact from every round. Save each chain with the provided <code>save_chain()</code> helper, which writes the standard file format used on Game Day.</p>
+
+    <h3>Part C: Measure the drift</h3>
+    <p>Run your chain on <strong>at least 5 starting images</strong> for <strong>at least 5 rounds each</strong>. Choose varied images: for example a simple object, a busy street, a face-free indoor scene, an image with text in it, and an unusual or surprising scene. Use your own photos or openly licensed images, and credit any you did not take.</p>
+    <p>For every round, compute the metrics from <a href="../multimodal_models/lesson3_chaining_models_and_what_gets_lost.html">Chaining Models and What Gets Lost</a>. The notebook provides the metric functions; your job is to use them well.</p>
+    <ul>
+        <li><strong>Word error rate</strong> between each caption and its transcript (how much the speech link loses).</li>
+        <li><strong>Text similarity</strong> between each round's caption and the round-1 caption (how far the meaning drifts).</li>
+        <li><strong>CLIP image similarity</strong> between each round's new image and the original (how far the picture drifts).</li>
+    </ul>
+    <p>Plot drift against round number for each starting image, and identify which station causes the most loss.</p>
+
+    <h3>Part D: Two extensions</h3>
+    <p>Complete <strong>two</strong> of the following, one led by each partner. Each extension must include a measured comparison against your Part C baseline, not just a demo.</p>
+    <ol>
+        <li><strong>Model showdown.</strong> Replace one station with a different model, such as SmolVLM instead of BLIP or whisper-small instead of whisper-base, and compare drift on the same starting images. Is the bigger model worth its extra time?</li>
+        <li><strong>Slow the drift.</strong> Design an intervention that keeps more meaning and show that it works. Ideas: ask a vision-language model for a more detailed caption, generate several images per round and keep the one with the highest CLIP similarity to the transcript, or fix the random seed.</li>
+        <li><strong>The sound route.</strong> Add a non-speech branch: turn the caption into music or sound effects with MusicGen, then recover a description with CLAP by scoring a candidate list you design. Compare it with the speech route.</li>
+        <li><strong>A noisy line.</strong> Add background noise to the audio at several loudness levels before the Listen station, and measure how WER and final image drift change. Where does the chain break?</li>
+        <li><strong>Your own idea.</strong> Propose it in your Milestone 0 plan; it must be approved by course staff.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>3. Game Day</h2>
+    <p>Game Day is a live class session where every team's stations join one long chain.</p>
+    <ol>
+        <li>Staff arrange the teams in a ring and assign each team one station.</li>
+        <li>Staff give the first team a secret starting image. Each team runs <em>only its assigned station</em> on the file it receives, then uploads its output to the shared Game Day folder for the next team.</li>
+        <li>After the message has gone all the way around, the class sees the original and the final result side by side and traces where the meaning changed.</li>
+        <li>Each team then runs its <em>own</em> full chain on a second mystery image and reports its final CLIP similarity. Small prizes go to the most faithful chain and, by class vote, the best drift story.</li>
+    </ol>
+    <p>Because files pass between teams, every team must read and write the standard formats exactly:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Artifact</th><th>Format</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Image</td><td>PNG, 512 &#215; 512 pixels, RGB</td></tr>
+            <tr><td>Audio</td><td>WAV, mono, 16,000 Hz, 16-bit</td></tr>
+            <tr><td>Text</td><td>UTF-8 <code>.txt</code> file, at most 60 words</td></tr>
+        </tbody>
+    </table></div>
+    <p>The notebook's <code>run_station_on_file()</code> helper reads and writes these formats for you. Test it before Game Day; a team whose files cannot be read breaks the chain for everyone after it.</p>
+  </section>
+
+  <section>
+    <h2>4. Grading</h2>
+    <p>Project 1 is worth 20% of your final grade. It is scored out of 100 points:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Component</th><th>What we look for</th><th>Points</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Milestone 0: Team plan</td><td>Team registered on time; clear plan for who builds what and which extensions</td><td>5</td></tr>
+            <tr><td>Milestone 1: Stations check-in</td><td>All four stations pass <code>check_stations()</code>; one full sample chain saved</td><td>15</td></tr>
+            <tr><td>Game loop and measurement</td><td>Correct <code>run_telephone()</code>; at least 5 images &#215; 5 rounds; all three metrics computed and plotted</td><td>20</td></tr>
+            <tr><td>Extensions</td><td>Two extensions, each with a measured comparison against the baseline (10 points each)</td><td>20</td></tr>
+            <tr><td>Report</td><td>Explains where and why meaning is lost, backed by your plots and example chains; discusses extension results; includes contribution and AI-use statements</td><td>25</td></tr>
+            <tr><td>Game Day</td><td>Present; outputs in the standard formats and on time</td><td>10</td></tr>
+            <tr><td>Peer evaluation</td><td>Submitted on time by each student individually</td><td>5</td></tr>
+            <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+        </tbody>
+    </table></div>
+    <p>Both partners normally receive the same score for team components. If the peer evaluations and contribution statement show a large imbalance, staff may adjust individual scores.</p>
+  </section>
+
+  <section>
+    <h2>5. Rules and Tips</h2>
+    <ul>
+        <li><strong>Models:</strong> any open model from Hugging Face is allowed. Paid APIs are not required; if you use one for an extension, report its cost.</li>
+        <li><strong>AI assistants:</strong> allowed for writing and debugging code, following the <a href="../../0_prerequisites/Introduction/GenAiUsePolicy.html">Generative AI Use Policy</a>. Your report's analysis must be your own writing, and it must say how you used AI tools.</li>
+        <li><strong>Images:</strong> do not use photos of people without their permission, and keep all content appropriate for class. Credit every image you did not create.</li>
+        <li><strong>Compute:</strong> load each model once and reuse it, use the GPU runtime, and test on one image before running everything. With the starter models, one round takes a few seconds on a Colab T4 GPU.</li>
+        <li><strong>Save as you go:</strong> Colab sessions reset. Save chains to Google Drive so you do not lose results.</li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../intro_to_image_generation_models/lesson5.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Tricks, Traps, and Why Hands Have Six Fingers</span>
+    </a>
+    <a class="pager__next" href="teams_milestones_and_submission.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Project 1: Teams, Milestones, and Submission</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+<script>
+  document.getElementById('notebook-download-link').addEventListener('click', function (e) {
+    var href = this.getAttribute('href');
+    var filename = this.getAttribute('download');
+    fetch(href)
+      .then(function (res) { return res.blob(); })
+      .then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      })
+      .catch(function () {
+        window.location.href = href;
+      });
+    e.preventDefault();
+  });
+</script>
+
+</body>
+</html>
