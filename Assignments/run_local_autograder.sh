@@ -5,6 +5,7 @@
 #   ./run_local_autograder.sh 0_prerequisites/rnn_assignment_autograder --solution
 #   ./run_local_autograder.sh 0_prerequisites/rnn_assignment_autograder --student
 #   ./run_local_autograder.sh 0_prerequisites/rnn_assignment_autograder /path/to/file.ipynb
+#   ./run_local_autograder.sh 1_foundations_of_genai/fine_tune_assignment_autograder --solution   # grades *_solution.py
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
@@ -27,13 +28,16 @@ STEM="${NAME%_autograder}"
 MODE="${1:-}"
 case "$MODE" in
   --solution|"")
+    # Solution may be a .ipynb (notebook-graded) or a .py (script-graded)
     NB="$ASSIGN_DIR/${STEM}_solution.ipynb"
+    [[ -f "$NB" ]] || NB="$ASSIGN_DIR/${STEM}_solution.py"
     if [[ "$MODE" == "" && ! -f "$NB" ]]; then
       NB="$ASSIGN_DIR/${STEM}.ipynb"
     fi
     ;;
   --student)
     NB="$ASSIGN_DIR/${STEM}.ipynb"
+    [[ -f "$NB" ]] || NB="$ASSIGN_DIR/${STEM}.py"
     ;;
   *)
     NB="$MODE"
@@ -58,5 +62,5 @@ fi
 
 echo "Autograder: $SRC"
 echo "Notebook:   $NB"
-AUTOGRADE_NOTEBOOK="$NB" python3 "$SRC/run_tests.py"
+AUTOGRADE_NOTEBOOK="$NB" AUTOGRADE_FILE="$NB" python3 "$SRC/run_tests.py"
 echo "Results:    $ASSIGN_DIR/_autograder_local_results/results.json"
