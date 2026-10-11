@@ -443,72 +443,63 @@ def t_p4_content(sub):
 
 GROUPS: list[tuple[str, list[tuple[str, float, Check]]]] = [
     (
-        "Dataset & prompt format",
+        "Dataset",
         [
-            ("pairs are well-formed (input, output) strings", 5, t_pairs_well_formed),
-            ("at least 50 examples", 5, t_at_least_50),
-            ("added at least 5 new examples", 8, t_added_new_pairs),
-            ("no duplicate inputs", 4, t_no_duplicates),
-            ("new examples have real outputs", 3, t_new_pairs_quality),
-            ("format_training_text", 3, t_format_training_text),
-            ("format_inference_prompt", 2, t_format_inference_prompt),
+            ("pairs are well-formed (input, output) strings", 1, t_pairs_well_formed),
+            ("at least 50 examples", 1, t_at_least_50),
+            ("added at least 5 new examples", 2, t_added_new_pairs),
+            ("no duplicate inputs", 1, t_no_duplicates),
         ],
     ),
     (
         "Hyperparameters",
         [
-            ("LEARNING_RATE_RUN1 set", 3, t_lr1),
-            ("LEARNING_RATE_RUN2 set", 3, t_lr2),
-            ("learning rates differ", 3, t_lr_differ),
-            ("NUM_EPOCHS set", 3, t_epochs),
-            ("BATCH_SIZE set", 3, t_batch),
+            ("LEARNING_RATE_RUN1 set", 1, t_lr1),
+            ("LEARNING_RATE_RUN2 set", 1, t_lr2),
+            ("learning rates differ", 1, t_lr_differ),
+            ("NUM_EPOCHS set", 1, t_epochs),
+            ("BATCH_SIZE set", 1, t_batch),
         ],
-    ),
-    (
-        "Training runs",
-        [
-            ("train_finetune_run still uses Trainer", 6, t_train_fn_intact),
-            ("W&B login active", 6, t_wandb),
-            ("two training runs executed", 10, t_two_runs),
-            ("runs use different learning rate & output dir", 8, t_runs_distinct),
-        ],
-    ),
-    (
-        "Part 4 - evaluation",
-        [("fine-tuned model prompted with the training format", 5, t_eval_uses_template)],
     ),
     (
         "Reflections",
         [
-            ("part1_reflection length", 5, t_p1_length),
-            ("part1_reflection content", 5, t_p1_content),
-            ("part4_reflection length", 5, t_p4_length),
-            ("part4_reflection content", 5, t_p4_content),
+            ("part1_reflection length", 2, t_p1_length),
+            ("part1_reflection content", 3, t_p1_content),
+            ("part4_reflection length", 2, t_p4_length),
+            ("part4_reflection content", 3, t_p4_content),
         ],
     ),
 ]
+MAX_TOTAL = float(sum(pts for _, tests in GROUPS for _, pts, _ in tests))  # 20
 
 
 def run_checks(sub: Submission) -> list[dict[str, Any]]:
+    """One Gradescope entry per section. Scores only: students never see failure details.
+
+    Set AUTOGRADE_DEBUG=1 when running locally to print which sub-checks failed.
+    """
     out: list[dict[str, Any]] = []
     for group, tests in GROUPS:
+        earned = 0.0
+        total = 0.0
         for name, pts, fn in tests:
+            total += pts
             try:
                 fn(sub)
-                score, msg = float(pts), "Passed"
-            except AssertionError as exc:
-                score, msg = 0.0, str(exc)
-            except Exception:
-                score, msg = 0.0, traceback.format_exc()
-            out.append(
-                {
-                    "name": f"{group}: {name}",
-                    "score": score,
-                    "max_score": float(pts),
-                    "output": msg,
-                    "visibility": "visible",
-                }
-            )
+                earned += pts
+            except Exception as exc:
+                if os.environ.get("AUTOGRADE_DEBUG"):
+                    print(f"[debug] {group}: {name}: {exc}")
+        out.append(
+            {
+                "name": group,
+                "score": float(earned),
+                "max_score": float(total),
+                "output": "",
+                "visibility": "visible",
+            }
+        )
     return out
 
 
@@ -518,11 +509,13 @@ def write_and_print(results_dir: Path, payload: dict[str, Any]) -> None:
 
 
 def failure_payload(name: str, msg: str) -> dict[str, Any]:
+    if os.environ.get("AUTOGRADE_DEBUG"):
+        print(f"[debug] {name}: {msg}")
     return {
         "score": 0.0,
-        "output": msg,
+        "output": "",
         "tests": [
-            {"name": name, "score": 0.0, "max_score": 100.0, "output": msg, "visibility": "visible"}
+            {"name": name, "score": 0.0, "max_score": MAX_TOTAL, "output": "", "visibility": "visible"}
         ],
     }
 
@@ -542,7 +535,6 @@ def main() -> int:
     except Exception as exc:
         payload = failure_payload("Submission check", str(exc))
         write_and_print(results_dir, payload)
-        print(json.dumps(payload, indent=2))
         return 0
 
     try:
@@ -555,7 +547,6 @@ def main() -> int:
         )
         payload = failure_payload("File parses", msg)
         write_and_print(results_dir, payload)
-        print(msg)
         return 0
 
     tests_out = run_checks(sub)
@@ -563,19 +554,15 @@ def main() -> int:
     header = f"Graded file: {path.name}\n"
     payload = {
         "score": score,
-        "output": header,
+        "output": "",
         "visibility": "visible",
-        "stdout_visibility": "visible",
+        "stdout_visibility": "hidden",
         "tests": tests_out,
     }
     write_and_print(results_dir, payload)
-    print(header)
-    print(f"Score: {score} / 100")
+    print(f"Score: {score} / {MAX_TOTAL:g}")
     for t in tests_out:
-        status = "PASS" if t["score"] >= t["max_score"] - 1e-9 else "FAIL"
-        print(f"[{status}] {t['name']}: {t['score']:.2f}/{t['max_score']:.2f}")
-        if status == "FAIL":
-            print("       " + t["output"].replace("\n", "\n       "))
+        print(f"{t['name']}: {t['score']:g}/{t['max_score']:g}")
     return 0
 
 
