@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Art Forger and the Detective: GANs · F.O.R.G.E. AI Challenge</title>
+<title>Learning a Shared Space: Contrastive Vision-Language Learning (CLIP) · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
 </head>
 <body class="genai">
 
@@ -14,7 +15,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Image Generation</span>
+      <span>Deep Dive: Vision-Language Models</span>
     </nav>
   </div>
 </header>
@@ -22,214 +23,207 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
-    <h1>The Art Forger and the Detective: GANs</h1>
-    <p class="lede">In Lesson 1 you learned that a generator can map a compact latent <code>z</code> to a full pixel grid. But who decides whether the output looks <em>real</em>? In a GAN — a <strong>Generative Adversarial Network</strong> — that job goes to a second network trained as an adversary. Two players, one game, no labeled “correct answer” image required.</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <h1>Learning a Shared Space: Contrastive Vision-Language Learning (CLIP)</h1>
   </header>
 
   <section>
-    <div class="roadmap">
-        <strong>Deep Dive Roadmap: Image Generation</strong>
-        <ol>
-            <li><a href="lesson1.html">Pixels &amp; latent space</a></li>
-            <li class="here">GANs (forger vs detective) ← <em>you are here</em></li>
-            <li><a href="lesson3.html">Diffusion basics (denoising)</a></li>
-            <li>Text conditioning &amp; coding lab</li>
-            <li>Control, failure modes, prompt craft</li>
-        </ol>
+    <h2>1. Two encoders, one space</h2>
+
+    <p>CLIP has two separate networks. An <strong>image encoder</strong> (a ViT or a ResNet) and a <strong>text encoder</strong> (a transformer) each produce one vector. A learned linear layer on each side maps those vectors to the same size \(d\) (for example \(512\)), and both are scaled to unit length.</p>
+
+    <div class="shape-trail">image   → image encoder → linear → normalize → u   (d,)
+caption → text encoder  → linear → normalize → v   (d,)
+
+similarity(image, caption) = u · v        (cosine similarity, since both have length 1)</div>
+
+    <p>Because the vectors are unit length, their dot product is the cosine of the angle between them: close to \(1\) for a good match, near \(0\) for unrelated content.</p>
+  </section>
+
+  <section>
+    <h2>2. The contrastive objective</h2>
+
+    <p>Take a batch of \(N\) image-caption pairs. Encode all of them to get image vectors \(\vec{u}_1, \dots, \vec{u}_N\) and text vectors \(\vec{v}_1, \dots, \vec{v}_N\). Form the \(N \times N\) grid of scaled similarities:</p>
+
+    <div class="eq-panel">
+        \[ s_{ij} = \frac{\vec{u}_i \cdot \vec{v}_j}{\tau} \]
     </div>
 
-    
+    <p>Here \(\vec{u}_i \cdot \vec{v}_j\) is the cosine similarity between image \(i\) and caption \(j\), and \(\tau\) (the Greek letter tau) is the <strong>temperature</strong>: a positive number that the similarities are divided by. Dividing by a small \(\tau\) stretches the similarities apart, so \(s_{ij}\) is just a rescaled cosine similarity. Section 3 explains what this rescaling does and why it is needed.</p>
 
-    <div class="bridge">
-        <strong>Building on what you know.</strong>
-        The <strong>Generator</strong> is the upsampler you met last lesson: <code>z → image</code>.
-        The <strong>Discriminator</strong> is a binary classifier from your ML prereqs — same family as “cat vs dog,” but now the classes are <em>real photo</em> vs <em>fake</em>.
-        Training is a tug-of-war: each network’s loss pushes against the other’s.
+    <p>In this grid, <strong>each row is one image and each column is one caption</strong>: row \(i\) holds the scores of image \(i\) against all \(N\) captions, and column \(j\) holds the scores of caption \(j\) against all \(N\) images. The true pairs sit on the diagonal (\(i = j\)). Every other cell is a mismatched pair, used as a negative. Each row is treated as a classification problem: "which of the \(N\) captions belongs to this image?" Each column asks the reverse: "which of the \(N\) images belongs to this caption?" The loss is the cross-entropy of both, averaged, which is why it is called <strong>symmetric</strong>:</p>
+
+    <div class="eq-panel">
+        \[ \mathcal{L}_{i \to t} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{s_{ii}}}{\sum_{j=1}^{N} e^{s_{ij}}} \qquad \mathcal{L}_{t \to i} = -\frac{1}{N} \sum_{j=1}^{N} \log \frac{e^{s_{jj}}}{\sum_{i=1}^{N} e^{s_{ij}}} \]
+        \[ \mathcal{L} = \tfrac{1}{2} \left( \mathcal{L}_{i \to t} + \mathcal{L}_{t \to i} \right) \]
+    </div>
+
+    <p>The CLIP paper gives the whole loss in a few lines of pseudocode. Here it is written out step by step:</p>
+
+    <pre><code># image_emb: (N, d)   row i is the vector for image i, scaled to length 1
+# text_emb:  (N, d)   row j is the vector for caption j, scaled to length 1
+# tau:       the temperature, a positive number
+
+# Step 1: cosine similarity of every image with every caption
+sims = image_emb @ text_emb.T              # (N, N), sims[i][j] = image i vs caption j
+
+# Step 2: divide by the temperature to get the scores s_ij
+logits = sims / tau                        # (N, N)
+
+# Step 3: the correct caption for image i is caption i,
+# so the correct column in row i is i
+labels = [0, 1, 2, ..., N-1]
+
+# Step 4: image to text. Each ROW is one classification problem.
+loss_i2t = cross_entropy(logits, labels)
+
+# Step 5: text to image. Each COLUMN is one problem, so transpose first.
+loss_t2i = cross_entropy(logits.T, labels)
+
+# Step 6: average the two directions
+loss = (loss_i2t + loss_t2i) / 2
+
+
+def cross_entropy(logits, labels):
+    total = 0
+    for k in range(N):                     # go through the rows one at a time
+        p = softmax(logits[k])             # N probabilities that add up to 1
+        total += -log(p[labels[k]])        # -log of the probability of the correct entry
+    return total / N                       # average over the N rows</code></pre>
+
+    <p>CLIP's own code stores the temperature as a learned log-scale number <code>t</code> and multiplies the similarities by <code>exp(t)</code>. That is the same as dividing by \(\tau\) with \(\tau = e^{-t}\).</p>
+
+    <div class="worked">
+        <strong>Worked example, \(N = 2\).</strong> A batch has two pairs: image 1 with caption 1, and image 2 with caption 2. Suppose the encoders give these cosine similarities (rows are images, columns are captions):
+
+        <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Caption 1</th><th>Caption 2</th></tr></thead>
+            <tbody>
+                <tr><th>Image 1</th><td><strong>0.30</strong></td><td>0.10</td></tr>
+                <tr><th>Image 2</th><td>0.05</td><td><strong>0.25</strong></td></tr>
+            </tbody>
+        </table></div>
+
+        The correct pairs (bold) already have the highest score in their row and column. Now we compute the loss with \(\tau = 0.1\).
+
+        <p><strong>Step 1: divide by \(\tau\).</strong> Dividing by \(0.1\) multiplies every score by \(10\):</p>
+        <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Caption 1</th><th>Caption 2</th></tr></thead>
+            <tbody>
+                <tr><th>Image 1</th><td><strong>3</strong></td><td>1</td></tr>
+                <tr><th>Image 2</th><td>0.5</td><td><strong>2.5</strong></td></tr>
+            </tbody>
+        </table></div>
+
+        <p><strong>Step 2: image to text (go along each row).</strong> For image 1, the softmax over the row \((3, 1)\) is \(\left(\frac{e^{3}}{e^{3} + e^{1}},\ \frac{e^{1}}{e^{3} + e^{1}}\right) \approx (0.881,\ 0.119)\). The correct entry is caption 1, so the loss for this row is \(-\ln 0.881 \approx 0.127\). For image 2, the row \((0.5, 2.5)\) gives probabilities \(\approx (0.119,\ 0.881)\). The correct entry is caption 2, so this loss is also \(-\ln 0.881 \approx 0.127\). Average of the rows: \(\mathcal{L}_{i \to t} \approx 0.127\).</p>
+
+        <p><strong>Step 3: text to image (go down each column).</strong> For caption 1, the column \((3, 0.5)\) gives probabilities \(\approx (0.924,\ 0.076)\) over the two images. The correct entry is image 1, so the loss is \(-\ln 0.924 \approx 0.079\). For caption 2, the column \((1, 2.5)\) gives \(\approx (0.182,\ 0.818)\). The correct entry is image 2, so the loss is \(-\ln 0.818 \approx 0.201\). Average of the columns: \(\mathcal{L}_{t \to i} \approx 0.140\).</p>
+
+        <p><strong>Step 4: average the two directions.</strong> \(\mathcal{L} = \tfrac{1}{2}(0.127 + 0.140) \approx 0.134\).</p>
+
+        <p><strong>What this shows.</strong> Caption 2 lost more than caption 1 because image 1 is a fairly good match for it too (score \(0.10\) against \(0.25\)), so the model was less sure. Training would push the diagonal scores up and the off-diagonal ones down, which lowers the loss. The temperature matters too: with \(\tau = 1\) the same grid gives a loss of about \(0.60\), because the scores \(0.30\) and \(0.10\) are too close together for the softmax to be confident. Dividing by a small \(\tau\) is what lets a modest gap in cosine similarity count as a clear win.</p>
     </div>
   </section>
 
   <section>
-    <h2>1. Two roles: counterfeiter and museum curator</h2>
+    <h2>3. Temperature scaling</h2>
 
-    <div class="callout">
-        <strong>Metaphor:</strong> A master forger paints fake Vermeers in a attic. A museum curator (expert authenticator) learns to spot flaws. Every time the curator catches a fake, the forger studies the rejection and tries again. Every time a fake slips through, the curator sharpens their eye. Neither can win forever — they co-evolve.
+    <p>The temperature \(\tau\) rescales the similarities before the softmax. Cosine similarities live in a narrow range (all between \(-1\) and \(1\)), so without scaling the softmax would be almost flat and the loss could not tell a good match from a mediocre one.</p>
+
+    <ul>
+        <li><strong>Small \(\tau\)</strong> sharpens the softmax. Confident matches get probability near \(1\), and the gradient concentrates on the hardest negatives, the wrong captions that look nearly as good as the right one.</li>
+        <li><strong>Large \(\tau\)</strong> flattens the softmax. All negatives are treated similarly and the signal is weak.</li>
+    </ul>
+
+    <p>CLIP does not fix \(\tau\). It learns it, as a log-scale parameter initialized to \(\tau = 0.07\), and clips it so the logits are never scaled by more than \(100\).</p>
+
+    <h3>Interactive: Temperature Explorer</h3>
+    <p>This is a fixed \(4 \times 4\) similarity grid (rows are images, columns are captions) with illustrative values. Each cell shows the row-wise softmax probability. Drag \(\tau\) and watch how confident the model becomes, and how the loss responds. Notice the two hard negatives off the diagonal.</p>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Temperature \(\tau\)</strong> = <span id="tx-tau">0.07</span></p>
+        <input type="range" id="tx-slider" min="0" max="100" value="42">
+        <div id="tx-table" style="margin-top:12px;"></div>
+        <div class="metric-row">
+            <div class="metric">Image to text loss: <strong id="tx-li">0</strong></div>
+            <div class="metric">Text to image loss: <strong id="tx-lt">0</strong></div>
+            <div class="metric">Total loss: <strong id="tx-l">0</strong></div>
+        </div>
+        <p id="tx-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Batch size</h2>
+
+    <p>In a batch of \(N\) pairs, every image has \(N - 1\) negative captions and every caption has \(N - 1\) negative images. Larger batches mean more negatives, and more of them are hard. CLIP trained with a batch of \(32{,}768\) pairs, so each step scored \(32{,}768^2 \approx 1.07\) billion pairs.</p>
+
+    <ul>
+        <li><strong>Too small a batch</strong> gives only easy negatives (a dog photo against a caption about a bridge), so the model learns little about fine distinctions.</li>
+        <li><strong>The grid grows as \(N^2\).</strong> Large-batch training spreads the work over many GPUs and shares embeddings between them.</li>
+        <li><strong>False negatives exist.</strong> Two different photos can both be well described by "a dog on a beach," yet the loss treats one as wrong. Large batches make this more likely.</li>
+    </ul>
+
+    <p>Later work such as SigLIP replaces the softmax over the whole batch with an independent yes/no loss on each pair, which relaxes the dependence on very large batches.</p>
+  </section>
+
+  <section>
+    <h2>5. Zero-shot inference</h2>
+
+    <p>Once CLIP is trained, there are two main ways to use it for classification. This section defines <strong>zero-shot inference</strong> and compares it with a <strong>linear probe</strong>.</p>
+
+    <ul>
+        <li><strong>Zero-shot inference</strong> is how you use CLIP when you have category names but no labeled images. You turn each name into a caption, embed it with the text encoder, and pick the caption closest to the image. The classifier is built from the names alone, with no training on your categories.</li>
+        <li>A <strong>linear probe</strong> takes the opposite route. First, you <em>freeze</em> the image encoder, meaning its weights never change, and run your labeled images through it to get one feature vector per image. Then you train a single linear classifier on those vectors so that it learns to map CLIP's features to your categories. It needs labeled images, but the only part that is trained is one small layer.</li>
+    </ul>
+
+    <p>We start with zero-shot. As a formula, the predicted class \(\hat{y}\) for an image vector \(\vec{u}\) is the one whose caption vector \(\vec{v}_c\) is closest:</p>
+
+    <div class="eq-panel">
+        \[ \hat{y} = \arg\max_{c} \; \vec{u} \cdot \vec{v}_c \qquad \text{where } \vec{v}_c = f_{\text{text}}\big(\text{"a photo of a } c\text{"}\big) \]
     </div>
 
+    <p>The text embeddings \(\vec{v}_c\) act as the weights of a classifier that you built from words alone. Prompt wording matters: "a photo of a dog" usually beats the bare word "dog," and averaging the embeddings of several templates (<em>prompt ensembling</em>) helps further.</p>
+
+    <h3>Zero-shot versus linear probing</h3>
+    <p>A <strong>linear probe</strong> is the standard way to measure how good an encoder's features are, and it is the main alternative to zero-shot. You keep the image encoder <strong>frozen</strong>, meaning its weights never change. You run each labeled training image through it to get one vector \(\vec{u}\), and then train a single linear layer on top (the same kind of classifier as logistic regression):</p>
+
+    <div class="eq-panel">
+        \[ \hat{y} = \arg\max_{c} \, (W \vec{u})_c \qquad W \in \mathbb{R}^{C \times d} \]
+    </div>
+
+    <p>Here \(C\) is the number of classes and \(d\) is the length of \(\vec{u}\), so \(W\) has one row per class. It is called a <em>probe</em> because you are checking what information the frozen features already contain, and <em>linear</em> because only one matrix is trained, so a good result has to come from the features rather than from a powerful new classifier on top. Compare this with zero-shot: there, the rows of the classifier are the text embeddings \(\vec{v}_c\), which need no training, while in a linear probe the rows of \(W\) are learned from labeled images.</p>
+
     <div class="table-wrap"><table>
-        <thead>
-            <tr><th>Role</th><th>Network</th><th>Input → Output</th><th>Goal</th></tr>
-        </thead>
+        <thead><tr><th></th><th>Zero-shot</th><th>Linear probe</th></tr></thead>
         <tbody>
-            <tr>
-                <td><strong>Forger</strong></td>
-                <td>Generator <code>G</code></td>
-                <td>Random noise <code>z</code> → fake image <code>G(z)</code></td>
-                <td>Make fakes that look real enough to fool the curator</td>
-            </tr>
-            <tr>
-                <td><strong>Detective</strong></td>
-                <td>Discriminator <code>D</code></td>
-                <td>Any image → score in [0, 1] (“probability real”)</td>
-                <td>Score real photos high, fakes low</td>
-            </tr>
+            <tr><td>What is trained</td><td>Nothing new</td><td>A linear classifier on frozen image features</td></tr>
+            <tr><td>Labeled images needed</td><td>None</td><td>Some per class</td></tr>
+            <tr><td>New categories</td><td>Just write new captions</td><td>Retrain the classifier</td></tr>
+            <tr><td>Accuracy on a fixed task</td><td>Good, limited by wording and domain</td><td>Usually higher once you have labels</td></tr>
         </tbody>
     </table></div>
 
-    <p>Unlike supervised classification, you never need pairs like “this z should produce <em>this</em> exact cat photo.” Real images from a dataset supply the “authentic” side; the Generator manufactures the counterfeits on the fly.</p>
-
-    <div class="shape-trail">sample z ~ p(z)           # e.g. Gaussian vector, length 128
-G(z) → fake image           # Generator (Lesson 1 decoder idea)
-x_real ~ dataset            # real photos
-D(x) → [0, 1]               # Discriminator (binary classifier)
-train D on real vs fake     # detective gets sharper
-train G to raise D(G(z))    # forger learns new tricks</div>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: which network is which?</h3>
-        <p><strong>Question:</strong> A student says, “The Discriminator generates improved images when it loses.” What is wrong with that statement?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">Only the <strong>Generator</strong> creates new images. The Discriminator never outputs pixels — it outputs a <em>score</em> (real vs fake). When D “loses,” that means G produced a fake D couldn’t reject; G gets the gradient signal to keep fooling D, not D itself painting pictures.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>2. The min–max game in plain language</h2>
-
-    <p>Think of a single number line measuring “how well the detective is doing.” The Discriminator wants to push that number <em>up</em> by confidently labeling reals as real and fakes as fake. The Generator wants to push the <em>same</em> setup so the detective is wrong on fakes — effectively minimizing the detective’s success on counterfeits.</p>
-
-    <div class="eq-panel">
-        min<sub>G</sub> max<sub>D</sub> &nbsp; V(D, G) = E<sub>x~real</sub>[log D(x)] + E<sub>z</sub>[log(1 − D(G(z)))]
-    </div>
-
-    <div class="worked">
-        <strong>Worked intuition (no calculus required).</strong>
-        <ul style="margin:8px 0 0;padding-left:1.2em;">
-            <li><strong>D’s turn (maximize):</strong> On a real photo, D should output near 1 → <code>log D(x)</code> is large (less negative). On a fake, D should output near 0 → <code>log(1 − D(G(z)))</code> is also large.</li>
-            <li><strong>G’s turn (minimize):</strong> G wants <code>D(G(z))</code> close to 1 even though the image is fake — so the second term <code>log(1 − D(G(z)))</code> blows up negative and G’s loss pushes G to improve.</li>
-            <li><strong>Equilibrium fantasy:</strong> At the Nash ideal, G’s fakes sit on the data manifold and D can only guess 50/50 — like a curator who truly cannot tell.</li>
-        </ul>
-    </div>
-
-    <p>Training alternates (or interleaves) updates — not unlike how you saw separate forward/backward passes in the training-loop prereq, except here two models take turns on opposing objectives.</p>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: log trick</h3>
-        <p><strong>Question:</strong> If D correctly outputs 0.01 on a fake (good for D), what happens to <code>log(1 − 0.01)</code> ≈ <code>log(0.99)</code>? Is that good or bad for D’s objective?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;"><code>log(0.99) ≈ −0.01</code> — close to zero, which is <strong>good</strong> for D (D wants to maximize, so values near 0 beat large negatives like <code>log(0.5) ≈ −0.69</code>). If D wrongly said 0.99 on a fake, <code>log(1 − 0.99) = log(0.01) ≈ −4.6</code> — terrible for D, great signal for G.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>3. Why the tug-of-war is fragile</h2>
-
-    <p>GAN training is famous for being finicky. If the Discriminator learns too fast, it always rejects fakes with near-certainty — gradients to the Generator vanish (“G gets no useful feedback”). If the Generator learns too fast, it may find one weird image that always fools D while ignoring diversity — <strong>mode collapse</strong> (every <code>z</code> maps to the same face).</p>
-
-    <ul>
-        <li><strong>D too strong:</strong> G’s loss flatlines; samples stay noisy or frozen.</li>
-        <li><strong>G too strong / collapsed:</strong> D is confused but outputs look identical or surreal.</li>
-        <li><strong>Balanced:</strong> Fakes gradually sharpen; D accuracy hovers below perfection.</li>
-    </ul>
-
-    <p>Learning rates, architecture, and tricks (label smoothing, spectral norm, Wasserstein variants) exist because of this balance problem — but the core story remains: two networks, opposing losses, shared data stream.</p>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: mode collapse</h3>
-        <p><strong>Question:</strong> You sample 100 different noise vectors <code>z</code> but G outputs nearly the same portrait every time. D’s accuracy on fakes is ~50%. Is training “solved”?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">No — that is classic <strong>mode collapse</strong>. D may be fooled by one trick image, but G failed to cover the full diversity of faces. A healthy GAN should produce varied samples across different <code>z</code> while still looking realistic.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>4. Interactive: Training Tug-of-War</h2>
-
-    <p>Use the sliders to set learning rates for Generator and Discriminator. Press <strong>Run training</strong> (or let it auto-run) and watch fake samples on the canvas improve, collapse, or dissolve into noise. Metrics are simulated — but the qualitative story matches real GAN instability.</p>
-
-    <div class="interactive-box">
-        <div class="slider-row">
-            <label>Generator learning rate: <strong><span id="g-lr-val">0.50</span></strong><br>
-            <input type="range" id="g-lr" min="1" max="100" value="50"></label>
-        </div>
-        <div class="slider-row">
-            <label>Discriminator learning rate: <strong><span id="d-lr-val">0.50</span></strong><br>
-            <input type="range" id="d-lr" min="1" max="100" value="50"></label>
-        </div>
-        <p style="margin:12px 0 6px;">
-            <button type="button" class="primary" id="gan-run">Run training</button>
-            <button type="button" id="gan-pause">Pause</button>
-            <button type="button" id="gan-reset">Reset</button>
-        </p>
-        <div id="gan-status" class="status-bar status-balanced">Status: balanced training — fakes sharpening gradually.</div>
-        <div class="metric-row">
-            <div class="metric">Step: <strong id="m-step">0</strong></div>
-            <div class="metric">D accuracy: <strong id="m-dacc">50%</strong></div>
-            <div class="metric">G fool rate: <strong id="m-gfool">50%</strong></div>
-            <div class="metric">Sample diversity: <strong id="m-div">100%</strong></div>
-        </div>
-        <div class="canvas-row">
-            <div>
-                <div class="canvas-label">Real target (fixed)</div>
-                <canvas id="gan-real" width="128" height="128"></canvas>
-            </div>
-            <div>
-                <div class="canvas-label">Generator output G(z) — 4 samples</div>
-                <canvas id="gan-fake" width="256" height="128"></canvas>
-            </div>
-        </div>
-        <p id="gan-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;">Tip: set D LR high and G LR low to starve the forger; flip it to watch mode collapse.</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>5. From toy GANs to StyleGAN faces</h2>
-
-    <p>Early GAN outputs were blurry 64×64 thumbnails. StyleGAN (2019) stacked progressive growing, style mixing, and a carefully balanced discriminator to reach photorealistic faces at 1024×1024. The latent walk you previewed in Lesson 1 — nearby <code>z</code> vectors morph smoothly — comes from this line of work.</p>
-
-    <div class="tool-box">
-        <p style="margin-top:0;"><strong>Live tools</strong></p>
-        <ul>
-            <li><a href="https://thispersondoesnotexist.com/" target="_blank" rel="noopener">This Person Does Not Exist</a> — each refresh samples a StyleGAN2 face (notice lighting, pose, and identity change).</li>
-            <li><a href="https://huggingface.co/spaces/huggingface/StyleGAN" target="_blank" rel="noopener">Hugging Face StyleGAN Spaces</a> — search for StyleGAN2 demos to drag latent sliders yourself.</li>
-        </ul>
-        <p><strong>Guided tasks:</strong></p>
-        <ol>
-            <li>Refresh ThisPersonDoesNotExist five times. List two features that change a lot and two that often stay similar.</li>
-            <li>In a StyleGAN Space, move one latent slider slowly. Write one sentence connecting what you see to “nearby points in latent space look related” from Lesson 1.</li>
-            <li>Ask: could a perfect Discriminator exist for human faces? (Hint: think about high-res artifacts, teeth, earrings.)</li>
-        </ol>
-    </div>
-
-    <div class="bridge">
-        <strong>Historical note:</strong> GANs dominated image synthesis for years, but training instability pushed researchers toward a different generative story — slowly removing noise instead of forging in one shot.
-        You already heard the audio version (Intro to Audio, Lesson 5). Next we make the pixel grid visible.
-    </div>
+    <p>Zero-shot CLIP is strong when your categories are common things people caption on the web. It is weaker on specialized domains (medical images, satellite imagery), on counting, and on fine-grained categories where the caption words are rare.</p>
   </section>
 
   <section>
     <h2>Further reading</h2>
     <ul>
-        <li>Goodfellow et al., original GAN paper (2014) — min-max formulation.</li>
-        <li>Karras et al., StyleGAN2 — state-of-the-art face GAN engineering.</li>
-        <li>Compare: GAN one-shot generation vs diffusion iterative denoising (next lesson).</li>
+        <li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Radford et al., Learning Transferable Visual Models From Natural Language Supervision (2021)</a>: the CLIP paper.</li>
+        <li><a href="https://openai.com/index/clip/" target="_blank" rel="noopener">CLIP: Connecting text and images (OpenAI)</a>: the announcement post with zero-shot examples.</li>
+        <li><a href="https://arxiv.org/abs/2303.15343" target="_blank" rel="noopener">Zhai et al., Sigmoid Loss for Language Image Pre-Training (2023)</a>: SigLIP, an alternative to the softmax loss.</li>
     </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
     <a class="pager__prev" href="lesson1.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Painting by Numbers: Pixels and the Latent Space</span>
+      <span class="pager__title">From Pixels to Tokens: Vision Encoders and Patchification</span>
     </a>
     <a class="pager__next" href="lesson3.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">The Sculptor in the Blizzard: Diffusion Basics</span>
+      <span class="pager__title">Teaching a Language Model to See: Vision-Language Models</span>
     </a>
   </nav>
 </main>
@@ -240,175 +234,74 @@ train G to raise D(G(z))    # forger learns new tricks</div>
 
 <script>
 (function () {
-    var N = 32;
-    var realCanvas = document.getElementById('gan-real');
-    var fakeCanvas = document.getElementById('gan-fake');
-    var rctx = realCanvas.getContext('2d');
-    var fctx = fakeCanvas.getContext('2d');
+    var S = [
+        [0.32, 0.10, 0.05, 0.20],
+        [0.08, 0.30, 0.12, 0.06],
+        [0.04, 0.11, 0.28, 0.18],
+        [0.22, 0.07, 0.15, 0.26]
+    ];
+    var N = S.length;
+    var slider = document.getElementById('tx-slider');
 
-    var step = 0;
-    var running = false;
-    var intervalId = null;
-    var gQuality = 0.15;
-    var diversity = 1.0;
-    var dAcc = 0.5;
-    var gFool = 0.5;
-    var mode = 'balanced';
-
-    // Target "real" pattern: circle + gradient background
-    var target = [];
-    for (var y = 0; y < N; y++) {
-        target[y] = [];
-        for (var x = 0; x < N; x++) {
-            var nx = (x / N - 0.5) * 2;
-            var ny = (y / N - 0.5) * 2;
-            var bg = 0.35 + 0.15 * nx;
-            var dist = Math.sqrt(nx * nx + ny * ny);
-            var circle = dist < 0.55 ? 0.85 : 0;
-            target[y][x] = Math.min(1, bg + circle);
-        }
+    function tauFromSlider(v) {
+        // slider 0..100 maps to tau 0.01 .. 1 on a log scale
+        return Math.pow(10, -2 + 2 * (v / 100));
     }
 
-    function drawGrid(ctx, grid, cellW, cellH, offsetX) {
-        var cell = cellW;
-        for (var y = 0; y < N; y++) {
-            for (var x = 0; x < N; x++) {
-                var v = Math.max(0, Math.min(1, grid[y][x]));
-                var g = Math.round(v * 255);
-                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
-                ctx.fillRect(offsetX + x * cell, y * cell, cell + 0.5, cell + 0.5);
+    function softmax(arr) {
+        var m = Math.max.apply(null, arr);
+        var e = arr.map(function (x) { return Math.exp(x - m); });
+        var z = e.reduce(function (a, b) { return a + b; }, 0);
+        return e.map(function (x) { return x / z; });
+    }
+
+    function render() {
+        var tau = tauFromSlider(parseInt(slider.value, 10));
+        document.getElementById('tx-tau').textContent = tau.toFixed(3);
+
+        var logits = S.map(function (row) { return row.map(function (x) { return x / tau; }); });
+        var rows = logits.map(softmax);
+        var cols = [];
+        for (var j = 0; j < N; j++) {
+            cols.push(softmax(logits.map(function (r) { return r[j]; })));
+        }
+
+        var li = 0, lt = 0;
+        for (var d = 0; d < N; d++) {
+            li += -Math.log(Math.max(rows[d][d], 1e-12));
+            lt += -Math.log(Math.max(cols[d][d], 1e-12));
+        }
+        li /= N; lt /= N;
+
+        var html = '<table><thead><tr><th></th>';
+        for (var c = 0; c < N; c++) html += '<th>Caption ' + (c + 1) + '</th>';
+        html += '</tr></thead><tbody>';
+        for (var i = 0; i < N; i++) {
+            html += '<tr><th>Image ' + (i + 1) + '</th>';
+            for (var k = 0; k < N; k++) {
+                var p = rows[i][k];
+                var bg = 'rgba(56,189,248,' + (0.08 + 0.6 * p).toFixed(2) + ')';
+                var w = i === k ? 'font-weight:700;' : '';
+                html += '<td style="background:' + bg + ';' + w + '">' + (p * 100).toFixed(1) + '%</td>';
             }
+            html += '</tr>';
         }
+        html += '</tbody></table>';
+        document.getElementById('tx-table').innerHTML = html;
+
+        document.getElementById('tx-li').textContent = li.toFixed(3);
+        document.getElementById('tx-lt').textContent = lt.toFixed(3);
+        document.getElementById('tx-l').textContent = ((li + lt) / 2).toFixed(3);
+
+        var note;
+        if (tau > 0.4) note = 'Large tau: probabilities are spread out, so even the correct pairs get low confidence and the loss stays high.';
+        else if (tau < 0.03) note = 'Very small tau: the softmax is nearly one-hot, so the loss is tiny for easy rows and dominated by the hardest negatives.';
+        else note = 'Moderate tau: correct pairs win clearly, while hard negatives still receive visible probability and keep contributing gradient.';
+        document.getElementById('tx-note').textContent = note;
     }
 
-    function renderReal() {
-        drawGrid(rctx, target, realCanvas.width / N, realCanvas.height / N, 0);
-    }
-
-    function makeFakeSample(seed, quality, collapsed) {
-        var grid = [];
-        var collapseShift = collapsed ? 0 : (seed - 1.5) * 0.08;
-        for (var y = 0; y < N; y++) {
-            grid[y] = [];
-            for (var x = 0; x < N; x++) {
-                var nx = (x / N - 0.5) * 2 + collapseShift;
-                var ny = (y / N - 0.5) * 2 + collapseShift * 0.5;
-                var dist = Math.sqrt(nx * nx + ny * ny);
-                var ideal = target[y][x];
-                var noise = (Math.random() - 0.5) * (1.4 - quality);
-                var blob = dist < 0.55 + quality * 0.1 ? 0.7 * quality : 0;
-                var v = ideal * quality + blob * (1 - quality) + noise;
-                grid[y][x] = v;
-            }
-        }
-        return grid;
-    }
-
-    function renderFakes() {
-        var collapsed = mode === 'g_wins' && diversity < 0.35;
-        var cell = fakeCanvas.width / N / 2;
-        for (var s = 0; s < 4; s++) {
-            var grid = makeFakeSample(s, gQuality, collapsed);
-            drawGrid(fctx, grid, cell, cell, s * (fakeCanvas.width / 2));
-        }
-    }
-
-    function getLR(id) {
-        return parseInt(document.getElementById(id).value, 10) / 100;
-    }
-
-    function updateStatus() {
-        var el = document.getElementById('gan-status');
-        el.className = 'status-bar ';
-        if (mode === 'd_wins') {
-            el.className += 'status-d-wins';
-            el.textContent = 'Status: Discriminator winning — G gradients vanish; fakes stay noisy or frozen.';
-        } else if (mode === 'g_wins') {
-            el.className += 'status-g-wins';
-            el.textContent = diversity < 0.35
-                ? 'Status: Generator winning too hard — mode collapse! D fooled but samples identical.'
-                : 'Status: Generator winning — D fooled often; fakes sharp but training may destabilize.';
-        } else {
-            el.className += 'status-balanced';
-            el.textContent = 'Status: balanced training — fakes sharpening gradually; D and G co-evolving.';
-        }
-    }
-
-    function trainStep() {
-        var gLR = getLR('g-lr');
-        var dLR = getLR('d-lr');
-        var ratio = gLR / (dLR + 0.001);
-
-        step += 1;
-
-        if (ratio < 0.35) {
-            mode = 'd_wins';
-            gQuality = Math.max(0.05, gQuality - 0.008);
-            diversity = Math.max(0.2, diversity - 0.005);
-            dAcc = Math.min(0.98, dAcc + 0.02 * dLR);
-            gFool = Math.max(0.05, gFool - 0.025);
-        } else if (ratio > 2.5) {
-            mode = 'g_wins';
-            gQuality = Math.min(0.95, gQuality + 0.025 * gLR);
-            diversity = Math.max(0.08, diversity - 0.018);
-            dAcc = Math.max(0.48, dAcc - 0.03 * gLR);
-            gFool = Math.min(0.95, gFool + 0.03 * gLR);
-        } else {
-            mode = 'balanced';
-            gQuality = Math.min(0.88, gQuality + 0.012 * gLR);
-            diversity = Math.min(1, diversity + 0.008);
-            dAcc = 0.72 + 0.12 * Math.sin(step * 0.08);
-            gFool = 1 - dAcc + (Math.random() - 0.5) * 0.06;
-        }
-
-        document.getElementById('m-step').textContent = step;
-        document.getElementById('m-dacc').textContent = Math.round(dAcc * 100) + '%';
-        document.getElementById('m-gfool').textContent = Math.round(gFool * 100) + '%';
-        document.getElementById('m-div').textContent = Math.round(diversity * 100) + '%';
-        updateStatus();
-        renderFakes();
-    }
-
-    function syncLabels() {
-        document.getElementById('g-lr-val').textContent = getLR('g-lr').toFixed(2);
-        document.getElementById('d-lr-val').textContent = getLR('d-lr').toFixed(2);
-    }
-
-    document.getElementById('g-lr').addEventListener('input', syncLabels);
-    document.getElementById('d-lr').addEventListener('input', syncLabels);
-
-    document.getElementById('gan-run').addEventListener('click', function () {
-        if (running) return;
-        running = true;
-        intervalId = setInterval(trainStep, 120);
-    });
-
-    document.getElementById('gan-pause').addEventListener('click', function () {
-        running = false;
-        if (intervalId) clearInterval(intervalId);
-    });
-
-    document.getElementById('gan-reset').addEventListener('click', function () {
-        running = false;
-        if (intervalId) clearInterval(intervalId);
-        step = 0;
-        gQuality = 0.15;
-        diversity = 1.0;
-        dAcc = 0.5;
-        gFool = 0.5;
-        mode = 'balanced';
-        document.getElementById('m-step').textContent = '0';
-        document.getElementById('m-dacc').textContent = '50%';
-        document.getElementById('m-gfool').textContent = '50%';
-        document.getElementById('m-div').textContent = '100%';
-        updateStatus();
-        renderFakes();
-    });
-
-    syncLabels();
-    renderReal();
-    renderFakes();
-    updateStatus();
+    slider.addEventListener('input', render);
+    render();
 })();
 </script>
 

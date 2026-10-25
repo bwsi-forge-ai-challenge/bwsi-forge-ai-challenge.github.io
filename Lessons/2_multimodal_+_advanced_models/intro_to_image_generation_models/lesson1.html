@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painting by Numbers: Pixels and the Latent Space · F.O.R.G.E. AI Challenge</title>
+<title>From Pixels to Tokens: Vision Encoders and Patchification · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
 </head>
 <body class="genai">
 
@@ -14,7 +15,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Image Generation</span>
+      <span>Deep Dive: Vision-Language Models</span>
     </nav>
   </div>
 </header>
@@ -22,193 +23,143 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
-    <h1>Painting by Numbers: Pixels and the Latent Space</h1>
-    <p class="lede">This deep dive follows a second modality, images, from pixels to text-guided diffusion.</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <h1>From Pixels to Tokens: Vision Encoders and Patchification</h1>
   </header>
 
   <section>
-    <aside class="callout callout--note">
-      <p class="callout__title">Where this fits</p>
-      <p>In <a href="../multimodal_models/lesson2_crossing_between_modalities.html">Crossing Between Modalities</a> you saw that text-to-image models are diffusion models steered by text embeddings. This deep dive explains how they work, from pixels and latent spaces to GANs, diffusion, and text conditioning. It is the background for the <strong>Draw</strong> station in Project 1.</p>
-    </aside>
-    <div class="roadmap">
-        <strong>Deep Dive Roadmap: Image Generation</strong>
-        <ol>
-            <li class="here">Pixels &amp; latent space ← <em>you are here</em></li>
-            <li>GANs (forger vs detective)</li>
-            <li>Diffusion basics (denoising)</li>
-            <li>Text conditioning &amp; coding lab</li>
-            <li>Control, failure modes, prompt craft</li>
-        </ol>
-    </div>
+    <h2>1. From CNN backbones to Vision Transformers</h2>
 
-    <p>In Computer Vision you usually feed an image into a network and get a label out — “cat,” “stop sign,” “tumor / not tumor.” Image <em>generation</em> flips that arrow. You start from a tiny list of numbers and expand it into a full picture.</p>
+    <p>For a decade, the standard vision backbone was the convolutional neural network. A CNN slides small filters across the image and stacks layers so that edges become textures, textures become parts, and parts become objects. Two assumptions are built into the design: nearby pixels matter most (<em>locality</em>), and a pattern means the same thing wherever it appears (<em>translation equivariance</em>).</p>
 
-    <div class="bridge">
-        <strong>You’ve already seen the cousin of this idea in audio.</strong>
-        A neural codec compressed a long waveform into discrete tokens, then a decoder stretched those tokens back into sound.
-        Images do something similar: compress into a compact <strong>latent</strong>, generate in that small space, then decode to millions of pixels.
-        This lesson builds the pixel grid and the latent “blueprint” so later GAN and diffusion pages have somewhere to land.
-    </div>
-  </section>
-
-  <section>
-    <h2>1. An image is a 3D grid of numbers</h2>
-
-    <p>A digital photo is not “a picture” to a computer. It is a tensor:</p>
-
-    <div class="eq-panel">
-        shape = (Height, Width, Channels)
-    </div>
-
-    <ul>
-        <li><strong>Height × Width</strong> — how many pixels (a 512×512 image has 262,144 spatial locations).</li>
-        <li><strong>Channels</strong> — usually 3 for RGB (red, green, blue). Each channel is an intensity from <code>0</code> (off) to <code>255</code> (full).</li>
-    </ul>
-
-    <div class="worked">
-        <strong>Worked example.</strong> One pixel that looks orange might be stored as <code>[255, 140, 0]</code>.
-        A grayscale thumbnail ignores color and uses one channel: each cell is just brightness <code>0–255</code>.
-        <br><br>
-        A 256×256 RGB photo stores <code>256 × 256 × 3 = 196,608</code> numbers.
-        At one byte per channel that is already ~192 KB <em>before</em> JPEG compression — and generation models often target 512×512 or larger.
-    </div>
-
-    <div class="shape-trail">phone camera JPEG
-  → decode to RGB array  shape (H, W, 3), dtype uint8
-  → (often) scale to floats in [0, 1] or [-1, 1] for the network
-  → for generation we will eventually output that grid again</div>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: pixel budget</h3>
-        <p><strong>Question:</strong> How many numbers does a 64×64 RGB image contain? A 512×512 RGB image?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">64×64×3 = <strong>12,288</strong>. 512×512×3 = <strong>786,432</strong>. Roughly 64× more numbers when you go from 64 to 512 on each side (because both height and width scale).</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>2. Why we don’t generate every pixel from scratch with one giant list</h2>
-
-    <p>In the audio unit you saw why predicting 44,100 waveform samples per second is painful. Images have the same problem: a transformer that tried to emit 786,432 RGB values one-by-one would be absurdly long.</p>
-
-    <p>So modern image generators work in a <strong>latent space</strong> — a much smaller vector (or small spatial map) that still carries the important structure of the picture. A decoder / upsampler expands that compact code into the full pixel grid.</p>
+    <p>A <strong>Vision Transformer (ViT)</strong> drops both assumptions and uses a standard transformer. The image becomes a sequence of tokens, and self-attention lets every token look at every other token from the very first layer.</p>
 
     <div class="table-wrap"><table>
-        <thead>
-            <tr><th></th><th>Audio (from last unit)</th><th>Images (this unit)</th></tr>
-        </thead>
+        <thead><tr><th></th><th>CNN backbone</th><th>Vision Transformer</th></tr></thead>
         <tbody>
-            <tr><td>Raw signal</td><td>Waveform samples</td><td>RGB pixel grid</td></tr>
-            <tr><td>Compressed form</td><td>Codec tokens / latents</td><td>Latent vector or latent feature map</td></tr>
-            <tr><td>Decode</td><td>Codec decoder → waveform</td><td>Decoder / VAE decoder → pixels</td></tr>
-            <tr><td>Generate where?</td><td>Often over tokens</td><td>Often over latents (then decode)</td></tr>
+            <tr><td>Basic unit</td><td>Pixel neighborhood under a filter</td><td>Patch token</td></tr>
+            <tr><td>Built-in assumptions</td><td>Locality, translation equivariance</td><td>Almost none; learned from data</td></tr>
+            <tr><td>Reach of one layer</td><td>Small window; grows with depth</td><td>Whole image from layer 1</td></tr>
+            <tr><td>Data appetite</td><td>Works well on modest datasets</td><td>Needs large datasets to beat CNNs</td></tr>
+            <tr><td>Output</td><td>Feature maps (often several scales)</td><td>One vector per token</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>The last row matters for this unit. A sequence of vectors is exactly what a language model already knows how to read, which is why transformer encoders became the default front end for vision-language models.</p>
+  </section>
+
+  <section>
+    <h2>2. Patch extraction</h2>
+
+    <p>ViT turns an image of size \(H \times W \times C\) (height, width, color channels) into tokens in three steps.</p>
+
+    <ol>
+        <li><strong>Cut</strong> the image into non-overlapping \(P \times P\) patches, where \(P\) is the patch size. The number of patches is \(N = \frac{H}{P} \cdot \frac{W}{P}\).</li>
+        <li><strong>Flatten</strong> each patch into a column vector \(\vec{x}_i \in \mathbb{R}^{P^2 C}\), where \(i = 1, \dots, N\) numbers the patches. The vector simply lists all \(P \cdot P \cdot C\) pixel values of patch \(i\).</li>
+        <li><strong>Project</strong> every flattened patch with the same learned matrix \(E \in \mathbb{R}^{D \times P^2 C}\) to get a token \(\vec{z}_i \in \mathbb{R}^{D}\), where \(D\) is the token width that the transformer works with.</li>
+    </ol>
+
+    <div class="eq-panel">
+        \[ \vec{z}_i = E\,\vec{x}_i \qquad i = 1, \dots, N \]
+    </div>
+
+    <p>The size rule for matrix products applies: \((D \times P^2 C)(P^2 C \times 1) = (D \times 1)\). The inner dimensions match, so a patch vector of length \(P^2 C\) becomes a token of length \(D\). The same \(E\) is used for every patch, and its entries are learned during training.</p>
+
+    <div class="callout">
+        <strong>Notation note.</strong> Here vectors are columns and the matrix multiplies on the left (\(E\vec{x}_i\)). The ViT paper uses row vectors and multiplies on the right, writing \(\vec{x}_i^{\top} E_{\text{paper}}\) with \(E_{\text{paper}} \in \mathbb{R}^{P^2 C \times D}\). It is the same computation, because \(E_{\text{paper}} = E^{\top}\). Deep learning code usually stacks the \(N\) tokens as rows, which gives an \(N \times D\) array.
+    </div>
+
+    <div class="worked">
+        <strong>Worked numbers.</strong> A \(224 \times 224 \times 3\) image with \(P = 16\) gives \(N = 14 \cdot 14 = 196\) patches. Each patch vector \(\vec{x}_i\) has \(16 \cdot 16 \cdot 3 = 768\) entries. With \(D = 1024\) (ViT-Large), \(E\) is a \(1024 \times 768\) matrix, so each token \(\vec{z}_i\) has \(1024\) entries. All \(196\) tokens stored as rows form a \(196 \times 1024\) array.
+    </div>
+
+    <p>In code, steps 1 to 3 are a single strided convolution whose kernel size and stride both equal \(P\). That is why you will often see the patch embedding written as <code>Conv2d(3, 1024, kernel_size=16, stride=16)</code>.</p>
+
+    <div class="shape-trail">image                  (3, 224, 224)
+  → cut into 16x16     196 patches, each (3, 16, 16)
+  → flatten            (196, 768)
+  → linear projection  (196, 1024)     same matrix for every patch
+                                       these are the tokens</div>
+
+    <h3>Interactive: Patchifier</h3>
+
+    <p>Change the image size and patch size and watch the token count change. Smaller patches mean finer detail and many more tokens.</p>
+
+    <div class="interactive-box">
+        <p style="margin-top:0;"><strong>Image size:</strong> <span id="pz-size-val">224</span> × <span id="pz-size-val2">224</span> pixels</p>
+        <input type="range" id="pz-size" min="64" max="448" step="32" value="224">
+        <p><strong>Patch size</strong></p>
+        <div id="pz-chips"></div>
+        <canvas id="pz-canvas" width="320" height="320" style="margin-top:12px;"></canvas>
+        <div class="metric-row">
+            <div class="metric">Patches per side: <strong id="pz-g">14</strong></div>
+            <div class="metric">Tokens: <strong id="pz-n">196</strong></div>
+            <div class="metric">Values per patch: <strong id="pz-v">768</strong></div>
+            <div class="metric">Attention pairs per head: <strong id="pz-a">38,416</strong></div>
+        </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Positional encodings in 2D</h2>
+
+    <p>Self-attention has no sense of order. If you shuffled the patches and shuffled their positions together, the output would not change, so the model needs to be told where each patch came from.</p>
+
+    <p>The simplest fix, used by the original ViT, is to number the patches and give each number its own vector. Patches are numbered in reading order: left to right along the first row, then along the next row, and so on (this is called <strong>raster order</strong>). On a \(14 \times 14\) grid, patch \(1\) is the top-left corner, patch \(14\) ends the first row, and patch \(15\) sits directly below patch \(1\).</p>
+
+    <p>The model keeps a table with one vector \(\vec{p}_i \in \mathbb{R}^{D}\) for each patch number \(i\). These vectors are <strong>learned</strong> (also called trainable): they are parameters that start with random values and are adjusted by gradient descent during training, just like the weights in \(E\). Each position vector is added to the token of the matching patch before the transformer sees it:</p>
+
+    <div class="eq-panel">
+        \[ \vec{h}_i = \underbrace{\vec{z}_i}_{\text{from the pixels}} + \underbrace{\vec{p}_i}_{\text{from the position}} \]
+    </div>
+
+    <p>Here \(\vec{h}_i \in \mathbb{R}^{D}\) is the input token for patch \(i\) that the transformer actually receives. The vector \(\vec{z}_i\) depends only on what the patch looks like, and \(\vec{p}_i\) depends only on where the patch is. Both have length \(D\), so they can be added entry by entry.</p>
+
+    <p>Nothing in these vectors says that patch \(15\) is below patch \(1\). The model works that out from data, because it ends up giving nearby grid positions similar vectors. The original transformer instead used fixed sinusoidal position codes; ViT simply learns its position vectors.</p>
+  </section>
+
+  <section>
+    <h2>4. Self-attention over visual tokens</h2>
+
+    <p>Once the tokens exist, the transformer treats them like words. Each layer computes attention between every pair of tokens:</p>
+
+    <div class="eq-panel">
+        \[ \text{Attention}(Q, K, V) = \text{softmax}\!\left( \frac{Q K^{\top}}{\sqrt{d_k}} \right) V \]
+    </div>
+
+    <p>With \(N\) tokens, \(QK^{\top}\) is an \(N \times N\) matrix, so the cost grows with \(N^2\). At \(P = 16\), a \(224 \times 224\) image has \(196\) tokens and about \(196^2 = 38{,}416\) pairs per head. A \(384 \times 384\) image has \(576\) tokens and \(331{,}776\) pairs, which is about \(8.6\) times as many pairs for about \(2.9\) times as many pixels. This quadratic growth is the main reason high-resolution images and, later, video are expensive.</p>
+
+    <p>Two outputs are used downstream. A single summary vector for the whole image can be read out, for example by averaging the tokens, and this is what a classifier uses. The full sequence of patch tokens keeps spatial detail, and this is what most vision-language models pass to the language model.</p>
+  </section>
+
+  <section>
+    <h2>5. Beyond vanilla ViT: Swin and ConvNeXt</h2>
+
+    <p>Plain ViT has two weak spots from the last section: attention over all \(N\) tokens costs \(N^2\), and it produces features at only one resolution. Two later models address these in different ways.</p>
+
+    <h3>Swin Transformer: attention in small windows</h3>
+    <p>Swin keeps the transformer but limits each token's attention to a small window of nearby tokens (for example \(7 \times 7 = 49\) tokens). The cost then grows in proportion to the number of tokens instead of its square. Alternate layers shift the window grid by a few patches, so information can still cross window borders. Between stages, each \(2 \times 2\) group of neighboring tokens is merged into one, so the token grid shrinks like the feature maps in a CNN. For a \(224 \times 224\) input it goes from \(56 \times 56\) to \(28 \times 28\), then \(14 \times 14\), then \(7 \times 7\).</p>
+
+    <h3>ConvNeXt: a CNN that borrows from transformers</h3>
+    <p>ConvNeXt asks whether the transformer's success came from attention itself or from other design choices. It starts from a standard ResNet and adopts transformer-era ideas one at a time, for example cutting the image into non-overlapping \(4 \times 4\) patches at the very start and using larger filters. The result matches Swin at a similar size while using only convolutions, which suggests that patchification and overall design matter as much as attention.</p>
+
+    <h3>What each one gives you</h3>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Encoder</th><th>Output</th><th>Typical use</th></tr></thead>
+        <tbody>
+            <tr><td>ViT</td><td>One grid of tokens at a single resolution; every token attends to every other token</td><td>Classification, CLIP, and the vision part of most vision-language models</td></tr>
+            <tr><td>Swin</td><td>Features at several resolutions, from fine to coarse; attention within windows</td><td>Detection and segmentation, which need both fine and coarse detail</td></tr>
+            <tr><td>ConvNeXt</td><td>Features at several resolutions; convolutions only</td><td>The same tasks as Swin, with no attention</td></tr>
         </tbody>
     </table></div>
   </section>
 
   <section>
-    <h2>3. Latent space as a blueprint</h2>
-
-    <p>Think of a latent vector <code>z</code> as a short address in a huge “neighborhood of possible images.” Nearby addresses tend to look related (same pose, similar lighting). Far-away addresses look like different scenes.</p>
-
-    <div class="callout">
-        <strong>Metaphor:</strong> Turning a tiny 2D house blueprint into a full 3D house.
-        If the blueprint is missing fine lines, the built house looks blocky, blurry, or warped —
-        the same failure mode you get from a weak decoder or an undersized latent.
-    </div>
-
-    <p>A minimal generative sketch:</p>
-    <ol>
-        <li>Sample or predict a small latent <code>z</code> (say length 16, or a 4×4×c feature map).</li>
-        <li>Pass <code>z</code> through learned layers that <strong>upsample</strong> spatially (or decode from a bottleneck).</li>
-        <li>Emit an image tensor of shape <code>(H, W, 3)</code>.</li>
-    </ol>
-
-    <div class="eq-panel">
-        z ∈ ℝ<sup>d</sup> &nbsp;→&nbsp; Decoder / Generator &nbsp;→&nbsp; x ∈ ℝ<sup>H×W×3</sup>
-    </div>
-
-    <div class="worked">
-        <strong>Toy numbers.</strong> Suppose <code>d = 3</code> and we decode to an <code>8×8</code> grayscale patch (64 pixels).
-        Each of the 3 latent numbers mixes into all 64 outputs through learned weights —
-        change one coordinate and the whole pattern can shift. That is the intuition the sandbox below makes visible.
-        Real models use much larger <code>d</code> (or spatial latents like Stable Diffusion’s ~64×64×4 map for a 512×512 image — about <strong>48×</strong> fewer values than full RGB).
-    </div>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: compression</h3>
-        <p><strong>Question:</strong> Stable Diffusion often generates in a latent that is 8× smaller on each spatial side than the final image (plus fewer channels). Why does that help generation?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">Fewer numbers to denoise / generate per step → cheaper compute and shorter effective sequences, while the VAE decoder restores high-resolution RGB detail — same spirit as audio codecs shrinking waveforms before the language model runs.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>4. Interactive: Color Grid Mapper</h2>
-
-    <p>Drag three latent knobs. A tiny “decoder” (fixed toy weights — not trained ML, just linear combinations + a nonlinearity) paints an 8×8 grayscale grid. Watch how one coordinate can flip a stripe, a blob, or a diagonal.</p>
-
-    <div class="interactive-box">
-        <p style="margin-top:0;"><strong>Latent vector z = [z₀, z₁, z₂]</strong> (each from −1 to 1)</p>
-        <div>
-            <label>z₀ <span id="z0v">0.00</span><br>
-            <input type="range" id="z0" min="-100" max="100" value="0"></label>
-        </div>
-        <div>
-            <label>z₁ <span id="z1v">0.00</span><br>
-            <input type="range" id="z1" min="-100" max="100" value="40"></label>
-        </div>
-        <div>
-            <label>z₂ <span id="z2v">0.00</span><br>
-            <input type="range" id="z2" min="-100" max="100" value="-20"></label>
-        </div>
-        <p style="margin:12px 0 6px;">
-            <button type="button" class="primary" id="z-random">Randomize z</button>
-            <button type="button" id="z-reset">Reset</button>
-        </p>
-        <canvas id="latent-grid" width="256" height="256"></canvas>
-        <p id="latent-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
-    </div>
-  </section>
-
-  <section>
-    <h2>5. Online lab: explore a real latent neighborhood</h2>
-
-    <div class="tool-box">
-        <p style="margin-top:0;"><strong>Live tool:</strong> <a href="https://gans.studio/" target="_blank" rel="noopener">GANs Studio / StyleGAN explorers</a> or Hugging Face “latent walk” demos (search Spaces for <em>StyleGAN2 latent</em>).</p>
-        <p>Alternate classic: <a href="https://thispersondoesnotexist.com/" target="_blank" rel="noopener">This Person Does Not Exist</a> — each refresh samples a new face from a GAN’s latent distribution (you’ll meet GANs formally next lesson).</p>
-        <ol>
-            <li>Refresh several times. Notice faces that look like “nearby relatives” vs totally different identities — that is latent neighborhood structure.</li>
-            <li>Write one sentence: what stays similar across two close-looking faces (pose? age? lighting?)?</li>
-        </ol>
-    </div>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: direction of the arrow</h3>
-        <p><strong>Question:</strong> Classifier CNNs map image → label. Generators map latent → image. Which direction does a VAE <em>encoder</em> travel, and why do diffusion models still use one?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">Encoder: image → latent (compression). Diffusion models often denoise in that compressed latent space so each step is cheaper; the decoder returns to pixels at the end — matching the audio “generate tokens, then decode” pattern.</p>
-        </details>
-    </div>
-
-    <div class="bridge">
-        <strong>Next:</strong> Before diffusion ruled the charts, two networks fought each other to invent realistic images — GANs.
-    </div>
-  </section>
-
-  <section>
     <h2>Further reading</h2>
     <ul>
-        <li>Connect back: audio latents / codecs (Intro to Audio, Lessons 1 &amp; 3).</li>
-        <li>Kingma &amp; Welling, Auto-Encoding Variational Bayes (VAE intuition).</li>
-        <li>Stable Diffusion overview — latent diffusion as “generate small, decode big.”</li>
+        <li><a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">Dosovitskiy et al., An Image is Worth 16x16 Words (2020)</a>: the Vision Transformer paper.</li>
+        <li><a href="https://arxiv.org/abs/2103.14030" target="_blank" rel="noopener">Liu et al., Swin Transformer: Hierarchical Vision Transformer using Shifted Windows (2021)</a>.</li>
+        <li><a href="https://arxiv.org/abs/2201.03545" target="_blank" rel="noopener">Liu et al., A ConvNet for the 2020s (2022)</a>: the ConvNeXt paper.</li>
     </ul>
   </section>
 
@@ -219,7 +170,7 @@
     </a>
     <a class="pager__next" href="lesson2.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">The Art Forger and the Detective: GANs</span>
+      <span class="pager__title">Learning a Shared Space: Contrastive Vision-Language Learning (CLIP)</span>
     </a>
   </nav>
 </main>
@@ -230,60 +181,64 @@
 
 <script>
 (function () {
-    var canvas = document.getElementById('latent-grid');
+    var sizeEl = document.getElementById('pz-size');
+    var canvas = document.getElementById('pz-canvas');
     var ctx = canvas.getContext('2d');
-    var note = document.getElementById('latent-note');
-    var N = 8;
+    var chipsEl = document.getElementById('pz-chips');
+    var PATCHES = [8, 16, 32];
+    var patch = 16;
 
-    // Fixed toy decoder weights: for each pixel (i,j), intensity = tanh(w·z + b)
-    var W = [];
-    var B = [];
-    for (var i = 0; i < N; i++) {
-        W[i] = []; B[i] = [];
-        for (var j = 0; j < N; j++) {
-            var u = (i / (N - 1)) * 2 - 1;
-            var v = (j / (N - 1)) * 2 - 1;
-            W[i][j] = [u, v, u * v];
-            B[i][j] = 0.1 * Math.sin(3 * u + 2 * v);
-        }
-    }
-
-    function val(id) { return parseInt(document.getElementById(id).value, 10) / 100; }
+    function fmt(n) { return n.toLocaleString('en-US'); }
 
     function render() {
-        var z = [val('z0'), val('z1'), val('z2')];
-        document.getElementById('z0v').textContent = z[0].toFixed(2);
-        document.getElementById('z1v').textContent = z[1].toFixed(2);
-        document.getElementById('z2v').textContent = z[2].toFixed(2);
+        var size = parseInt(sizeEl.value, 10);
+        var g = size / patch;
+        var n = g * g;
+        document.getElementById('pz-size-val').textContent = size;
+        document.getElementById('pz-size-val2').textContent = size;
+        document.getElementById('pz-g').textContent = g;
+        document.getElementById('pz-n').textContent = fmt(n);
+        document.getElementById('pz-v').textContent = fmt(patch * patch * 3);
+        document.getElementById('pz-a').textContent = fmt(n * n);
 
-        var cell = canvas.width / N;
-        for (var i = 0; i < N; i++) {
-            for (var j = 0; j < N; j++) {
-                var s = B[i][j];
-                for (var k = 0; k < 3; k++) s += W[i][j][k] * z[k];
-                var g = Math.round((Math.tanh(s) * 0.5 + 0.5) * 255);
-                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
-                ctx.fillRect(j * cell, i * cell, cell + 0.5, cell + 0.5);
-            }
+        var w = canvas.width;
+        var grad = ctx.createLinearGradient(0, 0, w, w);
+        grad.addColorStop(0, '#38bdf8');
+        grad.addColorStop(0.5, '#a78bfa');
+        grad.addColorStop(1, '#f472b6');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, w);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = g > 28 ? 0.5 : 1;
+        for (var i = 0; i <= g; i++) {
+            var p = (i * w) / g;
+            ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, w); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(w, p); ctx.stroke();
         }
-        note.textContent = 'Decoder: each of 64 pixels = tanh(wᵢⱼ · z + bᵢⱼ). Shape trail: z (3,) → image (8, 8, 1).';
     }
 
-    ['z0', 'z1', 'z2'].forEach(function (id) {
-        document.getElementById(id).addEventListener('input', render);
-    });
-    document.getElementById('z-random').addEventListener('click', function () {
-        ['z0', 'z1', 'z2'].forEach(function (id) {
-            document.getElementById(id).value = Math.round(Math.random() * 200 - 100);
+    function renderChips() {
+        Array.prototype.forEach.call(chipsEl.querySelectorAll('.chip'), function (c) {
+            c.classList.toggle('selected', parseInt(c.dataset.p, 10) === patch);
         });
-        render();
+    }
+
+    PATCHES.forEach(function (p) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip';
+        b.dataset.p = p;
+        b.textContent = p + ' × ' + p;
+        b.addEventListener('click', function () {
+            patch = p;
+            renderChips();
+            render();
+        });
+        chipsEl.appendChild(b);
     });
-    document.getElementById('z-reset').addEventListener('click', function () {
-        document.getElementById('z0').value = 0;
-        document.getElementById('z1').value = 40;
-        document.getElementById('z2').value = -20;
-        render();
-    });
+
+    sizeEl.addEventListener('input', render);
+    renderChips();
     render();
 })();
 </script>

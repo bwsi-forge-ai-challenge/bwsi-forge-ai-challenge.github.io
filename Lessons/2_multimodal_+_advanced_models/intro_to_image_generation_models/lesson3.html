@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Sculptor in the Blizzard: Diffusion Basics · F.O.R.G.E. AI Challenge</title>
+<title>Teaching a Language Model to See: Vision-Language Models · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
 </head>
 <body class="genai">
 
@@ -14,7 +15,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Image Generation</span>
+      <span>Deep Dive: Vision-Language Models</span>
     </nav>
   </div>
 </header>
@@ -22,191 +23,104 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
-    <h1>The Sculptor in the Blizzard: Diffusion Basics</h1>
-    <p class="lede">GANs generate an image in one forward pass from noise. <strong>Diffusion models</strong> take the opposite journey: start from pure noise and peel it away, step by step, until structure appears. The idea feels slow — but it is remarkably stable and now powers DALL·E 3, Stable Diffusion, and Midjourney.</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <h1>Teaching a Language Model to See: Vision-Language Models</h1>
   </header>
 
   <section>
-    <div class="roadmap">
-        <strong>Deep Dive Roadmap: Image Generation</strong>
-        <ol>
-            <li><a href="lesson1.html">Pixels &amp; latent space</a></li>
-            <li><a href="lesson2.html">GANs (forger vs detective)</a></li>
-            <li class="here">Diffusion basics (denoising) ← <em>you are here</em></li>
-            <li>Text conditioning &amp; coding lab</li>
-            <li>Control, failure modes, prompt craft</li>
-        </ol>
-    </div>
+    <h2>1. The recipe: encoder, connector, language model</h2>
 
-    
+    <p>A language model reads a sequence of token embeddings (vectors) and writes text one token at a time, where each new token is chosen using everything that came before it. This is what <em>autoregressive</em> means. A plain language model cannot take in an image, because it only knows how to read vectors that look like word embeddings. A <strong>vision-language model (VLM)</strong> solves this by turning the image into vectors that sit alongside the word embeddings, so the language model can read the picture and the question together.</p>
 
-    <div class="bridge">
-        <strong>You’ve seen this movie before — in audio.</strong>
-        Intro to Audio, Lesson 5 gave a high-level peek: add noise to a spectrogram, train a network to predict that noise, run the process backward to synthesize.
-        Here the grid is visible: each pixel gets noised and denoised. Same training-loop intuition (predict target, backprop loss), different target — <code>ε</code> (noise) instead of a class label.
-    </div>
-  </section>
-
-  <section>
-    <h2>1. Forward diffusion: the blizzard arrives</h2>
-
-    <div class="callout">
-        <strong>Metaphor:</strong> A marble statue stands in a courtyard. A blizzard blows in, coating it with thicker and thicker static each hour. After enough time you cannot tell there was ever a face — only white noise. Forward diffusion is that corruption schedule, but mathematically controlled.
-    </div>
-
-    <p>Given a clean image <code>x₀</code>, forward diffusion adds Gaussian noise over <code>T</code> timesteps until <code>x<sub>T</sub></code> ≈ random noise. Each step uses a small variance <code>β<sub>t</sub></code> so the signal fades smoothly.</p>
-
-    <div class="eq-panel">
-        q(x<sub>t</sub> | x<sub>t−1</sub>) = 𝒩(x<sub>t</sub>; √(1 − β<sub>t</sub>) · x<sub>t−1</sub>, β<sub>t</sub> · I)
-    </div>
-
-    <p>In code you rarely loop one pixel at a time; you can jump straight to any timestep with a closed form using cumulative products <code>ᾱ<sub>t</sub></code>. But the story is always: <strong>signal → noise</strong>, monotonically.</p>
-
-    <div class="shape-trail">x₀  clean image   shape (H, W, 3)
-  → x₁  slightly noised
-  → x₂  more noise ...
-  → x_T  ~ pure Gaussian noise</div>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: direction</h3>
-        <p><strong>Question:</strong> Forward diffusion goes from image to noise. What does the <em>generative</em> (sampling) process do?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;"><strong>Reverse diffusion:</strong> start from noise <code>x<sub>T</sub></code> and iteratively denoise to <code>x₀</code>. Training teaches a network to undo one small noise step at a time — like the sculptor chipping away static to reveal the figure underneath.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>2. Reverse diffusion: the sculptor chips static away</h2>
-
-    <p>At sampling time we do not have a clean image — only noise. A learned model (historically a <strong>U-Net</strong>, now often a transformer variant) looks at the noisy image <code>x<sub>t</sub></code> and timestep <code>t</code>, then predicts the noise component <code>ε</code> that was added. Subtract a scaled version and you land closer to <code>x₀</code>.</p>
-
-    <div class="eq-panel">
-        x<sub>t−1</sub> ≈ (1 / √(1 − β<sub>t</sub>)) · (x<sub>t</sub> − (β<sub>t</sub> / √(1 − ᾱ<sub>t</sub>)) · ε<sub>θ</sub>(x<sub>t</sub>, t))
-    </div>
-
-    <p>Do not memorize the fractions — notice the pattern: <strong>current noisy state + noise prediction + schedule = slightly cleaner state</strong>. Repeat for <code>t = T … 1</code>.</p>
+    <p>Almost every VLM is built from three parts:</p>
 
     <div class="table-wrap"><table>
-        <thead>
-            <tr><th>Component</th><th>Role</th><th>Audio parallel</th></tr>
-        </thead>
+        <thead><tr><th>Part</th><th>Its job</th><th>Shape in to shape out</th><th>Example (LLaVA-1.5)</th></tr></thead>
         <tbody>
-            <tr><td>Timestep <code>t</code></td><td>Tells the network how noisy the input is</td><td>Same — conditioning on noise level</td></tr>
-            <tr><td>Noise predictor <code>ε<sub>θ</sub></code></td><td>Estimates what was added</td><td>Spectrogram denoiser in audio diffusion peek</td></tr>
-            <tr><td>Schedule <code>β<sub>t</sub></code></td><td>Controls step size</td><td>How aggressively each denoise step runs</td></tr>
-            <tr><td>U-Net / DiT</td><td>Spatial architecture with skip connections</td><td>Convolution over time–frequency bins</td></tr>
+            <tr><td><strong>Vision encoder</strong></td><td>Turn the image into feature vectors, one per patch</td><td>\(336 \times 336 \times 3\) image to \(N = 576\) vectors of width \(d_{\text{vision}} = 1024\)</td><td>CLIP ViT-L/14 (a ViT-Large with \(14 \times 14\) patches)</td></tr>
+            <tr><td><strong>Connector</strong></td><td>Translate those features into the language model's embedding space</td><td>\(576 \times 1024\) to \(M = 576\) visual tokens of width \(d_{\text{llm}} = 4096\)</td><td>Two-layer MLP</td></tr>
+            <tr><td><strong>Language model</strong></td><td>Read visual tokens and text tokens together, then generate the answer</td><td>\((M + L)\) tokens of width \(4096\) to probabilities for the next token</td><td>Vicuna 7B</td></tr>
         </tbody>
     </table></div>
 
-    <div class="worked">
-        <strong>Worked numbers (T = 1000).</strong>
-        Suppose at step <code>t = 500</code> the network predicts noise <code>ε<sub>θ</sub></code> with mean magnitude 0.4 (in normalized pixel space).
-        The sampler scales that prediction by schedule constants (often ~0.02–0.05 at mid-t) and subtracts it from <code>x<sub>500</sub></code>.
-        After one step you might move 5% closer to the clean image in L2 sense — tiny per step, but 500 steps compound into a crisp circle or face.
-        Production models use fast samplers (DDIM, DPM++) to cut 1000 network calls down to 20–50 with similar quality.
-    </div>
+    <p>Here \(L\) is the number of text tokens in the prompt. The connector exists because the encoder and the language model were trained separately and speak different "languages". Their vectors have different lengths (\(1024\) and \(4096\)), and, more importantly, the language model has never seen a CLIP feature, so it would not know what to do with one. The connector is trained to map each visual feature to a vector that lands in the right place among the word embeddings.</p>
+  </section>
 
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: training target</h3>
-        <p><strong>Question:</strong> During training we take a real image, add noise to get <code>x<sub>t</sub></code>, and ask the network to predict something. Is the target the clean image <code>x₀</code> or the noise <code>ε</code>?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">Standard DDPM training predicts the <strong>noise ε</strong> that was used to corrupt the image (equivalent formulations predict <code>x₀</code> or velocity — same idea, different algebra). Loss is usually MSE between predicted and actual noise — a regression problem, not classification.</p>
-        </details>
+  <section>
+    <h2>2. Projection layers</h2>
+
+    <p>A language model only understands vectors of its own embedding size, so the connector's first job is dimension matching. Its second job is deciding how many tokens to pass along.</p>
+
+    <div class="table-wrap"><table>
+        <thead><tr><th>Connector</th><th>What it does</th><th>Tokens out</th><th>Used by</th></tr></thead>
+        <tbody>
+            <tr><td>Linear adapter</td><td>One matrix: \(\vec{h}_v = W \vec{z}_v\)</td><td>Same as in (\(N\))</td><td>LLaVA</td></tr>
+            <tr><td>MLP</td><td>Two layers with a nonlinearity such as ReLU in between: \(\vec{h}_v = W_2\, \text{ReLU}(W_1 \vec{z}_v)\)</td><td>Same as in (\(N\))</td><td>LLaVA-1.5</td></tr>
+            <tr><td>Q-Former</td><td>A small transformer with \(32\) learned query vectors that cross-attend to the image features</td><td>Fixed at \(32\)</td><td>BLIP-2</td></tr>
+            <tr><td>Perceiver Resampler</td><td>Learned latent queries cross-attend to the image features</td><td>Fixed at \(64\)</td><td>Flamingo</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>The last two use <strong>learned queries</strong>: a fixed set of vectors that ask the image "what is worth keeping?" using cross-attention, \(\text{CrossAttn}(Q_{\text{learned}}, K_{\text{image}}, V_{\text{image}})\). The output size is set by the number of queries, not by the image size. That is useful for high-resolution images or many video frames, at the price of throwing detail away.</p>
+
+    <p>The trade-off is token count against detail. Passing all \(576\) tokens keeps small objects and printed text readable but fills the context window. A Q-Former's \(32\) tokens are cheap but cannot hold fine detail.</p>
+  </section>
+
+  <section>
+    <h2>3. Token injection</h2>
+
+    <p>Once the visual tokens exist, there are two ways to give them to the language model.</p>
+
+    <h3>Input-level concatenation</h3>
+    <p>The visual tokens are placed directly in the input sequence, next to the text tokens, and the language model's ordinary self-attention reads them. The prompt contains a placeholder such as <code>&lt;image&gt;</code> that is replaced by the projected tokens before the first layer. To the language model, a picture is a few hundred extra tokens. LLaVA and PaLM-E work this way.</p>
+
+    <h3>Cross-attention layers inside the model</h3>
+    <p>New cross-attention layers are inserted between the layers of a frozen language model, and text positions attend to the visual tokens through them. Flamingo does this with gated layers whose gate starts at zero, so training begins from the original language model's behavior. This does not consume context length, but it needs new layers.</p>
+
+    <p>Training usually has two stages. First, only the connector is trained on image-caption pairs, with the encoder and the language model frozen, so visual tokens learn to land in the language model's embedding space. Second, the connector and the language model are fine-tuned on instruction data (questions and answers about images). The loss is the usual next-token loss, computed on the answer tokens only:</p>
+
+    <div class="eq-panel">
+        \[ P(y_t \mid y_{\lt t},\; \vec{h}_v,\; \vec{x}_{\text{text}}) \]
     </div>
   </section>
 
   <section>
-    <h2>3. Latent diffusion: denoise small, decode big</h2>
+    <h2>4. Case studies</h2>
 
-    <p>Full 512×512 RGB diffusion is expensive. Stable Diffusion runs the blizzard in a <strong>VAE latent</strong> — the compressed map from Lesson 1 — then decodes once at the end.</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Model</th><th>Vision side</th><th>Connector and injection</th><th>Notable idea</th></tr></thead>
+        <tbody>
+            <tr><td>LLaVA</td><td>CLIP ViT-L/14 encoder</td><td>Linear (v1) or MLP (v1.5) projector; tokens concatenated before the text</td><td>Simple recipe plus GPT-generated instruction data</td></tr>
+            <tr><td>BLIP-2</td><td>Frozen image encoder</td><td>Q-Former gives \(32\) tokens to a frozen language model</td><td>Bridge two frozen models with a small trainable module</td></tr>
+            <tr><td>Flamingo</td><td>Contrastively trained vision encoder</td><td>Perceiver Resampler gives \(64\) tokens; gated cross-attention layers inside a frozen language model</td><td>Interleaved image-text input and few-shot prompting</td></tr>
+            <tr><td>PaLM-E</td><td>ViT; also robot sensor states</td><td>Observations projected into the language embedding space and placed in the sequence</td><td>"Multimodal sentences" that mix text with images and robot state, for embodied tasks</td></tr>
+            <tr><td>Gemini</td><td>Natively multimodal</td><td>Trained jointly on text, images, audio, and video rather than bolting an encoder onto a finished language model</td><td>Few architecture details are public; the technical report describes one model across modalities</td></tr>
+        </tbody>
+    </table></div>
 
-    <div class="shape-trail">sample z_T ~ 𝒩(0, I)     latent noise, shape ~(64, 64, 4)
-for t = T … 1:
-    ε = U-Net(z_t, t)       predict noise in latent space
-    z_{t-1} = denoise_step(z_t, ε, t)
-x₀ = VAE_decode(z₀)         RGB image (512, 512, 3)</div>
-
-    <p>Lesson 4 will add text embeddings into that U-Net call — for now, notice the pipeline: <strong>noise → iterative denoise in latent → VAE decode → pixels</strong>. No adversarial forger required.</p>
-
-    <div class="quiz">
-        <h3 style="margin-top:0;">Check your knowledge: GAN vs diffusion</h3>
-        <p><strong>Question:</strong> A GAN generates in one shot from <code>z</code>. A diffusion model needs hundreds of steps. Why might researchers accept that cost?</p>
-        <details>
-            <summary>Show answer</summary>
-            <p style="margin-top:8px;color:#475569;">Diffusion training is typically <strong>more stable</strong> (no min–max tug-of-war), scales well with data and compute, and gives fine control over diversity via the noise schedule. Fast samplers and latent space shrink the step-count penalty — trade one-shot speed for reliability and quality.</p>
-        </details>
-    </div>
-  </section>
-
-  <section>
-    <h2>4. Interactive: Step-by-Step Denoising Slider</h2>
-
-    <p>Drag the slider from <code>t = 1000</code> (pure noise) down to <code>t = 0</code> (clean image). The canvas simulates reverse diffusion on a simple target: circle, square, and a soft “face-like” blob. Watch structure emerge as noise is subtracted each step.</p>
-
-    <div class="interactive-box">
-        <p style="margin-top:0;"><strong>Timestep</strong> (sampling runs <code>T → 0</code>)</p>
-        <label>
-            t = <strong><span id="t-val">1000</span></strong> / 1000
-            <br>
-            <input type="range" id="t-slider" min="0" max="1000" value="1000">
-        </label>
-        <div class="t-label" id="t-desc">Pure noise — no structure visible.</div>
-        <div class="step-pills" id="step-pills"></div>
-        <p style="margin:12px 0 6px;">
-            <button type="button" class="primary" id="play-btn">▶ Play denoising</button>
-            <button type="button" id="reset-btn">Reset to noise</button>
-            <button type="button" id="target-btn">Show clean target</button>
-        </p>
-        <canvas id="denoise-canvas" width="320" height="320"></canvas>
-        <p id="denoise-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;">
-            Simulated update: x<sub>t−1</sub> ← blend(x<sub>t</sub>, x₀, schedule(t)) — 64×64 grid, fixed noise seed for reproducibility.
-        </p>
-    </div>
-  </section>
-
-  <section>
-    <h2>5. Online lab: Diffusion Explainer</h2>
-
-    <div class="tool-box">
-        <p style="margin-top:0;"><strong>Live tool:</strong> <a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> (Georgia Tech Polo Club) — interactive diagrams for forward/noise schedule, U-Net, and sampling.</p>
-        <p><strong>Guided tasks:</strong></p>
-        <ol>
-            <li>Step through <em>Forward Process</em>. Write one sentence linking “more steps → more noise” to the slider above.</li>
-            <li>Open the <em>Reverse Process</em> view. Identify where the noise predictor sits in the loop — same role as <code>ε<sub>θ</sub></code> here.</li>
-            <li>Compare parameter counts: why does the explainer highlight U-Net skip connections for preserving spatial detail?</li>
-            <li>Stretch: if text conditioning were added to the U-Net input, which lesson in this unit will cover that? (Preview Lesson 4.)</li>
-        </ol>
-    </div>
-
-    <div class="bridge">
-        <strong>Where you’ve been / where you’re going.</strong>
-        Lesson 2 (GANs) covered one-shot generation via adversarial training.
-        This lesson covered iterative denoising, U-Net noise prediction, and a preview of the latent pipeline.
-        Lesson 4 (text conditioning) will inject prompt embeddings into <code>ε<sub>θ</sub>(x<sub>t</sub>, t, <strong>text</strong>)</code> so the sculptor follows your words.
-    </div>
+    <p>These split into two camps. <em>Bolt-on</em> models (LLaVA, BLIP-2, Flamingo) join separately trained parts and train only the connector, or the connector plus fine-tuning. <em>Native</em> models (Gemini and GPT-4o) are trained across modalities from the start, which costs far more data and compute.</p>
   </section>
 
   <section>
     <h2>Further reading</h2>
     <ul>
-        <li>Ho et al., Denoising Diffusion Probabilistic Models (DDPM) — foundational image diffusion.</li>
-        <li>Rombach et al., Stable Diffusion (latent diffusion) — VAE + U-Net at scale.</li>
-        <li>Reconnect: Audio Lesson 5 diffusion peek; Lesson 1 latent decode; Lesson 2 GAN comparison.</li>
+        <li><a href="https://arxiv.org/abs/2304.08485" target="_blank" rel="noopener">Liu et al., Visual Instruction Tuning (2023)</a>: LLaVA.</li>
+        <li><a href="https://arxiv.org/abs/2310.03744" target="_blank" rel="noopener">Liu et al., Improved Baselines with Visual Instruction Tuning (2023)</a>: LLaVA-1.5 and the MLP connector.</li>
+        <li><a href="https://arxiv.org/abs/2301.12597" target="_blank" rel="noopener">Li et al., BLIP-2 (2023)</a>: the Q-Former.</li>
+        <li><a href="https://arxiv.org/abs/2204.14198" target="_blank" rel="noopener">Alayrac et al., Flamingo (2022)</a>: the Perceiver Resampler and gated cross-attention.</li>
+        <li><a href="https://arxiv.org/abs/2303.03378" target="_blank" rel="noopener">Driess et al., PaLM-E (2023)</a>: embodied multimodal language models.</li>
+        <li><a href="https://arxiv.org/abs/2312.11805" target="_blank" rel="noopener">Gemini Team, Gemini: A Family of Highly Capable Multimodal Models (2023)</a>.</li>
     </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
     <a class="pager__prev" href="lesson2.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">The Art Forger and the Detective: GANs</span>
+      <span class="pager__title">Learning a Shared Space: Contrastive Vision-Language Learning (CLIP)</span>
     </a>
     <a class="pager__next" href="lesson4.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Driving with Words: Conditioning and a Coding Lab</span>
+      <span class="pager__title">Adding Time: Video and Action</span>
     </a>
   </nav>
 </main>
@@ -214,172 +128,6 @@ x₀ = VAE_decode(z₀)         RGB image (512, 512, 3)</div>
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
-
-<script>
-(function () {
-    var N = 64;
-    var T = 1000;
-    var canvas = document.getElementById('denoise-canvas');
-    var ctx = canvas.getContext('2d');
-    var slider = document.getElementById('t-slider');
-    var tVal = document.getElementById('t-val');
-    var tDesc = document.getElementById('t-desc');
-    var note = document.getElementById('denoise-note');
-    var pills = document.getElementById('step-pills');
-    var playing = false;
-    var playId = null;
-    var showTargetOnly = false;
-
-    // Fixed noise seed (deterministic "blizzard")
-    var noiseGrid = [];
-    for (var y = 0; y < N; y++) {
-        noiseGrid[y] = [];
-        for (var x = 0; x < N; x++) {
-            noiseGrid[y][x] = (Math.random() * 2 - 1);
-        }
-    }
-
-    // Clean target: circle + square + face blob
-    var clean = [];
-    for (var y = 0; y < N; y++) {
-        clean[y] = [];
-        for (var x = 0; x < N; x++) {
-            var nx = (x / N - 0.5) * 2;
-            var ny = (y / N - 0.5) * 2;
-            var v = 0.25 + 0.1 * ny;
-            // circle left
-            if ((nx + 0.35) * (nx + 0.35) + ny * ny < 0.18) v = 0.82;
-            // square right
-            if (nx > 0.15 && nx < 0.55 && ny > -0.25 && ny < 0.25) v = 0.55;
-            // face blob center-bottom
-            var fx = nx * 0.9;
-            var fy = (ny - 0.45) * 1.2;
-            if (fx * fx + fy * fy < 0.12) v = 0.72;
-            // eyes
-            if ((fx + 0.12) * (fx + 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
-            if ((fx - 0.12) * (fx - 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
-            clean[y][x] = Math.max(0, Math.min(1, v));
-        }
-    }
-
-    function alphaBar(t) {
-        // ᾱ_t decreases from 1 to ~0
-        var frac = t / T;
-        return Math.pow(1 - frac, 2.2);
-    }
-
-    function stateAt(t) {
-        var a = alphaBar(t);
-        var grid = [];
-        for (var y = 0; y < N; y++) {
-            grid[y] = [];
-            for (var x = 0; x < N; x++) {
-                var signal = Math.sqrt(a) * clean[y][x];
-                var noise = Math.sqrt(1 - a) * noiseGrid[y][x];
-                grid[y][x] = signal + noise;
-            }
-        }
-        return grid;
-    }
-
-    function drawGrid(grid) {
-        var cell = canvas.width / N;
-        for (var y = 0; y < N; y++) {
-            for (var x = 0; x < N; x++) {
-                var v = (grid[y][x] + 1) * 0.5;
-                v = Math.max(0, Math.min(1, v));
-                var g = Math.round(v * 255);
-                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
-                ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
-            }
-        }
-    }
-
-    function updateDesc(t) {
-        if (showTargetOnly) {
-            tDesc.textContent = 'Clean target x₀ — no noise.';
-            return;
-        }
-        if (t >= 900) tDesc.textContent = 'Pure noise — no structure visible.';
-        else if (t >= 600) tDesc.textContent = 'Early reverse steps — faint ghost shapes.';
-        else if (t >= 300) tDesc.textContent = 'Mid denoising — circle and square separating from static.';
-        else if (t >= 50) tDesc.textContent = 'Late steps — edges sharpening; face blob emerging.';
-        else tDesc.textContent = 'Nearly clean — fine detail restored.';
-    }
-
-    function renderPills(t) {
-        var marks = [1000, 750, 500, 250, 100, 0];
-        pills.innerHTML = '';
-        marks.forEach(function (m) {
-            var s = document.createElement('span');
-            s.textContent = 't=' + m;
-            if (Math.abs(t - m) < 60 || (m === 0 && t < 30)) s.className = 'active';
-            pills.appendChild(s);
-        });
-    }
-
-    function render() {
-        var t = parseInt(slider.value, 10);
-        tVal.textContent = t;
-        if (showTargetOnly) {
-            drawGrid(clean.map(function (row) { return row.map(function (v) { return v * 2 - 1; }); }));
-        } else {
-            drawGrid(stateAt(t));
-        }
-        updateDesc(t);
-        renderPills(t);
-        note.textContent = showTargetOnly
-            ? 'Showing ground-truth x₀ used during forward diffusion.'
-            : 'Simulated: x_t = √ᾱ_t · x₀ + √(1−ᾱ_t) · ε with ᾱ_t = (1 − t/T)^2.2 — drag t from 1000→0 to reverse.';
-    }
-
-    slider.addEventListener('input', function () {
-        showTargetOnly = false;
-        render();
-    });
-
-    document.getElementById('play-btn').addEventListener('click', function () {
-        if (playing) {
-            playing = false;
-            clearInterval(playId);
-            document.getElementById('play-btn').textContent = '▶ Play denoising';
-            return;
-        }
-        showTargetOnly = false;
-        playing = true;
-        document.getElementById('play-btn').textContent = '⏸ Pause';
-        slider.value = T;
-        playId = setInterval(function () {
-            var t = parseInt(slider.value, 10);
-            if (t <= 0) {
-                playing = false;
-                clearInterval(playId);
-                document.getElementById('play-btn').textContent = '▶ Play denoising';
-                return;
-            }
-            slider.value = Math.max(0, t - 18);
-            render();
-        }, 50);
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', function () {
-        playing = false;
-        clearInterval(playId);
-        document.getElementById('play-btn').textContent = '▶ Play denoising';
-        showTargetOnly = false;
-        slider.value = T;
-        render();
-    });
-
-    document.getElementById('target-btn').addEventListener('click', function () {
-        showTargetOnly = !showTargetOnly;
-        document.getElementById('target-btn').textContent = showTargetOnly ? 'Hide target' : 'Show clean target';
-        render();
-    });
-
-    render();
-})();
-</script>
 
 </body>
 </html>
