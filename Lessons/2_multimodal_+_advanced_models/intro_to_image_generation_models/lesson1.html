@@ -83,13 +83,17 @@
 
     <h3>Interactive: Patchifier</h3>
 
-    <p>Change the image size and patch size and watch the token count change. Smaller patches mean finer detail and many more tokens.</p>
+    <p>Upload one of your own photos, or use the sample, then change the image size and patch size and watch the token count change. Smaller patches mean finer detail and many more tokens. Your image stays in your browser and is never uploaded anywhere.</p>
 
     <div class="interactive-box">
         <p style="margin-top:0;"><strong>Image size:</strong> <span id="pz-size-val">224</span> × <span id="pz-size-val2">224</span> pixels</p>
         <input type="range" id="pz-size" min="64" max="448" step="32" value="224">
         <p><strong>Patch size</strong></p>
         <div id="pz-chips"></div>
+        <p><strong>Your image</strong> (cropped to a square)</p>
+        <input type="file" id="pz-file" accept="image/*">
+        <button type="button" id="pz-clear">Use sample image</button>
+        <p id="pz-msg" style="font-size:0.88em;color:#64748b;margin:6px 0 0;"></p>
         <canvas id="pz-canvas" width="320" height="320" style="margin-top:12px;"></canvas>
         <div class="metric-row">
             <div class="metric">Patches per side: <strong id="pz-g">14</strong></div>
@@ -187,6 +191,7 @@
     var chipsEl = document.getElementById('pz-chips');
     var PATCHES = [8, 16, 32];
     var patch = 16;
+    var userImg = null;
 
     function fmt(n) { return n.toLocaleString('en-US'); }
 
@@ -202,12 +207,20 @@
         document.getElementById('pz-a').textContent = fmt(n * n);
 
         var w = canvas.width;
-        var grad = ctx.createLinearGradient(0, 0, w, w);
-        grad.addColorStop(0, '#38bdf8');
-        grad.addColorStop(0.5, '#a78bfa');
-        grad.addColorStop(1, '#f472b6');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, w);
+        if (userImg) {
+            // center-crop to a square, then scale to the canvas
+            var side = Math.min(userImg.naturalWidth, userImg.naturalHeight);
+            var sx = (userImg.naturalWidth - side) / 2;
+            var sy = (userImg.naturalHeight - side) / 2;
+            ctx.drawImage(userImg, sx, sy, side, side, 0, 0, w, w);
+        } else {
+            var grad = ctx.createLinearGradient(0, 0, w, w);
+            grad.addColorStop(0, '#38bdf8');
+            grad.addColorStop(0.5, '#a78bfa');
+            grad.addColorStop(1, '#f472b6');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, w);
+        }
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.lineWidth = g > 28 ? 0.5 : 1;
         for (var i = 0; i <= g; i++) {
@@ -235,6 +248,38 @@
             render();
         });
         chipsEl.appendChild(b);
+    });
+
+    var fileEl = document.getElementById('pz-file');
+    var msgEl = document.getElementById('pz-msg');
+
+    fileEl.addEventListener('change', function () {
+        var file = fileEl.files && fileEl.files[0];
+        if (!file) return;
+        if (file.type.indexOf('image/') !== 0) {
+            msgEl.textContent = 'That file is not an image. Please choose a JPEG, PNG or similar file.';
+            return;
+        }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            userImg = img;
+            msgEl.textContent = 'Using ' + file.name + ' (' + img.naturalWidth + ' × ' + img.naturalHeight + ' pixels, cropped to a square).';
+            URL.revokeObjectURL(url);
+            render();
+        };
+        img.onerror = function () {
+            msgEl.textContent = 'This browser could not read that image. Try a JPEG or PNG.';
+            URL.revokeObjectURL(url);
+        };
+        img.src = url;
+    });
+
+    document.getElementById('pz-clear').addEventListener('click', function () {
+        userImg = null;
+        fileEl.value = '';
+        msgEl.textContent = '';
+        render();
     });
 
     sizeEl.addEventListener('input', render);

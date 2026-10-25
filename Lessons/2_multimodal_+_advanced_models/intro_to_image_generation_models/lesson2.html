@@ -137,6 +137,8 @@ def cross_entropy(logits, labels):
 
     <p>CLIP does not fix \(\tau\). It learns it, as a log-scale parameter initialized to \(\tau = 0.07\), and clips it so the logits are never scaled by more than \(100\).</p>
 
+    <p>If this sounds like the temperature setting for language models, that is because it is the same operation. In both cases the scores are divided by a temperature before the softmax, so a low value makes the probabilities sharper and a high value makes them flatter. The difference is when it is used. A language model applies temperature while <em>generating</em>, to control how random the next token is. CLIP uses it while <em>training</em>, to control how sharply the loss separates the correct caption from the wrong ones, and it learns the value instead of having you pick it.</p>
+
     <h3>Interactive: Temperature Explorer</h3>
     <p>This is a fixed \(4 \times 4\) similarity grid (rows are images, columns are captions) with illustrative values. Each cell shows the row-wise softmax probability. Drag \(\tau\) and watch how confident the model becomes, and how the loss responds. Notice the two hard negatives off the diagonal.</p>
 
