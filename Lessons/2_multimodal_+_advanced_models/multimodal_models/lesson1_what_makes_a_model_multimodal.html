@@ -7,6 +7,30 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+#mm-clip .clip-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.75rem 0; }
+#mm-clip .clip-controls input[type="range"] { flex: 1 1 12rem; }
+#mm-clip .clip-scroll { overflow-x: auto; padding: 3px; }
+#mm-clip .clip-grid { width: 100%; min-width: 30rem; margin: 0; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+#mm-clip .clip-grid th, #mm-clip .clip-grid td { padding: 0; border: 0; background: none; }
+#mm-clip .clip-grid button {
+  display: block; width: 100%; margin: 0; padding: 0.45rem 0.4rem;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text);
+  font: inherit; font-size: 0.95em; font-weight: 400; line-height: 1.3; cursor: pointer;
+}
+#mm-clip .clip-grid button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#mm-clip .clip-grid .clip-head.sel { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+#mm-clip .clip-grid .clip-cell { font-family: var(--mono); padding: 0.6rem 0.4rem; }
+#mm-clip .clip-grid .clip-cell.pair { border-style: dashed; border-color: var(--text); }
+#mm-clip .clip-grid .dim { opacity: 0.4; }
+#mm-clip .clip-grid .clip-cell.best-ok { border-style: solid; border-color: var(--ok); box-shadow: 0 0 0 2px var(--ok); }
+#mm-clip .clip-grid .clip-cell.best-no { border-style: solid; border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad); }
+#mm-clip .clip-grid .clip-cell.picked { box-shadow: 0 0 0 2px var(--accent); }
+#mm-clip .clip-readout { margin: 0.75rem 0; padding: 0.75rem 0.9rem; border: 1px solid var(--border); border-radius: 6px; background: var(--code-bg); }
+#mm-clip .clip-readout p { margin: 0; }
+#mm-clip .clip-readout p + p { margin-top: 0.4rem; color: var(--muted); }
+</style>
 </head>
 <body class="genai">
 
@@ -25,127 +49,196 @@
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Multimodal Models</p>
     <h1>What Makes a Model Multimodal?</h1>
-    <p class="lede">Every model in the Foundations module read and wrote text. People, though, see, hear, and speak. This lesson shows how a model can work with images and sound by turning them into the same thing it already understands: sequences of vectors.</p>
+    <p class="lede">So far, we've mostly worked with models that read and generate text. But people don't experience the world through text alone. We see images, hear sounds, watch videos, and speak to each other.</p>
   </header>
 
   <section>
+    <p>How can an AI model work with all these different kinds of information?</p>
+    <p>The key idea is surprisingly simple: <strong>a model can process different kinds of information by converting them into numerical representations that a neural network can work with.</strong> These representations let a model connect a picture to a caption, answer questions about an image, or generate audio from a written description.</p>
+    <p>In this lesson, we'll look at how images and audio are represented, how models learn to connect different types of information, and how these ideas are used in modern AI systems.</p>
+  </section>
+
+  <section>
     <h2>1. Modalities Are Different Shapes of Data</h2>
-    <p>A <strong>modality</strong> is a kind of input or output: text, images, audio, video, and so on. A <strong>multimodal model</strong> takes in or produces more than one modality, for example a model that answers questions about a photo, or one that turns a written description into music.</p>
-    <p>The challenge is that each modality arrives as a very different shape of data:</p>
+    <p>A <em>modality</em> is simply a type of information. Text, images, audio, and video are all different modalities.</p>
+    <p>A <em>multimodal model</em> works with more than one of these types. For example, a model that describes a photograph in words is multimodal because it takes an image as input and produces text as output.</p>
+    <p>The challenge is that these inputs look very different to a computer.</p>
 
     <div class="table-wrap"><table>
         <thead>
-            <tr><th>Modality</th><th>Raw form</th><th>Example shape</th><th>What one number means</th></tr>
+            <tr><th>Modality</th><th>What the computer receives</th><th>Example</th></tr>
         </thead>
         <tbody>
-            <tr><td>Text</td><td>A sequence of token IDs</td><td><code>[12]</code> for a 12-token sentence</td><td>Which word piece (Foundations, Lesson 1)</td></tr>
-            <tr><td>Image</td><td>A grid of pixels with 3 color channels</td><td><code>[3 &#215; 224 &#215; 224]</code> = 150,528 numbers</td><td>How red, green, or blue one dot is</td></tr>
-            <tr><td>Audio</td><td>A sequence of air-pressure samples</td><td><code>[160,000]</code> for 10 seconds at 16 kHz</td><td>Air pressure at one instant</td></tr>
+            <tr><td>Text</td><td>A sequence of token IDs</td><td>A sentence split into 12 tokens</td></tr>
+            <tr><td>Image</td><td>A grid of pixel values</td><td>A 224 &#215; 224 color image contains 150,528 numbers</td></tr>
+            <tr><td>Audio</td><td>A sequence of sound measurements</td><td>10 seconds of audio recorded at 16,000 samples per second contains 160,000 samples</td></tr>
         </tbody>
     </table></div>
 
-    <p>A single word token already carries meaning. A single pixel or audio sample does not: one red dot tells you almost nothing, and the same is true of one instant of sound. Meaning in images and audio lives in <em>patterns</em> across thousands of numbers. So the first job of a multimodal model is to turn those raw numbers into meaningful units.</p>
+    <p>Let's unpack these examples.</p>
+    <p>When a language model processes text, it first breaks the text into <em>tokens</em>. A token might be a whole word, part of a word, or a punctuation mark. Each token is represented by a number called a token ID.</p>
+    <p>An image works differently. It is made up of pixels, and each color pixel usually has three values representing red, green, and blue. A single pixel tells us very little about what the image contains. To recognize a dog, for example, a model needs to pick up patterns across many pixels, including the shape of the animal, its features, and its surroundings.</p>
+    <p>Audio has the same problem. A recording is a long sequence of measurements of a changing sound wave. A single measurement tells us almost nothing about whether someone is speaking, music is playing, or a dog is barking. The useful information comes from patterns that unfold over time.</p>
+    <p><strong>The important difference is that computers receive numbers, while we care about what those numbers represent.</strong> A multimodal model needs a way to turn raw images and audio into representations that capture useful information, just as language models learn useful representations of text.</p>
   </section>
 
   <section>
     <h2>2. The Common Move: Turn Everything Into Tokens</h2>
-    <p>Recall the pipeline from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html">Transformers: Putting It All Together</a>. Once text is a sequence of embedding vectors, the transformer blocks do not care where those vectors came from. Multimodal models exploit this. Each modality gets its own <strong>encoder</strong>, a network that turns raw data into a sequence of embedding vectors, which the transformer then processes like word tokens.</p>
+    <p>In the <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html">Transformers: Putting It All Together</a> lesson, we saw how a language model turns text tokens into <em>embeddings</em>: vectors of numbers that represent information about each token.</p>
+    <p>A transformer processes these vectors and uses attention to work out how different parts of the input relate to one another.</p>
+    <p>Multimodal models use a similar idea. Instead of feeding only text into a transformer, they first convert images or audio into sequences of vectors.</p>
+    <p>The network that performs this conversion is called an <strong>encoder</strong>. Different types of data usually need different encoders because an image and a sound recording have very different structures.</p>
 
     <h3>Images become patches</h3>
-    <p>The <strong>Vision Transformer (ViT)</strong> cuts an image into a grid of small squares called <strong>patches</strong>, typically 16 &#215; 16 pixels. A 224 &#215; 224 image becomes a 14 &#215; 14 grid, which is 196 patches. Each patch is flattened and multiplied by a learned matrix to produce one embedding vector, exactly like looking up a token's embedding. A position vector is added so the model knows where each patch sat in the image, just as position vectors tell a language model the order of words.</p>
-    <p class="eq-panel">Image <code>[3 &#215; 224 &#215; 224]</code> &rarr; 196 patches &rarr; <code>[196 &#215; d]</code> patch embeddings</p>
+    <p>One popular approach to processing images is the <em>Vision Transformer</em>, or ViT.</p>
+    <p>Instead of treating an image as one enormous grid of pixels, ViT divides it into smaller squares called <strong>patches</strong>. Each patch is converted into a vector, which the transformer can process much like a text token.</p>
+    <p>Consider a 224 &#215; 224 image. If each patch is 16 &#215; 16 pixels, the image contains 14 patches along each side:</p>
+    <p class="eq-panel">14 &#215; 14 = 196 patches.</p>
+    <p>The model converts these 196 patches into embedding vectors. It also adds information about where each patch came from, so the model can distinguish, for example, something at the top of an image from something at the bottom.</p>
+    <p>This is similar to how a language model uses positional information to keep track of word order.</p>
+    <p>The result is a sequence of 196 vectors instead of one large collection of raw pixel values.</p>
+    <p class="eq-panel">Image <code>[3 &#215; 224 &#215; 224]</code> &rarr; 196 patches &rarr; 196 embedding vectors</p>
 
     <h3>Audio becomes spectrogram frames</h3>
-    <p>Raw audio is far too long to feed in directly. Ten seconds at 16,000 samples per second is 160,000 numbers. Speech models such as OpenAI's <strong>Whisper</strong> first convert the sound into a <strong>spectrogram</strong>, a picture of which frequencies are present at each moment, and then treat short slices of it as tokens. Whisper reads 30-second chunks as an 80-band log-Mel spectrogram and turns each chunk into 1,500 embedding vectors. The audio deep dive later in this module explains spectrograms in detail.</p>
-    <p class="eq-panel">Audio <code>[480,000]</code> samples (30 s) &rarr; spectrogram <code>[80 &#215; 3,000]</code> &rarr; <code>[1,500 &#215; d]</code> audio embeddings</p>
-
-    <p>After this step, a sentence, a photo, and a voice clip are all the same kind of object: a sequence of vectors with shape <code>[number of tokens &#215; d]</code>. Everything you learned about attention now applies to all three.</p>
+    <p>Audio presents a different challenge: recordings can contain hundreds of thousands of samples, even when they last only a few seconds.</p>
+    <p>One way to make audio easier to process is to convert it into a <strong>spectrogram</strong>. A spectrogram shows how the frequencies in a sound change over time. You can think of it as a visual representation of the sound, with time along one axis and frequency along the other.</p>
+    <p>Speech recognition models such as OpenAI's Whisper use a representation called a <em>log-Mel spectrogram</em>. This transforms the sound into a form that makes useful frequency patterns easier for a model to learn.</p>
+    <p>For a 30-second recording sampled at 16,000 samples per second, the raw audio contains 480,000 samples. Whisper converts the recording into a spectrogram and processes it in smaller chunks, ultimately producing a sequence of vectors for its encoder.</p>
+    <p class="eq-panel">Audio <code>[480,000 samples]</code> &rarr; spectrogram &rarr; sequence of audio representations</p>
+    <p>The details of spectrograms are covered in the audio deep dive later in this module.</p>
+    <p>The exact conversion depends on the model. What matters here is the general principle: <strong>an encoder turns raw data into a sequence of vectors that a neural network can process.</strong></p>
+    <p>After this conversion, a transformer can process text tokens, image patches, or audio representations using many of the same building blocks. That doesn't mean the representations are identical or interchangeable in every model. It means they now have a form that neural networks can work with.</p>
 
     <details>
-        <summary>Check your understanding: patches</summary>
-        <p><strong>Question:</strong> A ViT uses 16 &#215; 16 patches on a 384 &#215; 384 image. How many patch tokens does it produce?</p>
-        <p><strong>Answer:</strong> 384 &#247; 16 = 24 patches per side, so 24 &#215; 24 = 576 tokens. Higher-resolution images cost more tokens, just as longer text does.</p>
+        <summary>Check your understanding: Image patches</summary>
+        <p><strong>Question:</strong> A Vision Transformer divides a 384 &#215; 384 image into 16 &#215; 16 patches. How many patch tokens does it produce?</p>
+        <p><strong>Answer:</strong> There are 384 &#247; 16 = 24 patches along each side. Multiplying the two dimensions gives 24 &#215; 24 = 576 patches.</p>
+        <p>A larger image produces more patches when the patch size stays the same. This usually means more computation, just as processing a longer text sequence generally requires more work.</p>
     </details>
   </section>
 
   <section>
     <h2>3. A Shared Space for Meaning</h2>
-    <p>Encoders turn each modality into vectors, but an image encoder and a text encoder trained separately would place their vectors in unrelated spaces. A picture of a dog and the word <code>"dog"</code> would have no reason to land near each other. To connect modalities, we want a <strong>shared embedding space</strong>: one space where the image of a dog and the caption "a photo of a dog" end up close together.</p>
-    <p>You already know this idea from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson2_embeddings.html">Embeddings</a>, where words with similar meanings sit near each other. A shared space extends it across modalities.</p>
+    <p>Turning images and text into vectors is a useful first step. But there's another problem: <strong>how does a model learn that a picture of a dog and the word "dog" are related?</strong></p>
+    <p>Imagine training one model to represent images and another to represent text, completely independently. The image model might represent a dog using one set of numerical patterns, while the text model represents the word "dog" using another. Nothing guarantees that their vectors will have any meaningful relationship.</p>
+    <p>To connect the two, we can train them to place related inputs near each other in a <strong>shared embedding space</strong>.</p>
+    <p>You may remember from the <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson2_embeddings.html">Embeddings</a> lesson that vectors can represent relationships between words. A shared embedding space extends this idea across different types of data. An image of a dog and the caption "a photo of a dog" can be trained to have similar representations, even though one is an image and the other is text.</p>
 
-    <h3>CLIP: learning a shared space from captions</h3>
-    <p>OpenAI's <strong>CLIP</strong> (2021) trains an image encoder and a text encoder together on about 400 million image&ndash;caption pairs collected from the internet. The training method is called <strong>contrastive learning</strong>:</p>
+    <h3>CLIP: Learning to connect images and text</h3>
+    <p>CLIP, introduced by OpenAI in 2021, is a well-known example of this approach. It uses an image encoder and a text encoder, trained together on roughly 400 million image&ndash;caption pairs collected from the internet.</p>
+    <p>The basic idea is to teach the model which images and captions belong together.</p>
+    <p>This training approach is called <strong>contrastive learning</strong>. Here's how it works:</p>
     <ol>
-        <li>Take a batch of \(N\) images and their \(N\) captions.</li>
-        <li>Encode all of them and compute the cosine similarity between every image and every caption, giving an \(N \times N\) grid of scores.</li>
-        <li>Train both encoders so the \(N\) correct pairs, on the diagonal of the grid, score high and every mismatched pair scores low.</li>
+        <li><strong>Start with matching pairs.</strong> Collect a batch of images, each paired with a caption that describes it.</li>
+        <li><strong>Compare every image with every caption.</strong> The model converts the images and captions into vectors, then calculates a similarity score for every possible image&ndash;caption combination.</li>
+        <li><strong>Reward the correct matches.</strong> The model learns to give higher scores to the original image&ndash;caption pairs and lower scores to mismatched pairs.</li>
     </ol>
-    \[ \text{similarity}(\text{image}, \text{text}) = \cos(\theta) = \frac{\mathbf{v}_{\text{image}} \cdot \mathbf{v}_{\text{text}}}{\lVert \mathbf{v}_{\text{image}} \rVert \, \lVert \mathbf{v}_{\text{text}} \rVert} \]
-    <p>No one labels the images with categories. The captions people already wrote on the web are the supervision. The result is a space where you can compare any image with any piece of text by measuring how close their vectors are.</p>
+    <p>For example, suppose a batch contains a picture of a dog, a picture of pizza, and a picture of a red car, each with its own caption. The model should give a high similarity score to the dog picture and "a dog running on sand," but a lower score to the dog picture and "a slice of cheese pizza."</p>
+    <p>The model learns these relationships from the paired images and captions. It doesn't need a separate human-provided category label for every image.</p>
+    <p>The similarity between two vectors is often measured using <em>cosine similarity</em>:</p>
+    \[ \text{similarity}(\text{image}, \text{text}) = \cos(\theta) \]
+    <p>In vector form:</p>
+    \[ \cos(\theta) = \frac{\mathbf{v}_{\text{image}} \cdot \mathbf{v}_{\text{text}}}{\lVert \mathbf{v}_{\text{image}} \rVert \, \lVert \mathbf{v}_{\text{text}} \rVert} \]
+    <p>You don't need to memorize the equation yet. The intuition is what matters: cosine similarity measures how closely two vectors point in the same direction. A higher score means the vectors are more aligned.</p>
 
     <div class="interactive-box" id="mm-clip">
-        <p style="margin-top:0;"><strong>Try it: a contrastive similarity grid.</strong> Each row is an image and each column is a caption. Click a caption to see how well it matches each image. Training pushes the diagonal up and everything else down.</p>
-        <div id="mm-clip-captions" class="guess-row"></div>
-        <div id="mm-clip-grid"></div>
-        <p class="lab-note" id="mm-clip-note">Similarity values are illustrative, chosen to look like a trained CLIP model.</p>
+        <p style="margin-top:0;"><strong>Try it: Train a contrastive similarity grid.</strong> Each row is an image and each column is a caption. Every cell holds the similarity score between that image and that caption. The four cells with dashed outlines are the true image&ndash;caption pairs.</p>
+        <p>The model starts untrained, so its scores are close to random. Click an image to see which caption the model picks for it, click a caption to see which image it retrieves, or click any score to see what training does to that pair.</p>
+        <div class="clip-controls">
+            <label for="mm-clip-train">Training progress: <strong id="mm-clip-pct">0%</strong></label>
+            <input type="range" id="mm-clip-train" min="0" max="100" step="1" value="0">
+            <button type="button" id="mm-clip-play">Play training</button>
+        </div>
+        <div class="clip-scroll">
+            <table class="clip-grid" id="mm-clip-grid" aria-label="Similarity scores between four images and four captions"></table>
+        </div>
+        <div class="clip-readout" id="mm-clip-readout" aria-live="polite">
+            <p id="mm-clip-note"></p>
+            <p id="mm-clip-score"></p>
+        </div>
+        <p><strong>Things to try:</strong></p>
+        <ol>
+            <li>At 0% training, click each image in turn. How many does the model match to the right caption? With four captions to choose from, random guessing gets about one in four.</li>
+            <li>Press <em>Play training</em>, or drag the slider slowly. Watch the dashed cells rise while every other cell falls. At what point does each image first get its correct caption?</li>
+            <li>Click a caption instead of an image. This is the same grid read the other way: text-to-image search instead of image-to-text classification.</li>
+            <li>At 100% training, look at the winning scores. They are only about 0.3. A similarity score isn't good or bad by itself; what matters is how it compares with the scores for the other possible matches.</li>
+        </ol>
+        <p class="lab-note">The values in this demonstration are illustrative, not measurements from an actual CLIP model.</p>
     </div>
 
-    <h3>What a shared space makes possible</h3>
+    <h3>What can a shared embedding space do?</h3>
+    <p>Once images and text can be compared in the same space, several useful applications become possible.</p>
     <ul>
-        <li><strong>Zero-shot classification.</strong> To classify a photo without any training, embed captions such as "a photo of a cat" and "a photo of a dog", and pick the one closest to the image.</li>
-        <li><strong>Search across modalities.</strong> Type a text query and retrieve the closest images, or the reverse.</li>
-        <li><strong>Measuring how well an image matches text.</strong> The similarity score itself is a useful metric. You will use exactly this in Project 1 to measure how much meaning survives each step of a chain.</li>
-        <li><strong>Guiding generators.</strong> Text-to-image models use text encoders, often from CLIP, to steer what they draw.</li>
+        <li><strong>Classify images without training on those specific categories.</strong> This is called <em>zero-shot classification</em>. For example, a model can compare an image with the captions "a photo of a cat" and "a photo of a dog" and select the closer match.</li>
+        <li><strong>Search across different types of data.</strong> You could type "a dog running on a beach" and retrieve images that match the description, even if you never supplied those images during training.</li>
+        <li><strong>Measure image&ndash;text similarity.</strong> A similarity score can help evaluate how well an image matches a description. In Project 1, you'll use this idea to measure how much meaning is preserved through different steps of a chain.</li>
+        <li><strong>Guide image generation.</strong> Text representations can help a generative model create an image that matches a written prompt.</li>
     </ul>
-    <p>The same recipe works for other pairs of modalities. <strong>CLAP</strong> learns a shared space for audio and text, and Meta's <strong>ImageBind</strong> links six modalities, including images, text, and audio, into one space by pairing each with images.</p>
+    <p>The same general idea can connect other modalities, too. CLAP learns to connect audio and text, while Meta's ImageBind connects six modalities, including images, text, and audio, in a shared embedding space.</p>
 
     <details>
-        <summary>Check your understanding: the training grid</summary>
-        <p><strong>Question:</strong> A CLIP training batch has 32,768 image&ndash;caption pairs. How many similarity scores are in the grid, and how many of them should training push <em>up</em>?</p>
-        <p><strong>Answer:</strong> 32,768 &#215; 32,768, about 1.07 billion scores. Only the 32,768 on the diagonal, the true pairs, are pushed up; all the others are pushed down. Large batches give the model many hard negatives to learn from.</p>
+        <summary>Check your understanding: The training grid</summary>
+        <p><strong>Question:</strong> Suppose a CLIP training batch contains 32,768 image&ndash;caption pairs. How many image&ndash;caption similarity scores are there if every image is compared with every caption?</p>
+        <p><strong>Answer:</strong> The grid contains 32,768 &#215; 32,768 = 1,073,741,824 scores, or about 1.07 billion. There are 32,768 original matching pairs. Training encourages those matches to score higher than the mismatched combinations.</p>
+        <p>Large batches provide many mismatched examples for the model to learn from, although training a model at this scale also requires substantial computation and memory.</p>
     </details>
   </section>
 
   <section>
     <h2>4. Three Ways Models Combine Modalities</h2>
-    <p>Almost every multimodal system you will meet is built in one of three ways. They reuse the encoders and the transformer you already know, and differ in where the modalities meet.</p>
+    <p>So far, we've looked at how to turn images and audio into vectors and how to train different modalities to share a common representation. But how do these ideas come together in a working AI system?</p>
+    <p>There are several approaches. Three useful patterns are a shared embedding space, an encoder connected to a language model, and a generator conditioned on another modality.</p>
 
     <div class="table-wrap"><table>
         <thead>
-            <tr><th>Design</th><th>How it works</th><th>Good for</th><th>Examples</th></tr>
+            <tr><th>Approach</th><th>How it works</th><th>What it's useful for</th><th>Examples</th></tr>
         </thead>
         <tbody>
-            <tr><td><strong>Shared embedding space</strong></td><td>Separate encoders, trained so matching inputs land close together</td><td>Search, classification, similarity scores</td><td>CLIP, CLAP, ImageBind</td></tr>
-            <tr><td><strong>Encoder + language model</strong></td><td>An image or audio encoder produces vectors; a small learned projection maps them into the language model's token space, and the language model reads them like extra words</td><td>Describing images, answering questions about them, transcribing speech</td><td>LLaVA, Whisper</td></tr>
-            <tr><td><strong>Conditioned generator</strong></td><td>A generator for one modality is steered by embeddings of another through cross-attention</td><td>Making images, music, or speech from a text prompt</td><td>Stable Diffusion, MusicGen</td></tr>
+            <tr><td><strong>Shared embedding space</strong></td><td>Separate encoders learn to represent related inputs with similar vectors.</td><td>Image search, classification, similarity scoring</td><td>CLIP, CLAP, ImageBind</td></tr>
+            <tr><td><strong>Encoder + language model</strong></td><td>An image or audio encoder produces vectors that are adapted for a language model to process.</td><td>Describing images, answering questions about pictures, processing speech</td><td>LLaVA, Whisper</td></tr>
+            <tr><td><strong>Conditioned generator</strong></td><td>A generator uses information from another modality to guide what it creates.</td><td>Generating images, music, or speech from prompts</td><td>Stable Diffusion, MusicGen</td></tr>
         </tbody>
     </table></div>
 
-    <p>The middle row is worth a closer look, because it is how most chatbots "see". <strong>LLaVA</strong>, for example, passes an image through CLIP's image encoder, multiplies each patch vector by a learned matrix so it has the same size as a word embedding, and places those vectors in front of the text prompt. The language model then attends to image patches and words together. To the transformer, the picture is just a few hundred extra tokens.</p>
-    <p>The bottom row is the subject of the two deep dives in this module: the <strong>audio</strong> deep dive shows how MusicGen turns text into sound, and the <strong>image</strong> deep dive shows how diffusion models turn text into pictures.</p>
+    <p>These are useful patterns rather than strict categories. Real systems can combine multiple approaches.</p>
+
+    <h3>How a language model learns to work with images</h3>
+    <p>Consider LLaVA, a vision-language model that can answer questions about pictures.</p>
+    <p>A typical language model has learned to process text. To help it understand an image, LLaVA first passes the image through a vision encoder. The encoder converts the image into a sequence of vectors representing its patches.</p>
+    <p>Those vectors then pass through a learned projection layer, which transforms them into a form the language model can use. The resulting image representations are supplied alongside the user's text prompt.</p>
+    <p>For example, imagine asking, "What is the dog doing in this picture?" The model receives both the text question and the image representations. Its language model can use information from both to generate an answer such as "The dog is running along the beach."</p>
+    <p>The image hasn't literally become a set of words. Instead, its numerical representations are made available to the language model, which learns how to use them when generating text.</p>
+    <p>This is one way modern AI systems can move beyond text-only conversations and answer questions about visual information.</p>
+
+    <h3>When the model needs to create something</h3>
+    <p>The third approach works in the opposite direction: instead of using an image or audio input to answer a question, the model creates a new output.</p>
+    <p>A <strong>conditioned generator</strong> uses information from one modality to guide the generation of another. For example, a text-to-image model takes a written prompt and uses it to guide the creation of an image.</p>
+    <p>Stable Diffusion generates images, while MusicGen generates music. These systems use different generation techniques, but both illustrate the same broad idea: information from one modality can guide what a model produces in another.</p>
+    <p>We'll explore these approaches in more detail in the image and audio deep dives later in this module. The audio deep dive looks at how MusicGen generates sound, while the image deep dive explores how diffusion models generate pictures.</p>
   </section>
 
   <section>
     <h2>Key Takeaways</h2>
     <ul>
-        <li>Each modality has its own raw shape. An <strong>encoder</strong> turns it into a sequence of embedding vectors so a transformer can process it.</li>
-        <li>Images become <strong>patch</strong> tokens; audio becomes <strong>spectrogram</strong> frames.</li>
-        <li><strong>Contrastive learning</strong>, as in CLIP, builds a <strong>shared embedding space</strong> where matching images and text land close together. Cosine similarity in that space measures how well two things match.</li>
-        <li>Multimodal systems combine modalities through a shared space, an encoder feeding a language model, or a generator conditioned on another modality.</li>
+        <li><strong>Different modalities have different data formats.</strong> Text consists of tokens, images contain pixels, and audio recordings contain sound samples.</li>
+        <li><strong>Encoders turn raw inputs into useful representations.</strong> Images can be divided into patches, while audio can be represented using spectrograms. These representations can then be processed by neural networks.</li>
+        <li><strong>A shared embedding space connects related inputs.</strong> Models such as CLIP learn to place matching images and captions near each other, making image&ndash;text search and zero-shot classification possible.</li>
+        <li><strong>Multimodal models combine information in different ways.</strong> They might compare representations in a shared space, pass image or audio representations into a language model, or use one modality to guide a generator.</li>
+        <li><strong>The common idea is learning relationships between representations.</strong> Once a model can connect different types of information, it can do more than read text: it can answer questions about images, search across modalities, and generate new content.</li>
     </ul>
   </section>
 
   <section>
     <h2>Recommended Learning Resources</h2>
     <ul class="link-list">
-        <li><a href="https://openai.com/index/clip/" target="_blank" rel="noopener">CLIP: Connecting text and images (OpenAI)</a>
-          <span class="desc">The announcement post, with examples of zero-shot classification.</span></li>
+        <li><a href="https://openai.com/index/clip/" target="_blank" rel="noopener">CLIP: Connecting Text and Images (OpenAI)</a>
+          <span class="desc">An introduction to CLIP, including examples of zero-shot classification.</span></li>
         <li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Learning Transferable Visual Models From Natural Language Supervision (Radford et al., 2021)</a>
-          <span class="desc">The CLIP paper.</span></li>
-        <li><a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">An Image is Worth 16x16 Words (Dosovitskiy et al., 2020)</a>
-          <span class="desc">The Vision Transformer paper that introduced image patches as tokens.</span></li>
+          <span class="desc">The research paper introducing CLIP and its image&ndash;text training approach.</span></li>
+        <li><a href="https://arxiv.org/abs/2010.11929" target="_blank" rel="noopener">An Image Is Worth 16&#215;16 Words (Dosovitskiy et al., 2020)</a>
+          <span class="desc">The Vision Transformer paper, which explains how images can be processed as sequences of patches.</span></li>
         <li><a href="https://arxiv.org/abs/2304.08485" target="_blank" rel="noopener">Visual Instruction Tuning (Liu et al., 2023)</a>
-          <span class="desc">The LLaVA paper, showing how an image encoder is connected to a language model.</span></li>
+          <span class="desc">The LLaVA paper, showing how a vision encoder can be connected to a language model.</span></li>
     </ul>
   </section>
 
@@ -177,42 +270,176 @@
         [0.09, 0.10, 0.30, 0.12],
         [0.16, 0.07, 0.11, 0.32]
     ];
-    var chosen = 0;
-    var capBox = document.getElementById('mm-clip-captions');
-    var grid = document.getElementById('mm-clip-grid');
-    var note = document.getElementById('mm-clip-note');
+    // The same grid before training: scores are near random, so most best matches are wrong.
+    var UNTRAINED = [
+        [0.14, 0.30, 0.20, 0.17],
+        [0.21, 0.15, 0.19, 0.28],
+        [0.19, 0.20, 0.22, 0.18],
+        [0.26, 0.18, 0.17, 0.20]
+    ];
+    var N = IMAGES.length;
+    var progress = 0;                       // 0..100
+    var sel = { type: 'row', i: 0, j: 0 };  // 'row' (image), 'col' (caption), or 'cell'
+    var timer = null;
 
-    CAPTIONS.forEach(function (c, j) {
+    var grid = document.getElementById('mm-clip-grid');
+    var slider = document.getElementById('mm-clip-train');
+    var pct = document.getElementById('mm-clip-pct');
+    var play = document.getElementById('mm-clip-play');
+    var note = document.getElementById('mm-clip-note');
+    var score = document.getElementById('mm-clip-score');
+
+    var rowHeads = [], colHeads = [], cells = [];
+
+    function makeButton(cls, text, onClick) {
         var b = document.createElement('button');
         b.type = 'button';
-        b.textContent = '"' + c + '"';
-        b.addEventListener('click', function () { chosen = j; render(); });
-        capBox.appendChild(b);
-    });
+        b.className = cls;
+        b.textContent = text;
+        b.addEventListener('click', onClick);
+        return b;
+    }
+
+    function build() {
+        var head = document.createElement('tr');
+        head.appendChild(document.createElement('td'));
+        CAPTIONS.forEach(function (c, j) {
+            var th = document.createElement('th');
+            th.scope = 'col';
+            var b = makeButton('clip-head', '"' + c + '"', function () { sel = { type: 'col', i: 0, j: j }; render(); });
+            colHeads.push(b);
+            th.appendChild(b);
+            head.appendChild(th);
+        });
+        grid.appendChild(head);
+        IMAGES.forEach(function (img, i) {
+            var tr = document.createElement('tr');
+            var th = document.createElement('th');
+            th.scope = 'row';
+            var b = makeButton('clip-head', img, function () { sel = { type: 'row', i: i, j: 0 }; render(); });
+            rowHeads.push(b);
+            th.appendChild(b);
+            tr.appendChild(th);
+            cells.push([]);
+            CAPTIONS.forEach(function (c, j) {
+                var td = document.createElement('td');
+                var cell = makeButton('clip-cell', '', function () { sel = { type: 'cell', i: i, j: j }; render(); });
+                cells[i].push(cell);
+                td.appendChild(cell);
+                tr.appendChild(td);
+            });
+            grid.appendChild(tr);
+        });
+    }
+
+    function sim(i, j) {
+        var t = progress / 100;
+        return UNTRAINED[i][j] + (SIM[i][j] - UNTRAINED[i][j]) * t;
+    }
+    function bestCaption(i) {
+        var best = 0;
+        for (var j = 1; j < N; j++) if (sim(i, j) > sim(i, best)) best = j;
+        return best;
+    }
+    function bestImage(j) {
+        var best = 0;
+        for (var i = 1; i < N; i++) if (sim(i, j) > sim(best, j)) best = i;
+        return best;
+    }
+    function name(i) { return IMAGES[i].slice(3); }
+    function quote(j) { return '"' + CAPTIONS[j] + '"'; }
 
     function render() {
-        Array.prototype.forEach.call(capBox.children, function (b, j) {
-            b.className = j === chosen ? 'active' : '';
+        pct.textContent = progress + '%' + (progress === 0 ? ' (untrained)' : progress === 100 ? ' (trained)' : '');
+        slider.value = progress;
+
+        var bestI = -1, bestJ = -1;
+        if (sel.type === 'row') { bestI = sel.i; bestJ = bestCaption(sel.i); }
+        if (sel.type === 'col') { bestJ = sel.j; bestI = bestImage(sel.j); }
+
+        rowHeads.forEach(function (b, i) {
+            var on = sel.type === 'row' && sel.i === i;
+            b.className = 'clip-head' + (on ? ' sel' : '');
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
-        grid.innerHTML = '';
-        var best = 0;
-        IMAGES.forEach(function (img, i) {
-            if (SIM[i][chosen] > SIM[best][chosen]) best = i;
+        colHeads.forEach(function (b, j) {
+            var on = sel.type === 'col' && sel.j === j;
+            b.className = 'clip-head' + (on ? ' sel' : '');
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
-        IMAGES.forEach(function (img, i) {
-            var p = SIM[i][chosen];
-            var row = document.createElement('div');
-            row.className = 'prob-row';
-            row.innerHTML = '<span class="prob-label" style="width:170px;font-family:inherit;"></span><div class="prob-track"><div class="prob-fill"></div></div><span class="prob-pct"></span>';
-            row.querySelector('.prob-label').textContent = img;
-            var fill = row.querySelector('.prob-fill');
-            fill.style.width = Math.round(p / 0.35 * 100) + '%';
-            if (i === best) fill.className = 'prob-fill chosen';
-            row.querySelector('.prob-pct').textContent = p.toFixed(2);
-            grid.appendChild(row);
-        });
-        note.textContent = 'Closest image: ' + IMAGES[best].slice(3) + '. Even the best match scores only about 0.3: CLIP similarities are small numbers, and what matters is how the correct pair compares with the others. Values are illustrative.';
+
+        for (var i = 0; i < N; i++) {
+            for (var j = 0; j < N; j++) {
+                var s = sim(i, j);
+                var cell = cells[i][j];
+                var cls = 'clip-cell';
+                if (i === j) cls += ' pair';
+                var inLine = (sel.type === 'row' && sel.i === i) || (sel.type === 'col' && sel.j === j) ||
+                             (sel.type === 'cell' && sel.i === i && sel.j === j);
+                if (!inLine) cls += ' dim';
+                if (sel.type !== 'cell' && i === bestI && j === bestJ) cls += i === j ? ' best-ok' : ' best-no';
+                if (sel.type === 'cell' && inLine) cls += ' picked';
+                cell.className = cls;
+                cell.textContent = s.toFixed(2);
+                var tint = Math.max(0, Math.min(1, (s - 0.05) / 0.30)) * 55;
+                cell.style.background = 'color-mix(in srgb, var(--accent) ' + tint.toFixed(0) + '%, var(--surface))';
+                cell.setAttribute('aria-label', name(i) + ' and ' + quote(j) + ': ' + s.toFixed(2) + (i === j ? ' (true pair)' : ''));
+            }
+        }
+
+        if (sel.type === 'row') {
+            note.textContent = 'Image → text. For the image "' + name(sel.i) + '", the highest-scoring caption is ' + quote(bestJ) +
+                ' at ' + sim(sel.i, bestJ).toFixed(2) + '. ' + (bestJ === sel.i
+                    ? 'That is the true caption.'
+                    : 'That is wrong: the true caption is ' + quote(sel.i) + ', which scores only ' + sim(sel.i, sel.i).toFixed(2) + '. Train the model further.');
+        } else if (sel.type === 'col') {
+            note.textContent = 'Text → image. For the caption ' + quote(sel.j) + ', the highest-scoring image is "' + name(bestI) +
+                '" at ' + sim(bestI, sel.j).toFixed(2) + '. ' + (bestI === sel.j
+                    ? 'That is the true image.'
+                    : 'That is wrong: the true image is "' + name(sel.j) + '", which scores only ' + sim(sel.j, sel.j).toFixed(2) + '. Train the model further.');
+        } else {
+            note.textContent = '"' + name(sel.i) + '" and ' + quote(sel.j) + ' score ' + sim(sel.i, sel.j).toFixed(2) + '. ' + (sel.i === sel.j
+                ? 'This is a true pair, so training pushes its score up.'
+                : 'This is a mismatched pair, so training pushes its score down.');
+        }
+
+        var rowsRight = 0, colsRight = 0;
+        for (var k = 0; k < N; k++) {
+            if (bestCaption(k) === k) rowsRight++;
+            if (bestImage(k) === k) colsRight++;
+        }
+        score.textContent = 'Images matched to the right caption: ' + rowsRight + ' of ' + N +
+            '. Captions matched to the right image: ' + colsRight + ' of ' + N + '.';
     }
+
+    function stop() {
+        if (timer) { clearInterval(timer); timer = null; }
+        play.textContent = 'Play training';
+    }
+
+    slider.addEventListener('input', function () {
+        stop();
+        progress = parseInt(slider.value, 10);
+        render();
+    });
+
+    play.addEventListener('click', function () {
+        if (timer) { stop(); return; }
+        if (progress >= 100) progress = 0;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            progress = 100;
+            render();
+            return;
+        }
+        play.textContent = 'Pause';
+        timer = setInterval(function () {
+            progress = Math.min(100, progress + 1);
+            render();
+            if (progress >= 100) stop();
+        }, 50);
+    });
+
+    build();
     render();
 })();
 </script>

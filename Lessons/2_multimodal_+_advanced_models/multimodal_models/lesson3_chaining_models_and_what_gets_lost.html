@@ -25,114 +25,163 @@
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Multimodal Models</p>
     <h1>Chaining Models and What Gets Lost</h1>
-    <p class="lede">Real multimodal products often connect several single-purpose models in a row. This lesson compares that approach with natively multimodal models, shows how errors build up along a chain, and introduces the metrics you will use in Project 1 to measure how much meaning survives.</p>
+    <p class="lede">Many AI systems use several models connected in a row. One model describes an image, another turns the description into speech, a third transcribes that speech, and another generates a new image. Each model handles one task, but information can disappear or change as it moves through the chain.</p>
   </header>
 
   <section>
+    <p>In this lesson, we'll compare these pipelines with models that handle multiple types of data at once. We'll also look at why errors build up, how to measure what survives, and how to test these ideas in Project 1.</p>
+  </section>
+
+  <section>
     <h2>1. Pipelines vs. Native Multimodal Models</h2>
-    <p>There are two ways to build a system that, for example, lets you talk to a chatbot out loud.</p>
+    <p>Imagine building a chatbot that can listen to you and respond out loud. There are two main ways to approach this.</p>
 
-    <p><strong>A pipeline</strong> chains separate models, each handling one conversion. Before May 2024, ChatGPT's Voice Mode worked this way: one model transcribed your speech to text, GPT-4 read the text and wrote a reply, and a third model turned the reply into speech. OpenAI described the cost of this design: because the language model only ever saw a transcript, it "can't directly observe tone, multiple speakers, or background noises, and it can't output laughter, singing, or express emotion." Responses also took several seconds, because each model had to finish before the next could start.</p>
+    <p><strong>Option 1: Connect several models in a pipeline.</strong></p>
+    <p>Each model handles one step:</p>
+    <ol>
+        <li>A speech recognition model turns your voice into text.</li>
+        <li>A language model reads the text and writes a response.</li>
+        <li>A text-to-speech model turns that response into audio.</li>
+    </ol>
+    <p>This was how ChatGPT's Voice Mode worked before May 2024. Each model passed its output to the next one.</p>
+    <p>The problem is that converting everything to text can throw away useful information. A transcript might capture the words you said, but not your tone of voice, background noises, or whether several people were speaking. The system also has to wait for one model to finish before the next can begin, which can make the conversation feel slow.</p>
 
-    <p><strong>A natively multimodal model</strong> takes in and produces several modalities in one network. OpenAI's <strong>GPT-4o</strong> was trained end to end across text, images, and audio, so the same model hears the tone of your voice and can respond in speech directly. OpenAI reported audio response times averaging about 320 milliseconds, similar to a human pause in conversation.</p>
+    <p><strong>Option 2: Use a natively multimodal model.</strong></p>
+    <p>A natively multimodal model handles multiple types of data within a single network. For example, OpenAI's GPT-4o was trained across text, images, and audio. Rather than relying entirely on a transcript, it can process audio directly and respond with audio.</p>
+    <p>OpenAI reported that GPT-4o's audio responses averaged about 320 milliseconds of latency&mdash;roughly the length of a natural pause in conversation.</p>
+
+    <p>Here's how the two approaches compare:</p>
 
     <div class="table-wrap"><table>
         <thead>
             <tr><th></th><th>Pipeline of models</th><th>Native multimodal model</th></tr>
         </thead>
         <tbody>
-            <tr><td>Information between steps</td><td>Squeezed through text at each step</td><td>Kept as rich internal vectors</td></tr>
-            <tr><td>Latency</td><td>Adds up across every model in the chain</td><td>One model, one pass</td></tr>
-            <tr><td>Building and debugging</td><td>Swap, test, and inspect each part on its own</td><td>One large model that is hard to inspect</td></tr>
-            <tr><td>What you need</td><td>Existing open models for each link</td><td>Huge amounts of paired multimodal training data and compute</td></tr>
+            <tr><td>Information</td><td>Details may be lost when data is converted between formats, especially through text</td><td>Can preserve richer information in internal representations</td></tr>
+            <tr><td>Speed</td><td>Delays from each step add up</td><td>Can process and respond in a more integrated way</td></tr>
+            <tr><td>Debugging</td><td>Each model can be tested or replaced separately</td><td>Harder to inspect and debug because everything is part of one large model</td></tr>
+            <tr><td>Requirements</td><td>Can combine existing models that are available to download</td><td>Usually requires much more paired multimodal training data and computing power</td></tr>
         </tbody>
     </table></div>
 
-    <p>Pipelines are still everywhere because they are cheap, modular, and built from models anyone can download. In Project 1 you will build a pipeline on purpose, so you can see exactly where information is lost.</p>
+    <p>Pipelines are still widely used because they're modular, practical, and often inexpensive to build. In Project 1, you'll deliberately build one so you can investigate where information gets lost.</p>
   </section>
 
   <section>
     <h2>2. Errors Compound Along a Chain</h2>
-    <p>In the last lesson, each conversion either compressed the input or invented details. In a chain, those effects stack up. A detail dropped at step 2 can never be recovered at step 3, and a detail invented at step 3 is treated as fact by step 4.</p>
-    <p>A simple model shows why chains degrade quickly. Suppose each step keeps 90% of the meaning of its input. After \(n\) steps, the fraction that survives is</p>
-    \[ \text{kept after } n \text{ steps} = 0.9^{\,n} \]
-    <p>That is 90% after one step, 73% after three, and only 59% after five. Real steps are not this uniform; speech recognition on clear audio keeps nearly everything, while captioning a busy photo keeps much less. The weakest links dominate.</p>
+    <p>In the previous lesson, we saw that converting between modalities can either remove information or introduce details that weren't in the original. When you connect several models, these effects can accumulate.</p>
+    <p>Suppose a model describes a photo but leaves out the red frisbee in the picture. A speech model can read that description perfectly, and a transcription model can accurately recover the words. But when the final model generates a new image, the frisbee is still missing. The later models cannot recover a detail that disappeared earlier unless they have some other way to infer it.</p>
+    <p>We can use a simple mathematical example to understand how this adds up.</p>
+    <p>Suppose every step preserves 90% of the meaning it receives. After \(n\) steps, the fraction of the original meaning that remains is approximately:</p>
+    \[ \text{Meaning retained after } n \text{ steps} = 0.9^{\,n} \]
+    <p>That gives us:</p>
+    <ul>
+        <li>After 1 step: 90% remains.</li>
+        <li>After 3 steps: about 73% remains.</li>
+        <li>After 5 steps: about 59% remains.</li>
+    </ul>
+    <p>This is a simplified model, not a rule that every AI system follows. Some steps preserve nearly all the information, while others lose much more. Describing a complicated photo, for example, may lose more detail than transcribing clear speech. The weakest steps can have the biggest effect on the final result.</p>
 
-    <p>This is the children's game of <strong>telephone</strong>: a message whispered down a line of people comes out the other end changed, often in funny and revealing ways. The changes are not random. Each person replaces what they misheard with something that sounds familiar to them. A model in a chain does the same thing, replacing missing details with whatever is most typical in its training data, so chains drift toward generic, common content.</p>
+    <h3>Why chains drift</h3>
+    <p>Think of the game of telephone: one person whispers a message to the next, and the message gradually changes as it travels down the line.</p>
+    <p>The changes aren't always random. When someone mishears a word, they may replace it with something that sounds more familiar. AI models can behave similarly. When information is missing or ambiguous, a model may fill in the gaps with details that are common in its training data.</p>
+    <p>As a result, a chain can gradually lose specific details and drift toward more generic descriptions. If one model introduces a mistake, later models may treat that mistake as if it were correct.</p>
 
     <details>
         <summary>Check your understanding: compounding loss</summary>
-        <p><strong>Question:</strong> One round of a chain has four steps: captioning keeps 70% of the meaning, text-to-speech keeps 99%, speech recognition keeps 95%, and image generation keeps 80%. Roughly how much of the original survives one round, and which step should you improve first?</p>
-        <p><strong>Answer:</strong> 0.70 &#215; 0.99 &#215; 0.95 &#215; 0.80 &#8776; 0.53, so about half. Captioning is the weakest link, so a better or more detailed captioner would help most.</p>
+        <p>Imagine a pipeline with four steps:</p>
+        <ul>
+            <li>Image captioning preserves 70% of the meaning.</li>
+            <li>Text-to-speech preserves 99%.</li>
+            <li>Speech recognition preserves 95%.</li>
+            <li>Image generation preserves 80%.</li>
+        </ul>
+        <p><strong>Question:</strong> Roughly how much of the original meaning survives one complete pass through the pipeline? Which step should you improve first?</p>
+        <p><strong>Answer:</strong> Multiply the retention rates:</p>
+        \[ 0.70 \times 0.99 \times 0.95 \times 0.80 \approx 0.53 \]
+        <p>About 53% remains in this simplified example. The captioning step is the weakest link, preserving only 70% of its input. Improving the captioner is a good place to start because it can preserve more of the original details for every later model to use.</p>
     </details>
   </section>
 
   <section>
     <h2>3. Measuring What Survives</h2>
-    <p>"The picture changed a lot" is not a measurement. To compare chains, models, or settings, you need numbers. Each kind of comparison has a standard metric.</p>
+    <p>Saying that an image or message "changed a lot" is a useful observation, but it isn't enough to compare different models or pipelines. To do that, we need measurements.</p>
+    <p>Different metrics measure different kinds of similarity. No single score tells us everything about whether the original meaning survived.</p>
 
-    <h3>Word error rate: did the words survive?</h3>
-    <p><strong>Word error rate</strong> (WER) measures how far a transcript is from the original text. Line up the two word sequences and count the fewest <strong>s</strong>ubstitutions, <strong>d</strong>eletions, and <strong>i</strong>nsertions needed to turn one into the other, then divide by the number of words \(N\) in the original:</p>
+    <h3>Word error rate: Did the words survive?</h3>
+    <p><strong>Word error rate (WER)</strong> measures how different a transcript is from the original text.</p>
+    <p>To calculate it, compare the two sequences of words and count the smallest number of changes needed to turn one into the other. There are three types of changes:</p>
+    <ul>
+        <li><strong>Substitution:</strong> One word is replaced by another.</li>
+        <li><strong>Deletion:</strong> A word is missing.</li>
+        <li><strong>Insertion:</strong> An extra word appears.</li>
+    </ul>
+    <p>Add up these changes and divide by the number of words in the original text:</p>
     \[ \text{WER} = \frac{S + D + I}{N} \]
+    <p>Here, \(S\) is the number of substitutions, \(D\) is the number of deletions, \(I\) is the number of insertions, and \(N\) is the number of words in the original.</p>
     <div class="worked">
-        <p><strong>Worked example.</strong> Original: <code>a brown dog running through a field</code> (7 words). Transcript: <code>a brown dog running through the field</code>. One substitution ("a" &rarr; "the"), so WER = 1 / 7 &#8776; 0.14. A WER of 0 is a perfect transcript; lower is better.</p>
+        <p><strong>Example</strong></p>
+        <p>Original: <code>a brown dog running through a field</code></p>
+        <p>Transcript: <code>a brown dog running through the field</code></p>
+        <p>The original contains seven words. One word has changed: "a" became "the." So:</p>
+        \[ \text{WER} = \frac{1}{7} \approx 0.14 \]
     </div>
+    <p>A WER of 0 means the transcript matches the original exactly. Lower scores are generally better. WER can sometimes exceed 1 if a transcript contains many insertions.</p>
+    <p>One limitation: WER measures word differences, not meaning. A transcript can use different words and still communicate the same idea.</p>
 
-    <h3>Text similarity: did the meaning survive?</h3>
-    <p>WER only counts exact words, so "a puppy on the sand" and "a small dog on a beach" score badly even though they mean nearly the same thing. To compare meaning, embed both sentences with a <strong>sentence embedding</strong> model and take the cosine similarity, exactly as in the Embeddings lesson. Scores near 1 mean the same meaning.</p>
+    <h3>Text similarity: Did the meaning survive?</h3>
+    <p>Consider these two descriptions:</p>
+    <ul>
+        <li>"A puppy on the sand"</li>
+        <li>"A small dog on a beach"</li>
+    </ul>
+    <p>The words differ, but the meaning is very similar. WER would count several differences, so it isn't the best tool for comparing these sentences.</p>
+    <p>Instead, we can use a <strong>sentence embedding model</strong>. It converts each sentence into a numerical representation, called an embedding, that captures aspects of its meaning. We then calculate the cosine similarity between the two embeddings.</p>
+    <p>A score closer to 1 generally indicates that the sentences are more similar in meaning. This is useful when the wording changes but the underlying idea stays the same.</p>
 
-    <h3>CLIP similarity: did the picture survive?</h3>
-    <p>Use the CLIP encoders from Lesson 1. <strong>Image&ndash;image</strong> similarity compares the embedding of a generated image with the original image, which tracks how far a chain has drifted visually. <strong>Image&ndash;text</strong> similarity checks how well an image matches a caption, which tests a single captioning or drawing step.</p>
+    <h3>CLIP similarity: Did the picture survive?</h3>
+    <p>CLIP, introduced in an earlier lesson, gives us another way to compare images and text.</p>
+    <p>There are two useful comparisons:</p>
+    <ul>
+        <li><strong>Image&ndash;image similarity:</strong> Compare the embedding of a generated image with the embedding of the original. This helps measure how much the image has changed as it passes through a chain.</li>
+        <li><strong>Image&ndash;text similarity:</strong> Compare an image with a caption. This helps measure how well the caption matches the picture, or how well a generated image matches a text description.</li>
+    </ul>
+    <p>Here's a summary of which metric to use:</p>
 
     <div class="table-wrap"><table>
         <thead>
-            <tr><th>Comparison</th><th>Metric</th><th>Good result</th></tr>
+            <tr><th>What you're comparing</th><th>Metric</th><th>What a good result looks like</th></tr>
         </thead>
         <tbody>
-            <tr><td>Original text vs. transcript</td><td>Word error rate</td><td>Close to 0</td></tr>
-            <tr><td>Text vs. text (meaning)</td><td>Sentence-embedding cosine similarity</td><td>Close to 1</td></tr>
-            <tr><td>Image vs. caption</td><td>CLIP image&ndash;text similarity</td><td>Higher than for unrelated captions</td></tr>
-            <tr><td>Image vs. original image</td><td>CLIP image&ndash;image similarity</td><td>Close to 1</td></tr>
+            <tr><td>Original text and transcript</td><td>Word error rate (WER)</td><td>Close to 0</td></tr>
+            <tr><td>Two text descriptions</td><td>Sentence-embedding cosine similarity</td><td>Close to 1</td></tr>
+            <tr><td>Image and caption</td><td>CLIP image&ndash;text similarity</td><td>Higher than the score for unrelated captions</td></tr>
+            <tr><td>Generated image and original image</td><td>CLIP image&ndash;image similarity</td><td>Close to 1</td></tr>
         </tbody>
     </table></div>
-    <p class="small">CLIP image&ndash;text scores are on a different scale from image&ndash;image scores; a strong image&ndash;text match is often only around 0.3. Compare scores of the same kind with each other, never across kinds.</p>
+
+    <p><strong>Important:</strong> CLIP image&ndash;text and image&ndash;image scores are not on the same scale. An image&ndash;text score around 0.3 can represent a strong match, depending on the setup. Always compare scores from the same type of measurement rather than comparing the two types directly.</p>
+    <p>These metrics each capture only part of the picture. A transcript can have a low WER but miss an important detail, and two images can have similar embeddings while differing in ways that matter for your task. Use the metric that matches what you want to measure.</p>
   </section>
 
   <section>
-    <h2>4. Try It: A Round of Multimodal Telephone</h2>
-    <p>Here is a chain that starts with a photo and passes it through four models per round: <strong>describe</strong> the image in text, <strong>speak</strong> the text aloud, <strong>listen</strong> and transcribe it, then <strong>draw</strong> a new image from the transcript. Step through four rounds and watch the message drift.</p>
-
-    <div class="interactive-box" id="tg">
-        <div id="tg-stages" style="text-align:center;"></div>
-        <p class="small" id="tg-round" style="margin-top:0.75rem;"></p>
-        <div id="tg-log"></div>
-        <div class="metric-row" id="tg-metrics"></div>
-        <div>
-            <button type="button" id="tg-next" class="primary">Run next step</button>
-            <button type="button" id="tg-reset">Start over</button>
-        </div>
-        <p class="lab-note">A simulated chain: captions, transcripts, and scores are illustrative but typical of small open models.</p>
-    </div>
-
-    <p>Notice the pattern: the chain loses specific details first (the breed, the frisbee, the park), keeps the general idea for a while, and then drifts to something new once a misdescription slips in. Finding <em>where</em> and <em>why</em> that happens, and how to slow it down, is exactly what Project 1 asks you to do.</p>
-  </section>
-
-  <section>
-    <h2>What's Next</h2>
-    <p>The next two units open up two of the boxes in this chain:</p>
+    <h2>What's Next?</h2>
+    <p>The next two units explore the audio and image generation steps in more detail.</p>
     <ul>
-        <li><strong>Deep Dive: Audio Generation</strong> covers how sound becomes numbers and how models such as MusicGen generate it, behind the <em>speak</em> and <em>listen</em> steps.</li>
-        <li><strong>Deep Dive: Image Generation</strong> covers latent spaces, GANs, and diffusion, behind the <em>draw</em> step.</li>
+        <li><strong>Deep Dive: Audio Generation</strong> explains how sound is represented as numbers and how models such as MusicGen generate audio. This will help you understand the "speak" and "listen" steps.</li>
+        <li><strong>Deep Dive: Image Generation</strong> introduces latent spaces, generative adversarial networks (GANs), and diffusion models. These methods help explain how the "draw" step creates new images.</li>
     </ul>
-    <p>Then you will build the whole chain yourself in <strong>Project 1: The Multimodal Telephone Game</strong>.</p>
+    <p>After those units, you'll put the pieces together in <strong>Project 1: The Multimodal Telephone Game</strong> and build a pipeline of your own.</p>
   </section>
 
   <section>
     <h2>Key Takeaways</h2>
     <ul>
-        <li>A <strong>pipeline</strong> chains single-purpose models; a <strong>native multimodal model</strong> handles several modalities in one network. Pipelines are modular and easy to build but lose information and add latency at every step.</li>
-        <li>Losses <strong>compound</strong> along a chain, and chains drift toward the most typical content in the models' training data.</li>
-        <li>Measure what survives with <strong>WER</strong> for transcripts, <strong>sentence-embedding similarity</strong> for meaning, and <strong>CLIP similarity</strong> for images.</li>
+        <li>A <strong>pipeline</strong> connects several single-purpose models. A <strong>native multimodal model</strong> handles multiple modalities within one network.</li>
+        <li>Pipelines are modular and practical, but every conversion can lose information and add latency.</li>
+        <li>Errors can compound across a chain. Once a detail disappears, later models may not recover it, and invented details can be passed along as if they were true.</li>
+        <li>Use <strong>WER</strong> to measure differences between transcripts, <strong>sentence-embedding similarity</strong> to compare the meaning of text, and <strong>CLIP similarity</strong> to compare images and image&ndash;text pairs.</li>
+        <li>No single metric captures every kind of information loss. Choose measurements that match the question you're trying to answer.</li>
     </ul>
   </section>
 
@@ -140,11 +189,11 @@
     <h2>Recommended Learning Resources</h2>
     <ul class="link-list">
         <li><a href="https://openai.com/index/hello-gpt-4o/" target="_blank" rel="noopener">Hello GPT-4o (OpenAI)</a>
-          <span class="desc">The announcement describing the old three-model Voice Mode pipeline and the move to one native model.</span></li>
-        <li><a href="https://huggingface.co/learn/audio-course/chapter5/evaluation" target="_blank" rel="noopener">Evaluation metrics for ASR (Hugging Face Audio Course)</a>
-          <span class="desc">A worked explanation of word error rate and how transcripts are normalized before scoring.</span></li>
-        <li><a href="https://www.sbert.net/" target="_blank" rel="noopener">Sentence Transformers documentation</a>
-          <span class="desc">The library used in Project 1 to compare the meaning of two sentences.</span></li>
+          <span class="desc">Learn about GPT-4o and the move from a multi-model voice pipeline toward a natively multimodal model.</span></li>
+        <li><a href="https://huggingface.co/learn/audio-course/chapter5/evaluation" target="_blank" rel="noopener">Evaluation Metrics for ASR (Hugging Face Audio Course)</a>
+          <span class="desc">See how word error rate is calculated and how transcripts are prepared for evaluation.</span></li>
+        <li><a href="https://www.sbert.net/" target="_blank" rel="noopener">Sentence Transformers Documentation</a>
+          <span class="desc">Explore tools for comparing the semantic similarity of sentences, including methods used in Project 1.</span></li>
     </ul>
   </section>
 
@@ -164,83 +213,6 @@
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
-
-<script>
-(function () {
-    var START = 'Photo: a golden retriever leaping to catch a red frisbee in a sunny park';
-    // Each round: caption written by the describe step, transcript from the listen step,
-    // the image the draw step produced, and illustrative scores.
-    var ROUNDS = [
-        { caption: 'a dog jumping to catch a frisbee in the grass',
-          heard: 'a dog jumping to catch a frisbee in the grass',
-          image: 'Image: a tan dog mid-jump, a white frisbee, green lawn', wer: 0.00, clip: 0.86 },
-        { caption: 'a brown dog running through a field',
-          heard: 'a brown dog running through the field',
-          image: 'Image: a brown dog running across a grassy field, no frisbee', wer: 0.14, clip: 0.74 },
-        { caption: 'a dog standing in tall grass',
-          heard: 'a dog standing in tall grass',
-          image: 'Image: a dog standing still in tall golden grass', wer: 0.00, clip: 0.66 },
-        { caption: 'a deer standing in a field of tall grass',
-          heard: 'a deer standing in a field of tall grass',
-          image: 'Image: a deer in a meadow at dusk', wer: 0.00, clip: 0.49 }
-    ];
-    var STEPS = ['Describe', 'Speak', 'Listen', 'Draw'];
-    var round = 0, step = 0, log = [];
-    function el(id) { return document.getElementById(id); }
-
-    function renderStages() {
-        var box = el('tg-stages');
-        box.innerHTML = '';
-        STEPS.forEach(function (s, i) {
-            var d = document.createElement('span');
-            d.className = 'pipe-stage' + (i < step ? ' done' : '') + (i === step && round < ROUNDS.length ? ' on' : '');
-            d.textContent = s;
-            box.appendChild(d);
-            if (i < STEPS.length - 1) {
-                var a = document.createElement('span');
-                a.className = 'pipe-arrow';
-                a.textContent = '→';
-                box.appendChild(a);
-            }
-        });
-    }
-
-    function render() {
-        renderStages();
-        el('tg-round').textContent = round < ROUNDS.length
-            ? 'Round ' + (round + 1) + ' of ' + ROUNDS.length + ' · next step: ' + STEPS[step]
-            : 'Chain finished after ' + ROUNDS.length + ' rounds.';
-        el('tg-log').innerHTML = '';
-        var pre = document.createElement('div');
-        pre.className = 'log';
-        pre.textContent = [START].concat(log).join('\n');
-        el('tg-log').appendChild(pre);
-        var m = el('tg-metrics');
-        m.innerHTML = '';
-        for (var r = 0; r < round; r++) {
-            var d = document.createElement('div');
-            d.className = 'metric';
-            d.textContent = 'Round ' + (r + 1) + ': WER ' + ROUNDS[r].wer.toFixed(2) + ' · image similarity to original ' + ROUNDS[r].clip.toFixed(2);
-            m.appendChild(d);
-        }
-        el('tg-next').disabled = round >= ROUNDS.length;
-    }
-
-    el('tg-next').addEventListener('click', function () {
-        var R = ROUNDS[round];
-        var n = round + 1;
-        if (step === 0) log.push('R' + n + ' describe → "' + R.caption + '"');
-        if (step === 1) log.push('R' + n + ' speak    → [audio of the caption]');
-        if (step === 2) log.push('R' + n + ' listen   → "' + R.heard + '"' + (R.wer > 0 ? '   (misheard a word)' : ''));
-        if (step === 3) log.push('R' + n + ' draw     → ' + R.image);
-        step++;
-        if (step === STEPS.length) { step = 0; round++; }
-        render();
-    });
-    el('tg-reset').addEventListener('click', function () { round = 0; step = 0; log = []; render(); });
-    render();
-})();
-</script>
 
 </body>
 </html>

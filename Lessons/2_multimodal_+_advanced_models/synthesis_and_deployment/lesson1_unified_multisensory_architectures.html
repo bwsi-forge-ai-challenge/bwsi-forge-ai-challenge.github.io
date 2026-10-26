@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unified Multi-Sensory Architectures · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Synthesis &amp; Deployment</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Synthesis &amp; Deployment</p>
+    <h1>Unified Multi-Sensory Architectures</h1>
+    <p class="lede">So far, each modality has had its own encoder, and the pieces met at a fusion point. The newest models go further: one network that reads and writes text, images, audio, and video in a single stream. This lesson covers the three ideas that make that possible: unified tokenizers, position encodings that understand space and time, and routing attention across modalities.</p>
+  </header>
+
+  <section>
+    <h2>1. From Pipelines to Any-to-Any</h2>
+    <p>Multimodal systems have moved along a spectrum:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Design</th><th>How it works</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Cascaded pipeline</strong></td><td>Separate models handed text to each other: speech recognition, then a language model, then text-to-speech</td><td>ChatGPT Voice Mode before May 2024</td></tr>
+            <tr><td><strong>Encoder + language model</strong></td><td>An image or audio encoder feeds vectors into a language model, which answers in text</td><td>LLaVA, many "vision" chatbots</td></tr>
+            <tr><td><strong>Natively multimodal (any-to-any)</strong></td><td>One model trained on many modalities, taking any mix as input and producing more than one kind of output</td><td>GPT-4o, Gemini, Meta's Chameleon, Qwen2.5-Omni</td></tr>
+        </tbody>
+    </table></div>
+    <p>An <strong>any-to-any</strong> model accepts several streams at once, say live video, microphone audio, and a typed question, and can answer in text, speech, or images. The appeal is that nothing is squeezed through text between steps: tone of voice, background sounds, and the timing between what is seen and heard all stay available to the model.</p>
+    <p>To build one, three problems from Part 1 have to be solved inside a single transformer: every modality must become tokens in one sequence, those tokens need positions that make sense in space and time, and attention has to handle a mix of very different tokens efficiently.</p>
+  </section>
+
+  <section>
+    <h2>2. Unified Tokenizers</h2>
+    <p>A language model predicts the next token from a fixed vocabulary. The simplest route to an any-to-any model is to turn <em>every</em> modality into tokens from one shared vocabulary, so the same next-token prediction covers all of them.</p>
+    <ul>
+        <li><strong>Text</strong> uses the subword tokenizer you met in the Foundations module.</li>
+        <li><strong>Images</strong> use a <strong>vector-quantized (VQ)</strong> tokenizer. An encoder turns the image into a grid of vectors, and each vector is replaced by the ID of the closest entry in a learned <strong>codebook</strong>. Meta's <strong>Chameleon</strong> (2024) turns a 512 &#215; 512 image into 1,024 tokens drawn from a codebook of 8,192 entries.</li>
+        <li><strong>Audio</strong> uses a neural audio codec such as SoundStream or EnCodec, covered in the audio deep dive. EnCodec's 24 kHz model produces 75 frames per second, and each frame is described by several codebook IDs stacked on top of each other.</li>
+    </ul>
+    <p>The vocabularies are stacked into one: for example, IDs 0 to 65,535 for text, the next 8,192 for image codes, and the next block for audio codes. Special tokens such as <code>&lt;image&gt;</code> and <code>&lt;/image&gt;</code> mark where each segment starts and ends. To the transformer, a photo is just a long run of unusual words.</p>
+
+    <div class="worked">
+        <p><strong>Worked example: the token budget.</strong> A user sends a 512 &#215; 512 photo, a 10-second voice note, and a 30-token question.</p>
+        <ul>
+            <li>Photo: 1,024 image tokens.</li>
+            <li>Voice note: 75 frames per second &#215; 10 seconds &#215; 8 codebooks = 6,000 audio tokens.</li>
+            <li>Question: 30 text tokens.</li>
+        </ul>
+        <p>That is about 7,054 tokens, and 85% of them are audio. Because attention cost grows with the square of the sequence length, sound and video dominate the compute of unified models, which is why real systems compress them aggressively.</p>
+    </div>
+
+    <p>Discrete tokens have a cost: snapping every vector to the nearest codebook entry throws away fine detail. For that reason many systems mix approaches. They read inputs with continuous encoders, the way LLaVA does, and use discrete codec tokens only where the model has to <em>generate</em> an image or speech. Qwen2.5-Omni, for example, reads audio with an encoder initialized from Whisper but speaks by generating discrete speech tokens.</p>
+  </section>
+
+  <section>
+    <h2>3. Positions in Space and Time: Multimodal RoPE</h2>
+
+    <h3>A quick look at RoPE</h3>
+    <p>Transformers need to know the order of their tokens. Most modern language models use <strong>rotary position embeddings</strong> (RoPE). Instead of adding a position vector, RoPE rotates each pair of dimensions in a query or key vector by an angle proportional to the token's position \(m\):</p>
+    \[ \begin{bmatrix} x_1' \\ x_2' \end{bmatrix} = \begin{bmatrix} \cos m\theta & -\sin m\theta \\ \sin m\theta & \cos m\theta \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} \]
+    <p>Different pairs rotate at different speeds \(\theta\). The useful property is that the dot product between a query at position \(m\) and a key at position \(n\) depends only on \(m - n\), so attention naturally sees <em>relative</em> distance.</p>
+
+    <h3>The problem with flattening</h3>
+    <p>RoPE assumes a single line of positions. An image is a grid. If a 14 &#215; 14 grid of patches is read row by row, the patch directly <em>below</em> another ends up 14 positions away, while the last patch of one row and the first of the next, which are on opposite edges of the image, end up neighbors. Video adds a time axis, and audio needs to line up with video by time.</p>
+
+    <h3>M-RoPE: separate rotations for time, height, and width</h3>
+    <p>Qwen2-VL (2024) introduced <strong>multimodal RoPE</strong> (M-RoPE). It splits the rotary dimensions into three groups, one each for <strong>time</strong>, <strong>height</strong>, and <strong>width</strong>, so every token gets a position triple \((t, h, w)\).</p>
+    <ul>
+        <li>A text token gets the same number in all three slots, so it behaves exactly like ordinary RoPE.</li>
+        <li>An image patch shares one time value, and its height and width values give its row and column.</li>
+        <li>For video, the time value increases from frame to frame.</li>
+        <li>After each segment, numbering continues from one more than the largest position used so far.</li>
+    </ul>
+    <div class="worked">
+        <p><strong>Worked example.</strong> Three text tokens are followed by a tiny image of 2 &#215; 2 patches, then one more text token.</p>
+        <div class="table-wrap"><table>
+            <thead><tr><th>Token</th><th>Position \((t, h, w)\)</th></tr></thead>
+            <tbody>
+                <tr><td>text 1, 2, 3</td><td>(0, 0, 0), (1, 1, 1), (2, 2, 2)</td></tr>
+                <tr><td>patch, top-left</td><td>(3, 3, 3)</td></tr>
+                <tr><td>patch, top-right</td><td>(3, 3, 4)</td></tr>
+                <tr><td>patch, bottom-left</td><td>(3, 4, 3)</td></tr>
+                <tr><td>patch, bottom-right</td><td>(3, 4, 4)</td></tr>
+                <tr><td>next text token</td><td>(5, 5, 5)</td></tr>
+            </tbody>
+        </table></div>
+        <p>Vertically adjacent patches now differ by exactly 1 in height, and horizontally adjacent ones by 1 in width, matching the real geometry. The next text token starts at 5 because the largest value used was 4.</p>
+    </div>
+
+    <h3>TMRoPE: lining up sight and sound</h3>
+    <p>For video with sound, Qwen2.5-Omni (2025) ties the time position to the clock: one time ID is 40 milliseconds, for both audio and video frames. A video frame and the audio from the same instant therefore share a time position, even though they arrive at completely different rates. The input is also cut into 2-second chunks, with each chunk's video tokens placed just before its audio tokens, so related sights and sounds sit close together in the sequence. This is the alignment problem from Lesson 1, solved directly in the position encoding.</p>
+  </section>
+
+  <section>
+    <h2>4. Routing Attention Across Modalities</h2>
+    <p>Once everything is in one sequence, the model still has to decide which tokens interact and how much compute each kind of token gets. Three common patterns:</p>
+    <ul>
+        <li><strong>One shared stream.</strong> Full self-attention over every token: any word can attend to any patch or audio frame. This is the most flexible option and the most expensive, since cost grows with the square of the total length. Chameleon works this way.</li>
+        <li><strong>Interleaved cross-attention.</strong> A language model attends to other modalities only through dedicated cross-attention layers, as in Flamingo (Lesson 3 of Part 1). Cheaper, but the other modalities never attend to the text.</li>
+        <li><strong>Modality-aware experts.</strong> In a mixture-of-experts layer, a router sends each token to one of several feed-forward "experts." Meta's MoMa (2024) split the experts into a text group and an image group and routed each token within its own group. The authors reported about 3.7 times less pretraining compute than a dense model of equal quality.</li>
+    </ul>
+    <p>Attention <strong>masks</strong> add further control. A streaming voice model may let audio tokens attend only to the past, so it can respond before the user finishes speaking. Qwen2.5-Omni also splits the work in two: a "Thinker" transformer understands all the inputs and writes text, while a "Talker" turns the Thinker's output into a stream of speech tokens.</p>
+  </section>
+
+  <section>
+    <h2>5. What Unified Models Make Possible</h2>
+    <p>Some tasks are only possible when a model aligns sight and sound precisely in time and space.</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Application</th><th>Question it answers</th><th>What has to be aligned</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Active speaker detection</strong></td><td>Which of the visible people is talking right now?</td><td>Lip movement in each face with the rhythm of the audio. The AVA-ActiveSpeaker benchmark (2019) labels this frame by frame in movies.</td></tr>
+            <tr><td><strong>Audio-visual scene grounding</strong></td><td>What is making that beeping, and when did it start?</td><td>A sound event with the object and the moment in the video that produced it</td></tr>
+            <tr><td><strong>Sounding-object localization</strong></td><td>Where in the picture is the sound coming from?</td><td>Audio with image regions, producing a heat map over the frame. "Objects that Sound" (Arandjelović &amp; Zisserman, 2018) learned this from unlabeled video alone.</td></tr>
+        </tbody>
+    </table></div>
+    <p>All three are co-learning in action. Videos come with their sound for free, so a model can learn which sights go with which sounds without any human labels.</p>
+  </section>
+
+  <section>
+    <h2>6. Putting It Together: A Home Assistant Robot</h2>
+    <p>Imagine a home robot with a camera and a four-microphone array. A user says, "Can you turn off whatever is beeping?" Here is one way to build it with the ideas in this lesson.</p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 700 260" role="img" aria-label="Architecture of a home assistant robot. A camera feeds a vision encoder, the microphone array feeds an audio encoder with sound direction, and the user's request is tokenized. All tokens enter a unified transformer with time-aligned positions, which produces a spoken reply, a text log, and motor actions." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs>
+          <marker id="ha-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker>
+        </defs>
+        <g font-size="12" text-anchor="middle" fill="#1b1f24">
+          <text x="75" y="18" font-weight="700" font-size="12.5">Sensors</text>
+          <text x="245" y="18" font-weight="700" font-size="12.5">Encoders</text>
+          <text x="415" y="18" font-weight="700" font-size="12.5">One model</text>
+          <text x="597" y="18" font-weight="700" font-size="12.5">Outputs</text>
+
+          <rect x="15" y="30" width="120" height="44" rx="8" fill="#dcfce7" stroke="#16a34a"/><text x="75" y="49">Camera</text><text x="75" y="64" font-size="10.5" fill="#475569">30 frames/s</text>
+          <rect x="15" y="115" width="120" height="44" rx="8" fill="#fef3c7" stroke="#d97706"/><text x="75" y="134">Mic array (4 mics)</text><text x="75" y="149" font-size="10.5" fill="#475569">16,000 samples/s each</text>
+          <rect x="15" y="200" width="120" height="44" rx="8" fill="#dbeafe" stroke="#2563eb"/><text x="75" y="219">User request</text><text x="75" y="234" font-size="10.5" fill="#475569">speech or text</text>
+
+          <rect x="170" y="30" width="150" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="245" y="49">Vision encoder</text><text x="245" y="64" font-size="10.5" fill="#475569">patch tokens, (t, h, w)</text>
+          <rect x="170" y="115" width="150" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="245" y="134">Audio encoder</text><text x="245" y="149" font-size="10.5" fill="#475569">tokens per 40 ms + direction</text>
+          <rect x="170" y="200" width="150" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="245" y="219">Tokenizer</text><text x="245" y="234" font-size="10.5" fill="#475569">text tokens</text>
+
+          <rect x="355" y="30" width="120" height="214" rx="8" fill="#e0e7ff" stroke="#4f46e5"/>
+          <text x="415" y="118" font-weight="700">Unified</text><text x="415" y="134" font-weight="700">transformer</text>
+          <text x="415" y="156" font-size="10.5" fill="#475569">time-aligned</text><text x="415" y="170" font-size="10.5" fill="#475569">positions</text>
+
+          <rect x="510" y="30" width="175" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="597" y="49">Spoken reply</text><text x="597" y="64" font-size="10.5" fill="#475569">speech tokens &#8594; speaker</text>
+          <rect x="510" y="115" width="175" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="597" y="134">Text log</text><text x="597" y="149" font-size="10.5" fill="#475569">what it saw, heard, and did</text>
+          <rect x="510" y="200" width="175" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="597" y="219">Actions</text><text x="597" y="234" font-size="10.5" fill="#475569">turn, drive, press button</text>
+        </g>
+        <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#ha-a)">
+          <line x1="135" y1="52" x2="168" y2="52"/><line x1="135" y1="137" x2="168" y2="137"/><line x1="135" y1="222" x2="168" y2="222"/>
+          <line x1="320" y1="52" x2="353" y2="52"/><line x1="320" y1="137" x2="353" y2="137"/><line x1="320" y1="222" x2="353" y2="222"/>
+          <line x1="475" y1="52" x2="508" y2="52"/><line x1="475" y1="137" x2="508" y2="137"/><line x1="475" y1="222" x2="508" y2="222"/>
+        </g>
+      </svg>
+      <figcaption>One possible design. Each sensor gets an encoder, and all tokens share one sequence in which camera and microphone tokens from the same moment get the same time position. That is what lets the model link a beep to the object that made it.</figcaption>
+    </figure>
+
+    <ol>
+        <li><strong>Hear and locate.</strong> The audio encoder turns each 40 ms of sound into tokens. Because the four microphones hear the beep at slightly different times, the robot can also estimate the direction it came from.</li>
+        <li><strong>See.</strong> The vision encoder turns each sampled camera frame into patch tokens. To save compute, it might sample only 2 frames per second and use fewer tokens for frames that barely change.</li>
+        <li><strong>Align and reason.</strong> All tokens share one sequence with time-aligned positions. The model links the beep to the microwave in the direction the sound came from: active speaker detection, applied to appliances.</li>
+        <li><strong>Act and reply.</strong> The model outputs motor commands to go to the microwave and press "stop," and says "I turned off the microwave timer."</li>
+    </ol>
+    <p>Each choice is a trade-off you now have the tools to reason about: how many tokens per second each sensor gets, how positions line them up, and whether the robot can still work when the camera is blocked or the room is loud.</p>
+
+    <details>
+        <summary>Check your understanding: token budget</summary>
+        <p><strong>Question:</strong> A model samples video at 2 frames per second and turns each frame into 256 tokens. Audio becomes 25 tokens per second. How many tokens does a 1-minute clip with sound produce, and which modality dominates?</p>
+        <p><strong>Answer:</strong> Video: \(60 \times 2 \times 256 = 30{,}720\) tokens. Audio: \(60 \times 25 = 1{,}500\) tokens. That is 32,220 tokens in total, and video is over 95% of them. This is why video models sample frames sparsely and prune tokens.</p>
+    </details>
+
+    <details>
+        <summary>Check your understanding: M-RoPE positions</summary>
+        <p><strong>Question:</strong> Using M-RoPE, five text tokens (positions 0 to 4) are followed by an image of 3 &#215; 3 patches. What is the position of the center patch, and what position does the next text token get?</p>
+        <p><strong>Answer:</strong> The image starts at 5, so its time value is 5 and its rows and columns run 5, 6, 7. The center patch is \((5, 6, 6)\). The largest value used is 7, so the next text token is \((8, 8, 8)\).</p>
+    </details>
+
+    <details>
+        <summary>Check your understanding: name the application</summary>
+        <p><strong>Question:</strong> A video-conferencing app automatically switches the camera view to whoever is talking. Which application from Section 5 is this, and what two signals must it align?</p>
+        <p><strong>Answer:</strong> Active speaker detection. It aligns each visible person's lip movements with the timing of the audio, ideally also using the microphone's sense of direction.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li><strong>Any-to-any</strong> models put every modality into one transformer, so nothing has to be squeezed through text between steps.</li>
+        <li><strong>Unified tokenizers</strong> turn images and audio into discrete codebook IDs that share a vocabulary with text. Audio and video produce far more tokens than text and dominate the compute.</li>
+        <li><strong>Multimodal RoPE</strong> gives each token a time, height, and width position, and tying time to the clock lines up audio and video from the same moment.</li>
+        <li>Shared self-attention, cross-attention layers, and <strong>modality-aware experts</strong> trade flexibility against compute.</li>
+        <li>Tight audio-visual alignment enables active speaker detection, scene grounding, and sounding-object localization.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://arxiv.org/abs/2405.09818" target="_blank" rel="noopener">Chameleon: Mixed-Modal Early-Fusion Foundation Models (Chameleon Team, 2024)</a>
+          <span class="desc">A single token-based model for interleaved images and text.</span></li>
+        <li><a href="https://arxiv.org/abs/2409.12191" target="_blank" rel="noopener">Qwen2-VL (Wang et al., 2024)</a>
+          <span class="desc">Section 2 introduces multimodal RoPE with a clear diagram.</span></li>
+        <li><a href="https://arxiv.org/abs/2503.20215" target="_blank" rel="noopener">Qwen2.5-Omni Technical Report (Xu et al., 2025)</a>
+          <span class="desc">TMRoPE, time-interleaved audio and video, and the Thinker-Talker design.</span></li>
+        <li><a href="https://arxiv.org/abs/1712.06651" target="_blank" rel="noopener">Objects that Sound (Arandjelović &amp; Zisserman, 2018)</a>
+          <span class="desc">Learning to locate sounding objects in images from unlabeled video.</span></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="../project1_telephone_game/teams_milestones_and_submission.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Project 1: Teams, Milestones, and Submission</span>
+    </a>
+    <a class="pager__next" href="lesson2_evaluation_benchmarks_and_safety.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Evaluation, Benchmarks, and Safety</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

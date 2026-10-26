@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 1 Capstone: An End-to-End Multimodal Assistant · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Synthesis &amp; Deployment</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Project 1</p>
+    <h1>Project 1 Capstone: An End-to-End Multimodal Assistant</h1>
+    <p class="lede">With a partner, you will build a lightweight assistant that takes a photo, an audio clip, and a question, and answers in text that is grounded in what it actually saw and heard. Then you will measure it the way a real team would: accuracy, alignment, generalization, grounding, and speed.</p>
+  </header>
+
+  <section>
+    <div class="assignment-box">
+        <strong>Weight:</strong> 20% of your final grade<br>
+        <strong>Team size:</strong> 2 students<br>
+        <strong>Length:</strong> about 3 weeks, with three Gradescope submissions<br>
+        <strong>Environment:</strong> Google Colab with a free T4 GPU, using open models from Hugging Face
+    </div>
+    <p>This project ties the module together. Part 1 gave you representations, alignment, and fusion; the deep dives showed how audio and image models work inside; and this unit covered unified architectures and evaluation. Now you will assemble frozen pretrained models into one working system and test whether it really uses its inputs.</p>
+  </section>
+
+  <section>
+    <h2>1. The Brief</h2>
+    <p>Your assistant receives three inputs and returns one answer:</p>
+    <ul>
+        <li><strong>An image</strong>, such as a photo of a room, a street, or a desk.</li>
+        <li><strong>An audio clip</strong> of up to 30 seconds, containing speech, an everyday sound, or both.</li>
+        <li><strong>A text question</strong> that needs one or both of them to answer.</li>
+    </ul>
+    <p>The answer must be <strong>grounded</strong>: it should say which input each part of it comes from, and say "I can't tell" when the evidence is not there.</p>
+    <div class="worked">
+        <p><strong>Example.</strong> Image: a kitchen counter with a kettle and a toaster. Audio: a high-pitched whistle. Question: "What is making that noise?"</p>
+        <p><strong>A good answer:</strong> "The sound is a high-pitched whistle, most likely a kettle boiling (audio). There is a kettle on the left side of the counter (image), so it is probably that kettle."</p>
+        <p><strong>A poor answer:</strong> "It is the smoke alarm." Nothing in either input supports this.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. The Technical Stack</h2>
+    <p>Every encoder stays <strong>frozen</strong>: you use pretrained weights without retraining them. The suggested models below all fit on a Colab T4 together. You may swap any of them for another open model if you explain why in your report.</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Role</th><th>Suggested model</th><th>What it gives you</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Image understanding</td><td><code>openai/clip-vit-base-patch32</code></td><td>Zero-shot labels for objects and scenes, with similarity scores</td></tr>
+            <tr><td>Image description (optional)</td><td><code>Salesforce/blip-image-captioning-base</code> or <code>microsoft/Florence-2-base</code></td><td>A caption or a list of detected objects for extra detail</td></tr>
+            <tr><td>Speech</td><td><code>openai/whisper-base</code> or <code>openai/whisper-small</code></td><td>A transcript, with timestamps</td></tr>
+            <tr><td>Everyday sounds</td><td><code>laion/clap-htsat-unfused</code></td><td>Zero-shot sound labels (siren, dog bark, kettle whistle), with similarity scores</td></tr>
+            <tr><td>Language model</td><td><code>Qwen/Qwen2.5-1.5B-Instruct</code>, loaded in 4-bit with <code>bitsandbytes</code></td><td>Reads the evidence and the question, and writes the answer</td></tr>
+        </tbody>
+    </table></div>
+    <p><strong>Connecting the encoders to the language model.</strong> The required baseline is a <strong>text bridge</strong>: turn every encoder's output into a structured evidence block, with labels, scores, and transcript, and put it in the language model's prompt along with the question and rules about grounding. The more ambitious option, a <strong>learned projection layer</strong> that maps CLIP embeddings straight into the language model's input space, LLaVA style, is one of the extensions below.</p>
+  </section>
+
+  <section>
+    <h2>3. What You Will Build and Measure</h2>
+
+    <h3>Part A: Perception</h3>
+    <p>Write one function per encoder that returns its evidence in a fixed format, such as a dictionary of labels and scores or a transcript with timestamps. Choose label vocabularies for CLIP and CLAP that fit your test scenes, and keep a record of every label you use.</p>
+
+    <h3>Part B: Grounded answering</h3>
+    <p>Write the prompt and the code that turn the evidence and the question into an answer. Your system must:</p>
+    <ul>
+        <li>say which modality supports each claim;</li>
+        <li>answer "I can't tell" when no evidence passes a confidence threshold you choose and justify; and</li>
+        <li>never follow instructions that appear inside the image or the transcript (Lesson 2 of this unit).</li>
+    </ul>
+
+    <h3>Part C: Evaluation</h3>
+    <p>Build a test set of at least <strong>30 cases</strong>, each with an image, an audio clip, a question, a reference answer, and a note of which modalities the answer needs. Include cases that need only the image, only the audio, and both. Then report:</p>
+    <ul>
+        <li><strong>Answer accuracy:</strong> score every answer as correct, partly correct, or wrong against the reference, using a rubric you write before you look at the answers.</li>
+        <li><strong>Cross-modal alignment accuracy:</strong> the top-1 accuracy of your CLIP labels on the images and your CLAP labels on the sounds.</li>
+        <li><strong>Zero-shot generalization:</strong> after your system is finished, write at least 10 <em>new</em> cases with objects and sounds you never tested on during development, and compare their accuracy with the rest.</li>
+        <li><strong>Grounding:</strong> run the four-condition protocol from <a href="lesson2_evaluation_benchmarks_and_safety.html">Evaluation, Benchmarks, and Safety</a> (full, blind, mismatched, counterfactual) on at least 20 cases, including at least 10 counterfactual pairs. Report the reliance gap, change rate, and flip rate for each modality.</li>
+    </ul>
+
+    <h3>Part D: Latency profiling</h3>
+    <p>Time every stage (each encoder, the language model's reading of the prompt, and its generation) over your whole test set. Report the median and the 95th-percentile time for each stage and for the full answer. Then make one optimization, such as running the encoders in parallel, a smaller Whisper model, shorter prompts, or caching, and show its before-and-after effect on both speed and accuracy.</p>
+
+    <h3>Part E: One extension</h3>
+    <p>Choose one, and measure it against your baseline:</p>
+    <ul>
+        <li><strong>Learned projection adapter:</strong> train a small linear or MLP layer that maps CLIP image embeddings into the language model's input embeddings, with the language model frozen, on a small image&ndash;caption dataset. Compare it with the text bridge.</li>
+        <li><strong>Hallucination check:</strong> write POPE-style "Is there a ___?" questions for your images, including objects that often appear in similar scenes but are absent, and reduce the hallucination rate.</li>
+        <li><strong>Robustness:</strong> test with noisy audio, blurry or dark images, and typographic attacks, and harden the system against them.</li>
+        <li><strong>Model trade-off study:</strong> compare two or three language models or Whisper sizes on accuracy, grounding, and latency.</li>
+    </ul>
+
+    <h3>Part F: Documentation</h3>
+    <p>Submit a README that explains how to run your system, plus a 4 to 6 page report using the template in Section 6.</p>
+  </section>
+
+  <section>
+    <h2>4. Grading</h2>
+    <p>The project is worth 20% of your final grade and is scored out of 100 points:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Component</th><th>What we look for</th><th>Points</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Milestone 0: Team plan</td><td>Team registered on time; clear plan for who builds what and which extension you will try</td><td>5</td></tr>
+            <tr><td>Milestone 1: Perception check-in</td><td>All encoders return evidence in your format; the assistant answers at least 5 sample cases end to end</td><td>15</td></tr>
+            <tr><td>Grounded assistant</td><td>Answers cite their modality, abstain when evidence is missing, and ignore instructions inside inputs</td><td>15</td></tr>
+            <tr><td>Evaluation</td><td>A test set of 30 or more cases; answer accuracy, alignment accuracy, zero-shot generalization, and the four-condition grounding protocol, all reported clearly</td><td>20</td></tr>
+            <tr><td>Latency profiling</td><td>Per-stage median and 95th-percentile timings, and one measured optimization</td><td>10</td></tr>
+            <tr><td>Extension</td><td>One extension with a measured comparison against the baseline</td><td>10</td></tr>
+            <tr><td>Documentation</td><td>A README that lets someone else run your code, and a report that explains what works, what fails, and why, backed by your measurements; includes contribution and AI-use statements</td><td>20</td></tr>
+            <tr><td>Peer evaluation</td><td>Submitted on time by each student individually</td><td>5</td></tr>
+            <tr><td colspan="2"><strong>Total</strong></td><td><strong>100</strong></td></tr>
+        </tbody>
+    </table></div>
+    <p>Both partners normally receive the same score for team components. If the peer evaluations and contribution statement show a large imbalance, staff may adjust individual scores.</p>
+  </section>
+
+  <section>
+    <h2>5. Teams, Milestones, and Submission</h2>
+    <p>The capstone is done in <strong>pairs</strong>. Find a partner by replying to the pinned <em>Project 1: Search for Teammates</em> post on Piazza with your time zone and availability. If you have no partner by the Milestone 0 deadline, submit Milestone 0 on your own and staff will pair you within two days. If the class has an odd number of students, one team of three is formed, and that team completes two extensions instead of one.</p>
+    <p>A natural split is for one partner to own the vision side (CLIP and image tests) and the other the audio side (Whisper, CLAP, and audio tests), with both working on the language model, the evaluation, and the report. Either partner should be able to explain any part of the system.</p>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Milestone</th><th>Due</th><th>What to submit</th><th>Gradescope</th><th>Points</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>0. Team plan</strong></td><td>End of week 1</td><td>A one-page PDF: team members, who owns which part, your chosen extension, and 5 sample test cases</td><td>Group</td><td>5</td></tr>
+            <tr><td><strong>1. Perception check-in</strong></td><td>End of week 2</td><td>Your notebook exported as a <code>.py</code> file, plus the assistant's answers to 5 sample cases</td><td>Group</td><td>15</td></tr>
+            <tr><td><strong>2. Final submission</strong></td><td>End of week 3</td><td>Final <code>.py</code> file, README, report PDF, and a <code>.zip</code> of your test set</td><td>Group</td><td>75</td></tr>
+            <tr><td><strong>Peer evaluation</strong></td><td>2 days after the final deadline</td><td>A short form about your own and your partner's contributions</td><td>Individual</td><td>5</td></tr>
+        </tbody>
+    </table></div>
+    <p class="small">The 75 points for the final submission cover the grounded assistant (15), evaluation (20), latency profiling (10), extension (10), and documentation (20). Exact dates are posted on Piazza. Milestone 1 and the final submission follow the course <a href="../../0_prerequisites/Introduction/GradingPolicy.html">late policy</a>; Milestone 0 cannot be late, because staff form teams right after it.</p>
+
+    <h3>Submitting as a team on Gradescope</h3>
+    <ol class="checklist">
+        <li>One partner uploads the files to the Gradescope assignment.</li>
+        <li>In the upload window, choose <strong>Add Group Member</strong> and select your partner.</li>
+        <li>Your partner checks that the submission appears in their own Gradescope account.</li>
+        <li>Either partner can resubmit before the deadline. Only the latest submission is graded.</li>
+    </ol>
+    <ul class="link-list">
+        <!-- TODO: replace each href="#" with the Gradescope assignment link. -->
+        <li><a href="#" target="_blank">Project 1 Capstone: Milestone 0, Team Plan</a></li>
+        <li><a href="#" target="_blank">Project 1 Capstone: Milestone 1, Perception Check-in</a></li>
+        <li><a href="#" target="_blank">Project 1 Capstone: Final Submission</a></li>
+        <li><a href="#" target="_blank">Project 1 Capstone: Peer Evaluation</a></li>
+    </ul>
+    <p class="small">If a link does not work, open the course on the <a href="https://www.gradescope.com/">Gradescope home page</a> and pick the assignment by name.</p>
+  </section>
+
+  <section>
+    <h2>6. Report Template (4 to 6 pages, PDF)</h2>
+    <ol>
+        <li><strong>System overview:</strong> a diagram of your pipeline and the models you chose, with reasons.</li>
+        <li><strong>Grounding design:</strong> your evidence format, prompt, confidence thresholds, and how the system abstains and resists injected instructions.</li>
+        <li><strong>Test set:</strong> how you built it, what it covers, and your scoring rubric.</li>
+        <li><strong>Results:</strong> answer accuracy, alignment accuracy, zero-shot generalization, and the grounding protocol, in tables or plots.</li>
+        <li><strong>Latency:</strong> the per-stage profile and your optimization.</li>
+        <li><strong>Extension:</strong> what you tried and how it compared with the baseline.</li>
+        <li><strong>Failure analysis:</strong> at least three failures, with the inputs, the answer, and which stage caused each.</li>
+        <li><strong>Contribution and AI-use statements:</strong> who did what, and how you used AI tools.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>7. Rules and Tips</h2>
+    <ul>
+        <li><strong>Models:</strong> any open model from Hugging Face is allowed. Paid APIs are not required; if you use one for comparison, report its cost.</li>
+        <li><strong>AI assistants:</strong> allowed for writing and debugging code, following the <a href="../../0_prerequisites/Introduction/GenAiUsePolicy.html">Generative AI Use Policy</a>. Your report's analysis must be your own writing.</li>
+        <li><strong>Data:</strong> use your own photos and recordings or openly licensed ones, and credit everything you did not create. Do not use photos or voice recordings of people without their permission, and keep all content appropriate for class.</li>
+        <li><strong>Compute:</strong> load each model once and reuse it, use the GPU runtime, and test on one case before running everything. Save results to Google Drive as you go, because Colab sessions reset.</li>
+        <li><strong>Start small:</strong> get one case working end to end with the simplest version of every part before improving anything.</li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson2_evaluation_benchmarks_and_safety.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Evaluation, Benchmarks, and Safety</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Synthesis &amp; Deployment</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>
