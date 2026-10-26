@@ -35,7 +35,7 @@
         <strong>Environment:</strong> Google Colab with a free GPU, using open models from Hugging Face<br>
         <strong>Starter notebook:</strong> <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/project1_telephone_game.ipynb" download="project1_telephone_game.ipynb">project1_telephone_game.ipynb</a>
     </div>
-    <p>This project ties together the whole module. The <em>Multimodal Models</em> lessons explained how models convert between modalities and what gets lost; the audio and image deep dives explained how the generators work. Now you will build a working multimodal pipeline, run controlled experiments on it, and explain the results.</p>
+    <p>This project ties together the whole module. Core Multimodal Foundations covered how models represent and align different modalities; the audio and vision-language deep dives showed how models turn sound and images into tokens and back; and Synthesis and Deployment covered pipelines and how to measure what they lose. Now you will build a working multimodal pipeline, run controlled experiments on it, and explain the results.</p>
   </section>
 
   <section>
@@ -88,7 +88,7 @@
 
     <h3>Part C: Measure the drift</h3>
     <p>Run your chain on <strong>at least 5 starting images</strong> for <strong>at least 5 rounds each</strong>. Choose varied images: for example a simple object, a busy street, a face-free indoor scene, an image with text in it, and an unusual or surprising scene. Use your own photos or openly licensed images, and credit any you did not take.</p>
-    <p>For every round, compute the metrics from <a href="../multimodal_models/lesson3_chaining_models_and_what_gets_lost.html">Chaining Models and What Gets Lost</a>. The notebook provides the metric functions; your job is to use them well.</p>
+    <p>For every round, compute the metrics from <a href="../synthesis_and_deployment/lesson2_evaluation_benchmarks_and_safety.html">Evaluation, Benchmarks, and Safety</a> (Section 2). The notebook provides the metric functions; your job is to use them well.</p>
     <ul>
         <li><strong>Word error rate</strong> between each caption and its transcript (how much the speech link loses).</li>
         <li><strong>Text similarity</strong> between each round's caption and the round-1 caption (how far the meaning drifts).</li>
@@ -163,9 +163,9 @@
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
-    <a class="pager__prev" href="../intro_to_image_generation_models/UnitQuiz.html">
+    <a class="pager__prev" href="../synthesis_and_deployment/MultimodalFeedback.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Unit Quiz</span>
+      <span class="pager__title">Multimodal &amp; Advanced Models Feedback</span>
     </a>
     <a class="pager__next" href="teams_milestones_and_submission.html">
       <span class="pager__label">Next</span>

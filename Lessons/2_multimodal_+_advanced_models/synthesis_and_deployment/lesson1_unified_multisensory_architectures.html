@@ -42,7 +42,7 @@
         </tbody>
     </table></div>
     <p>An <strong>any-to-any</strong> model accepts several streams at once, say live video, microphone audio, and a typed question, and can answer in text, speech, or images. The appeal is that nothing is squeezed through text between steps: tone of voice, background sounds, and the timing between what is seen and heard all stay available to the model.</p>
-    <p>To build one, three problems from Part 1 have to be solved inside a single transformer: every modality must become tokens in one sequence, those tokens need positions that make sense in space and time, and attention has to handle a mix of very different tokens efficiently.</p>
+    <p>To build one, three problems from Core Multimodal Foundations have to be solved inside a single transformer: every modality must become tokens in one sequence, those tokens need positions that make sense in space and time, and attention has to handle a mix of very different tokens efficiently.</p>
   </section>
 
   <section>
@@ -112,7 +112,7 @@
     <p>Once everything is in one sequence, the model still has to decide which tokens interact and how much compute each kind of token gets. Three common patterns:</p>
     <ul>
         <li><strong>One shared stream.</strong> Full self-attention over every token: any word can attend to any patch or audio frame. This is the most flexible option and the most expensive, since cost grows with the square of the total length. Chameleon works this way.</li>
-        <li><strong>Interleaved cross-attention.</strong> A language model attends to other modalities only through dedicated cross-attention layers, as in Flamingo (Lesson 3 of Part 1). Cheaper, but the other modalities never attend to the text.</li>
+        <li><strong>Interleaved cross-attention.</strong> A language model attends to other modalities only through dedicated cross-attention layers, as in Flamingo (see <a href="../intro_to_image_generation_models/lesson3.html">Teaching a Language Model to See</a>). Cheaper, but the other modalities never attend to the text.</li>
         <li><strong>Modality-aware experts.</strong> In a mixture-of-experts layer, a router sends each token to one of several feed-forward "experts." Meta's MoMa (2024) split the experts into a text group and an image group and routed each token within its own group. The authors reported about 3.7 times less pretraining compute than a dense model of equal quality.</li>
     </ul>
     <p>Attention <strong>masks</strong> add further control. A streaming voice model may let audio tokens attend only to the past, so it can respond before the user finishes speaking. Qwen2.5-Omni also splits the work in two: a "Thinker" transformer understands all the inputs and writes text, while a "Talker" turns the Thinker's output into a stream of speech tokens.</p>
@@ -227,9 +227,9 @@
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
-    <a class="pager__prev" href="../project1_telephone_game/teams_milestones_and_submission.html">
+    <a class="pager__prev" href="../intro_to_image_generation_models/UnitQuiz.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Project 1: Teams, Milestones, and Submission</span>
+      <span class="pager__title">Unit Quiz: Vision-Language Models</span>
     </a>
     <a class="pager__next" href="lesson2_evaluation_benchmarks_and_safety.html">
       <span class="pager__label">Next</span>

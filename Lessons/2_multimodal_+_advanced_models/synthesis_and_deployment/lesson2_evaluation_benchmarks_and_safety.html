@@ -25,7 +25,7 @@
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Synthesis &amp; Deployment</p>
     <h1>Evaluation, Benchmarks, and Safety</h1>
-    <p class="lede">A multimodal model can score well on a benchmark without ever really looking at the image. This lesson covers how multimodal systems are measured, the distinctive ways they fail, and how to design a test that checks whether a model actually uses the picture or sound you gave it.</p>
+    <p class="lede">A multimodal model can score well on a benchmark without ever really looking at the image. This lesson covers how multimodal systems are measured, from the outputs of a single pipeline to public benchmarks, the distinctive ways they fail, and how to design a test that checks whether a model actually uses the picture or sound you gave it.</p>
   </header>
 
   <section>
@@ -39,7 +39,61 @@
   </section>
 
   <section>
-    <h2>2. Widely Used Benchmarks</h2>
+    <h2>2. Measuring What Survives a Pipeline</h2>
+    <p>Many deployed systems are still <strong>cascaded pipelines</strong> (see <a href="lesson1_unified_multisensory_architectures.html">Unified Multi-Sensory Architectures</a>, Section 1): one model's output becomes the next model's input. Project 1 is a pipeline of this kind. It describes an image, speaks the caption, transcribes the speech, and draws a new image from the transcript. Every conversion between modalities can change the message in two ways:</p>
+    <ul>
+        <li><strong>Compression:</strong> a detail is dropped. If a caption leaves out the red frisbee in a photo, the speech and transcription steps cannot pass the frisbee on, and the final image will not contain it.</li>
+        <li><strong>Invention:</strong> a detail is added. When an input is missing or ambiguous, a model fills the gap with what is common in its training data, and later models treat the added detail as part of the original.</li>
+    </ul>
+    <p>Over many steps, both effects push a chain toward generic, typical content: specific details disappear and common ones take their place.</p>
+
+    <h3>Errors compound</h3>
+    <p>Suppose every step keeps 90% of the meaning it receives. After \(n\) steps, the fraction that remains is approximately:</p>
+    \[ \text{Meaning retained after } n \text{ steps} = 0.9^{\,n} \]
+    <p>After 1 step 90% remains, after 3 steps about 73%, and after 5 steps about 59%. This is a simplified model: real steps differ, and describing a busy photo usually loses far more than transcribing clear speech. The weakest step has the largest effect on the result, so it is the first one to measure and improve.</p>
+
+    <details>
+        <summary>Check your understanding: compounding loss</summary>
+        <p><strong>Question:</strong> A pipeline's steps keep 70% (captioning), 99% (text-to-speech), 95% (speech recognition), and 80% (image generation) of the meaning. Roughly how much survives one pass, and which step should you improve first?</p>
+        <p><strong>Answer:</strong> \(0.70 \times 0.99 \times 0.95 \times 0.80 \approx 0.53\), so about 53% survives. Captioning keeps the least, and every later step depends on what it passes on, so improve it first.</p>
+    </details>
+
+    <p>Saying that a message "changed a lot" does not let you compare two pipelines. Each of the metrics below measures one kind of survival, and no single score measures all of them.</p>
+
+    <h3>Word error rate: did the words survive?</h3>
+    <p><strong>Word error rate (WER)</strong> measures how far a transcript is from the original text. Align the two word sequences and count the fewest edits that turn the original into the transcript: <strong>substitutions</strong> \(S\) (one word replaced by another), <strong>deletions</strong> \(D\) (a word missing), and <strong>insertions</strong> \(I\) (an extra word). Divide by the number of words \(N\) in the original:</p>
+    \[ \text{WER} = \frac{S + D + I}{N} \]
+    <div class="worked">
+        <p><strong>Worked example.</strong> Original: <code>a brown dog running through a field</code>. Transcript: <code>a brown dog running through the field</code>.</p>
+        <p>The original has \(N = 7\) words, and one substitution ("a" became "the") turns it into the transcript, so \(\text{WER} = 1/7 \approx 0.14\).</p>
+    </div>
+    <p>A WER of 0 is a perfect match, and lower is better. WER can exceed 1 when a transcript has many insertions. It counts word differences, not meaning, so a transcript with different words but the same idea still scores poorly.</p>
+
+    <h3>Text similarity: did the meaning survive?</h3>
+    <p>"A puppy on the sand" and "A small dog on a beach" share almost no words, so WER scores them as very different, but they mean nearly the same thing. To compare meaning, a <strong>sentence embedding model</strong> maps each sentence to a vector, and the score is the cosine similarity of the two vectors (the same operation as in <a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">Multimodal Representation &amp; Latent Spaces</a>). A score near 1 means the sentences are close in meaning, even when the wording changes.</p>
+
+    <h3>CLIP similarity: did the picture survive?</h3>
+    <p><a href="../intro_to_image_generation_models/lesson2.html">CLIP</a> embeds images and text in one shared space, which gives two useful comparisons:</p>
+    <ul>
+        <li><strong>Image&ndash;image similarity:</strong> the cosine similarity between the embeddings of two images, such as a generated image and the original. It measures how far a picture has drifted along a chain.</li>
+        <li><strong>Image&ndash;text similarity:</strong> the cosine similarity between an image embedding and a text embedding. It measures how well a caption matches a picture, or how well a generated image matches its prompt.</li>
+    </ul>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>What you are comparing</th><th>Metric</th><th>What a good result looks like</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Original text and its transcript</td><td>Word error rate</td><td>Close to 0</td></tr>
+            <tr><td>Two text descriptions</td><td>Sentence-embedding cosine similarity</td><td>Close to 1</td></tr>
+            <tr><td>An image and a caption</td><td>CLIP image&ndash;text similarity</td><td>Higher than the score for unrelated captions</td></tr>
+            <tr><td>A generated image and the original image</td><td>CLIP image&ndash;image similarity</td><td>Close to 1</td></tr>
+        </tbody>
+    </table></div>
+    <p>CLIP image&ndash;text and image&ndash;image scores are on different scales. An image&ndash;text score around 0.3 is often a good match, while image&ndash;image scores for related pictures are much higher. Compare scores only within the same type of measurement. Each metric also misses things: a transcript can have a low WER and still drop the one word that mattered, and two images can have similar embeddings while differing in the detail your task depends on.</p>
+  </section>
+
+  <section>
+    <h2>3. Widely Used Benchmarks</h2>
     <p>You will see these names in nearly every multimodal model announcement. Each tests something different.</p>
     <div class="table-wrap"><table>
         <thead>
@@ -53,16 +107,14 @@
             <tr><td><strong>LibriSpeech</strong> (2015)</td><td>Speech + text</td><td>About 1,000 hours of read English audiobooks, with "clean" and harder "other" test sets</td><td>Speech recognition; word error rate</td></tr>
         </tbody>
     </table></div>
-    <p>Recall that <strong>word error rate</strong> counts the substitutions \(S\), deletions \(D\), and insertions \(I\) needed to turn a transcript into the reference, divided by the number of reference words \(N\):</p>
-    \[ \text{WER} = \frac{S + D + I}{N} \]
-    <p>Retrieval benchmarks report <strong>recall@K</strong>: the fraction of queries whose correct match appears in the top \(K\) results. Caption benchmarks use scores such as CIDEr, which reward agreement with several human captions at once instead of a single reference.</p>
+    <p>Speech recognition benchmarks such as LibriSpeech report the word error rate from Section 2. Retrieval benchmarks report <strong>recall@K</strong>: the fraction of queries whose correct match appears in the top \(K\) results. Caption benchmarks use scores such as CIDEr, which reward agreement with several human captions at once instead of a single reference.</p>
   </section>
 
   <section>
-    <h2>3. How Multimodal Systems Fail</h2>
+    <h2>4. How Multimodal Systems Fail</h2>
 
     <h3>Cross-modal hallucination</h3>
-    <p>The model describes things that are not there. Shown a birthday cake, a captioner may mention a fork, because forks often appear next to cakes in its training data. This is the "inventing" failure from earlier lessons, and it is common enough to have its own metrics. <strong>CHAIR</strong> (2018) counts objects in captions that are absent from the image. <strong>POPE</strong> (2023) asks "Is there a ___ in the image?" for objects that are present, random, and, most revealingly, objects that frequently co-occur with what is shown but are absent.</p>
+    <p>The model describes things that are not there. Shown a birthday cake, a captioner may mention a fork, because forks often appear next to cakes in its training data. This is the invention failure from Section 2, and it is common enough to have its own metrics. <strong>CHAIR</strong> (2018) counts objects in captions that are absent from the image. <strong>POPE</strong> (2023) asks "Is there a ___ in the image?" for objects that are present, random, and, most revealingly, objects that frequently co-occur with what is shown but are absent.</p>
 
     <h3>Visual jailbreaks and prompt injection</h3>
     <p>Text inside an image is read as text. In 2021, OpenAI showed that CLIP labeled an apple as an "iPod" once a paper note reading "iPod" was stuck to it, a <strong>typographic attack</strong>. With chatbots the stakes are higher. An image can carry instructions like "ignore your previous instructions," and a harmful request rendered as an image can slip past safety filters that only check typed text. The FigStep attack (2023) did exactly this.</p>
@@ -75,7 +127,7 @@
   </section>
 
   <section>
-    <h2>4. Designing a Test: Does the Model Actually Use the Input?</h2>
+    <h2>5. Designing a Test: Does the Model Actually Use the Input?</h2>
     <p>Benchmark accuracy alone cannot tell grounded answers from good guesses. A <strong>modality-reliance protocol</strong> runs the same questions under conditions that remove or change the evidence, and watches what happens.</p>
 
     <div class="table-wrap"><table>
@@ -109,11 +161,11 @@
         <p>Model A wins on the benchmark, but it scores almost as well with no image at all and rarely changes its answer when the image changes. It is mostly guessing from the question. Model B scores slightly lower but clearly looks at the image. For a product that must describe what is actually in front of a user, such as an app for blind users, Model B is the safer choice.</p>
     </div>
 
-    <p>A few rules make the protocol trustworthy. Write questions whose answers genuinely depend on the input. Make the counterfactual edits small, so only the tested detail changes. And keep the questions, edited inputs, and scoring fixed before you look at results. You will run this protocol on your own system in the capstone project.</p>
+    <p>A few rules make the protocol trustworthy. Write questions whose answers genuinely depend on the input. Make the counterfactual edits small, so only the tested detail changes. And keep the questions, edited inputs, and scoring fixed before you look at results.</p>
   </section>
 
   <section>
-    <h2>5. Building Safer Multimodal Systems</h2>
+    <h2>6. Building Safer Multimodal Systems</h2>
     <ul>
         <li><strong>Treat every input as untrusted data.</strong> Text read from an image, a document, or a transcript should never be followed as instructions.</li>
         <li><strong>Red-team every modality.</strong> Test with typographic attacks, hidden text, noisy and adversarial audio, and deliberately mismatched inputs, not just typed prompts.</li>
@@ -143,6 +195,7 @@
   <section>
     <h2>Key Takeaways</h2>
     <ul>
+        <li>In a pipeline, each conversion can drop details (compression) or add them (invention), and the losses compound across steps. Measure what survives with <strong>WER</strong> for words, <strong>sentence-embedding similarity</strong> for meaning, and <strong>CLIP similarity</strong> for images and image&ndash;text pairs.</li>
         <li>Multimodal evaluation is hard because many answers are valid, questions can leak answers, and test data can leak into training.</li>
         <li><strong>MME</strong>, <strong>MMMU</strong>, and <strong>SEED-Bench</strong> test vision-language understanding; <strong>AudioCaps</strong> and <strong>LibriSpeech</strong> test sound description and speech recognition.</li>
         <li>Distinctive failures include <strong>cross-modal hallucination</strong>, <strong>visual jailbreaks and prompt injection</strong>, <strong>audio adversarial attacks</strong>, and <strong>modality collapse</strong>.</li>
@@ -153,6 +206,10 @@
   <section>
     <h2>Recommended Learning Resources</h2>
     <ul class="link-list">
+        <li><a href="https://huggingface.co/learn/audio-course/chapter5/evaluation" target="_blank" rel="noopener">Evaluation Metrics for ASR (Hugging Face Audio Course)</a>
+          <span class="desc">How word error rate is calculated and how transcripts are normalized first.</span></li>
+        <li><a href="https://www.sbert.net/" target="_blank" rel="noopener">Sentence Transformers documentation</a>
+          <span class="desc">The library behind the sentence-embedding similarity used in Project 1.</span></li>
         <li><a href="https://mmmu-benchmark.github.io/" target="_blank" rel="noopener">MMMU benchmark</a>
           <span class="desc">Browse example questions and the current leaderboard.</span></li>
         <li><a href="https://arxiv.org/abs/2305.10355" target="_blank" rel="noopener">Evaluating Object Hallucination in Large Vision-Language Models (Li et al., 2023)</a>
@@ -169,9 +226,9 @@
       <span class="pager__label">Previous</span>
       <span class="pager__title">Unified Multi-Sensory Architectures</span>
     </a>
-    <a class="pager__next" href="lesson3_capstone_project.html">
+    <a class="pager__next" href="UnitQuiz.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Project 1 Capstone: An End-to-End Multimodal Assistant</span>
+      <span class="pager__title">Unit Quiz: Synthesis &amp; Deployment</span>
     </a>
   </nav>
 
