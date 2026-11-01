@@ -7,6 +7,33 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+  #bp-svg .bp-edge { stroke: var(--border); stroke-width: 2; }
+  #bp-svg .bp-edge.fwd { stroke: var(--accent); stroke-width: 3; }
+  #bp-svg .bp-edge.bwd { stroke: var(--warn); stroke-width: 3; }
+  #bp-svg .bp-node { fill: var(--surface); stroke: var(--muted); stroke-width: 2; }
+  #bp-svg .bp-node.fwd { fill: var(--accent-soft); stroke: var(--accent); }
+  #bp-svg .bp-node.bwd { fill: var(--warn-bg); stroke: var(--warn); }
+  #bp-svg .bp-node.upd { fill: var(--ok-bg); stroke: var(--ok); }
+  #bp-svg .bp-tag { fill: var(--surface); stroke: var(--border); }
+  #bp-svg text { fill: var(--text); font-family: var(--font); }
+  #bp-svg .bp-muted { fill: var(--muted); }
+  #bp-svg .bp-fwd { fill: var(--accent); }
+  #bp-svg .bp-bwd { fill: var(--warn); }
+  #bp-svg .bp-upd { fill: var(--ok); }
+  #bp-svg .bp-pulse.fwd { fill: var(--accent); }
+  #bp-svg .bp-pulse.bwd { fill: var(--warn); }
+  #bp-pills span { cursor: pointer; }
+  .bp-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.4rem 0 0.8rem; font-size: 0.85em; color: var(--muted); }
+  .bp-swatch { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.35em; border-radius: 50%; vertical-align: -0.1em; }
+  .bp-swatch--fwd { background: var(--accent); }
+  .bp-swatch--bwd { background: var(--warn); }
+  .bp-swatch--upd { background: var(--ok); }
+  .bp-text { min-height: 9.5rem; margin-bottom: 0.6rem; padding: 0.8rem 1rem; border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; background: var(--note-bg); }
+  .bp-text.bwd { border-left-color: var(--warn); background: var(--warn-bg); }
+  .bp-text.upd { border-left-color: var(--ok); background: var(--ok-bg); }
+  .bp-text > :last-child { margin-bottom: 0; }
+</style>
 </head>
 <body class="wide">
 
@@ -86,7 +113,39 @@
   </section>
 
   <section>
-<h2>4. The vanishing gradient constraint</h2>
+<h2>4. Visual walkthrough: one forward pass and one backward pass</h2>
+    <p>The equations above are easier to follow on a network small enough to compute by hand. The walkthrough below uses a 2 &rarr; 2 &rarr; 1 network with sigmoid activations, one training example \(x = (1.0,\ 0.5)\) with target \(y = 1\), and the squared-error loss \(L = \tfrac{1}{2}(\hat{y} - y)^2\). Step through it and watch the numbers change on the diagram.</p>
+    <p><b>The forward pass moves left to right.</b> Each neuron adds up its weighted inputs plus its bias to get \(z\), then applies the activation to get \(a = \sigma(z)\). The output neuron's activation is the prediction \(\hat{y}\), and comparing it with the target gives the loss. Every \(z\) and \(a\) computed along the way is kept, because the backward pass needs them.</p>
+    <p><b>The backward pass moves right to left.</b> It answers one question for every weight: if this weight grew slightly, how much would the loss change? To answer it efficiently, backpropagation first computes an <b>error signal</b> for each neuron,</p>
+    <p align="center">
+        \[\delta^{(l)} = \frac{\partial L}{\partial z^{(l)}},\]
+    </p>
+    <p>which measures how sensitive the loss is to that neuron's pre-activation. The output neuron's error comes straight from the loss. Each earlier layer's error is the next layer's error sent back along the same weights used in the forward pass, then scaled by the local slope of the activation:</p>
+    <p align="center">
+        \[\delta^{(l)} = \left( (W^{(l+1)})^{\top} \delta^{(l+1)} \right) \odot \sigma'(z^{(l)})\]
+    </p>
+    <p>Once a neuron's error is known, the gradient of every weight feeding into it is just <em>(error at the weight's destination) &times; (activation at the weight's source)</em>: \(\frac{\partial L}{\partial w_{ij}^{(l)}} = \delta_i^{(l)} a_j^{(l-1)}\). This is why backpropagation is efficient: one backward sweep reuses the cached forward values and the downstream errors, so every gradient costs about as much as the forward pass itself instead of requiring a separate calculation per weight.</p>
+
+    <div class="interactive-box" id="bp-demo">
+        <div class="step-pills" id="bp-pills"></div>
+        <svg id="bp-svg" viewBox="0 0 740 350" role="img" aria-label="A 2-2-1 neural network. Values flow left to right during the forward pass and error signals flow right to left during the backward pass." style="display: block; width: 100%; height: auto;"></svg>
+        <div class="bp-legend">
+            <span><i class="bp-swatch bp-swatch--fwd"></i>forward signal</span>
+            <span><i class="bp-swatch bp-swatch--bwd"></i>error / gradient</span>
+            <span><i class="bp-swatch bp-swatch--upd"></i>updated weight</span>
+        </div>
+        <div class="bp-text" id="bp-text" aria-live="polite"></div>
+        <div>
+            <button id="bp-prev">&#9664; Back</button>
+            <button id="bp-next" class="primary">Next &#9654;</button>
+            <button id="bp-play">Play</button>
+            <button id="bp-reset">Reset</button>
+        </div>
+    </div>
+  </section>
+
+  <section>
+<h2>5. The vanishing gradient constraint</h2>
     <p>Utilizing sigmoid activations introduces distinct mathematical limitations during backpropagation, as the derivative of the sigmoid function caps at \(\sigma'(z) \le 0.25\). Propagating errors backward through an architecture containing \(L\) hidden layers scales the gradient signal down by a maximum factor of \(0.25^L\):</p>
     <p align="center">
         \[\sigma'(z) = \sigma(z)(1 - \sigma(z)) \le 0.25\]
@@ -123,7 +182,7 @@
   </section>
 
   <section>
-<h2>5. Interactive Sandbox: Train an MLP on 16×16 Digits</h2>
+<h2>6. Interactive Sandbox: Train an MLP on 16×16 Digits</h2>
     <p>Input pixel configurations on the coordinate canvas, define hidden layer depths and node counts, isolate an activation profile, and execute optimization routines. The sandbox performs forward calculations, computes categorical cross-entropy loss, and runs backpropagation operations natively within the browser environment using a synthetic digit array.</p>
 
     <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #ccc;">
@@ -631,6 +690,248 @@
 
         l5Init();
     </script>
+
+<script>
+    // Section 4: step-through forward pass and backpropagation on a 2-2-1 sigmoid network
+    (function () {
+        const svg = document.getElementById('bp-svg');
+        if (!svg) return;
+        const NS = 'http://www.w3.org/2000/svg';
+        const R = 32;
+        const LR = 0.5;
+        const X = [1.0, 0.5], Y = 1;
+        const W1 = [[0.4, -0.2], [0.3, 0.8]], B1 = [0.1, -0.1];   // W1[i][j]: input j -> hidden i
+        const W2 = [0.6, -0.5], B2 = 0.2;
+        const sig = z => 1 / (1 + Math.exp(-z));
+
+        function forward(W1, B1, W2, B2) {
+            const z1 = [0, 1].map(i => W1[i][0] * X[0] + W1[i][1] * X[1] + B1[i]);
+            const a1 = z1.map(sig);
+            const z2 = W2[0] * a1[0] + W2[1] * a1[1] + B2;
+            const yhat = sig(z2);
+            return { z1, a1, z2, yhat, loss: 0.5 * (yhat - Y) ** 2 };
+        }
+
+        const f = forward(W1, B1, W2, B2);
+        const d2 = (f.yhat - Y) * f.yhat * (1 - f.yhat);
+        const gW2 = f.a1.map(a => d2 * a), gB2 = d2;
+        const d1 = [0, 1].map(i => W2[i] * d2 * f.a1[i] * (1 - f.a1[i]));
+        const gW1 = d1.map(d => X.map(x => d * x)), gB1 = d1;
+        const nW1 = W1.map((row, i) => row.map((w, j) => w - LR * gW1[i][j]));
+        const nB1 = B1.map((b, i) => b - LR * gB1[i]);
+        const nW2 = W2.map((w, i) => w - LR * gW2[i]), nB2 = B2 - LR * gB2;
+        const f2 = forward(nW1, nB1, nW2, nB2);
+
+        const n = v => (Math.abs(v) < 0.0005 ? 0 : v).toFixed(3);
+        const p = v => (v < 0 ? '(' + n(v) + ')' : n(v));
+        const pos = { x0: [80, 80], x1: [80, 260], h0: [360, 80], h1: [360, 260], o: [580, 170], loss: [685, 170] };
+
+        const steps = [
+            { pill: 'Start', phase: 'fwd', edges: [], lit: [], title: 'Start: one training example',
+              body: () => `<p>Input \\(x = (1.0,\\ 0.5)\\), target \\(y = 1\\). The numbers on the edges are the starting weights, and the number under each neuron is its bias. Every neuron uses the sigmoid activation. Press <b>Next</b> to run the forward pass.</p>` },
+            { pill: 'z hidden', phase: 'fwd', edges: ['w00', 'w01', 'w10', 'w11'], lit: ['h0', 'h1'], title: 'Forward 1: weighted sums into the hidden layer',
+              body: () => `<p>Each hidden neuron multiplies every input by the weight on its edge, adds the results, and adds its bias.</p>
+                \\[z^{(1)}_1 = ${n(W1[0][0])}(1.0) + ${p(W1[0][1])}(0.5) + ${n(B1[0])} = ${n(f.z1[0])}\\]
+                \\[z^{(1)}_2 = ${n(W1[1][0])}(1.0) + ${p(W1[1][1])}(0.5) + ${p(B1[1])} = ${n(f.z1[1])}\\]` },
+            { pill: 'a hidden', phase: 'fwd', edges: [], lit: ['h0', 'h1'], title: 'Forward 2: hidden activations',
+              body: () => `<p>Each sum passes through the sigmoid, which squashes it into the range (0, 1).</p>
+                \\[a^{(1)}_1 = \\sigma(${n(f.z1[0])}) = ${n(f.a1[0])} \\qquad a^{(1)}_2 = \\sigma(${n(f.z1[1])}) = ${n(f.a1[1])}\\]` },
+            { pill: 'ŷ', phase: 'fwd', edges: ['v0', 'v1'], lit: ['o'], title: 'Forward 3: the output neuron',
+              body: () => `<p>The output neuron does the same thing, using the hidden activations as its inputs.</p>
+                \\[z^{(2)} = ${n(W2[0])}(${n(f.a1[0])}) + ${p(W2[1])}(${n(f.a1[1])}) + ${n(B2)} = ${n(f.z2)}\\]
+                \\[\\hat{y} = \\sigma(${n(f.z2)}) = ${n(f.yhat)}\\]` },
+            { pill: 'Loss', phase: 'fwd', edges: ['ol'], lit: ['loss'], title: 'Forward 4: the loss',
+              body: () => `<p>Comparing the prediction with the target gives the loss.</p>
+                \\[L = \\tfrac{1}{2}(\\hat{y} - y)^2 = \\tfrac{1}{2}(${n(f.yhat)} - 1)^2 = ${n(f.loss)}\\]
+                <p>The forward pass is done. Every \\(z\\) and \\(a\\) on the diagram is kept, because the backward pass reuses them.</p>` },
+            { pill: 'δ output', phase: 'bwd', edges: ['ol'], lit: ['o'], title: 'Backward 1: the error at the output',
+              body: () => `<p>The chain rule splits the output error into two local slopes: how the loss changes with \\(\\hat{y}\\), and how \\(\\hat{y}\\) changes with \\(z^{(2)}\\).</p>
+                \\[\\delta^{(2)} = \\frac{\\partial L}{\\partial \\hat{y}} \\cdot \\frac{\\partial \\hat{y}}{\\partial z^{(2)}} = (\\hat{y} - y)\\,\\hat{y}(1 - \\hat{y}) = ${p(f.yhat - Y)}(${n(f.yhat)})(${n(1 - f.yhat)}) = ${n(d2)}\\]
+                <p>The error is negative: the prediction is too low, so increasing \\(z^{(2)}\\) would lower the loss.</p>` },
+            { pill: '∂L/∂w output', phase: 'bwd', edges: ['v0', 'v1'], lit: [], title: 'Backward 2: gradients for the output weights',
+              body: () => `<p>A weight's gradient is the error at its destination times the activation at its source.</p>
+                \\[\\frac{\\partial L}{\\partial w^{(2)}_1} = \\delta^{(2)} a^{(1)}_1 = ${p(d2)}(${n(f.a1[0])}) = ${n(gW2[0])} \\qquad \\frac{\\partial L}{\\partial w^{(2)}_2} = ${p(d2)}(${n(f.a1[1])}) = ${n(gW2[1])}\\]
+                <p>The bias behaves like a weight whose source is always 1, so \\(\\partial L / \\partial b^{(2)} = \\delta^{(2)} = ${n(gB2)}\\).</p>` },
+            { pill: 'δ hidden', phase: 'bwd', edges: ['v0', 'v1'], lit: ['h0', 'h1'], title: 'Backward 3: send the error back to the hidden layer',
+              body: () => `<p>The output error travels back along the same edges, scaled by the same weights used in the forward pass, then by each hidden neuron's sigmoid slope \\(a(1 - a)\\).</p>
+                \\[\\delta^{(1)}_1 = w^{(2)}_1\\,\\delta^{(2)}\\,a^{(1)}_1(1 - a^{(1)}_1) = ${n(W2[0])}${p(d2)}(${n(f.a1[0] * (1 - f.a1[0]))}) = ${n(d1[0])}\\]
+                \\[\\delta^{(1)}_2 = ${p(W2[1])}${p(d2)}(${n(f.a1[1] * (1 - f.a1[1]))}) = ${n(d1[1])}\\]
+                <p>Hidden neuron 2 reaches the output through a negative weight, so its error has the opposite sign.</p>` },
+            { pill: '∂L/∂w hidden', phase: 'bwd', edges: ['w00', 'w01', 'w10', 'w11'], lit: [], title: 'Backward 4: gradients for the hidden weights',
+              body: () => `<p>The same rule again: error at the destination times the value at the source, which here is an input.</p>
+                \\[\\frac{\\partial L}{\\partial w^{(1)}_{ij}} = \\delta^{(1)}_i x_j\\]
+                <p>\\(\\partial L/\\partial w^{(1)}_{11} = ${n(gW1[0][0])}\\), \\(\\partial L/\\partial w^{(1)}_{12} = ${n(gW1[0][1])}\\), \\(\\partial L/\\partial w^{(1)}_{21} = ${n(gW1[1][0])}\\), \\(\\partial L/\\partial w^{(1)}_{22} = ${n(gW1[1][1])}\\). Every weight and bias now has a gradient.</p>` },
+            { pill: 'Update', phase: 'upd', edges: [], lit: ['h0', 'h1', 'o', 'loss'], title: 'Update: one step of gradient descent',
+              body: () => `<p>Each weight moves a small step against its gradient, with learning rate \\(\\alpha = ${LR}\\):</p>
+                \\[w \\leftarrow w - \\alpha \\frac{\\partial L}{\\partial w}, \\qquad \\text{e.g. } w^{(2)}_1 = ${n(W2[0])} - ${LR}${p(gW2[0])} = ${n(nW2[0])}\\]
+                <p>Running the forward pass again with the new weights gives \\(\\hat{y} = ${n(f2.yhat)}\\) and \\(L = ${n(f2.loss)}\\), down from ${n(f.loss)}. Training repeats this forward, backward, update loop over many examples.</p>` }
+        ];
+
+        let step = 0, timer = null, raf = null;
+
+        function el(tag, attrs, text) {
+            const e = document.createElementNS(NS, tag);
+            for (const k in attrs) e.setAttribute(k, attrs[k]);
+            if (text !== undefined) e.textContent = text;
+            return e;
+        }
+
+        function edgeEnds(a, b, ra, rb) {
+            const [x1, y1] = pos[a], [x2, y2] = pos[b];
+            const d = Math.hypot(x2 - x1, y2 - y1);
+            return [x1 + (x2 - x1) * ra / d, y1 + (y2 - y1) * ra / d, x2 - (x2 - x1) * rb / d, y2 - (y2 - y1) * rb / d];
+        }
+
+        function edgeList(k) {
+            const list = [];
+            for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+                list.push({ id: 'w' + i + j, from: 'x' + j, to: 'h' + i, t: 0.7, w: W1[i][j], g: k >= 8 ? gW1[i][j] : null, nw: k >= 9 ? nW1[i][j] : null });
+            }
+            for (let i = 0; i < 2; i++) {
+                list.push({ id: 'v' + i, from: 'h' + i, to: 'o', t: 0.5, w: W2[i], g: k >= 6 ? gW2[i] : null, nw: k >= 9 ? nW2[i] : null });
+            }
+            list.push({ id: 'ol', from: 'o', to: 'loss', ends: [R, 50] });
+            return list;
+        }
+
+        function render() {
+            const k = step, s = steps[k];
+            svg.textContent = '';
+            const edgesG = el('g', {}), tagsG = el('g', {}), nodesG = el('g', {}), pulseG = el('g', {});
+            const active = [];
+
+            edgeList(k).forEach(e => {
+                const [x1, y1, x2, y2] = edgeEnds(e.from, e.to, ...(e.ends || [R, R]));
+                const on = s.edges.includes(e.id);
+                edgesG.appendChild(el('line', { x1, y1, x2, y2, class: 'bp-edge' + (on ? ' ' + s.phase : '') }));
+                if (on) active.push({ x1, y1, x2, y2, dir: s.phase });
+                if (e.w === undefined) return;
+                const lx = x1 + (x2 - x1) * e.t, ly = y1 + (y2 - y1) * e.t;
+                const lines = [e.nw !== null
+                    ? { text: 'w ' + n(e.w) + ' → ' + n(e.nw), cls: 'bp-upd' }
+                    : { text: 'w = ' + n(e.w), cls: '' }];
+                if (e.g !== null) lines.push({ text: '∂L/∂w = ' + n(e.g), cls: 'bp-bwd' });
+                const h = 15 * lines.length + 4, wdt = e.nw !== null ? 122 : 92;
+                tagsG.appendChild(el('rect', { x: lx - wdt / 2, y: ly - h / 2, width: wdt, height: h, rx: 5, class: 'bp-tag' }));
+                lines.forEach((ln, idx) => {
+                    tagsG.appendChild(el('text', { x: lx, y: ly - h / 2 + 14 + idx * 15, 'text-anchor': 'middle', 'font-size': 11.5, class: ln.cls }, ln.text));
+                });
+            });
+
+            const nodeInfo = {
+                x0: { name: 'x₁', val: 'x = ' + X[0].toFixed(1) },
+                x1: { name: 'x₂', val: 'x = ' + X[1].toFixed(1) },
+                h0: { name: 'h₁', i: 0 }, h1: { name: 'h₂', i: 1 }, o: { name: 'ŷ' }
+            };
+            Object.keys(nodeInfo).forEach(id => {
+                const [cx, cy] = pos[id], info = nodeInfo[id];
+                const cls = s.lit.includes(id) ? ' ' + s.phase : '';
+                nodesG.appendChild(el('circle', { cx, cy, r: R, class: 'bp-node' + cls }));
+                let val = info.val, under = [], delta = null;
+                if (id[0] === 'h') {
+                    const i = info.i;
+                    if (k >= 2) val = 'a = ' + n(f.a1[i]); else if (k >= 1) val = 'z = ' + n(f.z1[i]); else val = '?';
+                    if (k >= 2) under.push({ text: 'z = ' + n(f.z1[i]), cls: 'bp-muted' });
+                    under.push(k >= 9 ? { text: 'b ' + n(B1[i]) + ' → ' + n(nB1[i]), cls: 'bp-upd' } : { text: 'b = ' + n(B1[i]), cls: 'bp-muted' });
+                    if (k >= 8 && k < 9) under.push({ text: '∂L/∂b = ' + n(gB1[i]), cls: 'bp-bwd' });
+                    if (k >= 7) delta = d1[i];
+                } else if (id === 'o') {
+                    val = k >= 3 ? n(f.yhat) : '?';
+                    if (k >= 3) under.push({ text: 'z = ' + n(f.z2), cls: 'bp-muted' });
+                    under.push(k >= 9 ? { text: 'b ' + n(B2) + ' → ' + n(nB2), cls: 'bp-upd' } : { text: 'b = ' + n(B2), cls: 'bp-muted' });
+                    if (k >= 6 && k < 9) under.push({ text: '∂L/∂b = ' + n(gB2), cls: 'bp-bwd' });
+                    if (k >= 5) delta = d2;
+                }
+                nodesG.appendChild(el('text', { x: cx, y: cy - 6, 'text-anchor': 'middle', 'font-size': 13, class: 'bp-muted' }, info.name));
+                nodesG.appendChild(el('text', { x: cx, y: cy + 13, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700 }, val));
+                under.forEach((u, idx) => {
+                    nodesG.appendChild(el('text', { x: cx, y: cy + R + 16 + idx * 15, 'text-anchor': 'middle', 'font-size': 11.5, class: u.cls }, u.text));
+                });
+                if (delta !== null) {
+                    nodesG.appendChild(el('text', { x: cx, y: cy - R - 9, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, class: 'bp-bwd' }, 'δ = ' + n(delta)));
+                }
+            });
+
+            const [lx, ly] = pos.loss;
+            nodesG.appendChild(el('rect', { x: lx - 50, y: ly - 38, width: 100, height: 76, rx: 8, class: 'bp-node' + (s.lit.includes('loss') ? ' ' + s.phase : '') }));
+            nodesG.appendChild(el('text', { x: lx, y: ly - 18, 'text-anchor': 'middle', 'font-size': 13, class: 'bp-muted' }, 'Loss'));
+            nodesG.appendChild(el('text', { x: lx, y: ly + 2, 'text-anchor': 'middle', 'font-size': 11.5, class: 'bp-muted' }, 'target y = 1'));
+            const lossText = k >= 9 ? n(f.loss) + ' → ' + n(f2.loss) : (k >= 4 ? 'L = ' + n(f.loss) : 'L = ?');
+            nodesG.appendChild(el('text', { x: lx, y: ly + 24, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, class: k >= 9 ? 'bp-upd' : '' }, lossText));
+
+            svg.append(edgesG, pulseG, tagsG, nodesG);
+            startPulses(pulseG, active);
+
+            const text = document.getElementById('bp-text');
+            text.className = 'bp-text' + (s.phase === 'fwd' ? '' : ' ' + s.phase);
+            text.innerHTML = '<p><strong>Step ' + k + ' of ' + (steps.length - 1) + ' · ' + s.title + '</strong></p>' + s.body();
+            if (window.MathJax && MathJax.typesetPromise) {
+                if (MathJax.typesetClear) MathJax.typesetClear([text]);
+                MathJax.typesetPromise([text]);
+            }
+
+            document.querySelectorAll('#bp-pills span').forEach((pill, idx) => pill.classList.toggle('active', idx === k));
+            document.getElementById('bp-prev').disabled = k === 0;
+            document.getElementById('bp-next').disabled = k === steps.length - 1;
+        }
+
+        function startPulses(group, active) {
+            if (raf) cancelAnimationFrame(raf);
+            raf = null;
+            if (!active.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const dots = active.map(a => {
+                const c = el('circle', { r: 5, class: 'bp-pulse ' + a.dir });
+                group.appendChild(c);
+                return c;
+            });
+            const t0 = performance.now();
+            const tick = now => {
+                const t = ((now - t0) / 1200) % 1;
+                active.forEach((a, i) => {
+                    const u = a.dir === 'bwd' ? 1 - t : t;
+                    dots[i].setAttribute('cx', a.x1 + (a.x2 - a.x1) * u);
+                    dots[i].setAttribute('cy', a.y1 + (a.y2 - a.y1) * u);
+                });
+                raf = requestAnimationFrame(tick);
+            };
+            raf = requestAnimationFrame(tick);
+        }
+
+        function go(k) {
+            step = Math.max(0, Math.min(steps.length - 1, k));
+            render();
+        }
+
+        function stopPlay() {
+            clearInterval(timer);
+            timer = null;
+            document.getElementById('bp-play').textContent = 'Play';
+        }
+
+        const pills = document.getElementById('bp-pills');
+        steps.forEach((s, idx) => {
+            const span = document.createElement('span');
+            span.textContent = s.pill;
+            span.addEventListener('click', () => { stopPlay(); go(idx); });
+            pills.appendChild(span);
+        });
+
+        document.getElementById('bp-prev').addEventListener('click', () => { stopPlay(); go(step - 1); });
+        document.getElementById('bp-next').addEventListener('click', () => { stopPlay(); go(step + 1); });
+        document.getElementById('bp-reset').addEventListener('click', () => { stopPlay(); go(0); });
+        document.getElementById('bp-play').addEventListener('click', function () {
+            if (timer) { stopPlay(); return; }
+            if (step === steps.length - 1) go(0);
+            this.textContent = 'Pause';
+            timer = setInterval(() => {
+                if (step >= steps.length - 1) { stopPlay(); return; }
+                go(step + 1);
+            }, 3500);
+        });
+
+        go(0);
+    })();
+</script>
 
 </body>
 </html>
