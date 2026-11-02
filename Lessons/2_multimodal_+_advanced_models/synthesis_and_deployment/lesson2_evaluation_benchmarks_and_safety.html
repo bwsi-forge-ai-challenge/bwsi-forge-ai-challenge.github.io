@@ -73,7 +73,7 @@
     <p>"A puppy on the sand" and "A small dog on a beach" share almost no words, so WER scores them as very different, but they mean nearly the same thing. To compare meaning, a <strong>sentence embedding model</strong> maps each sentence to a vector, and the score is the cosine similarity of the two vectors (the same operation as in <a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">Multimodal Representation &amp; Latent Spaces</a>). A score near 1 means the sentences are close in meaning, even when the wording changes.</p>
 
     <h3>CLIP similarity: did the picture survive?</h3>
-    <p><a href="../intro_to_image_generation_models/lesson2.html">CLIP</a> embeds images and text in one shared space, which gives two useful comparisons:</p>
+    <p><a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">CLIP</a> embeds images and text in one shared space, which gives two useful comparisons:</p>
     <ul>
         <li><strong>Image&ndash;image similarity:</strong> the cosine similarity between the embeddings of two images, such as a generated image and the original. It measures how far a picture has drifted along a chain.</li>
         <li><strong>Image&ndash;text similarity:</strong> the cosine similarity between an image embedding and a text embedding. It measures how well a caption matches a picture, or how well a generated image matches its prompt.</li>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Learning a Shared Space: Contrastive Vision-Language Learning (CLIP) · F.O.R.G.E. AI Challenge</title>
+<title>Teaching a Language Model to See: Vision-Language Models · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
@@ -24,197 +24,92 @@
 
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
-    <h1>Learning a Shared Space: Contrastive Vision-Language Learning (CLIP)</h1>
+    <h1>Teaching a Language Model to See: Vision-Language Models</h1>
   </header>
 
   <section>
-    <h2>1. Two encoders, one space</h2>
+    <h2>1. The recipe: encoder, connector, language model</h2>
 
-    <p>CLIP has two separate networks. An <strong>image encoder</strong> (a ViT or a ResNet) and a <strong>text encoder</strong> (a transformer) each produce one vector. A learned linear layer on each side maps those vectors to the same size \(d\) (for example \(512\)), and both are scaled to unit length.</p>
+    <p>A language model reads a sequence of token embeddings (vectors) and writes text one token at a time, where each new token is chosen using everything that came before it. This is what <em>autoregressive</em> means. A plain language model cannot take in an image, because it only knows how to read vectors that look like word embeddings. A <strong>vision-language model (VLM)</strong> solves this by turning the image into vectors that sit alongside the word embeddings, so the language model can read the picture and the question together.</p>
 
-    <div class="shape-trail">image   → image encoder → linear → normalize → u   (d,)
-caption → text encoder  → linear → normalize → v   (d,)
-
-similarity(image, caption) = u · v        (cosine similarity, since both have length 1)</div>
-
-    <p>Because the vectors are unit length, their dot product is the cosine of the angle between them: close to \(1\) for a good match, near \(0\) for unrelated content.</p>
-  </section>
-
-  <section>
-    <h2>2. The contrastive objective</h2>
-
-    <p>Take a batch of \(N\) image-caption pairs. Encode all of them to get image vectors \(\vec{u}_1, \dots, \vec{u}_N\) and text vectors \(\vec{v}_1, \dots, \vec{v}_N\). Form the \(N \times N\) grid of scaled similarities:</p>
-
-    <div class="eq-panel">
-        \[ s_{ij} = \frac{\vec{u}_i \cdot \vec{v}_j}{\tau} \]
-    </div>
-
-    <p>Here \(\vec{u}_i \cdot \vec{v}_j\) is the cosine similarity between image \(i\) and caption \(j\), and \(\tau\) (the Greek letter tau) is the <strong>temperature</strong>: a positive number that the similarities are divided by. Dividing by a small \(\tau\) stretches the similarities apart, so \(s_{ij}\) is just a rescaled cosine similarity. Section 3 explains what this rescaling does and why it is needed.</p>
-
-    <p>In this grid, <strong>each row is one image and each column is one caption</strong>: row \(i\) holds the scores of image \(i\) against all \(N\) captions, and column \(j\) holds the scores of caption \(j\) against all \(N\) images. The true pairs sit on the diagonal (\(i = j\)). Every other cell is a mismatched pair, used as a negative. Each row is treated as a classification problem: "which of the \(N\) captions belongs to this image?" Each column asks the reverse: "which of the \(N\) images belongs to this caption?" The loss is the cross-entropy of both, averaged, which is why it is called <strong>symmetric</strong>:</p>
-
-    <div class="eq-panel">
-        \[ \mathcal{L}_{i \to t} = -\frac{1}{N} \sum_{i=1}^{N} \log \frac{e^{s_{ii}}}{\sum_{j=1}^{N} e^{s_{ij}}} \qquad \mathcal{L}_{t \to i} = -\frac{1}{N} \sum_{j=1}^{N} \log \frac{e^{s_{jj}}}{\sum_{i=1}^{N} e^{s_{ij}}} \]
-        \[ \mathcal{L} = \tfrac{1}{2} \left( \mathcal{L}_{i \to t} + \mathcal{L}_{t \to i} \right) \]
-    </div>
-
-    <p>The CLIP paper gives the whole loss in a few lines of pseudocode. Here it is written out step by step:</p>
-
-    <pre><code># image_emb: (N, d)   row i is the vector for image i, scaled to length 1
-# text_emb:  (N, d)   row j is the vector for caption j, scaled to length 1
-# tau:       the temperature, a positive number
-
-# Step 1: cosine similarity of every image with every caption
-sims = image_emb @ text_emb.T              # (N, N), sims[i][j] = image i vs caption j
-
-# Step 2: divide by the temperature to get the scores s_ij
-logits = sims / tau                        # (N, N)
-
-# Step 3: the correct caption for image i is caption i,
-# so the correct column in row i is i
-labels = [0, 1, 2, ..., N-1]
-
-# Step 4: image to text. Each ROW is one classification problem.
-loss_i2t = cross_entropy(logits, labels)
-
-# Step 5: text to image. Each COLUMN is one problem, so transpose first.
-loss_t2i = cross_entropy(logits.T, labels)
-
-# Step 6: average the two directions
-loss = (loss_i2t + loss_t2i) / 2
-
-
-def cross_entropy(logits, labels):
-    total = 0
-    for k in range(N):                     # go through the rows one at a time
-        p = softmax(logits[k])             # N probabilities that add up to 1
-        total += -log(p[labels[k]])        # -log of the probability of the correct entry
-    return total / N                       # average over the N rows</code></pre>
-
-    <p>CLIP's own code stores the temperature as a learned log-scale number <code>t</code> and multiplies the similarities by <code>exp(t)</code>. That is the same as dividing by \(\tau\) with \(\tau = e^{-t}\).</p>
-
-    <div class="worked">
-        <strong>Worked example, \(N = 2\).</strong> A batch has two pairs: image 1 with caption 1, and image 2 with caption 2. Suppose the encoders give these cosine similarities (rows are images, columns are captions):
-
-        <div class="table-wrap"><table>
-            <thead><tr><th></th><th>Caption 1</th><th>Caption 2</th></tr></thead>
-            <tbody>
-                <tr><th>Image 1</th><td><strong>0.30</strong></td><td>0.10</td></tr>
-                <tr><th>Image 2</th><td>0.05</td><td><strong>0.25</strong></td></tr>
-            </tbody>
-        </table></div>
-
-        The correct pairs (bold) already have the highest score in their row and column. Now we compute the loss with \(\tau = 0.1\).
-
-        <p><strong>Step 1: divide by \(\tau\).</strong> Dividing by \(0.1\) multiplies every score by \(10\):</p>
-        <div class="table-wrap"><table>
-            <thead><tr><th></th><th>Caption 1</th><th>Caption 2</th></tr></thead>
-            <tbody>
-                <tr><th>Image 1</th><td><strong>3</strong></td><td>1</td></tr>
-                <tr><th>Image 2</th><td>0.5</td><td><strong>2.5</strong></td></tr>
-            </tbody>
-        </table></div>
-
-        <p><strong>Step 2: image to text (go along each row).</strong> For image 1, the softmax over the row \((3, 1)\) is \(\left(\frac{e^{3}}{e^{3} + e^{1}},\ \frac{e^{1}}{e^{3} + e^{1}}\right) \approx (0.881,\ 0.119)\). The correct entry is caption 1, so the loss for this row is \(-\ln 0.881 \approx 0.127\). For image 2, the row \((0.5, 2.5)\) gives probabilities \(\approx (0.119,\ 0.881)\). The correct entry is caption 2, so this loss is also \(-\ln 0.881 \approx 0.127\). Average of the rows: \(\mathcal{L}_{i \to t} \approx 0.127\).</p>
-
-        <p><strong>Step 3: text to image (go down each column).</strong> For caption 1, the column \((3, 0.5)\) gives probabilities \(\approx (0.924,\ 0.076)\) over the two images. The correct entry is image 1, so the loss is \(-\ln 0.924 \approx 0.079\). For caption 2, the column \((1, 2.5)\) gives \(\approx (0.182,\ 0.818)\). The correct entry is image 2, so the loss is \(-\ln 0.818 \approx 0.201\). Average of the columns: \(\mathcal{L}_{t \to i} \approx 0.140\).</p>
-
-        <p><strong>Step 4: average the two directions.</strong> \(\mathcal{L} = \tfrac{1}{2}(0.127 + 0.140) \approx 0.134\).</p>
-
-        <p><strong>What this shows.</strong> Caption 2 lost more than caption 1 because image 1 is a fairly good match for it too (score \(0.10\) against \(0.25\)), so the model was less sure. Training would push the diagonal scores up and the off-diagonal ones down, which lowers the loss. The temperature matters too: with \(\tau = 1\) the same grid gives a loss of about \(0.60\), because the scores \(0.30\) and \(0.10\) are too close together for the softmax to be confident. Dividing by a small \(\tau\) is what lets a modest gap in cosine similarity count as a clear win.</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>3. Temperature scaling</h2>
-
-    <p>The temperature \(\tau\) rescales the similarities before the softmax. Cosine similarities live in a narrow range (all between \(-1\) and \(1\)), so without scaling the softmax would be almost flat and the loss could not tell a good match from a mediocre one.</p>
-
-    <ul>
-        <li><strong>Small \(\tau\)</strong> sharpens the softmax. Confident matches get probability near \(1\), and the gradient concentrates on the hardest negatives, the wrong captions that look nearly as good as the right one.</li>
-        <li><strong>Large \(\tau\)</strong> flattens the softmax. All negatives are treated similarly and the signal is weak.</li>
-    </ul>
-
-    <p>CLIP does not fix \(\tau\). It learns it, as a log-scale parameter initialized to \(\tau = 0.07\), and clips it so the logits are never scaled by more than \(100\).</p>
-
-    <p>If this sounds like the temperature setting for language models, that is because it is the same operation. In both cases the scores are divided by a temperature before the softmax, so a low value makes the probabilities sharper and a high value makes them flatter. The difference is when it is used. A language model applies temperature while <em>generating</em>, to control how random the next token is. CLIP uses it while <em>training</em>, to control how sharply the loss separates the correct caption from the wrong ones, and it learns the value instead of having you pick it.</p>
-
-    <h3>Interactive: Temperature Explorer</h3>
-    <p>This is a fixed \(4 \times 4\) similarity grid (rows are images, columns are captions) with illustrative values. Each cell shows the row-wise softmax probability. Drag \(\tau\) and watch how confident the model becomes, and how the loss responds. Notice the two hard negatives off the diagonal.</p>
-
-    <div class="interactive-box">
-        <p style="margin-top:0;"><strong>Temperature \(\tau\)</strong> = <span id="tx-tau">0.07</span></p>
-        <input type="range" id="tx-slider" min="0" max="100" value="42">
-        <div id="tx-table" style="margin-top:12px;"></div>
-        <div class="metric-row">
-            <div class="metric">Image to text loss: <strong id="tx-li">0</strong></div>
-            <div class="metric">Text to image loss: <strong id="tx-lt">0</strong></div>
-            <div class="metric">Total loss: <strong id="tx-l">0</strong></div>
-        </div>
-        <p id="tx-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
-    </div>
-  </section>
-
-  <section>
-    <h2>4. Batch size</h2>
-
-    <p>In a batch of \(N\) pairs, every image has \(N - 1\) negative captions and every caption has \(N - 1\) negative images. Larger batches mean more negatives, and more of them are hard. CLIP trained with a batch of \(32{,}768\) pairs, so each step scored \(32{,}768^2 \approx 1.07\) billion pairs.</p>
-
-    <ul>
-        <li><strong>Too small a batch</strong> gives only easy negatives (a dog photo against a caption about a bridge), so the model learns little about fine distinctions.</li>
-        <li><strong>The grid grows as \(N^2\).</strong> Large-batch training spreads the work over many GPUs and shares embeddings between them.</li>
-        <li><strong>False negatives exist.</strong> Two different photos can both be well described by "a dog on a beach," yet the loss treats one as wrong. Large batches make this more likely.</li>
-    </ul>
-
-    <p>Later work such as SigLIP replaces the softmax over the whole batch with an independent yes/no loss on each pair, which relaxes the dependence on very large batches.</p>
-  </section>
-
-  <section>
-    <h2>5. Zero-shot inference</h2>
-
-    <p>Once CLIP is trained, there are two main ways to use it for classification. This section defines <strong>zero-shot inference</strong> and compares it with a <strong>linear probe</strong>.</p>
-
-    <ul>
-        <li><strong>Zero-shot inference</strong> is how you use CLIP when you have category names but no labeled images. You turn each name into a caption, embed it with the text encoder, and pick the caption closest to the image. The classifier is built from the names alone, with no training on your categories.</li>
-        <li>A <strong>linear probe</strong> takes the opposite route. First, you <em>freeze</em> the image encoder, meaning its weights never change, and run your labeled images through it to get one feature vector per image. Then you train a single linear classifier on those vectors so that it learns to map CLIP's features to your categories. It needs labeled images, but the only part that is trained is one small layer.</li>
-    </ul>
-
-    <p>We start with zero-shot. As a formula, the predicted class \(\hat{y}\) for an image vector \(\vec{u}\) is the one whose caption vector \(\vec{v}_c\) is closest:</p>
-
-    <div class="eq-panel">
-        \[ \hat{y} = \arg\max_{c} \; \vec{u} \cdot \vec{v}_c \qquad \text{where } \vec{v}_c = f_{\text{text}}\big(\text{"a photo of a } c\text{"}\big) \]
-    </div>
-
-    <p>The text embeddings \(\vec{v}_c\) act as the weights of a classifier that you built from words alone. Prompt wording matters: "a photo of a dog" usually beats the bare word "dog," and averaging the embeddings of several templates (<em>prompt ensembling</em>) helps further.</p>
-
-    <h3>Zero-shot versus linear probing</h3>
-    <p>A <strong>linear probe</strong> is the standard way to measure how good an encoder's features are, and it is the main alternative to zero-shot. You keep the image encoder <strong>frozen</strong>, meaning its weights never change. You run each labeled training image through it to get one vector \(\vec{u}\), and then train a single linear layer on top (the same kind of classifier as logistic regression):</p>
-
-    <div class="eq-panel">
-        \[ \hat{y} = \arg\max_{c} \, (W \vec{u})_c \qquad W \in \mathbb{R}^{C \times d} \]
-    </div>
-
-    <p>Here \(C\) is the number of classes and \(d\) is the length of \(\vec{u}\), so \(W\) has one row per class. It is called a <em>probe</em> because you are checking what information the frozen features already contain, and <em>linear</em> because only one matrix is trained, so a good result has to come from the features rather than from a powerful new classifier on top. Compare this with zero-shot: there, the rows of the classifier are the text embeddings \(\vec{v}_c\), which need no training, while in a linear probe the rows of \(W\) are learned from labeled images.</p>
+    <p>Almost every VLM is built from three parts:</p>
 
     <div class="table-wrap"><table>
-        <thead><tr><th></th><th>Zero-shot</th><th>Linear probe</th></tr></thead>
+        <thead><tr><th>Part</th><th>Its job</th><th>Shape in to shape out</th><th>Example (LLaVA-1.5)</th></tr></thead>
         <tbody>
-            <tr><td>What is trained</td><td>Nothing new</td><td>A linear classifier on frozen image features</td></tr>
-            <tr><td>Labeled images needed</td><td>None</td><td>Some per class</td></tr>
-            <tr><td>New categories</td><td>Just write new captions</td><td>Retrain the classifier</td></tr>
-            <tr><td>Accuracy on a fixed task</td><td>Good, limited by wording and domain</td><td>Usually higher once you have labels</td></tr>
+            <tr><td><strong>Vision encoder</strong></td><td>Turn the image into feature vectors, one per patch</td><td>\(336 \times 336 \times 3\) image to \(N = 576\) vectors of width \(d_{\text{vision}} = 1024\)</td><td>CLIP ViT-L/14 (a ViT-Large with \(14 \times 14\) patches)</td></tr>
+            <tr><td><strong>Connector</strong></td><td>Translate those features into the language model's embedding space</td><td>\(576 \times 1024\) to \(M = 576\) visual tokens of width \(d_{\text{llm}} = 4096\)</td><td>Two-layer MLP</td></tr>
+            <tr><td><strong>Language model</strong></td><td>Read visual tokens and text tokens together, then generate the answer</td><td>\((M + L)\) tokens of width \(4096\) to probabilities for the next token</td><td>Vicuna 7B</td></tr>
         </tbody>
     </table></div>
 
-    <p>Zero-shot CLIP is strong when your categories are common things people caption on the web. It is weaker on specialized domains (medical images, satellite imagery), on counting, and on fine-grained categories where the caption words are rare.</p>
+    <p>Here \(L\) is the number of text tokens in the prompt. The connector exists because the encoder and the language model were trained separately and speak different "languages". Their vectors have different lengths (\(1024\) and \(4096\)), and, more importantly, the language model has never seen a CLIP feature, so it would not know what to do with one. The connector is trained to map each visual feature to a vector that lands in the right place among the word embeddings.</p>
+  </section>
+
+  <section>
+    <h2>2. Projection layers</h2>
+
+    <p>A language model only understands vectors of its own embedding size, so the connector's first job is dimension matching. Its second job is deciding how many tokens to pass along.</p>
+
+    <div class="table-wrap"><table>
+        <thead><tr><th>Connector</th><th>What it does</th><th>Tokens out</th><th>Used by</th></tr></thead>
+        <tbody>
+            <tr><td>Linear adapter</td><td>One matrix: \(\vec{h}_v = W \vec{z}_v\)</td><td>Same as in (\(N\))</td><td>LLaVA</td></tr>
+            <tr><td>MLP</td><td>Two layers with a nonlinearity such as ReLU in between: \(\vec{h}_v = W_2\, \text{ReLU}(W_1 \vec{z}_v)\)</td><td>Same as in (\(N\))</td><td>LLaVA-1.5</td></tr>
+            <tr><td>Q-Former</td><td>A small transformer with \(32\) learned query vectors that cross-attend to the image features</td><td>Fixed at \(32\)</td><td>BLIP-2</td></tr>
+            <tr><td>Perceiver Resampler</td><td>Learned latent queries cross-attend to the image features</td><td>Fixed at \(64\)</td><td>Flamingo</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>The last two use <strong>learned queries</strong>: a fixed set of vectors that ask the image "what is worth keeping?" using cross-attention, \(\text{CrossAttn}(Q_{\text{learned}}, K_{\text{image}}, V_{\text{image}})\). The output size is set by the number of queries, not by the image size. That is useful for high-resolution images or many video frames, at the price of throwing detail away.</p>
+
+    <p>The trade-off is token count against detail. Passing all \(576\) tokens keeps small objects and printed text readable but fills the context window. A Q-Former's \(32\) tokens are cheap but cannot hold fine detail.</p>
+  </section>
+
+  <section>
+    <h2>3. Token injection</h2>
+
+    <p>Once the visual tokens exist, there are two ways to give them to the language model.</p>
+
+    <h3>Input-level concatenation</h3>
+    <p>The visual tokens are placed directly in the input sequence, next to the text tokens, and the language model's ordinary self-attention reads them. The prompt contains a placeholder such as <code>&lt;image&gt;</code> that is replaced by the projected tokens before the first layer. To the language model, a picture is a few hundred extra tokens. LLaVA and PaLM-E work this way.</p>
+
+    <h3>Cross-attention layers inside the model</h3>
+    <p>New cross-attention layers are inserted between the layers of a frozen language model, and text positions attend to the visual tokens through them. Flamingo does this with gated layers whose gate starts at zero, so training begins from the original language model's behavior. This does not consume context length, but it needs new layers.</p>
+
+    <p>Training usually has two stages. First, only the connector is trained on image-caption pairs, with the encoder and the language model frozen, so visual tokens learn to land in the language model's embedding space. Second, the connector and the language model are fine-tuned on instruction data (questions and answers about images). The loss is the usual next-token loss, computed on the answer tokens only:</p>
+
+    <div class="eq-panel">
+        \[ P(y_t \mid y_{\lt t},\; \vec{h}_v,\; \vec{x}_{\text{text}}) \]
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Case studies</h2>
+
+    <div class="table-wrap"><table>
+        <thead><tr><th>Model</th><th>Vision side</th><th>Connector and injection</th><th>Notable idea</th></tr></thead>
+        <tbody>
+            <tr><td>LLaVA</td><td>CLIP ViT-L/14 encoder</td><td>Linear (v1) or MLP (v1.5) projector; tokens concatenated before the text</td><td>Simple recipe plus GPT-generated instruction data</td></tr>
+            <tr><td>BLIP-2</td><td>Frozen image encoder</td><td>Q-Former gives \(32\) tokens to a frozen language model</td><td>Bridge two frozen models with a small trainable module</td></tr>
+            <tr><td>Flamingo</td><td>Contrastively trained vision encoder</td><td>Perceiver Resampler gives \(64\) tokens; gated cross-attention layers inside a frozen language model</td><td>Interleaved image-text input and few-shot prompting</td></tr>
+            <tr><td>PaLM-E</td><td>ViT; also robot sensor states</td><td>Observations projected into the language embedding space and placed in the sequence</td><td>"Multimodal sentences" that mix text with images and robot state, for embodied tasks</td></tr>
+            <tr><td>Gemini</td><td>Natively multimodal</td><td>Trained jointly on text, images, audio, and video rather than bolting an encoder onto a finished language model</td><td>Few architecture details are public; the technical report describes one model across modalities</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>These split into two camps. <em>Bolt-on</em> models (LLaVA, BLIP-2, Flamingo) join separately trained parts and train only the connector, or the connector plus fine-tuning. <em>Native</em> models (Gemini and GPT-4o) are trained across modalities from the start, which costs far more data and compute.</p>
   </section>
 
   <section>
     <h2>Further reading</h2>
     <ul>
-        <li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Radford et al., Learning Transferable Visual Models From Natural Language Supervision (2021)</a>: the CLIP paper.</li>
-        <li><a href="https://openai.com/index/clip/" target="_blank" rel="noopener">CLIP: Connecting text and images (OpenAI)</a>: the announcement post with zero-shot examples.</li>
-        <li><a href="https://arxiv.org/abs/2303.15343" target="_blank" rel="noopener">Zhai et al., Sigmoid Loss for Language Image Pre-Training (2023)</a>: SigLIP, an alternative to the softmax loss.</li>
+        <li><a href="https://arxiv.org/abs/2304.08485" target="_blank" rel="noopener">Liu et al., Visual Instruction Tuning (2023)</a>: LLaVA.</li>
+        <li><a href="https://arxiv.org/abs/2310.03744" target="_blank" rel="noopener">Liu et al., Improved Baselines with Visual Instruction Tuning (2023)</a>: LLaVA-1.5 and the MLP connector.</li>
+        <li><a href="https://arxiv.org/abs/2301.12597" target="_blank" rel="noopener">Li et al., BLIP-2 (2023)</a>: the Q-Former.</li>
+        <li><a href="https://arxiv.org/abs/2204.14198" target="_blank" rel="noopener">Alayrac et al., Flamingo (2022)</a>: the Perceiver Resampler and gated cross-attention.</li>
+        <li><a href="https://arxiv.org/abs/2303.03378" target="_blank" rel="noopener">Driess et al., PaLM-E (2023)</a>: embodied multimodal language models.</li>
+        <li><a href="https://arxiv.org/abs/2312.11805" target="_blank" rel="noopener">Gemini Team, Gemini: A Family of Highly Capable Multimodal Models (2023)</a>.</li>
     </ul>
   </section>
 
@@ -225,7 +120,7 @@ def cross_entropy(logits, labels):
     </a>
     <a class="pager__next" href="lesson3.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Teaching a Language Model to See: Vision-Language Models</span>
+      <span class="pager__title">Generating Images by Removing Noise: Diffusion</span>
     </a>
   </nav>
 </main>
@@ -233,79 +128,6 @@ def cross_entropy(logits, labels):
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
-
-<script>
-(function () {
-    var S = [
-        [0.32, 0.10, 0.05, 0.20],
-        [0.08, 0.30, 0.12, 0.06],
-        [0.04, 0.11, 0.28, 0.18],
-        [0.22, 0.07, 0.15, 0.26]
-    ];
-    var N = S.length;
-    var slider = document.getElementById('tx-slider');
-
-    function tauFromSlider(v) {
-        // slider 0..100 maps to tau 0.01 .. 1 on a log scale
-        return Math.pow(10, -2 + 2 * (v / 100));
-    }
-
-    function softmax(arr) {
-        var m = Math.max.apply(null, arr);
-        var e = arr.map(function (x) { return Math.exp(x - m); });
-        var z = e.reduce(function (a, b) { return a + b; }, 0);
-        return e.map(function (x) { return x / z; });
-    }
-
-    function render() {
-        var tau = tauFromSlider(parseInt(slider.value, 10));
-        document.getElementById('tx-tau').textContent = tau.toFixed(3);
-
-        var logits = S.map(function (row) { return row.map(function (x) { return x / tau; }); });
-        var rows = logits.map(softmax);
-        var cols = [];
-        for (var j = 0; j < N; j++) {
-            cols.push(softmax(logits.map(function (r) { return r[j]; })));
-        }
-
-        var li = 0, lt = 0;
-        for (var d = 0; d < N; d++) {
-            li += -Math.log(Math.max(rows[d][d], 1e-12));
-            lt += -Math.log(Math.max(cols[d][d], 1e-12));
-        }
-        li /= N; lt /= N;
-
-        var html = '<table><thead><tr><th></th>';
-        for (var c = 0; c < N; c++) html += '<th>Caption ' + (c + 1) + '</th>';
-        html += '</tr></thead><tbody>';
-        for (var i = 0; i < N; i++) {
-            html += '<tr><th>Image ' + (i + 1) + '</th>';
-            for (var k = 0; k < N; k++) {
-                var p = rows[i][k];
-                var bg = 'rgba(56,189,248,' + (0.08 + 0.6 * p).toFixed(2) + ')';
-                var w = i === k ? 'font-weight:700;' : '';
-                html += '<td style="background:' + bg + ';' + w + '">' + (p * 100).toFixed(1) + '%</td>';
-            }
-            html += '</tr>';
-        }
-        html += '</tbody></table>';
-        document.getElementById('tx-table').innerHTML = html;
-
-        document.getElementById('tx-li').textContent = li.toFixed(3);
-        document.getElementById('tx-lt').textContent = lt.toFixed(3);
-        document.getElementById('tx-l').textContent = ((li + lt) / 2).toFixed(3);
-
-        var note;
-        if (tau > 0.4) note = 'Large tau: probabilities are spread out, so even the correct pairs get low confidence and the loss stays high.';
-        else if (tau < 0.03) note = 'Very small tau: the softmax is nearly one-hot, so the loss is tiny for easy rows and dominated by the hardest negatives.';
-        else note = 'Moderate tau: correct pairs win clearly, while hard negatives still receive visible probability and keep contributing gradient.';
-        document.getElementById('tx-note').textContent = note;
-    }
-
-    slider.addEventListener('input', render);
-    render();
-})();
-</script>
 
 </body>
 </html>
