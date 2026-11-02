@@ -111,40 +111,7 @@
   </section>
 
   <section>
-    <h2>3. Side-by-Side: One Domain, Two Goals</h2>
-    <p>To fully grasp the separation, look at how both archetypes handle identical targets within the exact same field:</p>
-
-    <div class="table-wrap"><table>
-        <tr>
-            <th>User Directive / Dataset Context</th>
-            <th>Discriminative Approach</th>
-            <th>Generative Approach</th>
-        </tr>
-        <tr>
-            <td><strong>Given a high-resolution photo of a dog</strong></td>
-            <td>Outputs a single class string: <code>"Golden Retriever"</code></td>
-            <td><em>N/A</em> (Expects generation requests, not evaluation)</td>
-        </tr>
-        <tr>
-            <td><strong>"Draw an ultra-realistic Golden Retriever"</strong></td>
-            <td><em>N/A</em> (Cannot build or assemble pixels from scratch)</td>
-            <td>Synthesizes a brand-new, unique pixel array</td>
-        </tr>
-        <tr>
-            <td><strong>Given an e-commerce review sentence</strong></td>
-            <td>Categorizes sentiment: <code>"Positive (98%)"</code></td>
-            <td><em>N/A</em> (Cannot perform structured class assignment)</td>
-        </tr>
-        <tr>
-            <td><strong>"Write a positive e-commerce product review"</strong></td>
-            <td><em>N/A</em></td>
-            <td>Assembles an entirely unique customer feedback paragraph</td>
-        </tr>
-    </table></div>
-  </section>
-
-  <section>
-    <h2>4. The Underlying Probability Mathematics</h2>
+    <h2>3. The Underlying Probability Mathematics</h2>
     <p>Under the hood, both fields optimize completely different statistical formulas:</p>
 
     <div class="math-card">
@@ -165,7 +132,7 @@
   </section>
 
   <section>
-    <h2>5. Core Trade-Offs at a Glance</h2>
+    <h2>4. Core Trade-Offs at a Glance</h2>
     <div class="table-wrap"><table>
         <tr>
             <th>Metric / Dimension</th>
@@ -197,7 +164,7 @@
   </section>
 
   <section>
-    <h2>6. Generation in action</h2>
+    <h2>5. Generation in action</h2>
 
     <p>Watch a model in action below. As each word is generated, it becomes part of the context used to predict the next one.</p>
 
@@ -216,54 +183,9 @@
   </section>
 
   <section>
-    <h2>7. Interactive Sandbox: Classifier vs. Generator</h2>
-    <p>This lab environment showcases both methods in action. <strong>Discriminative Mode</strong> acts as an Iris Flower classifier; it processes the dimensions you select and sorts them cleanly into a deterministic class. <strong>Generative Mode</strong> simulates an autoregressive language model, pulling dynamic, randomized textual descriptions out of its internal space every time you call it.</p>
-
-    <div class="genai-l2-sandbox-layout">
-        <div class="genai-l2-sandbox-left">
-            <strong>System Parameters:</strong><br><br>
-            <label for="l2-mode">Execution Mode:</label><br>
-            <select id="l2-mode">
-                <option value="disc">Discriminative Classifier</option>
-                <option value="gen">Generative Data Sampler</option>
-            </select>
-            <br><br>
-            
-            <div id="l2-disc-controls">
-                <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-                    <canvas id="l2-canvas" width="240" height="180" style="border: 1px solid #cbd5e1; background-color: #fff; cursor: crosshair; border-radius: 6px;"></canvas>
-                </div>
-                <label>Sepal Dimension: <span id="l2-sepal-lbl" style="font-weight: bold;">5.0</span> cm<br>
-                <input type="range" id="l2-sepal" min="4.3" max="7.9" step="0.1" value="5.0" style="width: 100%;"></label><br>
-                <label>Petal Dimension: <span id="l2-petal-lbl" style="font-weight: bold;">0.2</span> cm<br>
-                <input type="range" id="l2-petal" min="0.1" max="2.5" step="0.1" value="0.2" style="width: 100%;"></label><br><br>
-                <button id="l2-classify" style="background-color: #2563eb; color: white; width: 100%; border: none; padding: 10px;">Run P(y | x) Classification</button>
-            </div>
-            
-            <div id="l2-gen-controls" style="display: none;">
-                <p style="font-size: 0.9em; background: #e2e8f0; padding: 8px; border-radius: 4px; margin-bottom: 15px;"><strong>Prompt:</strong> "Describe an original flower style."</p>
-                <button id="l2-generate" style="background-color: #059669; color: white; width: 100%; border: none; padding: 10px;">Sample P(x | Prompt)</button>
-            </div>
-            <button id="l2-reset" style="width: 100%; padding: 6px; margin-top: 8px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #ef4444;">Reset Lab</button>
-        </div>
-        
-        <div class="genai-l2-sandbox-right">
-            <div>
-                <strong style="color: #2563eb;">Output Terminal Interface</strong>
-                <hr style="margin: 8px 0; border: 0; border-top: 1px solid #f1f5f9;">
-                <div id="l2-output" style="font-family: monospace; font-size: 0.95em; min-height: 140px; white-space: pre-wrap; color: var(--text);">Select parameters and activate classification.</div>
-            </div>
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px;">
-                <strong>Live Framework State:</strong> <span id="l2-status1">Active. Standing by for runtime inputs.</span>
-            </div>
-        </div>
-    </div>
-  </section>
-
-  <section>
     <h2>Essential Reading & Core Resources</h2>
     <ul>
-        <li><strong>Generative vs. Discriminative Classifiers (Ng & Jordan):</strong> A landmark paper contrasting the performance trade-offs of both model families. <a href="https://ai.stanford.edu/~ang/papers/nips01-discriminativegenerative.pdf" target="_blank">Download Stanford PDF</a></li>
+        <li><strong>Generative vs. Discriminative Classifiers (Ng & Jordan):</strong> A landmark paper contrasting the performance trade-offs of both model families. <a href="https://papers.nips.cc/paper/2001/file/7b7a53e239400a13bd6be6c91c4f6c4e-Paper.pdf" target="_blank">Download Stanford PDF</a></li>
         <li><strong>Pattern Recognition and Machine Learning (Bishop):</strong> Section 1.5 provides a formal mathematical deep-dive into both methodologies. <a href="https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/" target="_blank">Access Reference Overview</a></li>
     </ul>
 
