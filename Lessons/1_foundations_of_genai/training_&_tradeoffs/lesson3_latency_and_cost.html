@@ -28,7 +28,7 @@
   </header>
 
   <section>
-    <p>Before your assignment — and before building anything real — you need a framework for matching model size to task complexity. The smartest model is rarely the right default.</p>
+    <p>Before your assignment, and before building anything real, you need a framework for matching model size to task complexity. The smartest model is rarely the right default.</p>
   </section>
 
   <section>
@@ -64,7 +64,7 @@
             <line x1="530" y1="100" x2="530" y2="55" stroke="#2563eb" stroke-dasharray="3 2"/>
             <circle cx="530" cy="100" r="6" fill="#16a34a"/>
             <text x="530" y="125" text-anchor="middle" font-size="9" fill="#64748b">Done</text>
-            <text x="340" y="145" text-anchor="middle" font-size="10" fill="#475569">User waits through <tspan font-style="italic">both</tspan> phases — TTFT is especially noticeable in chat UIs</text>
+            <text x="340" y="145" text-anchor="middle" font-size="10" fill="#475569">User waits through <tspan font-style="italic">both</tspan> phases; TTFT is especially noticeable in chat UIs</text>
         </svg>
         <figcaption>Latency breakdown: TTFT (thinking before speaking) plus generation time (speaking speed). Longer outputs multiply the second phase.</figcaption>
     </figure>
@@ -89,20 +89,20 @@
     <p>Most hosted LLM APIs charge <strong>per token</strong>. From Lesson 2: tokens are the billing unit, not words or characters.</p>
 
     <ul>
-        <li><strong>Input tokens</strong> — your prompt, system message, retrieved documents, chat history</li>
-        <li><strong>Output tokens</strong> — everything the model generates</li>
+        <li><strong>Input tokens</strong> are your prompt, system message, retrieved documents, and chat history</li>
+        <li><strong>Output tokens</strong> are everything the model generates</li>
     </ul>
 
     <div class="eq-panel">
         Cost per request ≈ (input tokens × input price) + (output tokens × output price)
     </div>
 
-    <p><strong>Output tokens usually cost more</strong> than input tokens — generating each new token requires a full forward pass and sampling step, while reading input is a single pass. On Claude Sonnet 4.6, for example, output is priced at $15/M tokens vs. $3/M for input — a 5× premium.</p>
+    <p><strong>Output tokens usually cost more</strong> than input tokens; generating each new token requires a full forward pass and sampling step, while reading input is a single pass. On Claude Sonnet 4.6, for example, output is priced at $15/M tokens vs. $3/M for input, a 5× premium.</p>
 
-    <p><strong>Bigger, more capable models cost more per token</strong> than smaller ones. GPT-4o mini might cost $0.15/M input; Claude Opus 4.6 costs $5/M input — over 30× more for the same token count.</p>
+    <p><strong>Bigger, more capable models cost more per token</strong> than smaller ones. GPT-4o mini might cost $0.15/M input; Claude Opus 4.6 costs $5/M input, over 30× more for the same token count.</p>
 
     <h3>Illustrative API pricing (mid-2026 list prices)</h3>
-    <p class="footnote">Vendors change prices frequently. These are for comparison and classroom estimation — check official pricing pages before production decisions.</p>
+    <p class="footnote">Vendors change prices frequently. These are for comparison and classroom estimation; check official pricing pages before production decisions.</p>
     <div class="table-wrap"><table>
         <thead>
             <tr><th>Tier</th><th>Example model</th><th>Input $/M tokens</th><th>Output $/M tokens</th></tr>
@@ -142,7 +142,7 @@
   <section>
     <h2>3. The Core Tradeoff: Quality vs. Speed vs. Cost</h2>
 
-    <p>You rarely get all three. The mental model is a triangle — push toward one corner and the others suffer:</p>
+    <p>You rarely get all three. The mental model is a triangle, where pushing toward one corner makes the others suffer:</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 400 320" role="img" aria-label="Quality Speed Cost tradeoff triangle">
@@ -163,14 +163,14 @@
     <ul>
         <li><strong>Tiny model:</strong> fast, cheap, but more errors on hard tasks</li>
         <li><strong>Huge model:</strong> slow, expensive, but much more capable and reliable on complex work</li>
-        <li><strong>There is no free lunch</strong> — "best model for everything" does not exist</li>
+        <li><strong>There is no free lunch</strong>, because a "best model for everything" does not exist</li>
     </ul>
   </section>
 
   <section>
     <h2>4. Matching the Model to the Task</h2>
 
-    <p>The assignment skill — and the production skill — is <strong>right-sizing</strong>:</p>
+    <p>The assignment skill, and the production skill, is <strong>right-sizing</strong>:</p>
 
     <div class="table-wrap"><table>
         <thead>
@@ -233,33 +233,33 @@
   <section>
     <h2>5. Local Models vs. API Models</h2>
 
-    <p>Your assignment will likely use <strong>open-source models running locally</strong> (e.g., smaller Llama or GPT-2 variants). Hosted APIs are the other path. Both are valid — they optimize different corners of the triangle.</p>
+    <p>Your assignment will likely use <strong>open-source models running locally</strong> (e.g., smaller Llama or GPT-2 variants). Hosted APIs are the other path. Both are valid; they optimize different corners of the triangle.</p>
 
     <div class="compare-cols">
         <div class="compare-card local">
             <h4>Local (self-hosted)</h4>
             <ul style="font-size:0.92em;margin:0;padding-left:18px;">
-                <li><strong>No per-token API bill</strong> — you pay for hardware and electricity</li>
+                <li><strong>There is no per-token API bill</strong>, since you pay for hardware and electricity</li>
                 <li>Needs a capable GPU/CPU; big models may be impractical on a laptop</li>
                 <li>Can be slower than optimized cloud inference</li>
-                <li>Full control over data — nothing leaves your machine</li>
+                <li>Full control over data, since nothing leaves your machine</li>
                 <li>Great for learning, prototyping, and privacy-sensitive work</li>
             </ul>
         </div>
         <div class="compare-card api">
             <h4>API (OpenAI, Anthropic, Hugging Face Inference)</h4>
             <ul style="font-size:0.92em;margin:0;padding-left:18px;">
-                <li><strong>Pay per use</strong> — no upfront GPU purchase</li>
+                <li><strong>You pay per use</strong>, with no upfront GPU purchase</li>
                 <li>Access to frontier models you could not run locally</li>
                 <li>Provider handles scaling, uptime, and optimization</li>
-                <li>Data sent to a third party — check privacy policies</li>
+                <li>Data is sent to a third party, so check privacy policies</li>
                 <li>Usually faster and more capable than local on consumer hardware</li>
             </ul>
         </div>
     </div>
 
     <!--<div class="highlight-box">
-        <strong>Assignment preview:</strong> Downloading and running a smaller open-weight model locally teaches you the full stack — tokenization, inference, latency on your own hardware — without racking up API bills. Tradeoff: you will not match GPT-5 quality on a MacBook, and that is the point.
+        <strong>Assignment preview:</strong> Downloading and running a smaller open-weight model locally teaches you the full stack (tokenization, inference, latency on your own hardware) without racking up API bills. Tradeoff: you will not match GPT-5 quality on a MacBook, and that is the point.
     </div>-->
   </section>
 
@@ -272,15 +272,15 @@
         1 million requests/day × $0.002 extra per request ≈ <strong>$2,000/day</strong> ≈ <strong>$60,000/month</strong>
     </div>
 
-    <p>A spam filter processing 10 million emails daily cannot afford frontier-model pricing on every message. A legal research tool handling 50 complex queries per day <em>can</em> afford Opus — because volume is low and mistake cost is high.</p>
+    <p>A spam filter processing 10 million emails daily cannot afford frontier-model pricing on every message. A legal research tool handling 50 complex queries per day <em>can</em> afford Opus, because volume is low and mistake cost is high.</p>
 
-    <p>Product teams constantly ask: <em>"Do we need the smartest model, or does a cheaper one work well enough?"</em> The answer is almost always task-dependent — which is why this framework matters before you write your first API call.</p>
+    <p>Product teams constantly ask: <em>"Do we need the smartest model, or does a cheaper one work well enough?"</em> The answer is almost always task-dependent, which is why this framework matters before you write your first API call.</p>
   </section>
 
   <section>
     <!--<h2>7. Try It: Monthly Cost Calculator</h2>
     <div class="interactive-box">
-        <p>Estimate monthly API spend across four illustrative tiers. Adjust the inputs — numbers update instantly.</p>
+        <p>Estimate monthly API spend across four illustrative tiers. Adjust the inputs; numbers update instantly.</p>
 
         <div class="lc-row">
             <div class="lc-field">
@@ -298,8 +298,8 @@
         </div>
 
         <p style="margin:8px 0;font-size:0.92em;">
-            <strong>Daily volume:</strong> <span id="lc-daily-tokens">—</span> total tokens/day
-            &nbsp;·&nbsp; <strong>Monthly requests:</strong> <span id="lc-monthly-reqs">—</span>
+            <strong>Daily volume:</strong> <span id="lc-daily-tokens">-</span> total tokens/day
+            &nbsp;·&nbsp; <strong>Monthly requests:</strong> <span id="lc-monthly-reqs">-</span>
         </p>
 
         <div class="lc-result" id="lc-results"></div>
@@ -315,14 +315,14 @@
         <textarea class="reflect-input" id="lc-reflect-1" placeholder="Consider volume, cost, latency, error tolerance, and whether spam detection needs frontier reasoning…"></textarea>
         <details>
             <summary>Sample answer</summary>
-            <p>No. Spam detection is a high-volume, low-complexity classification task. Running Opus on 5M emails/day at ~700 input tokens each would cost tens of thousands of dollars <em>per day</em> and add seconds of latency per message. A small model (or even a traditional ML classifier) catches most spam at a fraction of the cost. Reserve expensive models for ambiguous edge cases via a cascade — e.g., 95% handled by a mini model, 5% escalated.</p>
+            <p>No. Spam detection is a high-volume, low-complexity classification task. Running Opus on 5M emails/day at ~700 input tokens each would cost tens of thousands of dollars <em>per day</em> and add seconds of latency per message. A small model (or even a traditional ML classifier) catches most spam at a fraction of the cost. Reserve expensive models for ambiguous edge cases via a cascade, e.g., 95% handled by a mini model, 5% escalated.</p>
         </details>
 
         <label class="reflect-label" for="lc-reflect-2">You're building a research assistant that needs to reason through complex multi-step problems. Would a small, fast model be a good fit? What tradeoff are you making either way?</label>
         <textarea class="reflect-input" id="lc-reflect-2" placeholder="Think about reasoning depth, hallucination risk, user trust, and budget…"></textarea>
         <details>
             <summary>Sample answer</summary>
-            <p>A small model is a poor default here. Multi-step research requires chaining logic, citing sources accurately, and recovering from mistakes — areas where frontier models outperform. Using GPT-4o mini saves money and latency but increases hallucination risk and shallow reasoning; users may get confident-sounding wrong answers. The tradeoff with a large model: higher cost (~30–40× per token) and slower responses, but better reliability on hard tasks. For a research assistant, quality usually wins — unless you hybridize (small model for retrieval/summarization, large model for synthesis).</p>
+            <p>A small model is a poor default here. Multi-step research requires chaining logic, citing sources accurately, and recovering from mistakes, areas where frontier models outperform. Using GPT-4o mini saves money and latency but increases hallucination risk and shallow reasoning; users may get confident-sounding wrong answers. The tradeoff with a large model: higher cost (~30–40× per token) and slower responses, but better reliability on hard tasks. For a research assistant, quality usually wins, unless you hybridize (small model for retrieval/summarization, large model for synthesis).</p>
         </details>
     </div>
 
@@ -332,10 +332,10 @@
     <ul>
         <li><strong>Latency</strong> = time to first token + generation time; bigger models are slower on both axes.</li>
         <li><strong>Cost</strong> = input tokens + output tokens × per-model rates; output is usually pricier; frontier models cost far more per token.</li>
-        <li>You trade off <strong>quality, speed, and cost</strong> — rarely get all three.</li>
+        <li>You trade off <strong>quality, speed, and cost</strong>, rarely get all three.</li>
         <li><strong>Match model tier to task complexity</strong>; use cascades at scale.</li>
         <li><strong>Local models</strong> avoid per-token bills but need hardware; <strong>APIs</strong> offer capability without capital expense.</li>
-        <li>At millions of requests, <strong>small cost differences compound</strong> — model choice is a product decision, not just an engineering one.</li>
+        <li>At millions of requests, <strong>small cost differences compound</strong>; model choice is a product decision, not just an engineering one.</li>
     </ul>
 
     <hr>-->
@@ -368,10 +368,10 @@
 <script>
     (function () {
         var TIERS = [
-            { name: 'Small — GPT-4o mini', input: 0.15, output: 0.60 },
-            { name: 'Medium — Claude Haiku 4.5', input: 1.00, output: 5.00 },
-            { name: 'Large — Claude Sonnet 4.6', input: 3.00, output: 15.00 },
-            { name: 'Frontier — Claude Opus 4.6', input: 5.00, output: 25.00 }
+            { name: 'Small (GPT-4o mini)', input: 0.15, output: 0.60 },
+            { name: 'Medium (Claude Haiku 4.5)', input: 1.00, output: 5.00 },
+            { name: 'Large (Claude Sonnet 4.6)', input: 3.00, output: 15.00 },
+            { name: 'Frontier (Claude Opus 4.6)', input: 5.00, output: 25.00 }
         ];
 
         function formatMoney(n) {

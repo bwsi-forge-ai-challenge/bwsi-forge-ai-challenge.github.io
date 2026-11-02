@@ -58,7 +58,7 @@
 
     <p>Example: for the phrase "The cat sat on the" the model might assign high probability to <em>mat</em>, moderate probability to <em>floor</em>, and low probability to <em>airplane</em>. When it picks the wrong token, the loss is high; backpropagation adjusts attention weights, embedding tables, and feed-forward layers so similar contexts do better next time.</p>
 
-    <p>Everything else — reasoning-like answers, translation, coding help — emerges from getting very good at this one prediction game across diverse text.</p>
+    <p>Everything else (reasoning-like answers, translation, coding help) emerges from getting very good at this one prediction game across diverse text.</p>
   </section>
 
   <section>
@@ -72,17 +72,17 @@
         <li>Reference material, Q&amp;A threads, documentation</li>
     </ul>
 
-    <p><span class="stat-pill">Scale snapshot</span> GPT-3 was trained on roughly <strong>300 billion tokens</strong>. Modern frontier models often train on <strong>trillions</strong> of tokens — many passes over filtered, deduplicated subsets of the web.</p>
+    <p><span class="stat-pill">Scale snapshot</span> GPT-3 was trained on roughly <strong>300 billion tokens</strong>. Modern frontier models often train on <strong>trillions</strong> of tokens, with many passes over filtered, deduplicated subsets of the web.</p>
 
     <p>Quantity alone is not enough. Training teams invest heavily in <strong>data quality</strong>:</p>
     <ul>
-        <li><strong>Filtering</strong> — remove spam, boilerplate, low-quality pages</li>
-        <li><strong>Deduplication</strong> — the same article copied 10,000 times should not count 10,000 times</li>
-        <li><strong>Safety filtering</strong> — reduce blatantly harmful or toxic content where possible</li>
-        <li><strong>Mixing</strong> — balance code, prose, dialogue, and factual text so the model sees varied styles</li>
+        <li><strong>Filtering</strong> removes spam, boilerplate, and low-quality pages</li>
+        <li><strong>Deduplication</strong> makes sure the same article copied 10,000 times does not count 10,000 times</li>
+        <li><strong>Safety filtering</strong> reduces blatantly harmful or toxic content where possible</li>
+        <li><strong>Mixing</strong> balances code, prose, dialogue, and factual text so the model sees varied styles</li>
     </ul>
 
-    <p>Bad data teaches bad habits. A model trained mostly on garbled forum spam will produce garbled forum spam — even with billions of parameters.</p>
+    <p>Bad data teaches bad habits. A model trained mostly on garbled forum spam will produce garbled forum spam, even with billions of parameters.</p>
   </section>
 
   <section>
@@ -93,10 +93,10 @@
     <ul>
         <li><strong>Duration:</strong> weeks to months on large GPU/TPU clusters</li>
         <li><strong>Cost:</strong> millions to tens of millions of dollars for frontier models</li>
-        <li><strong>Output:</strong> a <strong>base model</strong> — strong at continuing text, but not necessarily helpful or safe to chat with</li>
+        <li><strong>Output:</strong> a <strong>base model</strong>, strong at continuing text, but not necessarily helpful or safe to chat with</li>
     </ul>
 
-    <p>A base model is like a very well-read autocomplete engine. It has absorbed grammar, facts, coding patterns, and style — but it was never explicitly taught to follow instructions or refuse harmful requests.</p>
+    <p>A base model is like a very well-read autocomplete engine. It has absorbed grammar, facts, coding patterns, and style, but it was never explicitly taught to follow instructions or refuse harmful requests.</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 760 120" role="img" aria-label="Training pipeline from raw text to deployed assistant">
@@ -150,7 +150,7 @@
   <section>
     <h2>4. From Base Model to Assistant: Fine-Tuning</h2>
 
-    <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence — because that is what "predict the next token" looked like on the internet.</p>
+    <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence, because that is what "predict the next token" looked like on the internet.</p>
 
     <div class="response-card base">
         <h4>Base-model style (completion, not instruction-following)</h4>
@@ -161,21 +161,21 @@
     <div class="response-card tuned">
         <h4>Instruction-tuned style (after fine-tuning)</h4>
         <p><strong>Prompt:</strong> <span class="prompt-box" style="display:inline;margin:0;">Write a poem about the ocean.</span></p>
-        <p><strong>Output:</strong> Salt wind, slate sky,<br>Horizon blurs where gulls drift by.<br>Each wave repeats what none can keep —<br>The deep remembers, wide and slow.</p>
+        <p><strong>Output:</strong> Salt wind, slate sky,<br>Horizon blurs where gulls drift by.<br>Each wave repeats what none can keep,<br>The deep remembers, wide and slow.</p>
     </div>
 
-    <p><strong>Fine-tuning</strong> adds a second training phase on curated examples of desired behavior — often prompt/response pairs written by humans or filtered from high-quality conversations:</p>
+    <p><strong>Fine-tuning</strong> adds a second training phase on curated examples of desired behavior, often prompt/response pairs written by humans or filtered from high-quality conversations:</p>
     <ul>
         <li>User asks a question → model should give a direct, helpful answer</li>
         <li>User requests a format → model should follow it (bullets, JSON, short summary)</li>
         <li>User asks for something unsafe → model should decline politely</li>
     </ul>
 
-    <p>Fine-tuning is much cheaper than pretraining because the dataset is tiny by comparison and training runs for far fewer steps. You are not re-reading the whole internet — you are steering an already-capable model toward a product experience.</p>
+    <p>Fine-tuning is much cheaper than pretraining because the dataset is tiny by comparison and training runs for far fewer steps. You are not re-reading the whole internet; you are steering an already-capable model toward a product experience.</p>
   </section>
 
   <section>
-    <h2>5. RLHF — Reinforcement Learning from Human Feedback (Conceptual)</h2>
+    <h2>5. Reinforcement Learning from Human Feedback (RLHF, Conceptual)</h2>
 
     <p>Even after fine-tuning, two answers can both be "valid" but one is clearer, kinder, or more accurate. <strong>RLHF</strong> (reinforcement learning from human feedback) adds a preference layer:</p>
     <ol>
@@ -188,14 +188,14 @@
     <p>You do not need the RL math details here. The takeaway is simple: <strong>RLHF teaches the model what humans prefer</strong>, not just what text is most likely on the internet.</p>
 
     <div class="highlight-box">
-        <strong>Why it matters:</strong> Pretraining data includes rude comments, misinformation, and toxic patterns. RLHF helps the deployed assistant be more polite, helpful, and cautious — even when pretraining exposed it to worse examples.
+        <strong>Why it matters:</strong> Pretraining data includes rude comments, misinformation, and toxic patterns. RLHF helps the deployed assistant be more polite, helpful, and cautious, even when pretraining exposed it to worse examples.
     </div>
   </section>
 
   <section>
     <h2>6. Why Scale Matters (Scaling Laws)</h2>
 
-    <p>Researchers discovered something surprising: for a fixed architecture family, <strong>bigger models + more training data + more compute</strong> tend to produce smoothly better performance. Plot loss or benchmark score against model size and you often see a predictable downward curve — the famous <strong>scaling laws</strong>.</p>
+    <p>Researchers discovered something surprising: for a fixed architecture family, <strong>bigger models + more training data + more compute</strong> tend to produce smoothly better performance. Plot loss or benchmark score against model size and you often see a predictable downward curve, the famous <strong>scaling laws</strong>.</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 520 260" role="img" aria-label="Simplified scaling law chart showing better performance as model size increases">
@@ -215,7 +215,7 @@
             <text x="400" y="48" font-size="10" fill="#1d4ed8" font-weight="600">frontier models</text>
             <text x="320" y="95" font-size="9" fill="#64748b">emergent skills appear</text>
         </svg>
-        <figcaption>Simplified trend: larger models trained on more data generally score better on hard benchmarks — which is why parameter counts and training tokens dominate AI headlines.</figcaption>
+        <figcaption>Simplified trend: larger models trained on more data generally score better on hard benchmarks, which is why parameter counts and training tokens dominate AI headlines.</figcaption>
     </figure>
 
     <h3>What the scaling laws actually say</h3>
@@ -241,7 +241,7 @@
         <p><strong>Answer:</strong> About \(20 \times 10\text{B} = 200\) billion tokens, and \(C \approx 6 \times 10\text{B} \times 200\text{B} = 1.2 \times 10^{22}\) operations.</p>
     </details>
 
-    <p>Nobody designed the model to "learn reasoning" as a separate module. Yet as scale increased, systems started passing exams, writing code, and translating languages — skills that were not explicitly labeled in the training data. That emergent behavior is a major reason labs keep investing in scale, even though it is expensive.</p>
+    <p>Nobody designed the model to "learn reasoning" as a separate module. Yet as scale increased, systems started passing exams, writing code, and translating languages, skills that were not explicitly labeled in the training data. That emergent behavior is a major reason labs keep investing in scale, even though it is expensive.</p>
 
     <p>Scale is not infinite magic. Data runs out, costs explode, and diminishing returns appear. But the scaling-law mindset explains why GPT-4, Claude, Gemini, and Llama 3 announcements all emphasize <strong>parameters</strong>, <strong>training tokens</strong>, and <strong>compute budget</strong>.</p>
   </section>
@@ -266,7 +266,7 @@
         <button type="button" id="tt-btn-a">Response A</button>
         <button type="button" id="tt-btn-b">Response B</button>
         <div class="feedback ok" id="tt-fb-ok">
-            <strong>Correct.</strong> Response B follows the instruction (two simple sentences, kid-friendly tone). Response A keeps <em>continuing</em> the prompt like a autocomplete engine — repeating the question and listing meta-commentary instead of answering directly. That pattern is typical of base models before instruction fine-tuning.
+            <strong>Correct.</strong> Response B follows the instruction (two simple sentences, kid-friendly tone). Response A keeps <em>continuing</em> the prompt like a autocomplete engine, repeating the question and listing meta-commentary instead of answering directly. That pattern is typical of base models before instruction fine-tuning.
         </div>
         <div class="feedback no" id="tt-fb-no">
             <strong>Not quite.</strong> Look for which response actually <em>answers</em> the question in two sentences. Base models often repeat or extend the prompt; instruction-tuned models try to fulfill the request.
@@ -288,7 +288,7 @@
         <textarea class="reflect-input" id="tt-reflect-2" placeholder="Connect human rankings to what the model learns to optimize…"></textarea>
         <details>
             <summary>Sample answer</summary>
-            <p>Pretraining optimizes likelihood on raw web text — which includes slurs and insults. RLHF adds a second objective: humans rank polite, safe answers higher. The model is nudged toward responses that score well on that preference signal, even when a toxic completion would have been statistically likely from pretraining alone.</p>
+            <p>Pretraining optimizes likelihood on raw web text, which includes slurs and insults. RLHF adds a second objective: humans rank polite, safe answers higher. The model is nudged toward responses that score well on that preference signal, even when a toxic completion would have been statistically likely from pretraining alone.</p>
         </details>
     </div>
 
@@ -296,11 +296,11 @@
 
     <h2>Key Takeaways</h2>
     <ul>
-        <li>LLM training is <strong>next-token prediction + gradient descent</strong>, scaled up — not a different species of machine learning.</li>
+        <li>LLM training is <strong>next-token prediction + gradient descent</strong>, scaled up, not a different species of machine learning.</li>
         <li><strong>Pretraining</strong> on web-scale text builds a base model; it is slow, expensive, and general.</li>
         <li><strong>Fine-tuning</strong> on curated examples teaches instruction-following and product behavior cheaply.</li>
-        <li><strong>RLHF</strong> aligns outputs with human preferences — helpful, harmless, honest — at a high level.</li>
-        <li><strong>Scaling laws</strong> explain why bigger models and more tokens keep winning benchmarks — until cost and data limits bite.</li>
+        <li><strong>RLHF</strong> aligns outputs with human preferences (helpful, harmless, honest) at a high level.</li>
+        <li><strong>Scaling laws</strong> explain why bigger models and more tokens keep winning benchmarks, until cost and data limits bite.</li>
     </ul>
 
     <hr>-->
@@ -310,7 +310,7 @@
         <li><strong>Scaling Laws for Neural Language Models (Kaplan et al., 2020):</strong> The paper that popularized predictable power-law improvements with scale. <a href="https://arxiv.org/abs/2001.08361" target="_blank">arXiv</a></li>
         <li><strong>Training Compute-Optimal Large Language Models (Hoffmann et al., 2022):</strong> The "Chinchilla" paper behind the 20-tokens-per-parameter rule. <a href="https://arxiv.org/abs/2203.15556" target="_blank">arXiv</a></li>
         <li><strong>Training language models to follow instructions with human feedback (Ouyang et al., 2022):</strong> InstructGPT / RLHF overview from OpenAI. <a href="https://arxiv.org/abs/2203.02155" target="_blank">arXiv</a></li>
-        <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> GPT-3 paper — scale and emergent behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv</a></li>
+        <li><strong>Language Models are Few-Shot Learners (Brown et al., 2020):</strong> The GPT-3 paper, which shows how scale leads to emergent behavior. <a href="https://arxiv.org/abs/2005.14165" target="_blank">arXiv</a></li>
     </ul>
   </section>
 

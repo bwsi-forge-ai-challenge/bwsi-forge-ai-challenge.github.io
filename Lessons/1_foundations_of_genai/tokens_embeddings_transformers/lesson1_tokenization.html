@@ -66,7 +66,7 @@
 
   <section>
     <h2>2. Tokens: Chunks of Meaning</h2>
-    <p>A <b>token</b> is a chunk of text — not necessarily a whole word. Each token gets a unique integer ID. Think of tokenizing a book as converting it into a list of word-piece IDs the model's vocabulary understands.</p>
+    <p>A <b>token</b> is a chunk of text, not necessarily a whole word. Each token gets a unique integer ID. Think of tokenizing a book as converting it into a list of word-piece IDs the model's vocabulary understands.</p>
 
     <table border="1" cellpadding="8" cellspacing="0" width="100%" style="border-collapse: collapse;">
         <tr bgcolor="#f1f5f9"><th>Text fragment</th><th>Typical tokenization</th><th>Token count</th></tr>
@@ -162,7 +162,7 @@
   <section>
     <h2>4. GPT-Style Tokenization (Real-World Example)</h2>
     <p>GPT-family models use BPE on byte sequences (cl100k_base for GPT-4 class models). Vocabulary size ≈ <b>50,000</b> tokens.</p>
-    <p>Example: <span style="font-family: monospace;">"Hello, how are you?"</span> might become IDs like <span style="font-family: monospace;">[15339, 11, 534, 366, 345, 30]</span> — exact splits depend on the trained merge table.</p>
+    <p>Example: <span style="font-family: monospace;">"Hello, how are you?"</span> might become IDs like <span style="font-family: monospace;">[15339, 11, 534, 366, 345, 30]</span>; exact splits depend on the trained merge table.</p>
     <p><b>Key property:</b> tokenization is <b>deterministic</b>. The same string always yields the same token sequence for a fixed tokenizer version.</p>
 
     <h3>Token ID mapping example</h3>
@@ -184,7 +184,7 @@
             <td style="font-family: monospace; color: #1d4ed8;">10152</td>
         </tr>
     </table>
-    <p style="font-size: 0.9em; color: #64748b;">Note the leading space on <span style="font-family: monospace;">" cat"</span> — GPT tokenizers often attach spaces to the following word token.</p>
+    <p style="font-size: 0.9em; color: #64748b;">Note the leading space on <span style="font-family: monospace;">" cat"</span>; GPT tokenizers often attach spaces to the following word token.</p>
   </section>
 
   <section>
@@ -192,9 +192,9 @@
     <ul>
         <li><b>Downstream effects:</b> embedding lookup, attention length, and memory all depend on token count, not word count.</li>
         <li><b>Longer sequences</b> → slower training and inference, higher API cost.</li>
-        <li><b>Language differences:</b> English averages ~1.3 tokens per word; Japanese may use ~1.3 tokens <em>per character</em> — same meaning can cost 2–3× more tokens.</li>
+        <li><b>Language differences:</b> English averages ~1.3 tokens per word; Japanese may use ~1.3 tokens <em>per character</em>, so the same meaning can cost 2–3× more tokens.</li>
         <li><b>Split entities:</b> if "New" and "York" are separate tokens, the model must learn they belong together (it can, but it's harder).</li>
-        <li><b>Billing:</b> OpenAI and other APIs charge per token — tokenization is literally the meter on the pump.</li>
+        <li><b>Billing:</b> OpenAI and other APIs charge per token; tokenization is literally the meter on the pump.</li>
     </ul>
 
     <h3>Language comparison (same meaning, different token counts)</h3>
@@ -219,7 +219,7 @@
   <section>
     <!-- <h2>6. Edge Cases and Quirks</h2>
     <ul>
-        <li><b>Spaces are tokens.</b> <span style="font-family: monospace;">"hello world"</span> → <span style="font-family: monospace;">["hello", " world"]</span> — the space often attaches to the second piece.</li>
+        <li><b>Spaces are tokens.</b> <span style="font-family: monospace;">"hello world"</span> → <span style="font-family: monospace;">["hello", " world"]</span>; the space often attaches to the second piece.</li>
         <li><b>Numbers:</b> <span style="font-family: monospace;">"123"</span> may be one token; <span style="font-family: monospace;">"1234567890"</span> often splits into several.</li>
         <li><b>Emojis:</b> usually dedicated tokens, behavior varies by tokenizer version.</li>
         <li><b>Apostrophe variants:</b> straight <span style="font-family: monospace;">'</span> vs curly <span style="font-family: monospace;">'</span> can tokenize differently.</li>
@@ -326,7 +326,7 @@
     <ol>
         <li><strong>Tokenize your name.</strong> How many tokens? Does it split into subwords? Why?</li>
         <li><strong>Try another language.</strong> Is the token count longer than English? Why?</li>
-        <li><strong>Find an odd split.</strong> Paste a URL, hashtag, or rare word — why did the tokenizer break it that way?</li>
+        <li><strong>Find an odd split.</strong> Paste a URL, hashtag, or rare word. Why did the tokenizer break it that way?</li>
         <li><strong>Challenge:</strong> Find a short string that uses the <em>most</em> tokens per character.</li>
         <li><strong>Back-of-envelope:</strong> A 77,000-word book × ~1.3 tokens/word ≈ <b>100,000 tokens</b> (Harry Potter book 1 scale). At $0.01/1k tokens, one full read-through generation costs ~$1 in tokens alone.</li>
     </ol>
@@ -407,9 +407,9 @@
         document.getElementById('simple-vocab-lbl').textContent = labels[vocabLevel];
 
         if (!text.trim()) {
-            document.getElementById('out-char').innerHTML = '—';
-            document.getElementById('out-word').innerHTML = '—';
-            document.getElementById('out-subword').innerHTML = '—';
+            document.getElementById('out-char').innerHTML = '-';
+            document.getElementById('out-word').innerHTML = '-';
+            document.getElementById('out-subword').innerHTML = '-';
             document.getElementById('count-char').textContent = '0';
             document.getElementById('count-word').textContent = '0';
             document.getElementById('count-subword').textContent = '0';

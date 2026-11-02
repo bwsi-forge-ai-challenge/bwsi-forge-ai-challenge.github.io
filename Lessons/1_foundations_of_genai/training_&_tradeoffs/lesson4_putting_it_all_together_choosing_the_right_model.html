@@ -29,7 +29,7 @@
 
   <section>
     <div class="assignment-box">
-        <strong>Before the assignment:</strong> You will fine-tune a model, track experiments, and compare runs. This page is your cheat sheet for <em>why</em> those choices matter — not just <em>how</em> to click through a notebook.
+        <strong>Before the assignment:</strong> You will fine-tune a model, track experiments, and compare runs. This page is your cheat sheet for <em>why</em> those choices matter, not just <em>how</em> to click through a notebook.
     </div>
   </section>
 
@@ -41,7 +41,7 @@
     <div class="question-card">
         <span class="question-num">QUESTION 1</span>
         <h3>How much context do I need?</h3>
-        <p><strong>Short prompts</strong> (a tweet-length question, a single email) fit easily in any modern model — even 8K-token windows are plenty.</p>
+        <p><strong>Short prompts</strong> (a tweet-length question, a single email) fit easily in any modern model; even 8K-token windows are plenty.</p>
         <p><strong>Long documents</strong> (full contracts, codebases, multi-turn chat history) need a model with a large context window <em>and</em> budget for all those input tokens. From Lesson 2: stuffing 100 pages into the prompt is expensive and slow even when it technically fits.</p>
         <p><strong>Rule of thumb:</strong> retrieve or summarize first; only send what the model must see.</p>
     </div>
@@ -49,7 +49,7 @@
     <div class="question-card">
         <span class="question-num">QUESTION 2</span>
         <h3>How fast does this need to respond?</h3>
-        <p><strong>Real-time chat</strong> (customer support, copilots in the IDE) needs low latency — usually a smaller or mid-tier model, streaming output, and short replies.</p>
+        <p><strong>Real-time chat</strong> (customer support, copilots in the IDE) needs low latency, usually a smaller or mid-tier model, streaming output, and short replies.</p>
         <p><strong>Batch / overnight jobs</strong> (summarizing thousands of tickets, labeling a dataset) can tolerate slow, frontier models because nobody is staring at a spinner.</p>
         <p>From Lesson 3: latency = time to first token + (output length ÷ tokens per second). Pick model tier accordingly.</p>
     </div>
@@ -57,8 +57,8 @@
     <div class="question-card">
         <span class="question-num">QUESTION 3</span>
         <h3>How complex is the task?</h3>
-        <p><strong>Simple classification or extraction</strong> ("Is this email spam?", "Pull the invoice date") often works with a small model + clear prompt — or even a non-LLM baseline.</p>
-        <p><strong>Deep reasoning, multi-step planning, rare domain expertise</strong> (legal analysis, complex debugging, nuanced writing) may need a larger model — but verify with evals before assuming you need the biggest one.</p>
+        <p><strong>Simple classification or extraction</strong> ("Is this email spam?", "Pull the invoice date") often works with a small model + clear prompt, or even a non-LLM baseline.</p>
+        <p><strong>Deep reasoning, multi-step planning, rare domain expertise</strong> (legal analysis, complex debugging, nuanced writing) may need a larger model, but verify with evals before assuming you need the biggest one.</p>
         <p>Don't use a sledgehammer for a thumbtack. Start small, measure, escalate only when metrics justify it.</p>
     </div>
 
@@ -87,7 +87,7 @@
   </section>
 
   <section>
-    <h2>2. Base Model vs. Fine-Tuned — When Do You Need Which?</h2>
+    <h2>2. When Do You Need a Base Model vs. a Fine-Tuned One?</h2>
 
     <p>From Lesson 1: a <strong>base model</strong> (or a general instruction-tuned API like ChatGPT) already absorbed broad language knowledge during pretraining. A <strong>fine-tuned model</strong> gets extra training on <em>your</em> examples to specialize behavior.</p>
 
@@ -99,13 +99,13 @@
     <ul>
         <li>You need a <strong>very specific style or format</strong> (brand voice, JSON schema, medical note template) that prompting alone can't stabilize</li>
         <li>You have <strong>domain knowledge</strong> the base model rarely saw (internal acronyms, proprietary procedures, niche regulations)</li>
-        <li>You need <strong>consistent behavior on a narrow task</strong> at scale — same input pattern, same output structure, every time</li>
+        <li>You need <strong>consistent behavior on a narrow task</strong> at scale, with the same input pattern and the same output structure every time</li>
     </ul>
 
     <p><strong>Stick with a base / API model when:</strong></p>
     <ul>
         <li>The task is general Q&amp;A, brainstorming, or summarization of public topics</li>
-        <li>Your requirements change weekly — prompts update in minutes; retraining does not</li>
+        <li>Your requirements change weekly, and prompts update in minutes while retraining does not</li>
         <li>You lack enough high-quality labeled examples (rough rule: hundreds to thousands for meaningful SFT, not five examples)</li>
     </ul>
 
@@ -154,7 +154,7 @@
             <text x="500" y="312" text-anchor="middle" font-size="10" font-weight="600">experiments in W&amp;B</text>
             <rect x="140" y="360" width="340" height="44" rx="8" fill="#f0fdf4" stroke="#16a34a"/>
             <text x="310" y="380" text-anchor="middle" font-size="10" font-weight="600">Always: pick model size for context + latency + cost (Lessons 2 &amp; 3)</text>
-            <text x="310" y="394" text-anchor="middle" font-size="9" fill="#64748b">Measure on your task — don't guess from parameter count alone</text>
+            <text x="310" y="394" text-anchor="middle" font-size="9" fill="#64748b">Measure on your task; don't guess from parameter count alone</text>
         </svg>
         <figcaption>Decision tree: prompt-first, fine-tune only when you have a narrow gap and enough data. Model size is a separate axis.</figcaption>
     </figure>-->
@@ -227,7 +227,7 @@
         Always: pick model size for context + latency + cost (Lessons 2 &amp; 3)
     </text>
     <text x="360" y="424" text-anchor="middle" font-size="9" fill="#64748b">
-        Measure on your task — don't guess from parameter count alone
+        Measure on your task; don't guess from parameter count alone
     </text>
 </svg>
         <figcaption>Decision tree: prompt-first, fine-tune only when you have a narrow gap and enough data. Model size is a separate axis.</figcaption>
@@ -237,14 +237,14 @@
   <section>
     <h2>3. What Fine-Tuning Looks Like in Practice</h2>
 
-    <p>Fine-tuning is not mysterious — it's the same gradient-descent loop from Lesson 1, just on a small curated dataset and for far fewer steps than pretraining.</p>
+    <p>Fine-tuning is not mysterious; it's the same gradient-descent loop from Lesson 1, just on a small curated dataset and for far fewer steps than pretraining.</p>
 
     <ol class="step-list">
         <li><strong>Prepare a dataset</strong> of input/output pairs for your task. Example: customer message → ideal support reply. Clean, consistent formatting matters more than raw size.</li>
-        <li><strong>Choose a starting checkpoint</strong> — a pretrained or instruction-tuned base (e.g., Llama, Mistral, GPT fine-tuning API). You are nudging weights, not training from scratch.</li>
-        <li><strong>Train with small learning rates</strong> for a few epochs. Updates are tiny compared to pretraining — you don't want to "forget" general language ability (catastrophic forgetting).</li>
+        <li><strong>Choose a starting checkpoint</strong>, such as a pretrained or instruction-tuned base (e.g., Llama, Mistral, GPT fine-tuning API). You are nudging weights, not training from scratch.</li>
+        <li><strong>Train with small learning rates</strong> for a few epochs. Updates are tiny compared to pretraining; you don't want to "forget" general language ability (catastrophic forgetting).</li>
         <li><strong>Evaluate on a held-out set</strong> you did not train on. Did accuracy, F1, human ratings, or task-specific metrics improve vs. the base model with prompts?</li>
-        <li><strong>Log everything</strong> — hyperparameters, loss curves, eval scores — so you can compare runs and reproduce what worked.</li>
+        <li><strong>Log everything</strong>, including hyperparameters, loss curves, and eval scores, so you can compare runs and reproduce what worked.</li>
     </ol>
 
     <div class="table-wrap"><table>
@@ -259,7 +259,7 @@
         </tbody>
     </table></div>
 
-    <p>Fine-tuning involves lots of trial and error: learning rate too high → model diverges; too low → no improvement; too many epochs → overfits your tiny set. That is why experiment tracking is not optional — it is how professionals remember what they already tried.</p>
+    <p>Fine-tuning involves lots of trial and error: learning rate too high → model diverges; too low → no improvement; too many epochs → overfits your tiny set. That is why experiment tracking is not optional; it is how professionals remember what they already tried.</p>
   </section>
 
   <section>
@@ -269,19 +269,19 @@
 
     <p><strong>What W&amp;B tracks for you:</strong></p>
     <ul>
-        <li><strong>Loss curves</strong> — training (and validation) loss over steps; should generally trend down unless something is wrong</li>
-        <li><strong>Hyperparameters</strong> — learning rate, batch size, epochs, model name — attached to each run automatically</li>
-        <li><strong>Side-by-side comparisons</strong> — overlay multiple runs to see which settings won</li>
-        <li><strong>Artifacts &amp; notes</strong> — checkpoints, eval tables, free-text "changed prompt template v2"</li>
+        <li><strong>Loss curves</strong> show training (and validation) loss over steps, and should generally trend down unless something is wrong</li>
+        <li><strong>Hyperparameters</strong> such as learning rate, batch size, epochs, and model name are attached to each run automatically</li>
+        <li><strong>Side-by-side comparisons</strong> let you overlay multiple runs to see which settings won</li>
+        <li><strong>Artifacts &amp; notes</strong> include checkpoints, eval tables, and free-text notes like "changed prompt template v2"</li>
     </ul>
 
-    <p>Why this matters: your first fine-tune will probably underperform. Your fifth might win — but only if you can remember what changed between them. Spreadsheets and memory don't scale; W&amp;B does.</p>
+    <p>Why this matters: your first fine-tune will probably underperform. Your fifth might win, but only if you can remember what changed between them. Spreadsheets and memory don't scale; W&amp;B does.</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 640 320" role="img" aria-label="Mock Weights and Biases dashboard showing training loss curve and hyperparameter table">
             <rect x="0" y="0" width="640" height="320" fill="#fafafa"/>
             <rect x="0" y="0" width="640" height="36" fill="#1e1b4b"/>
-            <text x="16" y="23" font-size="12" fill="#fff" font-weight="600">wandb — fine-tune-support-bot</text>
+            <text x="16" y="23" font-size="12" fill="#fff" font-weight="600">wandb (fine-tune-support-bot)</text>
             <text x="520" y="23" font-size="10" fill="#a5b4fc">Runs: 4 · Best: run-3</text>
             <rect x="12" y="48" width="380" height="200" rx="6" fill="#fff" stroke="#e2e8f0"/>
             <text x="24" y="68" font-size="11" fill="#334155" font-weight="600">train/loss</text>
@@ -314,10 +314,10 @@
             <text x="24" y="280" font-size="10" fill="#334155" font-weight="600">What you look for:</text>
             <text x="24" y="296" font-size="9" fill="#64748b">Smooth downward loss · validation not diverging · compare runs before picking a checkpoint for deployment</text>
         </svg>
-        <figcaption>Mock W&amp;B view — what you'll see after logging your assignment runs. Red dashed line = unstable training; blue = run you'd ship.</figcaption>
+        <figcaption>Mock W&amp;B view of what you'll see after logging your assignment runs. Red dashed line = unstable training; blue = run you'd ship.</figcaption>
     </figure>
 
-    <p class="footnote">W&amp;B is standard in real ML workflows — not just coursework. The habit of "log first, argue from curves later" saves teams from mistaking luck for skill.</p>
+    <p class="footnote">W&amp;B is standard in real ML workflows, not just coursework. The habit of "log first, argue from curves later" saves teams from mistaking luck for skill.</p>
 
     <!--<hr>
 
@@ -327,29 +327,29 @@
         <p>For each project below, decide: <strong>base model or fine-tuned?</strong> <strong>Big model or small?</strong> Briefly explain why, using context, latency, cost, and task complexity.</p>
 
         <div class="project-card">
-            <h4>Project A — Customer support chatbot</h4>
+            <h4>Project A (Customer support chatbot)</h4>
             <p>Live chat widget on a retail site. Must reply in under 2 seconds. Answers draw on return policies, order status APIs, and brand tone guidelines.</p>
             <label class="reflect-label" for="tt4-a">Your decision (base vs fine-tuned, big vs small, why):</label>
             <textarea class="reflect-input" id="tt4-a" placeholder="Consider latency, domain tone, volume…"></textarea>
             <details>
                 <summary>Sample reasoning</summary>
-                <p><strong>Small–medium instruction model + fine-tune (or RAG).</strong> Latency demands rules out frontier models. Fine-tuning (or heavy prompt + retrieval over policy docs) helps stable brand voice and consistent refund steps. Base GPT-style API might work with RAG first — fine-tune if tone/format still drifts at scale.</p>
+                <p><strong>Small–medium instruction model + fine-tune (or RAG).</strong> Latency demands rules out frontier models. Fine-tuning (or heavy prompt + retrieval over policy docs) helps stable brand voice and consistent refund steps. Base GPT-style API might work with RAG first; fine-tune if tone/format still drifts at scale.</p>
             </details>
         </div>
 
         <div class="project-card">
-            <h4>Project B — Code autocomplete in the IDE</h4>
+            <h4>Project B (Code autocomplete in the IDE)</h4>
             <p>Suggests the next few lines as the developer types. Must feel instant (&lt;200 ms perceived). Runs locally or on a nearby server millions of times per day.</p>
             <label class="reflect-label" for="tt4-b">Your decision:</label>
             <textarea class="reflect-input" id="tt4-b" placeholder="Consider local inference, model size, specialization…"></textarea>
             <details>
                 <summary>Sample reasoning</summary>
-                <p><strong>Small specialized base model, often pre-trained on code (not generic chat).</strong> Fine-tuning on your company's codebase patterns can help, but many products start with Codex/StarCoder-class models without custom fine-tune. Size beats raw capability — latency and cost dominate. Frontier chat models are wrong tool.</p>
+                <p><strong>Small specialized base model, often pre-trained on code (not generic chat).</strong> Fine-tuning on your company's codebase patterns can help, but many products start with Codex/StarCoder-class models without custom fine-tune. Size beats raw capability; latency and cost dominate. Frontier chat models are wrong tool.</p>
             </details>
         </div>
 
         <div class="project-card">
-            <h4>Project C — Poetry generator for a creative writing app</h4>
+            <h4>Project C (Poetry generator for a creative writing app)</h4>
             <p>Users request poems in specific forms (haiku, sonnet). Quality matters more than speed; batch generation overnight is acceptable for a "workshop" feature.</p>
             <label class="reflect-label" for="tt4-c">Your decision:</label>
             <textarea class="reflect-input" id="tt4-c" placeholder="Consider creativity, format constraints, fine-tuning for meter…"></textarea>
@@ -366,9 +366,9 @@
     <ul>
         <li>Ask <strong>context, speed, complexity</strong> before picking a model tier.</li>
         <li><strong>Prompt + eval first</strong>; fine-tune only for narrow gaps with enough data.</li>
-        <li>Fine-tuning is <strong>small-data, small-step</strong> training — measure on your task, not vibes.</li>
+        <li>Fine-tuning is <strong>small-data, small-step</strong> training, so measure on your task, not vibes.</li>
         <li><strong>W&amp;B</strong> (or similar) is how you compare runs and avoid repeating failed experiments.</li>
-        <li>The assignment puts this framework into practice — choose hyperparameters deliberately and read your loss curves.</li>
+        <li>The assignment puts this framework into practice, so choose hyperparameters deliberately and read your loss curves.</li>
     </ul>
 
     <div class="assignment-box">
@@ -379,7 +379,7 @@
   <section>
     <h2>Recommended Reading</h2>
     <ul>
-        <li><strong>Weights &amp; Biases documentation:</strong> <a href="https://docs.wandb.ai/" target="_blank">docs.wandb.ai</a> — quickstart for logging training runs</li>
+        <li><strong>Weights &amp; Biases documentation:</strong> <a href="https://docs.wandb.ai/" target="_blank">docs.wandb.ai</a> has a quickstart for logging training runs</li>
         <li><strong>OpenAI fine-tuning guide:</strong> Practical notes on when fine-tuning helps vs. prompting. <a href="https://platform.openai.com/docs/guides/fine-tuning" target="_blank">OpenAI docs</a></li>
         <li><strong>Hugging Face Transformers fine-tuning tutorial:</strong> Code-level walkthrough aligned with many classroom assignments. <a href="https://huggingface.co/docs/transformers/training" target="_blank">HF docs</a></li>
     </ul>

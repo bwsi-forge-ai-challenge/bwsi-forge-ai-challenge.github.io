@@ -45,7 +45,7 @@
     <p>Example: summarize a 10-page research paper in one sentence, or rewrite a technical paragraph for a 5-year-old. The model does not "understand" in a human sense, but it has learned how ideas are expressed at different lengths and reading levels.</p>
 
     <h3>Creative brainstorming</h3>
-    <p>Models combine learned patterns in novel ways. Each run can produce different variations — useful when you want quantity before quality.</p>
+    <p>Models combine learned patterns in novel ways. Each run can produce different variations, useful when you want quantity before quality.</p>
     <p>Example: "Give me 10 ideas for a sci-fi short story" or "Design a logo concept for a coffee shop." Outputs vary each time because generation is stochastic.</p>
 
     <h3>Answering questions from training data</h3>
@@ -66,12 +66,12 @@
     <p>Example: "What is 247 × 18?" may yield 4,446 or another plausible-sounding wrong number. "If A = B and B = C, does A = C?" can waver despite the syllogism being trivial for humans.</p>
 
     <h3>New or rare information</h3>
-    <p>Events after the training cutoff, niche facts, or uncommon names are not in the learned distribution. The model may still answer confidently — incorrectly.</p>
+    <p>Events after the training cutoff, niche facts, or uncommon names are not in the learned distribution. The model may still answer confidently, incorrectly.</p>
     <p>Example: asking a 2023-trained model about a 2024 election result → hallucinated details that sound plausible.</p>
 
     <h3>Counting</h3>
     <p>Token-based models do not iterate character-by-character unless explicitly designed to. Precise counts are surprisingly hard.</p>
-    <p>Example: "How many times does the letter 'e' appear in 'elephant'?" — correct answer is 2; models often say 1 or 3.</p>
+    <p>Example: "How many times does the letter 'e' appear in 'elephant'?" The correct answer is 2; models often say 1 or 3.</p>
 
     <h3>Keeping track of details in long contexts</h3>
     <p>Attention over very long sequences can degrade. Facts stated early may be lost by the time a question appears late.</p>
@@ -83,20 +83,20 @@
 
     <h3>Commonsense reasoning</h3>
     <p>Physical intuition and obvious impossibilities are not guaranteed.</p>
-    <p>Example: "Can you fit a car in a coffee cup?" — a human laughs; a model may hedge or confuse scale.</p>
+    <p>Example: "Can you fit a car in a coffee cup?" A human laughs; a model may hedge or confuse scale.</p>
 
     <h3>Biases in training data</h3>
     <p>Models reproduce skew in their corpora. Image generators may depict "doctor" as mostly men and "nurse" as mostly women if training images were skewed.</p>
 
     <h3>Hallucination</h3>
-    <p>The model generates text that <i>looks</i> like a correct answer — citations, phone numbers, ISBNs — with no mechanism to verify truth.</p>
+    <p>The model generates text that <i>looks</i> like a correct answer (citations, phone numbers, ISBNs) with no mechanism to verify truth.</p>
     <p>Example: "What is the phone number of John Smith in Austin?" → a confident 10-digit number that is fabricated.</p>
   </section>
 
   <section>
     <h2>3. The Core Limitation</h2>
     <p><b>GenAI is a pattern matcher and remixer, not a reasoner.</b> It learned what good text and images look like by seeing billions of examples. It can interpolate (blend known patterns) and extrapolate (extend them), but it cannot truly compute, verify facts against the world, or access real-time information unless connected to external tools.</p>
-    <p><b>Analogy:</b> Imagine autocomplete on your phone — but trained on the entire internet. It can complete sophisticated paragraphs because it has seen so many continuations. It is still predicting the next token from patterns, not thinking step by step inside a reasoning engine.</p>
+    <p><b>Analogy:</b> Imagine autocomplete on your phone, but trained on the entire internet. It can complete sophisticated paragraphs because it has seen so many continuations. It is still predicting the next token from patterns, not thinking step by step inside a reasoning engine.</p>
 
     <table border="1" cellpadding="12" cellspacing="0" width="100%" style="border-collapse: collapse; background-color: #f8fafc; border: 1px solid #cbd5e1;">
         <tr>
