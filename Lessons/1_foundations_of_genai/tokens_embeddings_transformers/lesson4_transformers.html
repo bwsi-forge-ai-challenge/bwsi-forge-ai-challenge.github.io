@@ -29,7 +29,31 @@
   </header>
 
   <section>
-    <h2>1. The Pieces You Already Have</h2>
+    <h2>1. What Is a Transformer?</h2>
+    <p>A <strong>transformer</strong> is a kind of neural network designed to work with <strong>sequences</strong>, such as the tokens of a sentence. It was introduced in 2017 in the paper <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Attention Is All You Need</a>, and almost every modern language model is built on it. The "T" in GPT stands for transformer: Generative Pre-trained Transformer.</p>
+
+    <div class="highlight-box">
+        <p><strong>Definition:</strong> A transformer is a neural network that turns a sequence of token embeddings into a sequence of context-aware vectors by passing them through a stack of identical <strong>blocks</strong>. Each block uses <strong>attention</strong> to let every token gather information from the other tokens, then a small <strong>feed-forward network</strong> to process each token on its own.</p>
+    </div>
+
+    <p>The key difference from the RNNs you saw in the prerequisites is how the model reads its input:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th></th><th>RNN</th><th>Transformer</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>How it reads</td><td>One token at a time, in order</td><td>All tokens at once</td></tr>
+            <tr><td>How tokens share information</td><td>Through a single hidden state passed from step to step</td><td>Through attention, where any token can look directly at any other</td></tr>
+            <tr><td>Long-distance connections</td><td>Can fade as the hidden state is updated over many steps</td><td>Just as easy to make as short ones</td></tr>
+            <tr><td>Training speed</td><td>Slow, because each step waits for the one before it</td><td>Fast, because every position can be computed in parallel</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>It also helps to separate two words that often get mixed up. The transformer <strong>architecture</strong> is the blueprint: which layers there are and how data flows between them. A transformer <strong>model</strong>, such as GPT-2 or Llama, is that blueprint with a specific size and a specific set of trained weights. This lesson walks through the blueprint, using GPT-2 small as the running example.</p>
+  </section>
+
+  <section>
+    <h2>2. The Pieces You Already Have</h2>
     <p>Each lesson in this unit answered one question. Together they cover most of what a transformer does:</p>
 
     <div class="table-wrap"><table>
@@ -54,7 +78,7 @@
   </section>
 
   <section>
-    <h2>2. The Whole Pipeline at a Glance</h2>
+    <h2>3. The Whole Pipeline at a Glance</h2>
     <p>This diagram shows a GPT-style transformer, the kind behind ChatGPT, processing the prompt <code>"The cat sat on the"</code>. Read it top to bottom. The shapes on the right follow the data; the labels on the right say which lesson introduced each step.</p>
 
     <figure class="diagram-wrap">
@@ -138,7 +162,7 @@
   </section>
 
   <section>
-    <h2>3. Following One Sentence Through the Model</h2>
+    <h2>4. Following One Sentence Through the Model</h2>
     <p>We will use <strong>GPT-2 small</strong> for every number in this section, because its size is public: a vocabulary of 50,257 tokens, vectors of 768 numbers, and 12 transformer blocks. Larger models use the same steps with bigger numbers.</p>
 
     <h3>Step 1: Tokenize the text (Lesson 1)</h3>
@@ -158,7 +182,7 @@
     <p>A <strong>transformer block</strong> is the repeating unit of the model. It has two main parts, each wrapped with an add-and-normalize step.</p>
 
     <p><strong>4a. Masked multi-head self-attention (Lesson 3).</strong> Every token builds a Query, Key, and Value, scores itself against the other tokens, and blends in the Values of the tokens that matter, exactly as in Lesson 3. GPT-2 small runs 12 attention heads side by side, each with its own 64-number Q, K, and V, and joins their outputs back into 768 numbers.</p>
-    <p>One rule is new: the attention is <strong>masked</strong> (also called <strong>causal</strong>). Each token may only look at itself and the tokens <em>before</em> it. <code>" on"</code> can attend to <code>"The"</code>, <code>" cat"</code>, and <code>" sat"</code>, but not to <code>" the"</code>. Section 4 explains why a text-generating model needs this rule.</p>
+    <p>One rule is new: the attention is <strong>masked</strong> (also called <strong>causal</strong>). Each token may only look at itself and the tokens <em>before</em> it. <code>" on"</code> can attend to <code>"The"</code>, <code>" cat"</code>, and <code>" sat"</code>, but not to <code>" the"</code>. Section 5 explains why a text-generating model needs this rule.</p>
 
     <p><strong>4b. Feed-forward network (new).</strong> After attention has mixed context into each vector, every token's vector passes <em>separately</em> through the same small neural network: 768 numbers expand to 3,072, go through a nonlinear activation, then shrink back to 768. This is the multi-layer perceptron from the <a href="../../0_prerequisites/MLP/MLP.html">prerequisites</a>, applied to one token at a time.</p>
     <p>Attention and the feed-forward network have different jobs. Attention moves information <em>between</em> tokens. The feed-forward network transforms the information <em>within</em> each token, and it holds about two-thirds of each block's parameters. Research suggests much of the model's stored knowledge, such as facts about the world, lives in these feed-forward layers.</p>
@@ -198,7 +222,7 @@
   </section>
 
   <section>
-    <h2>4. Training and Generation Use the Same Pipeline</h2>
+    <h2>5. Training and Generation Use the Same Pipeline</h2>
     <p>During <strong>generation</strong>, the model runs the pipeline once per new token and uses only the last position's prediction. During <strong>training</strong>, it runs the pipeline once on a whole passage and uses <em>every</em> position's prediction at the same time:</p>
 
     <div class="table-wrap"><table>
@@ -225,7 +249,7 @@
   </section>
 
   <section>
-    <h2>5. Where the Parameters Live</h2>
+    <h2>6. Where the Parameters Live</h2>
     <p>"GPT-2 small has 124 million parameters" sounds abstract. Every one of those numbers sits in a specific box of the pipeline diagram:</p>
 
     <div class="table-wrap"><table>
@@ -253,7 +277,7 @@
   </section>
 
   <section>
-    <h2>6. Three Kinds of Transformer</h2>
+    <h2>7. Three Kinds of Transformer</h2>
     <p>Everything above describes a <strong>decoder-only</strong> transformer, the design used by GPT, Llama, and most of today&rsquo;s chatbots. The same blocks can be arranged in two other ways, depending on whether the model needs to generate text, understand it, or both:</p>
 
     <div class="table-wrap"><table>
