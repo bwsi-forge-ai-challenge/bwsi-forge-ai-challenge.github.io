@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Gradescope entrypoint: runs for every student submission.
+set -euo pipefail
+
+mkdir -p /autograder/results
+cd /autograder/source
+python3 run_tests.py

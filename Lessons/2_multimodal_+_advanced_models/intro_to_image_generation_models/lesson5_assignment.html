@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment: Noise to Picture · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Deep Dive: Vision-Language Models</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <h1>Assignment: Noise to Picture</h1>
+    <p class="lede">Destroy a picture with noise, train a tiny diffusion model of your own, turn pure noise into new pictures, morph between them, and then try a big pretrained model with your own prompts.</p>
+  </header>
+
+  <section>
+    <div class="assignment-box">
+        <strong>Starter notebook:</strong> <code>diffusion_assignment.ipynb</code><br>
+        <strong>Environment:</strong> Google Colab with a free T4 GPU. The notebook downloads everything else it needs (a small picture dataset and the SD-Turbo model, about 2.5 GB).<br>
+        <strong>Suggested time:</strong> 2 to 2.5 hours<br>
+        <strong>Companion reading:</strong> <a href="lesson3.html">Generating Images by Removing Noise: Diffusion</a>
+    </div>
+    <p>Download the starter notebook below, upload it to Google Colab (<strong>File &rarr; Upload notebook</strong>), complete the TODOs inside it, and run all cells before submitting. Each part has a short explanation, a check cell that tells you whether your code is right, and a written reflection.</p>
+    <p>
+        <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/diffusion_assignment.ipynb" download="diffusion_assignment.ipynb"><strong>Download diffusion_assignment.ipynb</strong></a>
+    </p>
+  </section>
+
+  <section>
+    <h2>What You Will Do</h2>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Part</th><th>Task</th><th>What it shows</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>1</strong></td><td>Write <code>make_alpha_bar</code> and <code>add_noise</code>, then watch a picture disappear into noise</td><td>How the noise schedule destroys a picture</td></tr>
+            <tr><td><strong>2</strong></td><td>Write <code>predict_clean</code> and recover the picture from a noise guess, a perfect one and a slightly wrong one</td><td>Why a perfect noise prediction matters, and why generating takes many small steps</td></tr>
+            <tr><td><strong>3</strong></td><td>Write <code>noise_prediction_loss</code> and train a tiny U-Net on small pictures (about 3 to 5 minutes on a T4)</td><td>What a diffusion model actually learns</td></tr>
+            <tr><td><strong>4</strong></td><td>Write the <code>ddim_sample</code> loop and generate new pictures with different numbers of steps</td><td>How noise becomes a picture, and what extra steps cost</td></tr>
+            <tr><td><strong>5</strong></td><td>Write <code>slerp</code> and morph one generated picture into another</td><td>Why the starting noise is the "seed" of a picture</td></tr>
+            <tr><td><strong>6</strong></td><td>Write four prompts that grow more detailed, run them on SD-Turbo, and pick a favorite</td><td>How text prompts steer a large model</td></tr>
+            <tr><td><strong>7</strong></td><td>Reflect on responsible use of image generators</td><td>Capability is not permission</td></tr>
+        </tbody>
+    </table></div>
+    <p>Every part ends with a short written reflection, stored as a Python string in the notebook. The reflections are a large part of the grade.</p>
+  </section>
+
+  <section>
+    <h2>Submitting Your Work</h2>
+    <ol class="checklist">
+        <li>Complete every TODO and all seven reflections (<code>part1_reflection</code> to <code>part7_reflection</code>). Keep every function name and signature exactly as given: the autograder tests your functions on its own small models and inputs.</li>
+        <li>Run every cell in the notebook from top to bottom and confirm that every check cell passes.</li>
+        <li>Export the notebook as a Python script (<strong>File &rarr; Download &rarr; Download .py</strong> in Colab) and rename it to <code>firstname_lastname_diffusion.py</code>.</li>
+        <!-- TODO: replace href="#" with the Gradescope assignment link. -->
+        <li>Submit only that <code>.py</code> file on <strong>Gradescope</strong>: <a href="#" target="_blank">Noise to Picture assignment</a>.</li>
+    </ol>
+    <p>If you can't access the Gradescope link, go to the Gradescope for this class (if you are logged in you should be able to see this course when you visit the <a href="https://www.gradescope.com/">Gradescope home page</a>), select this course, and then pick the <b>Noise to Picture</b> assignment.</p>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson4.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Adding Time: Video and Action</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>
