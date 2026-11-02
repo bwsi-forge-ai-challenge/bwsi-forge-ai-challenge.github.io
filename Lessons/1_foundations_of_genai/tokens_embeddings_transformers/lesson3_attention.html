@@ -80,7 +80,7 @@
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://colah.github.io/posts/2015-08-Understanding-LSTMs/img/RNN-unrolled.png"
             alt="An unrolled recurrent neural network passing hidden state one timestep at a time">
-        <figcaption>An RNN reads the sentence left to right, passing a hidden state from step to step — so early words like <em>bank</em> may not yet have seen <em>executive</em>, and distant context can fade.
+        <figcaption>An RNN reads the sentence left to right, passing a hidden state from step to step, so early words like <em>bank</em> may not yet have seen <em>executive</em>, and distant context can fade.
             Source: Christopher Olah, <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank">Understanding LSTM Networks</a>.</figcaption>
     </figure>
 
@@ -91,7 +91,7 @@
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
     
-    <p>There's another challenge. Imagine the sentence were much longer. By the time an RNN reaches the end, it has to remember information from dozens—or even hundreds—of words earlier. As that information is passed from one step to the next, some of it can gradually fade or become less useful.</p>
+    <p>There's another challenge. Imagine the sentence were much longer. By the time an RNN reaches the end, it has to remember information from dozens, or even hundreds, of words earlier. As that information is passed from one step to the next, some of it can gradually fade or become less useful.</p>
     
     <p>This is closely related to a training issue called the <strong>vanishing gradient problem</strong>, which you learned about in a previous lesson. In practice, it makes learning long-range relationships much more difficult.</p>
     
@@ -133,7 +133,7 @@
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self_attention_score.png"
             alt="Attention scores from one word's query dotted with every word's key">
-        <figcaption>To understand one word (here, the first word in the sentence), the model compares its Query against every Key and assigns higher scores to more helpful neighbors — the same idea as <em>bank</em> scoring <em>executive</em> highly.
+        <figcaption>To understand one word (here, the first word in the sentence), the model compares its Query against every Key and assigns higher scores to more helpful neighbors, the same idea as <em>bank</em> scoring <em>executive</em> highly.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
   </section>
@@ -217,7 +217,7 @@
 
     <p>Each output vector \(z_i\) is a weighted blend of all Value vectors, with weights set by attention.</p>
 
-    <p>All four steps are often written as one formula — 
+    <p>All four steps are often written as one formula: 
   
   \[ \text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^T}{\sqrt{d_k}} \right) V \]
 
@@ -293,7 +293,7 @@
         </tr>
     </table>
     
-    <p>These aren't probabilities yet—they're simply similarity scores. Larger scores mean the model thinks that word is more useful for understanding <em>bank</em>.</p>
+    <p>These aren't probabilities yet; they're simply similarity scores. Larger scores mean the model thinks that word is more useful for understanding <em>bank</em>.</p>
     
     <h3>Step 2: Convert the scores into attention weights</h3>
     
@@ -316,7 +316,7 @@
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.10 × Value(jumped)
     </p>
     
-    <p>The result is a brand-new vector representing the word <em>bank</em>. This vector doesn't just capture the dictionary meaning of the word—it captures what <em>bank</em> means <em>in this particular sentence</em>.</p>
+    <p>The result is a brand-new vector representing the word <em>bank</em>. This vector doesn't just capture the dictionary meaning of the word; it captures what <em>bank</em> means <em>in this particular sentence</em>.</p>
     
     <p>Because <em>executive</em> received a large attention weight, the new representation is pulled toward the meaning of a financial institution. If the sentence had been "<em>The fisherman sat on the bank</em>," attention would have focused on different words, producing a different representation for exactly the same word.</p>
     
@@ -361,7 +361,7 @@
     <figure>
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/Transformer_encoder.png"
             alt="Transformer encoder layer with self-attention and feed-forward applied to every word position">
-        <figcaption>Every word in the sentence flows through the same encoder layer in parallel — self-attention first, then a feed-forward network — which is why Transformers scale well on GPUs.
+        <figcaption>Every word in the sentence flows through the same encoder layer in parallel, with self-attention first and then a feed-forward network, which is why Transformers scale well on GPUs.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
   </section>
@@ -427,7 +427,7 @@
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_positional_encoding_large_example.png"
             alt="Heatmap of sinusoidal positional encodings across embedding dimensions">
-        <figcaption>The original Transformer uses sinusoidal functions across embedding dimensions — low dimensions oscillate quickly; higher dimensions change slowly. This heatmap shows the full pattern with readable axis labels.
+        <figcaption>The original Transformer uses sinusoidal functions across embedding dimensions, so low dimensions oscillate quickly while higher dimensions change slowly. This heatmap shows the full pattern with readable axis labels.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>; based on Vaswani et al., <a href="https://arxiv.org/abs/1706.03762" target="_blank">Attention Is All You Need</a>.</figcaption>
     </figure>
     
@@ -443,7 +443,7 @@
     <div class="l3-sav-box" style="padding:14px; background:#fafafa; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px;">
         <label for="l3-sav-input" style="display:block; margin-bottom:8px; font-weight:600;">Sentence</label>
         <input type="text" id="l3-sav-input" value="The bank executive jumped" style="width:100%; box-sizing:border-box; padding:10px; font-size:16px; font-family:inherit; border:1px solid #cbd5e1; border-radius:6px;">
-        <p style="font-size:0.88em; color:#64748b; margin:10px 0 0;">Tokens below are from the model’s tokenizer (not spaces). Click a token to see its attention row. <strong>Requires</strong> opening this page over <code>http://localhost</code> (not as a double-clicked <code>file://</code> link). First visit downloads ~87MB — usually 30 seconds to 2 minutes on fast internet, then cached.</p>
+        <p style="font-size:0.88em; color:#64748b; margin:10px 0 0;">Tokens below are from the model’s tokenizer (not spaces). Click a token to see its attention row. <strong>Requires</strong> opening this page over <code>http://localhost</code> (not as a double-clicked <code>file://</code> link). First visit downloads ~87MB, usually 30 seconds to 2 minutes on fast internet, then cached.</p>
         <div class="l3-sav-row" id="l3-sav-tokens" style="margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;"></div>
         <p id="l3-sav-status" style="font-size:0.9em; color:#334155; margin:14px 0 0; min-height:1.4em;">Starting…</p>
         <div style="margin-top:12px;">
@@ -455,7 +455,7 @@
     </div>
 
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:4px;font-size:0.9em;margin-top:12px;">
-        <strong>What to look for:</strong> Subword pieces like <span style="font-family:monospace;">bank</span> or <span style="font-family:monospace;">##ed</span> are separate tokens. Attention patterns come from trained weights—not hand rules—so they may differ from our textbook examples, especially on ambiguous words.
+        <strong>What to look for:</strong> Subword pieces like <span style="font-family:monospace;">bank</span> or <span style="font-family:monospace;">##ed</span> are separate tokens. Attention patterns come from trained weights, not hand rules, so they may differ from our textbook examples, especially on ambiguous words.
     </div>
   </section>
 
@@ -517,7 +517,7 @@
             statusEl.textContent = 'Downloading ' + (info.file || 'file') + ': ' +
                 (info.loaded / 1048576).toFixed(0) + ' / ' + (info.total / 1048576).toFixed(0) + ' MB…';
         } else if (info.status === 'done' && info.file) {
-            statusEl.textContent = 'Finished ' + info.file + ' — loading next file…';
+            statusEl.textContent = 'Finished ' + info.file + ', now loading the next file…';
         } else if (info.status === 'ready') {
             statusEl.textContent = 'Initializing ONNX runtime in browser…';
         }
@@ -584,7 +584,7 @@
                 '<div class="l3-sav-label" style="font-size:13px;font-weight:600;color:#1e293b;font-family:monospace;">' + escapeHtml(label) + '</div>' +
                 '<div class="l3-sav-bar-track" style="height:8px;margin-top:6px;background:#cbd5e1;border-radius:4px;overflow:hidden;">' +
                 '<div class="l3-sav-bar-fill" style="height:100%;width:0;background:#dc2626;border-radius:4px;transition:width 0.25s;"></div></div>' +
-                '<div class="l3-sav-pct" style="font-size:11px;color:#64748b;margin-top:4px;">—</div>';
+                '<div class="l3-sav-pct" style="font-size:11px;color:#64748b;margin-top:4px;">-</div>';
             el.addEventListener('click', function () { showAttention(i); });
             tokensDiv.appendChild(el);
         });
@@ -694,7 +694,7 @@
             statusEl.textContent = 'Loading MiniLM tokenizer and weights (~87MB on first visit)…';
             var loadOpts = { progress_callback: onLoadProgress };
             tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, loadOpts);
-            statusEl.textContent = 'Tokenizer ready — downloading model weights…';
+            statusEl.textContent = 'Tokenizer ready, now downloading model weights…';
             model = await AutoModel.from_pretrained(MODEL_ID, Object.assign({ dtype: 'fp32' }, loadOpts));
             markReady();
             await runInference(input.value);

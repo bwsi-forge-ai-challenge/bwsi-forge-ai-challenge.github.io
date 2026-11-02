@@ -17,9 +17,9 @@ Zip from the `Assignments/` folder:
 
 | Section | Points |
 | --- | ---: |
-| Dataset — >= 50 well-formed pairs, >= 5 new, no duplicate inputs | 5 |
-| Hyperparameters — two different learning rates, epochs, batch size set | 5 |
-| Reflections — `part1_reflection` / `part4_reflection` length + key content | 10 |
+| Dataset has >= 50 well-formed pairs, >= 5 new, and no duplicate inputs | 5 |
+| Hyperparameters use two different learning rates, with epochs and batch size set | 5 |
+| Reflections (`part1_reflection` / `part4_reflection`) are checked for length and key content | 10 |
 
 Reflections get only a keyword/length sanity check; a manual read is still recommended.
 The training runs, W&B login and Part 4 evaluation are not graded (the unused checks remain in `run_tests.py`).

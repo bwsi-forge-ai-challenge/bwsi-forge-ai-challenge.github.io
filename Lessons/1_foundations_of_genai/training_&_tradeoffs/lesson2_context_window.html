@@ -24,7 +24,7 @@
   <header class="page-header">
     <p class="eyebrow">Foundations of GenAI · Training &amp; Tradeoffs</p>
     <h1>Context Windows: How Much Can a Model Actually “See”?</h1>
-    <p class="lede">We have already learned that transformers use <strong>attention</strong> so every token can look at every other token in the input. That mechanism is powerful — but it only works inside a fixed boundary called the <strong>context window</strong>.</p>
+    <p class="lede">We have already learned that transformers use <strong>attention</strong> so every token can look at every other token in the input. That mechanism is powerful, but it only works inside a fixed boundary called the <strong>context window</strong>.</p>
   </header>
 
   <section>
@@ -34,7 +34,7 @@
   <section>
     <h2>1. What Is a Context Window?</h2>
 
-    <p>Remember attention from the tokens &amp; transformers unit? Each token computes a relevance score against <em>every other token</em> in the sequence. That "every token sees every token" property defines what the model can reason over <strong>right now</strong> — but only within a maximum length.</p>
+    <p>Remember attention from the tokens &amp; transformers unit? Each token computes a relevance score against <em>every other token</em> in the sequence. That "every token sees every token" property defines what the model can reason over <strong>right now</strong>, but only within a maximum length.</p>
 
     <div class="highlight-box">
         <strong>Definition:</strong> The <strong>context window</strong> is the maximum number of tokens (input + output combined) a model can process in a single forward pass. Input tokens, system prompts, retrieved documents, tool results, and the model's own generated reply all count toward the same budget.
@@ -47,7 +47,7 @@
         <li><strong>Mid-2026 frontier models:</strong> many commercial APIs advertise 200K–1M+ tokens; specialized open-weight models push even higher (e.g., Llama 4 Scout at 10M advertised)</li>
     </ul>
 
-    <p><span class="stat-pill">Rule of thumb</span> English prose averages about <strong>1.3 tokens per word</strong> (from Week 2 tokenization). A 128K window holds on the order of ~95,000 words — a long novel, but not an entire library.</p>
+    <p><span class="stat-pill">Rule of thumb</span> English prose averages about <strong>1.3 tokens per word</strong> (from Week 2 tokenization). A 128K window holds on the order of ~95,000 words, a long novel, but not an entire library.</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 720 140" role="img" aria-label="Sliding context window over a long document">
@@ -70,14 +70,14 @@
             <rect x="140" y="108" width="200" height="18" rx="3" fill="#fef3c7" stroke="#fbbf24"/>
             <text x="240" y="121" text-anchor="middle" font-size="9" fill="#92400e">Window slides forward as new tokens are added</text>
         </svg>
-        <figcaption>A sliding window over a long document. Tokens outside the highlighted region are invisible — the model cannot attend to them, no matter how "smart" it is.</figcaption>
+        <figcaption>A sliding window over a long document. Tokens outside the highlighted region are invisible; the model cannot attend to them, no matter how "smart" it is.</figcaption>
     </figure>
   </section>
 
   <section>
     <h2>2. Why Isn't the Context Window Infinite?</h2>
 
-    <p>The bottleneck is attention itself. Standard self-attention compares <strong>every token to every other token</strong>. For a sequence of length <var>n</var>, that means roughly <var>n</var> × <var>n</var> pairwise interactions — called <strong>O(<var>n</var>²) complexity</strong>.</p>
+    <p>The bottleneck is attention itself. Standard self-attention compares <strong>every token to every other token</strong>. For a sequence of length <var>n</var>, that means roughly <var>n</var> × <var>n</var> pairwise interactions, called <strong>O(<var>n</var>²) complexity</strong>.</p>
 
     <div class="eq-panel">
         Sequence length ×2 → attention pairs ×4 → compute, GPU memory, and API cost all jump sharply.
@@ -86,10 +86,10 @@
     <ul>
         <li><strong>Compute:</strong> doubling context length roughly quadruples attention work (before optimizations)</li>
         <li><strong>Memory:</strong> attention score matrices grow with sequence length; GPUs have finite RAM</li>
-        <li><strong>Cost:</strong> most APIs bill per token — longer context = higher price per request</li>
+        <li><strong>Cost:</strong> most APIs bill per token; longer context = higher price per request</li>
     </ul>
 
-    <p>Researchers have invented tricks — sparse attention, sliding windows, ring attention, KV-cache compression — to stretch windows further. But physics and economics still cap what you can run in one shot. "Just make it infinite" is not a free knob.</p>
+    <p>Researchers have invented tricks (sparse attention, sliding windows, ring attention, KV-cache compression) to stretch windows further. But physics and economics still cap what you can run in one shot. "Just make it infinite" is not a free knob.</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 520 260" role="img" aria-label="O(n squared) compute cost as context length grows">
@@ -123,13 +123,13 @@
     <ul>
         <li><strong>Hard error:</strong> the request is rejected ("context length exceeded")</li>
         <li><strong>Silent truncation:</strong> the oldest tokens are dropped from the beginning; the model never sees them</li>
-        <li><strong>Summarization middleware:</strong> your app compresses old messages before sending — quality depends on what you kept</li>
+        <li><strong>Summarization middleware:</strong> your app compresses old messages before sending; quality depends on what you kept</li>
     </ul>
 
     <p>Practical impact: a model cannot "remember" an entire long conversation, book, or codebase if it exceeds the window. That is why production systems <strong>chunk</strong> documents, <strong>summarize</strong> old chat turns, or <strong>retrieve</strong> only relevant passages that it needs.</p>
 
     <!--<div class="highlight-box">
-        <strong>Assignment preview:</strong> If you paste 200 pages into one prompt and the model "misses" facts from page 3, the model is not being careless — those tokens may simply not be in context anymore.
+        <strong>Assignment preview:</strong> If you paste 200 pages into one prompt and the model "misses" facts from page 3, the model is not being careless; those tokens may simply not be in context anymore.
     </div>-->
   </section>
 
@@ -161,7 +161,7 @@
         </tbody>
     </table></div>
 
-    <p>A large context window is <strong>not</strong> the same as the model "learning" your conversation. Once the session ends — or older tokens fall off the window — that information is gone unless you stored it elsewhere. Every new conversation starts fresh with the same pretrained weights.</p>
+    <p>A large context window is <strong>not</strong> the same as the model "learning" your conversation. Once the session ends (or older tokens fall off the window), that information is gone unless you stored it elsewhere. Every new conversation starts fresh with the same pretrained weights.</p>
   </section>
 
   <section>
@@ -171,7 +171,7 @@
     <ul>
         <li><strong>Latency:</strong> more tokens → longer time to first token</li>
         <li><strong>Cost:</strong> billed per token; 1M-token requests can cost dollars per call on frontier APIs</li>
-        <li><strong>Quality:</strong> advertised max context ≠ effective context — models may lose focus in the middle of very long inputs ("lost in the middle" effect)</li>
+        <li><strong>Quality:</strong> advertised max context ≠ effective context; models may lose focus in the middle of very long inputs ("lost in the middle" effect)</li>
     </ul>
 
     <p>Mature applications manage context deliberately: keep recent messages verbatim, summarize older turns, retrieve only relevant chunks, and reserve output budget for the reply.</p>
@@ -181,7 +181,7 @@
         <div class="compare-card short">
             <h4>4K context window</h4>
             <div class="msg user faded">Day 1: "My dog's name is Biscuit."</div>
-            <div class="msg bot faded">Got it — Biscuit is a great name!</div>
+            <div class="msg bot faded">Got it, Biscuit is a great name!</div>
             <div class="msg user">What's my dog's name?</div>
             <div class="msg bot">I don't have that information. What is your dog's name?</div>
             <p class="footnote">Early messages fell off the window. The model cannot recall Biscuit.</p>
@@ -189,15 +189,15 @@
         <div class="compare-card long">
             <h4>128K context window</h4>
             <div class="msg user">Day 1: "My dog's name is Biscuit."</div>
-            <div class="msg bot">Got it — Biscuit is a great name!</div>
+            <div class="msg bot">Got it, Biscuit is a great name!</div>
             <div class="msg user">What's my dog's name?</div>
             <div class="msg bot">Your dog's name is Biscuit.</div>
-            <p class="footnote">Full history still fits — but this request used ~100× more tokens (and cost) than the 4K case for the same answer.</p>
+            <p class="footnote">Full history still fits, but this request used ~100× more tokens (and cost) than the 4K case for the same answer.</p>
         </div>
     </div>
 
     <!--<h3>Context window sizes across popular models</h3>
-    <p class="footnote">Snapshot as of mid-2026. Vendors update limits frequently — check documentation before building. <strong>Advertised max ≠ guaranteed quality</strong> at the upper bound.</p>
+    <p class="footnote">Snapshot as of mid-2026. Vendors update limits frequently; check documentation before building. <strong>Advertised max ≠ guaranteed quality</strong> at the upper bound.</p>
     <table>
         <thead>
             <tr><th>Model</th><th>Max context (advertised)</th><th>Notes</th></tr>
@@ -220,25 +220,25 @@
     <div class="interactive-box">
         <p>Paste text below. This tool uses a <strong>GPT-style token estimate</strong> (~4 characters per token for English, matching the heuristic from Week 2). Compare your text against common context limits.</p>
         <label class="reflect-label" for="cw-input">Your text</label>
-        <textarea class="cw-textarea" id="cw-input" placeholder="Paste a paragraph, email, code snippet, or chapter excerpt…">The cat sat on the mat. In Week 2 you learned that models break text into tokens before attention runs. Each token in the context window can attend to every other token — but only up to the model's limit.</textarea>
+        <textarea class="cw-textarea" id="cw-input" placeholder="Paste a paragraph, email, code snippet, or chapter excerpt…">The cat sat on the mat. In Week 2 you learned that models break text into tokens before attention runs. Each token in the context window can attend to every other token, but only up to the model's limit.</textarea>
 
-        <p style="margin:12px 0 4px;"><strong>Estimated tokens:</strong> <span id="cw-count" style="font-size:1.2em;color:#1d4ed8;font-weight:700;">—</span>
-            &nbsp;·&nbsp; <strong>Words:</strong> <span id="cw-words">—</span>
-            &nbsp;·&nbsp; <strong>Chars:</strong> <span id="cw-chars">—</span></p>
+        <p style="margin:12px 0 4px;"><strong>Estimated tokens:</strong> <span id="cw-count" style="font-size:1.2em;color:#1d4ed8;font-weight:700;">-</span>
+            &nbsp;·&nbsp; <strong>Words:</strong> <span id="cw-words">-</span>
+            &nbsp;·&nbsp; <strong>Chars:</strong> <span id="cw-chars">-</span></p>
 
         <label class="reflect-label" for="cw-primary-limit">Primary comparison limit</label>
         <select class="cw-select" id="cw-primary-limit">
-            <option value="4096">GPT-3.5 era — 4,096 tokens</option>
-            <option value="8192">GPT-4 8K — 8,192 tokens</option>
-            <option value="128000" selected>GPT-4 class — 128,000 tokens</option>
-            <option value="200000">Claude standard — 200,000 tokens</option>
-            <option value="1000000">Frontier 1M — 1,000,000 tokens</option>
+            <option value="4096">GPT-3.5 era (4,096 tokens)</option>
+            <option value="8192">GPT-4 8K (8,192 tokens)</option>
+            <option value="128000" selected>GPT-4 class (128,000 tokens)</option>
+            <option value="200000">Claude standard (200,000 tokens)</option>
+            <option value="1000000">Frontier 1M (1,000,000 tokens)</option>
         </select>
 
         <div class="limit-bar-wrap" title="Fill level vs selected limit">
             <div class="limit-bar safe" id="cw-primary-bar" style="width:0%;"></div>
         </div>
-        <p id="cw-primary-status" class="footnote">—</p>
+        <p id="cw-primary-status" class="footnote">-</p>
 
         <p style="margin-top:18px;font-weight:600;font-size:0.92em;">Compare against all common limits:</p>
         <div id="cw-all-limits"></div>
@@ -254,14 +254,14 @@
         <textarea class="reflect-input" id="cw-reflect-1" placeholder="Think about token growth, cost, latency, truncation, and whether old messages still fit…"></textarea>
         <details>
             <summary>Sample answer</summary>
-            <p>Three months of daily chat could be hundreds of thousands or millions of tokens — far beyond most windows. Even on a 1M window, you'd pay for every token on every request, responses get slower, and you'd eventually hit the cap anyway. Older messages get truncated or dropped. Better approaches: summarize old threads, store facts in a database, retrieve only relevant past turns (RAG), or maintain a rolling window of recent messages plus a compressed memory.</p>
+            <p>Three months of daily chat could be hundreds of thousands or millions of tokens, far beyond most windows. Even on a 1M window, you'd pay for every token on every request, responses get slower, and you'd eventually hit the cap anyway. Older messages get truncated or dropped. Better approaches: summarize old threads, store facts in a database, retrieve only relevant past turns (RAG), or maintain a rolling window of recent messages plus a compressed memory.</p>
         </details>
 
         <label class="reflect-label" for="cw-reflect-2">Estimate: how many tokens is your favorite book? Would it fit inside a 128K context window?</label>
         <textarea class="reflect-input" id="cw-reflect-2" placeholder="Look up word count × ~1.3 tokens/word, or paste an excerpt into the counter above…"></textarea>
         <details>
             <summary>Sample answer</summary>
-            <p><em>Harry Potter and the Sorcerer's Stone</em> ≈ 77,000 words × 1.3 ≈ <strong>100,000 tokens</strong> — it would fit in 128K with room for a system prompt and reply, but barely. <em>The Lord of the Rings</em> (single volume ~180K words) ≈ <strong>230K+ tokens</strong> — too large for 128K; you'd need chunking, summarization, or a larger window. Always leave headroom for the model's output.</p>
+            <p><em>Harry Potter and the Sorcerer's Stone</em> ≈ 77,000 words × 1.3 ≈ <strong>100,000 tokens</strong>; it would fit in 128K with room for a system prompt and reply, but barely. <em>The Lord of the Rings</em> (single volume ~180K words) ≈ <strong>230K+ tokens</strong>; too large for 128K; you'd need chunking, summarization, or a larger window. Always leave headroom for the model's output.</p>
         </details>
     </div>
 
@@ -269,11 +269,11 @@
 
     <h2>Key Takeaways</h2>
     <ul>
-        <li>The <strong>context window</strong> is the max tokens (input + output) a model can attend over in one call — a direct consequence of attention's O(<var>n</var>²) cost.</li>
-        <li>Exceeding the window means <strong>truncation, failure, or forced summarization</strong> — not reliable long-term memory.</li>
+        <li>The <strong>context window</strong> is the max tokens (input + output) a model can attend over in one call, a direct consequence of attention's O(<var>n</var>²) cost.</li>
+        <li>Exceeding the window means <strong>truncation, failure, or forced summarization</strong>, not reliable long-term memory.</li>
         <li>Context is <strong>temporary working space</strong>, not learning; weights do not change from your chat unless you fine-tune.</li>
         <li>Bigger windows are convenient but <strong>slower, pricier</strong>, and not always equally usable at max length.</li>
-        <li>Production apps <strong>manage context</strong> — chunk, summarize, retrieve — instead of blindly pasting everything.</li>
+        <li>Production apps <strong>manage context</strong> (chunk, summarize, retrieve) instead of blindly pasting everything.</li>
     </ul>
 
     <hr>-->
@@ -281,7 +281,7 @@
     <h2>Recommended Reading</h2>
     <ul>
         <li><strong>Lost in the Middle: How Language Models Use Long Contexts (Liu et al., 2023):</strong> Shows models often miss information buried in the middle of long inputs. <a href="https://arxiv.org/abs/2307.03172" target="_blank">arXiv</a></li>
-        <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> Original transformer paper — the source of O(<var>n</var>²) attention. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv</a></li>
+        <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> Original transformer paper, and the source of O(<var>n</var>²) attention. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv</a></li>
         <li><strong>OpenAI tiktoken:</strong> Count tokens exactly for OpenAI models. <a href="https://github.com/openai/tiktoken" target="_blank">GitHub</a></li>
     </ul>
   </section>
@@ -383,7 +383,7 @@
                 statusEl.textContent = 'Paste text to see how much of the selected window it would consume.';
             } else if (pct <= 100) {
                 statusEl.textContent = 'Uses ' + formatNum(count) + ' of ' + formatNum(limit) + ' tokens (' +
-                    pct.toFixed(1) + '%). Leave room for the model\'s reply — output tokens count too.';
+                    pct.toFixed(1) + '%). Leave room for the model\'s reply; output tokens count too.';
             } else {
                 statusEl.textContent = 'Exceeds limit by ' + formatNum(count - limit) + ' tokens. You would need truncation, chunking, or a larger window.';
             }
