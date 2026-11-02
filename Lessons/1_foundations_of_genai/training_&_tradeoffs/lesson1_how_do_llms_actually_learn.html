@@ -131,8 +131,24 @@
         </svg>
         <figcaption>The full path from scraped text to a product you can chat with. Pretraining does the heavy lifting; later stages shape behavior.</figcaption>
     </figure>
+  </section>
+
+  <section>
+    <h2>4. From Base Model to Assistant: Fine-Tuning</h2>
+
+    <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence, because that is what "predict the next token" looked like on the internet.</p>
+
+    <p><strong>Fine-tuning</strong> adds a second training phase on curated examples of desired behavior, often prompt/response pairs written by humans or filtered from high-quality conversations:</p>
+    <ul>
+        <li>User asks a question → model should give a direct, helpful answer</li>
+        <li>User requests a format → model should follow it (bullets, JSON, short summary)</li>
+        <li>User asks for something unsafe → model should decline politely</li>
+    </ul>
+
+    <p>Fine-tuning is much cheaper than pretraining because the dataset is tiny by comparison and training runs for far fewer steps. You are not re-reading the whole internet; you are steering an already-capable model toward a product experience.</p>
 
     <h3>Pretraining vs. Fine-Tuning at a Glance</h3>
+    <p>Now that you have seen both stages, here is how they compare:</p>
     <div class="table-wrap"><table>
         <thead>
             <tr><th></th><th>Pretraining</th><th>Fine-Tuning</th></tr>
@@ -145,33 +161,6 @@
             <tr><td><strong>Analogy</strong></td><td>Reading the entire library</td><td>Practicing specific job interviews</td></tr>
         </tbody>
     </table></div>
-  </section>
-
-  <section>
-    <h2>4. From Base Model to Assistant: Fine-Tuning</h2>
-
-    <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence, because that is what "predict the next token" looked like on the internet.</p>
-
-    <div class="response-card base">
-        <h4>Base-model style (completion, not instruction-following)</h4>
-        <p><strong>Prompt:</strong> <span class="prompt-box" style="display:inline;margin:0;">Write a poem about the ocean.</span></p>
-        <p><strong>Output:</strong> Write a poem about the ocean. Write a poem about the sea. What rhymes with wave? Here are some tips for writing poetry: 1) Choose a theme 2) Pick a structure 3) …</p>
-    </div>
-
-    <div class="response-card tuned">
-        <h4>Instruction-tuned style (after fine-tuning)</h4>
-        <p><strong>Prompt:</strong> <span class="prompt-box" style="display:inline;margin:0;">Write a poem about the ocean.</span></p>
-        <p><strong>Output:</strong> Salt wind, slate sky,<br>Horizon blurs where gulls drift by.<br>Each wave repeats what none can keep,<br>The deep remembers, wide and slow.</p>
-    </div>
-
-    <p><strong>Fine-tuning</strong> adds a second training phase on curated examples of desired behavior, often prompt/response pairs written by humans or filtered from high-quality conversations:</p>
-    <ul>
-        <li>User asks a question → model should give a direct, helpful answer</li>
-        <li>User requests a format → model should follow it (bullets, JSON, short summary)</li>
-        <li>User asks for something unsafe → model should decline politely</li>
-    </ul>
-
-    <p>Fine-tuning is much cheaper than pretraining because the dataset is tiny by comparison and training runs for far fewer steps. You are not re-reading the whole internet; you are steering an already-capable model toward a product experience.</p>
   </section>
 
   <section>
