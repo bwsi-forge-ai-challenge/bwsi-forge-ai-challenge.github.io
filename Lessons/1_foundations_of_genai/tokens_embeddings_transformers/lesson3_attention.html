@@ -57,7 +57,7 @@
         <li>The second <em>bank</em> refers to the edge of a river. This time, words like <em>wall</em> suggest a riverbank instead.</li>
     </ul>
     
-    <p>You probably figured that out immediately. But notice what your brain actually did. You didn't interpret the word <em>bank</em> by itself. Yyou looked at the surrounding words to figure out which meaning made sense.</p>
+    <p>You probably figured that out immediately. But notice what your brain actually did. You didn't interpret the word <em>bank</em> by itself. You looked at the surrounding words to figure out which meaning made sense.</p>
 
     <div class="highlight-box" style="background:#f8fafc;border-left:4px solid #3b82f6;padding:15px;margin:20px 0;">
         <strong>The challenge:</strong> The meaning of a word depends on its context. If an AI only looks at one word at a time, or only pays attention to a few nearby words, it can easily misunderstand the sentence. We need a way for every word to find and use the other words that matter, even if they're far apart.
@@ -133,7 +133,7 @@
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_self_attention_score.png"
             alt="Attention scores from one word's query dotted with every word's key">
-        <figcaption>To understand one word (here, the first word in the sentence), the model compares its Query against every Key and assigns higher scores to more helpful neighbors, the same idea as <em>bank</em> scoring <em>executive</em> highly.
+        <figcaption>To understand one word (here, the first word in the sentence), the model compares it with every word in the sentence and gives higher scores to the more helpful ones, the same idea as <em>bank</em> scoring <em>executive</em> highly. The next section explains the q, k, and v labels in this picture.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
   </section>
@@ -337,7 +337,7 @@
             <li><strong>Context:</strong> Ambiguous words like <em>bank</em> can mean different things depending on neighbors like <em>executive</em> or <em>river</em>.</li>
             <li><strong>Long-range links:</strong> Pronouns like <em>She</em> can connect to <em>Alice</em> even when many words sit between them.</li>
             <li><strong>Parallel processing:</strong> Unlike RNNs, all words can be updated together, which is faster to train on modern hardware.</li>
-            <li><strong>Foundation of Transformers:</strong> This mechanism (often with multiple heads and positional encoding) is the core idea behind models like ChatGPT.</li>
+            <li><strong>Foundation of Transformers:</strong> This mechanism, plus the two additions in the next sections, is the core idea behind models like ChatGPT.</li>
         </ul>
         <p style="margin-bottom:0;font-size:0.92em;color:#64748b;">You do not need to memorize every symbol. The key takeaway: attention = <em>weighted lookup</em> over the sentence, learned from data.</p>
     </div>
@@ -357,13 +357,6 @@
     
         <li>Words can have different meanings in different situations. The word <em>bank</em> doesn't always produce the same representation. In one sentence it may represent a financial institution, while in another it represents the side of a river. Attention uses the surrounding context to determine which meaning fits best.</li>
     </ul>
-
-    <figure>
-        <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/Transformer_encoder.png"
-            alt="Transformer encoder layer with self-attention and feed-forward applied to every word position">
-        <figcaption>Every word in the sentence flows through the same encoder layer in parallel, with self-attention first and then a feed-forward network, which is why Transformers scale well on GPUs.
-            Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
-    </figure>
   </section>
 
   <section>
@@ -437,29 +430,6 @@
   </section>
 
   <section>
-    <h2>9. Try It Yourself: Self-Attention Visualizer</h2>
-    <p>This activity runs a real <strong>MiniLM</strong> encoder (22M-parameter BERT-style model) in your browser using <a href="https://huggingface.co/docs/transformers.js" target="_blank">Transformers.js</a>. It uses the model’s <strong>WordPiece tokenizer</strong> and real learned <strong>Query–Key attention</strong> from the final layer (averaged across 12 heads).</p>
-
-    <div class="l3-sav-box" style="padding:14px; background:#fafafa; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px;">
-        <label for="l3-sav-input" style="display:block; margin-bottom:8px; font-weight:600;">Sentence</label>
-        <input type="text" id="l3-sav-input" value="The bank executive jumped" style="width:100%; box-sizing:border-box; padding:10px; font-size:16px; font-family:inherit; border:1px solid #cbd5e1; border-radius:6px;">
-        <p style="font-size:0.88em; color:#64748b; margin:10px 0 0;">Tokens below are from the model’s tokenizer (not spaces). Click a token to see its attention row. <strong>Requires</strong> opening this page over <code>http://localhost</code> (not as a double-clicked <code>file://</code> link). First visit downloads ~87MB, usually 30 seconds to 2 minutes on fast internet, then cached.</p>
-        <div class="l3-sav-row" id="l3-sav-tokens" style="margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;"></div>
-        <p id="l3-sav-status" style="font-size:0.9em; color:#334155; margin:14px 0 0; min-height:1.4em;">Starting…</p>
-        <div style="margin-top:12px;">
-            <span style="font-size:0.85em; color:#64748b; margin-right:6px;">Try:</span>
-            <button type="button" class="l3-sav-preset" data-s="The bank executive jumped" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">bank sentence</button>
-            <button type="button" class="l3-sav-preset" data-s="Alice went to the store. She bought milk." style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">She → Alice</button>
-            <button type="button" class="l3-sav-preset" data-s="attention is all you need" style="margin:2px;padding:4px 8px;cursor:pointer;font-size:0.85em;">attention paper</button>
-        </div>
-    </div>
-
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:4px;font-size:0.9em;margin-top:12px;">
-        <strong>What to look for:</strong> Subword pieces like <span style="font-family:monospace;">bank</span> or <span style="font-family:monospace;">##ed</span> are separate tokens. Attention patterns come from trained weights, not hand rules, so they may differ from our textbook examples, especially on ambiguous words.
-    </div>
-  </section>
-
-  <section>
     <h2>Recommended Learning Resources</h2>
     <ul>
         <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> The original research paper that introduced this idea. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv paper</a></li>
@@ -485,229 +455,6 @@
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
-
-<script>
-(function () {
-    var statusEl = document.getElementById('l3-sav-status');
-    var input = document.getElementById('l3-sav-input');
-    var tokensDiv = document.getElementById('l3-sav-tokens');
-    if (!statusEl || !input || !tokensDiv) return;
-
-    var MODEL_ID = 'dbernsohn/all-MiniLM-L6-v2-onnx';
-    var TRANSFORMERS_URL = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.0';
-    var tokenizer = null;
-    var model = null;
-    var tokenLabels = [];
-    var attentionRows = null;
-    var busy = false;
-    var debounceTimer = null;
-
-    function markReady() {
-        statusEl.setAttribute('data-l3-sav-ready', '1');
-    }
-
-    function markBoot() {
-        statusEl.setAttribute('data-l3-sav-boot', '1');
-    }
-
-    function onLoadProgress(info) {
-        if (info.status === 'progress_total' && typeof info.progress === 'number') {
-            statusEl.textContent = 'Downloading model files: ' + info.progress.toFixed(0) + '% (first visit ~87MB)…';
-        } else if (info.status === 'progress' && info.total) {
-            statusEl.textContent = 'Downloading ' + (info.file || 'file') + ': ' +
-                (info.loaded / 1048576).toFixed(0) + ' / ' + (info.total / 1048576).toFixed(0) + ' MB…';
-        } else if (info.status === 'done' && info.file) {
-            statusEl.textContent = 'Finished ' + info.file + ', now loading the next file…';
-        } else if (info.status === 'ready') {
-            statusEl.textContent = 'Initializing ONNX runtime in browser…';
-        }
-    }
-
-    function escapeHtml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    function idsToLabels(inputIds, seqLen) {
-        var ids = inputIds.data ? Array.from(inputIds.data) : Array.from(inputIds);
-        var labels = [];
-        for (var i = 0; i < seqLen; i++) {
-            labels.push(tokenizer.decode([Number(ids[i])], { skip_special_tokens: false }));
-        }
-        return labels;
-    }
-
-    function getSeqLen(inputs) {
-        var mask = inputs.attention_mask.data ? Array.from(inputs.attention_mask.data) : Array.from(inputs.attention_mask);
-        var len = 0;
-        for (var i = 0; i < mask.length; i++) {
-            if (Number(mask[i]) === 1) len = i + 1;
-        }
-        return len;
-    }
-
-    function getLastAttentionTensor(output) {
-        var keys = Object.keys(output).filter(function (k) { return k.indexOf('attentions.') === 0; });
-        if (!keys.length) return null;
-        keys.sort(function (a, b) {
-            return parseInt(a.split('.')[1], 10) - parseInt(b.split('.')[1], 10);
-        });
-        return output[keys[keys.length - 1]];
-    }
-
-    function averageHeads(attnTensor, seqLen) {
-        var dims = attnTensor.dims;
-        var heads = dims[1];
-        var stride = dims[3];
-        var data = attnTensor.data;
-        var rows = [];
-        for (var i = 0; i < seqLen; i++) {
-            var row = new Array(seqLen).fill(0);
-            for (var h = 0; h < heads; h++) {
-                for (var j = 0; j < seqLen; j++) {
-                    row[j] += data[h * stride * stride + i * stride + j];
-                }
-            }
-            for (var k = 0; k < seqLen; k++) row[k] /= heads;
-            rows.push(row);
-        }
-        return rows;
-    }
-
-    function renderTokenRow() {
-        tokensDiv.innerHTML = '';
-        tokenLabels.forEach(function (label, i) {
-            var el = document.createElement('div');
-            el.className = 'l3-sav-token';
-            el.setAttribute('data-idx', String(i));
-            el.style.cssText = 'padding:8px 10px;border-radius:6px;cursor:pointer;background:#e2e8f0;border:2px solid transparent;transition:background 0.2s,border-color 0.2s;min-width:48px;text-align:center;';
-            el.innerHTML =
-                '<div class="l3-sav-label" style="font-size:13px;font-weight:600;color:#1e293b;font-family:monospace;">' + escapeHtml(label) + '</div>' +
-                '<div class="l3-sav-bar-track" style="height:8px;margin-top:6px;background:#cbd5e1;border-radius:4px;overflow:hidden;">' +
-                '<div class="l3-sav-bar-fill" style="height:100%;width:0;background:#dc2626;border-radius:4px;transition:width 0.25s;"></div></div>' +
-                '<div class="l3-sav-pct" style="font-size:11px;color:#64748b;margin-top:4px;">-</div>';
-            el.addEventListener('click', function () { showAttention(i); });
-            tokensDiv.appendChild(el);
-        });
-    }
-
-    function showAttention(queryIdx) {
-        if (!attentionRows || !tokenLabels.length) return;
-        var row = attentionRows[queryIdx];
-        var maxP = Math.max.apply(null, row);
-
-        document.querySelectorAll('.l3-sav-token').forEach(function (el, j) {
-            var p = row[j];
-            var rel = maxP > 0 ? p / maxP : 0;
-            var red = Math.round(254 - rel * 120);
-            var green = Math.round(226 - rel * 190);
-            var blue = Math.round(226 - rel * 190);
-            var isQuery = j === queryIdx;
-
-            el.style.background = isQuery ? '#fde68a' : 'rgb(' + red + ',' + green + ',' + blue + ')';
-            el.style.borderColor = isQuery ? '#2563eb' : '#94a3b8';
-            el.querySelector('.l3-sav-bar-fill').style.width = Math.round(p * 100) + '%';
-            el.querySelector('.l3-sav-pct').textContent = (p * 100).toFixed(0) + '%';
-        });
-
-        var topIdx = row.indexOf(maxP);
-        statusEl.innerHTML =
-            'MiniLM layer 6 · 12-head average · WordPiece tokens: ' + tokenLabels.length +
-            '<br>Attention <strong>from</strong> <span style="font-family:monospace;">' + escapeHtml(tokenLabels[queryIdx]) +
-            '</span> → strongest <span style="font-family:monospace;">' + escapeHtml(tokenLabels[topIdx]) +
-            '</span> (' + (maxP * 100).toFixed(1) + '%). Row sums to 100%.';
-    }
-
-    function defaultSelection() {
-        var bankIdx = tokenLabels.findIndex(function (t) { return t.toLowerCase() === 'bank'; });
-        if (bankIdx >= 0) return bankIdx;
-        var sheIdx = tokenLabels.findIndex(function (t) { return t.toLowerCase() === 'she'; });
-        if (sheIdx >= 0) return sheIdx;
-        return Math.min(1, tokenLabels.length - 1);
-    }
-
-    async function runInference(text) {
-        if (!model || !tokenizer) return;
-        var trimmed = text.trim();
-        if (!trimmed) {
-            tokensDiv.innerHTML = '';
-            statusEl.textContent = 'Type a sentence to tokenize and run attention.';
-            attentionRows = null;
-            return;
-        }
-        if (busy) return;
-        busy = true;
-        statusEl.textContent = 'Running MiniLM attention…';
-
-        try {
-            var inputs = await tokenizer(trimmed, { padding: true, truncation: true, max_length: 64 });
-            var output = await model(inputs);
-            var attnTensor = getLastAttentionTensor(output);
-            if (!attnTensor) throw new Error('Model did not return attention tensors.');
-
-            var seqLen = getSeqLen(inputs);
-            tokenLabels = idsToLabels(inputs.input_ids, seqLen);
-            attentionRows = averageHeads(attnTensor, seqLen);
-            renderTokenRow();
-            showAttention(defaultSelection());
-        } catch (err) {
-            statusEl.textContent = 'Inference failed: ' + err.message;
-        } finally {
-            busy = false;
-        }
-    }
-
-    function scheduleInference() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function () { runInference(input.value); }, 450);
-    }
-
-    input.addEventListener('input', scheduleInference);
-    document.querySelectorAll('.l3-sav-preset').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            input.value = btn.getAttribute('data-s');
-            runInference(input.value);
-        });
-    });
-
-    async function boot() {
-        if (location.protocol === 'file:') {
-            statusEl.innerHTML = 'This page was opened as a local file (<code>file://</code>). Chrome blocks the model library in that mode. ' +
-                'Run a local server in this folder, then open the lesson via <code>http://localhost</code>:<br><br>' +
-                '<code style="display:block;background:#f1f5f9;padding:8px;border-radius:4px;margin-top:6px;">cd "' +
-                location.pathname.split('/').slice(0, -1).join('/') +
-                '"<br>python3 -m http.server 8000</code><br>' +
-                'Then visit the printed <code>http://localhost:8000/...</code> URL for this file.';
-            return;
-        }
-
-        statusEl.textContent = 'Loading Transformers.js from CDN…';
-        markBoot();
-
-        try {
-            var tf = await import(TRANSFORMERS_URL);
-            var AutoTokenizer = tf.AutoTokenizer;
-            var AutoModel = tf.AutoModel;
-            var env = tf.env;
-            env.allowLocalModels = false;
-            env.useBrowserCache = true;
-
-            statusEl.textContent = 'Loading MiniLM tokenizer and weights (~87MB on first visit)…';
-            var loadOpts = { progress_callback: onLoadProgress };
-            tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID, loadOpts);
-            statusEl.textContent = 'Tokenizer ready, now downloading model weights…';
-            model = await AutoModel.from_pretrained(MODEL_ID, Object.assign({ dtype: 'fp32' }, loadOpts));
-            markReady();
-            await runInference(input.value);
-        } catch (err) {
-            markReady();
-            statusEl.innerHTML = 'Could not load the activity: <strong>' + escapeHtml(err.message) + '</strong>. ' +
-                'Open DevTools → Network and check that requests to <code>cdn.jsdelivr.net</code> and <code>huggingface.co</code> succeed (not blocked by an extension, firewall, or LMS iframe).';
-        }
-    }
-
-    boot();
-})();
-</script>
 
 </body>
 </html>

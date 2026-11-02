@@ -169,7 +169,7 @@
     <p>A major limitation of basic dictionary embeddings is their static nature: an isolated word token receives exactly one vector entry. This breaks when managing words with multiple meanings:</p>
     <p style="text-align: center; font-style: italic;">How can we map the word <strong>"bank"</strong> in both "river bank" and "investment bank"?</p>
     
-    <p><strong>The Transformer Core Fix:</strong> While a word always pulls the same base lookup vector initial coordinates, subsequent internal <strong>Self-Attention Layers</strong> mathematically modify the initial state based on surrounding text context. This dynamically shifts the base coordinates toward the appropriate financial or nature neighborhoods before evaluating meaning.</p>
+    <p><strong>The fix (a preview):</strong> Modern language models still start every "bank" from the same lookup vector, but they then update that vector using the other words in the sentence. The surrounding words shift it toward the financial neighborhood or the nature neighborhood. The next lesson shows the mechanism that does this, called <strong>attention</strong>.</p>
 
     <div class="table-wrap"><table>
         <tr>
@@ -242,14 +242,14 @@
     <h2>7. Core Reading List</h2>
     <ul>
         <li><strong>Efficient Estimation of Word Representations in Vector Space (Word2Vec - Mikolov et al., 2013):</strong> The foundational research paper that proved semantic analogies could be computed using vector math. <a href="https://arxiv.org/abs/1301.3781" target="_blank">Download arXiv Paper</a></li>
-        <li><strong>GloVe: Global Vectors for Word Representation (Pennington et al., 2014):</strong> Demonstrates how global matrix co-occurrence metrics map clean spatial structures. <a href="https://nlp.stanford.edu/projects/glove/" target="_blank">Access Stanford Project Page</a></li>
+        <li><strong>GloVe: Global Vectors for Word Representation (Pennington et al., 2014):</strong> Demonstrates how global matrix co-occurrence metrics map clean spatial structures. <a href="https://aclanthology.org/D14-1162/" target="_blank">Read the paper</a></li>
     </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
     <a class="pager__prev" href="lesson1_tokenization.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Tokenization: Breaking Text Into Pieces</span>
+      <span class="pager__title">Tokenization: How Computers Learn to Read</span>
     </a>
     <a class="pager__next" href="lesson3_attention.html">
       <span class="pager__label">Next</span>
