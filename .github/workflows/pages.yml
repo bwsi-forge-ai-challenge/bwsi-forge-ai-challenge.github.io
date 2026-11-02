@@ -23,7 +23,6 @@ concurrency:
 
 env:
   UNPUBLISHED: |
-    Lessons/1_foundations_of_genai
     Lessons/2_multimodal_+_advanced_models
     Assignments/2_multimodal_+_advanced_models
 
@@ -43,7 +42,6 @@ jobs:
           while IFS= read -r p; do
             if [ -n "$p" ]; then rm -rf "_site/$p"; fi
           done <<< "$UNPUBLISHED"
-          test ! -e "_site/Lessons/1_foundations_of_genai"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
