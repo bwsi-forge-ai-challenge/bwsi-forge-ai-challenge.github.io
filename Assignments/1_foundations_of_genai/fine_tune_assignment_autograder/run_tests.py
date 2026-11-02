@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 SOURCE_DIR = Path(__file__).resolve().parent
-STARTER_PATH = SOURCE_DIR / "starter_pairs.json"
+DATASET_ID = "dvgodoy/yoda_sentences"
 
 LOCAL_RESULTS = SOURCE_DIR.parent / "_autograder_local_results"
 SUBMISSION_CANDIDATES = [Path("/autograder/submission"), SOURCE_DIR.parent]
@@ -34,8 +34,9 @@ SAFE_ASSIGN_NAMES = {
     "SEED",
     "MODEL_NAME",
     "TASK_NAME",
-    "TRAINING_PAIRS",
-    "MIN_EXAMPLES",
+    "DATASET_NAME",
+    "INPUT_COLUMN",
+    "OUTPUT_COLUMN",
     "PROMPT_TEMPLATE",
     "LEARNING_RATE_RUN1",
     "LEARNING_RATE_RUN2",
@@ -97,8 +98,9 @@ def sanitize(source: str) -> str:
 
 
 class Submission:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, root: Path | None = None):
         self.path = path
+        self.root = root or path.parent
         self.source = sanitize(path.read_text(encoding="utf-8", errors="replace"))
         self.tree = ast.parse(self.source, filename=path.name)
         self.ns: dict[str, Any] = {}
@@ -126,6 +128,19 @@ class Submission:
                 for n in names:
                     self.errors[n] = f"{type(exc).__name__}: {exc}"
                     self.ns.pop(n, None)
+
+    def images(self) -> list[Path]:
+        """Non-trivial image files uploaded next to the .py (existence check only)."""
+        exts = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+        return [
+            p
+            for p in self.root.rglob("*")
+            if p.suffix.lower() in exts
+            and p.is_file()
+            and p.stat().st_size >= 1024
+            and "__pycache__" not in p.parts
+            and not any("_autograder" in part for part in p.parts)
+        ]
 
     # -- AST helpers -------------------------------------------------------- #
     def function_def(self, name: str) -> ast.FunctionDef | None:
@@ -201,33 +216,6 @@ def require(sub: Submission, name: str) -> Any:
     return sub.ns[name]
 
 
-def starter_inputs() -> set[str]:
-    data = json.loads(STARTER_PATH.read_text(encoding="utf-8"))
-    return {_norm(p[0]) for p in data}
-
-
-def _norm(s: str) -> str:
-    return re.sub(r"\s+", " ", s.strip().lower())
-
-
-def good_pairs(sub: Submission) -> list[tuple[str, str]]:
-    pairs = require(sub, "TRAINING_PAIRS")
-    if not isinstance(pairs, (list, tuple)):
-        raise AssertionError("TRAINING_PAIRS must be a list of (input, output) tuples.")
-    out = []
-    for i, p in enumerate(pairs):
-        if (
-            not isinstance(p, (list, tuple))
-            or len(p) != 2
-            or not all(isinstance(x, str) and x.strip() for x in p)
-        ):
-            raise AssertionError(
-                f"TRAINING_PAIRS[{i}] = {p!r} is not a pair of two non-empty strings."
-            )
-        out.append((p[0], p[1]))
-    return out
-
-
 def word_count(s: Any) -> int:
     return len(re.findall(r"\w+", s)) if isinstance(s, str) else 0
 
@@ -236,44 +224,15 @@ def word_count(s: Any) -> int:
 # Checks
 # --------------------------------------------------------------------------- #
 # ---- Dataset ------------------------------------------------------- #
-def t_pairs_well_formed(sub):
-    good_pairs(sub)
-
-
-def t_at_least_50(sub):
-    n = len(good_pairs(sub))
-    assert n >= 50, f"TRAINING_PAIRS has {n} examples; need at least 50."
-
-
-def t_added_new_pairs(sub):
-    pairs = good_pairs(sub)
-    starters = starter_inputs()
-    new = [p for p in pairs if _norm(p[0]) not in starters]
-    assert len(new) >= 5, (
-        f"Found {len(new)} pairs that are not in the starter set; add at least 5 of your own."
-    )
-
-
-def t_no_duplicates(sub):
-    pairs = good_pairs(sub)
-    seen: dict[str, int] = {}
-    for i, (inp, _) in enumerate(pairs):
-        key = _norm(inp)
-        assert key not in seen, (
-            f"Duplicate input {inp!r} at positions {seen[key]} and {i}."
-        )
-        seen[key] = i
-
-
-def t_new_pairs_quality(sub):
-    pairs = good_pairs(sub)
-    starters = starter_inputs()
-    new = [p for p in pairs if _norm(p[0]) not in starters]
-    bad = [p for p in new if _norm(p[0]) == _norm(p[1]) or word_count(p[1]) < 2]
-    assert not bad, (
-        "Your added pairs need a real output (different from the input, 2+ words). "
-        f"Problem pair: {bad[0]!r}"
-    )
+def t_loads_yoda_dataset(sub):
+    for node in ast.walk(sub.tree):
+        if isinstance(node, ast.Call) and _call_name(node) == "load_dataset":
+            arg = _arg(node, 0, "path")
+            if isinstance(arg, ast.Constant) and arg.value == DATASET_ID:
+                return
+            if isinstance(arg, ast.Name) and sub.ns.get(arg.id) == DATASET_ID:
+                return
+    raise AssertionError(f"Expected load_dataset({DATASET_ID!r}, ...) in your file.")
 
 
 def t_format_training_text(sub):
@@ -319,7 +278,7 @@ def t_epochs(sub):
     v = require(sub, "NUM_EPOCHS")
     assert isinstance(v, (int, float)) and not isinstance(v, bool), "NUM_EPOCHS must be a number (still None?)."
     assert v >= 1, f"NUM_EPOCHS={v} must be at least 1."
-    assert v <= 50, f"NUM_EPOCHS={v} is unreasonably large for 50 examples."
+    assert v <= 50, f"NUM_EPOCHS={v} is unreasonably large for this dataset."
 
 
 def t_batch(sub):
@@ -328,16 +287,55 @@ def t_batch(sub):
     assert 1 <= v <= 64, f"BATCH_SIZE={v} should be between 1 and 64."
 
 
-# ---- Training ------------------------------------------------------ #
-def t_train_fn_intact(sub):
+# ---- Training function (TODO 2) ------------------------------------ #
+def _train_fn(sub):
     fn = sub.function_def("train_finetune_run")
     assert fn is not None, "`train_finetune_run` was removed -- keep the provided function."
-    names = {_call_name(n) for n in ast.walk(fn) if isinstance(n, ast.Call)}
-    for needed in ("Trainer", "TrainingArguments"):
-        assert needed in names, f"train_finetune_run no longer calls {needed}(...)."
-    assert any(n.endswith("train") for n in names if n.startswith("trainer")), (
-        "train_finetune_run no longer calls trainer.train()."
+    return fn
+
+
+def _calls_in(fn, name):
+    return [n for n in ast.walk(fn) if isinstance(n, ast.Call) and _call_name(n) == name]
+
+
+def _kwargs(call):
+    return {k.arg for k in call.keywords if k.arg}
+
+
+def t_train_args(sub):
+    calls = _calls_in(_train_fn(sub), "TrainingArguments")
+    assert calls, "train_finetune_run never calls TrainingArguments(...)."
+    needed = {"output_dir", "num_train_epochs", "per_device_train_batch_size", "learning_rate"}
+    missing = needed - _kwargs(calls[0])
+    assert not missing, f"TrainingArguments is missing: {sorted(missing)}"
+
+
+def t_train_report_to(sub):
+    calls = _calls_in(_train_fn(sub), "TrainingArguments")
+    assert calls, "train_finetune_run never calls TrainingArguments(...)."
+    ok = any(
+        k.arg == "report_to" and isinstance(k.value, ast.Constant) and k.value.value == "wandb"
+        for k in calls[0].keywords
     )
+    assert ok, 'TrainingArguments needs report_to="wandb".'
+
+
+def t_train_trainer(sub):
+    calls = _calls_in(_train_fn(sub), "Trainer")
+    assert calls, "train_finetune_run never creates a Trainer(...)."
+    missing = {"model", "args", "train_dataset", "data_collator"} - _kwargs(calls[0])
+    assert not missing, f"Trainer is missing: {sorted(missing)}"
+
+
+def t_train_runs_and_saves(sub):
+    names = {_call_name(n) for n in ast.walk(_train_fn(sub)) if isinstance(n, ast.Call)}
+    assert any(n.endswith(".train") for n in names), "train_finetune_run never calls trainer.train()."
+    assert any(n.endswith(".save_model") for n in names), "train_finetune_run never saves the model."
+
+
+def t_plot_uploaded(sub):
+    imgs = sub.images()
+    assert imgs, "No plot image (.png/.jpg) found in the submission; upload one from your W&B page."
 
 
 def t_wandb(sub):
@@ -371,7 +369,7 @@ def t_runs_distinct(sub):
         out = _arg(call, 2, "output_dir")
         assert lr is not None and out is not None, (
             "Each call needs a learning rate and output directory: "
-            "train_finetune_run(TRAINING_PAIRS, lr, output_dir, run_name)"
+            "train_finetune_run(train_data, lr, output_dir, run_name)"
         )
         lr_src = ast.unparse(lr)
         if isinstance(lr, ast.Name) and lr.id in sub.ns:
@@ -410,7 +408,7 @@ def t_eval_uses_template(sub):
 def t_p1_length(sub):
     r = require(sub, "part1_reflection")
     n = word_count(r)
-    assert n >= 30, f"part1_reflection has {n} words; write at least 30."
+    assert n >= 20, f"part1_reflection has {n} words; write at least 20."
 
 
 def t_p1_content(sub):
@@ -426,7 +424,7 @@ def t_p1_content(sub):
 def t_p4_length(sub):
     r = require(sub, "part4_reflection")
     n = word_count(r)
-    assert n >= 60, f"part4_reflection has {n} words; write at least 60."
+    assert n >= 40, f"part4_reflection has {n} words; write at least 40."
 
 
 def t_p4_content(sub):
@@ -445,10 +443,18 @@ GROUPS: list[tuple[str, list[tuple[str, float, Check]]]] = [
     (
         "Dataset",
         [
-            ("pairs are well-formed (input, output) strings", 1, t_pairs_well_formed),
-            ("at least 50 examples", 1, t_at_least_50),
-            ("added at least 5 new examples", 2, t_added_new_pairs),
-            ("no duplicate inputs", 1, t_no_duplicates),
+            ("loads dvgodoy/yoda_sentences", 1, t_loads_yoda_dataset),
+            ("format_training_text correct", 1, t_format_training_text),
+            ("format_inference_prompt correct", 1, t_format_inference_prompt),
+        ],
+    ),
+    (
+        "Training function",
+        [
+            ("TrainingArguments has the required settings", 2, t_train_args),
+            ('report_to="wandb"', 1, t_train_report_to),
+            ("Trainer built with model, args, dataset, collator", 1, t_train_trainer),
+            ("trains and saves the model", 1, t_train_runs_and_saves),
         ],
     ),
     (
@@ -462,12 +468,20 @@ GROUPS: list[tuple[str, list[tuple[str, float, Check]]]] = [
         ],
     ),
     (
+        "Training runs",
+        [
+            ("two active train_finetune_run calls", 1, t_two_runs),
+            ("runs differ in learning rate and output dir", 1, t_runs_distinct),
+            ("W&B plot image uploaded", 1, t_plot_uploaded),
+        ],
+    ),
+    (
         "Reflections",
         [
-            ("part1_reflection length", 2, t_p1_length),
-            ("part1_reflection content", 3, t_p1_content),
-            ("part4_reflection length", 2, t_p4_length),
-            ("part4_reflection content", 3, t_p4_content),
+            ("part1_reflection length", 1, t_p1_length),
+            ("part1_reflection content", 1, t_p1_content),
+            ("part4_reflection length", 1, t_p4_length),
+            ("part4_reflection content", 1, t_p4_content),
         ],
     ),
 ]
@@ -538,7 +552,7 @@ def main() -> int:
         return 0
 
     try:
-        sub = Submission(path)
+        sub = Submission(path, submission_dir)
     except SyntaxError as exc:
         msg = (
             f"{path.name} has a syntax error and could not be parsed:\n"
