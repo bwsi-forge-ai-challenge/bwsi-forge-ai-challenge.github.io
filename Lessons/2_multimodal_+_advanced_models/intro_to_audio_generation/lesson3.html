@@ -116,8 +116,8 @@ Reconstructed Waveform x̂ (T samples)</pre>
 
 <h3>1. The Encoder (\(E\))</h3>
 <p>A deep convolutional neural network processes the 1D waveform \(x \in \mathbb{R}^T\). Using progressive strided convolutions (e.g., strides of \(2, 4, 5, 8\)), it reduces the temporal sample rate while increasing channel depth.</p>
-<p>For an input at \(32,000\text{ Hz}\) with a total downsampling stride of \(640\):</p>
-<div class="eq-panel">\[ \text{Latent Frame Rate} = \frac{32000}{640} = 50\text{ Hz} \]</div>
+<p>For an input at \(32,000\text{ Hz}\) with a total downsampling stride of \(320\):</p>
+<div class="eq-panel">\[ \text{Latent Frame Rate} = \frac{32000}{320} = 100\text{ Hz} \]</div>
 <p>Every frame \(z_f \in \mathbb{R}^D\) (\(D \approx 128\)) represents a continuous summary of a \(20\text{ ms}\) window of physical audio.</p>
 
 <h3>2. The Quantization Layer (\(Q\))</h3>
@@ -318,61 +318,6 @@ User Text Prompt ──► [ T5 Encoder ] ──► [ AR Transformer Sampling (T
 <p>Generate a short clip and estimate \(F = \text{duration} \times 50\) frames and roughly \(F \times 4\) AR token decisions — the discrete stream this lesson describes.</p>
 </div>
   </section>
-
-  <section>
-    <h2>Knowledge Verification</h2>
-
-<div class="quiz">
-<strong>1. Codec Tensor Dimensionality</strong>
-<p><strong>Question:</strong> You pass a \(6.0\text{-second}\) mono audio recording sampled at \(32,000\text{ Hz}\) through a neural codec. The convolutional encoder applies downsampling with successive layer strides of \([2, 4, 5, 8]\). The RVQ bottleneck uses \(K = 8\) residual codebooks, each containing \(V = 1,024\) entries with embedding dimension \(D = 128\).</p>
-<ol>
-<li>What is the total temporal downsampling factor?</li>
-<li>What is the latent frame rate (\(f_{\text{codec}}\))?</li>
-<li>What is the exact shape of the continuous latent tensor \(z = E(x)\) before quantization?</li>
-<li>What is the exact shape of the discrete token tensor produced by the RVQ layer?</li>
-</ol>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Total stride \(= 2 \times 4 \times 5 \times 8 = \mathbf{320}\).</li>
-<li>Latent frame rate \(= \frac{32,000\text{ Hz}}{320} = \mathbf{100\text{ Hz}}\) (100 frames per second).</li>
-<li>Total frames \(F = 6.0\text{ s} \times 100\text{ frames/s} = 600\text{ frames}\). Continuous latent shape: <strong><code>(600, 128)</code></strong> (or <code>(1, 128, 600)</code> with batch and channel ordering).</li>
-<li>Discrete token shape: <strong><code>(600, 8)</code></strong> (representing \(600\) time frames across \(8\) residual codebook indices).</li>
-</ol>
-</details>
-</div>
-
-<div class="quiz">
-<strong>2. Compression Calculations</strong>
-<p><strong>Question:</strong> Compute the uncompressed PCM bitrate for \(48\text{ kHz}\), 24-bit stereo audio. Then, calculate the bitrate of a neural codec operating at \(75\text{ Hz}\) frame rate with \(K = 6\) codebooks and \(V = 2,048\) entries. What is the compression factor achieved by the codec?</p>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Uncompressed PCM bitrate:
-<div class="eq-panel">\[ \text{PCM Bitrate} = 48,000\text{ samples/s} \times 24\text{ bits/sample} \times 2\text{ channels} = \mathbf{2,304\text{ kbps}} \]</div>
-</li>
-<li>Codec bitrate:
-<div class="eq-panel">\[ \text{Bits per token} = \log_2(2048) = 11\text{ bits} \]</div>
-<div class="eq-panel">\[ \text{Codec Bitrate} = 75\text{ frames/s} \times 6\text{ books/frame} \times 11\text{ bits/token} = 4,950\text{ bps} = \mathbf{4.95\text{ kbps}} \]</div>
-</li>
-<li>Compression factor:
-<div class="eq-panel">\[ \text{Compression Ratio} = \frac{2304\text{ kbps}}{4.95\text{ kbps}} \approx \mathbf{465.45\times} \]</div>
-</li>
-</ol>
-</details>
-</div>
-  </section>
-
-  <section>
-    <h2>Key Takeaways &amp; What's Next</h2>
-<ul>
-<li><strong>Neural codecs bridge physics and language modeling:</strong> They turn long, high-frequency waveforms into short, discrete token sequences that standard Transformers can generate.</li>
-<li><strong>Vector Quantization uses nearest-neighbor lookup:</strong> Continuous latent vectors are mapped to the closest codebook prototype vectors, producing discrete token indices.</li>
-<li><strong>RVQ enables coarse-to-fine fidelity:</strong> Chaining codebooks recursively quantizes residual error, capturing high-level musical structure in early books and fine textures in later books.</li>
-<li><strong>Codebook delay aligns dependencies:</strong> Shifting multi-codebook streams allows Transformers to condition fine timbral tokens on earlier coarse predictions.</li>
-</ul>
-<p>Now that we have established how audio is tokenized into discrete vocabularies, we can look at control: <strong>How do we steer these models to generate specific genres, instruments, tempos, or melodies?</strong></p>
-<p>In <strong>Lesson 4</strong>, we explore <strong>Conditioning Mechanisms</strong>, analyzing how text prompts, cross-attention layers, and Classifier-Free Guidance (CFG) direct generative audio models.</p>
 
 <div class="bridge">
 <strong>Further reading</strong>

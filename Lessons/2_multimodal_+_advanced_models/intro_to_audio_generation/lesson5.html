@@ -251,57 +251,6 @@ Downstream Generation Risks:
 </ul>
   </section>
 
-  <section>
-    <h2>Knowledge Verification</h2>
-
-<div class="quiz">
-<strong>1. Complete Pipeline Inference Arithmetic</strong>
-<p><strong>Question:</strong> You deploy an autoregressive music generation pipeline using a \(32\text{ kHz}\) neural codec with a framing rate of \(50\text{ Hz}\) and \(K = 4\) codebooks (\(V = 2,048\)). A user inputs a prompt and requests <strong>15 seconds</strong> of audio.</p>
-<ol>
-<li>What is the total length of the generated discrete token sequence?</li>
-<li>What is the shape of the continuous latent matrix before passing into the codec decoder?</li>
-<li>Exactly how many floating-point samples will make up the final uncompressed mono PCM waveform?</li>
-</ol>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Frames to generate \(= 15\text{ s} \times 50\text{ frames/s} = \mathbf{750\text{ frames}}\). Total tokens \(= 750\text{ frames} \times 4\text{ codebooks} = \mathbf{3,000\text{ discrete tokens}}\).</li>
-<li>Latent matrix shape: <strong><code>(750, 128)</code></strong> (assuming standard embedding dimension \(D = 128\)).</li>
-<li>Final output samples \(= 15\text{ s} \times 32,000\text{ samples/s} = \mathbf{480,000\text{ samples}}\) (PCM tensor of shape <code>(480000,)</code>).</li>
-</ol>
-</details>
-</div>
-
-<div class="quiz">
-<strong>2. Autoregressive vs. Diffusion Latency Comparison</strong>
-<p><strong>Question:</strong> Compare generating a 10-second audio track across two backends:</p>
-<ul>
-<li><strong>Backend A (Autoregressive):</strong> 2,000 sequential token steps. GPU execution with KV-caching achieves an average of \(6\text{ ms}\) per step.</li>
-<li><strong>Backend B (Latent Diffusion):</strong> 50 iterative denoising steps. Each step computes a full-tensor update across the latent grid, taking \(180\text{ ms}\) per step.</li>
-</ul>
-<p>Which backend finishes generation faster, and by how much?</p>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Backend A Latency \(= 2,000\text{ steps} \times 0.006\text{ s} = \mathbf{12.0\text{ seconds}}\).</li>
-<li>Backend B Latency \(= 50\text{ steps} \times 0.180\text{ s} = \mathbf{9.0\text{ seconds}}\).</li>
-<li>Verdict: <strong>Backend B (Diffusion) finishes faster by \(3.0\text{ seconds}\)</strong> (\(9.0\text{ s}\) vs. \(12.0\text{ s}\)).</li>
-</ol>
-</details>
-</div>
-  </section>
-
-  <section>
-    <h2>Unit Summary: The Complete Mental Model</h2>
-<p>Across this deep dive, we have connected the physics of sound to modern generative architectures:</p>
-<ol>
-<li><strong>The Physical Wave:</strong> Sound is physical air pressure, represented as a 1D sequence of amplitude samples measured at sample rate \(f_s\).</li>
-<li><strong>The Frequency Prism:</strong> The STFT uses sliding window FFTs to convert 1D waveforms into 2D time-frequency spectrograms, bounded by the time-frequency uncertainty principle.</li>
-<li><strong>The Discrete Bottleneck:</strong> Neural Audio Codecs downsample waveforms to low frame rates (\(50\text{ Hz}\)) and use Residual Vector Quantization (RVQ) to produce compact discrete token grids.</li>
-<li><strong>Targeted Conditioning:</strong> Cross-attention and Classifier-Free Guidance (CFG) steer the pre-Softmax logits toward user prompts and reference audio.</li>
-<li><strong>Production Synthesis:</strong> Modern systems combine autoregressive Transformers or latent diffusion backbones with neural decoders to output production-ready audio.</li>
-</ol>
-
 <div class="bridge">
 <strong>Further reading</strong>
 <ul style="margin:8px 0 0;">

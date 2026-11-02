@@ -181,7 +181,7 @@
     <h2>4. The Nyquist-Shannon Theorem &amp; Aliasing</h2>
 <p>How fast do we actually need to sample audio to capture the original sound without loss?</p>
 <p>The <strong>Nyquist-Shannon Sampling Theorem</strong> establishes the fundamental limit: to record and reconstruct a signal containing frequencies up to \(f_{\text{max}}\), your sampling rate must be strictly greater than twice that frequency:</p>
-<div class="eq-panel">\[ f_s \ge 2 f_{\text{max}} \]</div>
+<div class="eq-panel">\[ f_s \gt 2 f_{\text{max}} \]</div>
 <p>The maximum frequency a system can capture without error, \(\frac{f_s}{2}\), is called the <strong>Nyquist frequency</strong>.</p>
 <p>Because healthy human hearing tops out around \(20,000\text{ Hz}\) (\(20\text{ kHz}\)), an audio system needs a sample rate of at least \(40\text{ kHz}\). CD audio chose \(44.1\text{ kHz}\) to provide a safe buffer above human perception while leaving room for physical analog low-pass filters to roll off smoothly.</p>
 
@@ -321,44 +321,6 @@
 <p class="status" id="viz-status">Stopped.</p>
 </div>
   </section>
-
-  <section>
-    <h2>Knowledge Verification</h2>
-
-<div class="quiz">
-<strong>1. The Nyquist Boundary</strong>
-<p><strong>Question:</strong> You are building a low-latency speech synthesis pipeline at a sample rate of \(f_s = 16,000\text{ Hz}\). What is the absolute highest audio frequency your system can generate? What happens if your model attempts to generate an unconstrained vocal sibilance hiss at \(10\text{ kHz}\)?</p>
-<details>
-<summary>Show answer</summary>
-<p>The Nyquist limit is \(\frac{f_s}{2} = \frac{16000}{2} = \mathbf{8\text{ kHz}}\). If the system outputs energy at \(10\text{ kHz}\) without appropriate anti-aliasing filters, it will reflect across the Nyquist threshold and alias down to \(\lvert 16 - 10 \rvert = \mathbf{6\text{ kHz}}\), introducing unwanted metallic distortion into the audio.</p>
-</details>
-</div>
-
-<div class="quiz">
-<strong>2. Spectrogram Tensor Arithmetic</strong>
-<p><strong>Question:</strong> You take a \(2.0\text{ second}\) mono audio file sampled at \(24,000\text{ Hz}\). You configure an STFT with an FFT window size of \(N = 1024\) samples and a hop length of \(H = 256\) samples. What is the exact shape of your output linear spectrogram tensor <code>(freq_bins, time_frames)</code>?</p>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Total samples = \(2.0 \times 24,000 = 48,000\text{ samples}\).</li>
-<li>\(\text{Frequency Bins} = \frac{N}{2} + 1 = \frac{1024}{2} + 1 = \mathbf{513}\).</li>
-<li>\(\text{Time Frames} = 1 + \lfloor\frac{48000 - 1024}{256}\rfloor = 1 + \lfloor\frac{46976}{256}\rfloor = 1 + 183 = \mathbf{184}\).</li>
-<li>Output shape: <strong><code>(513, 184)</code></strong>.</li>
-</ol>
-</details>
-</div>
-  </section>
-
-  <section>
-    <h2>Key Takeaways &amp; What's Next</h2>
-<ul>
-<li><strong>Sound is physical pressure:</strong> A raw audio tensor is a 1D sequence of amplitude samples measured at fixed time intervals \(f_s\).</li>
-<li><strong>Raw PCM is too long for LLMs:</strong> A few seconds of raw audio contains hundreds of thousands of numbers with zero standalone semantic meaning.</li>
-<li><strong>The STFT bridges time and pitch:</strong> By sliding an FFT window over time, we construct a 2D time-frequency spectrogram.</li>
-<li><strong>Mel-scaling matches human biological perception:</strong> It allocates maximum tensor resolution to low and mid frequencies while compressing higher bands.</li>
-</ul>
-<p>Now that we know how to turn continuous acoustic waves into 2D tensors, the next question is architectural: <strong>Should generative models synthesize audio by predicting spectrograms, or is there a more efficient representation?</strong></p>
-<p>In <strong>Lesson 2</strong>, we examine the divide between <strong>Symbolic Audio (MIDI event recipes)</strong> and <strong>Continuous Audio Records (PCM/Spectrograms)</strong>, and see why models like the Google Magenta Bach Doodle rely on sparse symbolic events.</p>
 
 <div class="bridge">
 <strong>Recommended Learning Resources</strong>

@@ -243,56 +243,6 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 <p>Coconet demonstrates why symbolic models excel at compositional logic: the network learns harmonic counterpoint rules directly without expending parameter capacity reconstructing waveforms or audio fidelity.</p>
   </section>
 
-  <section>
-    <h2>Knowledge Verification</h2>
-
-<div class="quiz">
-<strong>1. Equal-Temperament Pitch Computation</strong>
-<p><strong>Question:</strong> A bass guitar plays MIDI note \(n = 33\) (A1). What is its exact fundamental frequency in Hertz? If a synthesizer plays a note three octaves higher, what is its MIDI number and frequency?</p>
-<details>
-<summary>Show answer</summary>
-<p><strong>Step-by-step arithmetic:</strong></p>
-<ol>
-<li>For \(n = 33\):
-<div class="eq-panel">\[ f(33) = 440 \times 2^{\frac{33 - 69}{12}} = 440 \times 2^{\frac{-36}{12}} = 440 \times 2^{-3} = \frac{440}{8} = \mathbf{55.0\text{ Hz}} \]</div>
-</li>
-<li>Three octaves higher corresponds to \(+36\) semitones (\(3 \times 12\)):
-<div class="eq-panel">\[ n_{\text{high}} = 33 + 36 = \mathbf{69}\text{ (Concert A4)} \]</div>
-</li>
-<li>Each octave doubles the frequency, so three octaves scales the base frequency by \(2^3 = 8\):
-<div class="eq-panel">\[ f_{\text{high}} = 55.0\text{ Hz} \times 8 = \mathbf{440.0\text{ Hz}} \]</div>
-</li>
-</ol>
-</details>
-</div>
-
-<div class="quiz">
-<strong>2. Sequence Length Scaling in REMI</strong>
-<p><strong>Question:</strong> A generative Transformer uses a REMI token format where each note requires 4 tokens <code>[Position, Pitch, Duration, Velocity]</code>, and each measure begins with a <code>[Bar]</code> token. If the model generates an 8-measure chord progression containing 4 voices playing whole notes simultaneously on every measure, what is the exact token length of the generated sequence?</p>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Number of measures = \(8\) → \(8\text{ [Bar] tokens}\).</li>
-<li>Notes per measure = \(4\text{ voices} \times 1\text{ note} = 4\text{ notes per measure}\).</li>
-<li>Total notes across 8 measures = \(8 \times 4 = 32\text{ notes}\).</li>
-<li>Tokens per note = \(4\).</li>
-<li>Note tokens = \(32 \times 4 = 128\text{ tokens}\).</li>
-<li>Total sequence length = \(8\text{ (Bar tokens)} + 128\text{ (Note tokens)} = \mathbf{136\text{ tokens}}\).</li>
-</ol>
-</details>
-</div>
-  </section>
-
-  <section>
-    <h2>Key Takeaways &amp; What's Next</h2>
-<ul>
-<li><strong>Symbolic representations store recipes:</strong> Formats like MIDI and REMI store performance instructions, enabling fast editing, transposition, and small data footprints.</li>
-<li><strong>Continuous representations store records:</strong> Formats like PCM waveforms and STFT spectrograms store the actual physical acoustics, which is required for vocals, timbre, and production fidelity.</li>
-<li><strong>Symbolic tokens fit vanilla Transformers:</strong> Because symbolic music flattens into small token vocabularies and compact sequence lengths, models can generate long compositions with standard sequence modeling techniques.</li>
-</ul>
-<p>This raises an essential architectural question: <strong>If symbolic models cannot generate actual sound, and raw waveforms are too long for Transformers, how do modern models like MusicGen and Suno generate high-fidelity audio from text prompts?</strong></p>
-<p>In <strong>Lesson 3</strong>, we explore <strong>Neural Audio Codecs (EnCodec, SoundStream, DAC)</strong>—deep autoencoders with Residual Vector Quantization (RVQ) that compress raw waveforms directly into discrete token dictionaries.</p>
-
 <div class="bridge">
 <strong>Recommended Learning Resources</strong>
 <ul style="margin:8px 0 0;">

@@ -170,7 +170,7 @@ Frame 0      Frame 1      ...  Frame F   Frame F+1    Frame F+2    ...
   <section>
     <h2>4. Classifier-Free Guidance (CFG): Amplifying Adherence</h2>
 <p>Even with cross-attention, autoregressive models often under-index on prompt conditioning. Left to standard sampling, the model may default to generic pop progressions rather than following nuanced prompt instructions like <code>"ambient drone with microtonal flute"</code>.</p>
-<p><strong>Classifier-Free Guidance (CFG)</strong> forces the model to adhere strictly to its conditioning signal without requiring a separate classifier network.</p>
+<p><strong>Classifier-Free Guidance (CFG)</strong> pushes the model toward its conditioning signal without requiring a separate classifier network. Note: It <em>encourages</em> prompt adherence; it cannot guarantee it, especially for concepts the model rarely saw during training.</p>
 
 <h3>How CFG Works</h3>
 <ol>
@@ -202,31 +202,7 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
   </section>
 
   <section>
-    <h2>5. Sampling Strategies: Temperature and Nucleus (Top-p)</h2>
-<p>Once guided logits \(z_{\text{guided}}\) are computed, the final discrete token is sampled using two key hyperparameters:</p>
-
-<h3>1. Temperature (\(\tau\))</h3>
-<p>Temperature rescales logits to adjust distribution entropy:</p>
-<div class="eq-panel">\[ P(i) = \frac{\exp(z_i / \tau)}{\sum_j \exp(z_j / \tau)} \]</div>
-<ul>
-<li><strong>\(\tau &lt; 1.0\) (e.g., \(0.7\)):</strong> Sharpens the distribution, suppressing low-probability noise tokens and favoring common, stable musical patterns.</li>
-<li><strong>\(\tau &gt; 1.0\) (e.g., \(1.3\)):</strong> Flattens the distribution, introducing sonic variation and unexpected instrument pairings at the risk of structural dissonance.</li>
-</ul>
-
-<h3>2. Nucleus Sampling (Top-\(p\))</h3>
-<p>Top-\(p\) sampling truncates the long tail of low-probability codebook vectors:</p>
-<ol>
-<li>Sort token probabilities in descending order.</li>
-<li>Retain the smallest subset of top tokens whose cumulative sum satisfies:
-<div class="eq-panel">\[ \sum_{i \in V_{\text{top}}} P(i) \ge p \]</div>
-</li>
-<li>Renormalize the remaining probabilities and sample exclusively from this subset.</li>
-</ol>
-<p>Setting \(p = 0.90\) eliminates improbable acoustic tokens (preventing sudden glitchy transients) while preserving expressive variance.</p>
-  </section>
-
-  <section>
-    <h2>6. Comparison of Conditioning Paradigms Across Audio Generation</h2>
+    <h2>5. Comparison of Conditioning Paradigms Across Audio Generation</h2>
 <div class="table-wrap"><table>
 <tr><th>Paradigm</th><th>Input Condition \(\mathbf{c}\)</th><th>Injection Method</th><th>Strengths</th><th>Limitations</th></tr>
 <tr><td><strong>Text Conditioning</strong></td><td>Natural language string</td><td>Cross-attention over frozen text embeddings (T5, CLAP)</td><td>Highly expressive; accessible to non-musicians</td><td>Coarse control; cannot specify exact note pitches or rhythms</td></tr>
@@ -258,7 +234,7 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
   </section>
 
   <section>
-    <h2>7. Troubleshooting Generative Failure Modes</h2>
+    <h2>6. Troubleshooting Generative Failure Modes</h2>
 <div class="table-wrap"><table>
 <tr><th>Failure Symptom</th><th>Underlying Cause</th><th>Corrective Action</th></tr>
 <tr><td><strong>Generic, bland audio output</strong></td><td>Low CFG scale (\(w \approx 1.0\)) or overly broad prompt</td><td>Increase CFG scale to \(w = 3.5\text{–}5.0\); add specific instrumentation, tempo, and genre descriptors.</td></tr>
@@ -268,60 +244,6 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
 <tr><td><strong>Total musical chaos / out-of-tune notes</strong></td><td>Sampling temperature too high (\(\tau &gt; 1.4\)) or Top-\(p\) unbound</td><td>Lower temperature to \(\tau = 0.85\) and set Top-\(p = 0.90\).</td></tr>
 </table></div>
   </section>
-
-  <section>
-    <h2>Knowledge Verification</h2>
-
-<div class="quiz">
-<strong>1. Dual-Forward Pass Arithmetic with CFG</strong>
-<p><strong>Question:</strong> A generative audio model is predicting token \(a_t\). For a specific codebook token (<code>acoustic_snare</code>), the unconditioned forward pass produces a logit \(z_{\emptyset} = 1.5\). The text-conditioned forward pass produces a logit \(z_{\mathbf{c}} = 3.5\).</p>
-<ol>
-<li>If the model operates with a guidance scale \(w = 3.0\), what is the final guided logit \(z_{\text{guided}}\)</li>
-<li>If another token (<code>synth_zap</code>) has \(z_{\emptyset} = 2.0\) and \(z_{\mathbf{c}} = 1.0\), what is its final guided logit under the same guidance scale?</li>
-</ol>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>For <code>acoustic_snare</code>:
-<div class="eq-panel">\[ z_{\text{guided}} = z_{\emptyset} + w \cdot (z_{\mathbf{c}} - z_{\emptyset}) = 1.5 + 3.0 \cdot (3.5 - 1.5) = 1.5 + 3.0 \cdot (2.0) = 1.5 + 6.0 = \mathbf{7.5} \]</div>
-</li>
-<li>For <code>synth_zap</code>:
-<div class="eq-panel">\[ z_{\text{guided}} = 2.0 + 3.0 \cdot (1.0 - 2.0) = 2.0 + 3.0 \cdot (-1.0) = 2.0 - 3.0 = \mathbf{-1.0} \]</div>
-</li>
-</ol>
-<p>Under CFG (\(w = 3.0\)), the relative logit gap between the desired snare and the unwanted synth expands from \(3.5 - 1.0 = 2.5\) to \(7.5 - (-1.0) = 8.5\), heavily suppressing the unwanted sound.</p>
-</details>
-</div>
-
-<div class="quiz">
-<strong>2. Multi-Codebook Continuation Calculations</strong>
-<p><strong>Question:</strong> A user inputs a \(5.0\text{-second}\) audio track into a MusicGen system (\(50\text{ Hz}\) frame rate, \(K = 4\) codebooks) and requests an additional \(10.0\text{ seconds}\) of music conditioned on the prompt <code>"ambient synth pads"</code>.</p>
-<ol>
-<li>How many total discrete tokens will make up the input prefix?</li>
-<li>How many forward autoregressive sampling steps must the Transformer execute to complete the generation?</li>
-<li>How many total tokens (prefix + generated) are passed to the codec decoder to synthesize the final 15-second waveform?</li>
-</ol>
-<details>
-<summary>Show answer</summary>
-<ol>
-<li>Prefix frames \(= 5.0\text{ s} \times 50\text{ frames/s} = 250\text{ frames}\). Prefix tokens \(= 250\text{ frames} \times 4\text{ codebooks} = \mathbf{1,000\text{ tokens}}\).</li>
-<li>New frames to generate \(= 10.0\text{ s} \times 50\text{ frames/s} = 500\text{ frames}\). Total new tokens generated \(= 500 \times 4 = \mathbf{2,000\text{ tokens}}\) (2,000 autoregressive steps across the delayed multi-codebook schedule).</li>
-<li>Total sequence length \(= 1,000\text{ prefix tokens} + 2,000\text{ generated tokens} = \mathbf{3,000\text{ tokens}}\) (spanning 750 frames).</li>
-</ol>
-</details>
-</div>
-  </section>
-
-  <section>
-    <h2>Key Takeaways &amp; What's Next</h2>
-<ul>
-<li><strong>Conditioning shifts logits:</strong> External controls (prompts, audio prefixes) bias the pre-Softmax logits toward desired codebook indices.</li>
-<li><strong>Cross-attention enables continuous prompt querying:</strong> Audio queries attend to frozen text key-value embeddings throughout the generation process.</li>
-<li><strong>CFG scales prompt adherence:</strong> By extrapolating away from the unconditioned prior (\(z_{\emptyset}\)) toward the conditioned distribution (\(z_{\mathbf{c}}\)), Classifier-Free Guidance enhances fidelity and reduces prompt drift.</li>
-<li><strong>Audio continuation uses prefix tokens:</strong> Pre-encoded codec tokens serve as an immutable starting history for ongoing autoregression.</li>
-</ul>
-<p>Now that we understand how audio is tokenized (Lesson 3) and steered (Lesson 4), we can assemble the complete puzzle.</p>
-<p>In <strong>Lesson 5</strong>, we analyze <strong>Production-Grade Architectures (AudioCraft, Diffusion Transformers, Suno, and Udio)</strong>, comparing autoregressive token models against continuous latent diffusion, and examining real-world deployment challenges and ethical considerations.</p>
 
 <div class="bridge">
 <strong>Further reading</strong>
