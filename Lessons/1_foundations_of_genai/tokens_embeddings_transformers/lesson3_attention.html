@@ -199,7 +199,7 @@
     
     <p>To make these scores easier to use, they're passed through a function called <strong>softmax</strong>. Softmax converts them into values between 0 and 1 that add up to 1, so they can be interpreted as how much attention each word should receive.</p>
     
-    <p>If you've seen softmax before, this idea should feel familiar. In a classifier, softmax converts raw scores into class probabilities. Here, it converts relevance scores into <strong>attention weights</strong> that sum to 1 for each row. First divide each score by 
+    <p>This is the same softmax function defined in the <a href="../../0_prerequisites/MLP/MLP.html">MLP prerequisite</a>. In a classifier, softmax converts raw scores into class probabilities. Here, it converts relevance scores into <strong>attention weights</strong> that sum to 1 for each row. First divide each score by 
       \(\sqrt{d_k}\) (the size of each Key vector). Call the result a scaled score \(s'_{ij}\):</p>
   \[s'_{ij} = \frac{s_{ij}}{\sqrt{d_k}}\]
   \[\alpha_{ij} = \frac{e^{s'_{ij}}}{Z_i}\]

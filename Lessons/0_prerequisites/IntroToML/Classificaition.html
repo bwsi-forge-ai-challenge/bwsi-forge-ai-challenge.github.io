@@ -55,10 +55,16 @@
 
   <section>
 <h2>3. Cross-entropy loss</h2>
-    <p>Mean Squared Error is mathematically unsuited for probabilistic targets: predicting \(\hat{y} = 0.9\) when the true label \(y = 1\) scales to an error contribution of \((1 - 0.9)^2 = 0.01\), which provides insufficient optimization signals. The binary <b>cross-entropy</b> loss function exponentially penalizes incorrect classifications based on confidence:</p>
+    <p>Mean Squared Error is mathematically unsuited for probabilistic targets: predicting \(\hat{y} = 0.9\) when the true label \(y = 1\) scales to an error contribution of \((1 - 0.9)^2 = 0.01\), which provides insufficient optimization signals. The binary <b>cross-entropy</b> loss function instead penalizes incorrect classifications more and more steeply the more confident they are:</p>
     <p>
-        \[L = −(1/n) \Sigma_i [ y_i \log(\hat{y}_i) + (1 − y_i) \log(1 − \hat{y}_i) ]\]
+        \[L = -\frac{1}{n} \sum_{i=1}^{n} \Big[\, y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \,\Big]\]
     </p>
+    <p>Here \(n\) is the number of training examples, \(y_i\) is the true label of example \(i\) (0 or 1), and \(\hat{y}_i\) is the model's predicted probability that the label is 1. Because \(y_i\) is always 0 or 1, only one of the two terms is ever switched on for a given example:</p>
+    <ul>
+        <li>If \(y_i = 1\), the second term vanishes and the loss is \(-\log(\hat{y}_i)\): the model is penalized for giving class 1 a low probability.</li>
+        <li>If \(y_i = 0\), the first term vanishes and the loss is \(-\log(1 - \hat{y}_i)\): the model is penalized for giving class 1 a high probability.</li>
+    </ul>
+    <p>In both cases the loss is simply <b>\(-\log\) of the probability the model gave the correct answer</b>. That value is 0 when the model is certain and right, and it grows without limit as that probability approaches 0. The minus sign is there because the log of a number between 0 and 1 is negative, and a loss should be positive. Averaging over all \(n\) examples gives the loss for the whole dataset.</p>
     <p>When evaluating a true positive label (\(y = 1\)), an underestimation of \(\hat{y} = 0.1\) incurs a loss of \(-\log(0.1) \approx 2.30\). Conversely, an accurate estimation of \(\hat{y} = 0.9\) drops the loss to \(-\log(0.9) \approx 0.11\). This asymmetric logarithmic scaling means a fixed error gap in probability space penalizes the model 20 times more severely when the system outputs a confident, incorrect prediction.</p>
     <canvas id="l3-lossCompareCanvas" width="360" height="160" style="border: 1px solid #ccc; display: block; margin: 10px 0;"></canvas>
     <p>For a true negative target (\(y = 0\)) where the model mistakenly predicts \(\hat{y} = 0.99\), the loss scales to \(-\log(0.01) \approx 4.61\). Under identical conditions, an MSE objective function would yield a benign penalty of \((0 - 0.99)^2 \approx 0.98\), failing to generate the necessary gradient push to correct the confident error.</p>

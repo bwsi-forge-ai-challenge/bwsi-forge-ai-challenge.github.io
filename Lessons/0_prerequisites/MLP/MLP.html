@@ -94,6 +94,41 @@
         <li><strong>\(\sigma\)</strong> — The localized activation function (such as ReLU, sigmoid, or tanh).</li>
     </ul>
     <p>The final output layer typically applies an activation function to normalize raw logit scores into a valid multinomial probability distribution that integrates to 1. The forward pass is purely deterministic matrix arithmetic; parameter optimization does not occur until an error metric is evaluated and gradients flow in reverse.</p>
+
+    <h3>The softmax function</h3>
+    <p>For a classifier with \(K\) classes, that output activation is almost always the <b>softmax</b> function. The last layer produces one raw score per class, called a <b>logit</b>, collected in a vector \(z = (z_1, z_2, \ldots, z_K)\). Logits can be any real numbers, positive or negative. Softmax turns them into probabilities:</p>
+    \[\text{softmax}(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}\]
+    <p>It works in two steps:</p>
+    <ol>
+        <li><b>Exponentiate</b> every logit. Since \(e^{x} > 0\) for every \(x\), each result is positive, and a larger logit always gives a larger result.</li>
+        <li><b>Divide by the total</b>, so the outputs add up to exactly 1.</li>
+    </ol>
+    <p>For example, a 3-class network that outputs logits \(z = (2.0,\ 1.0,\ 0.1)\):</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Class</th><th>Logit \(z_i\)</th><th>\(e^{z_i}\)</th><th>Probability \(e^{z_i} / 11.21\)</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>2.0</td><td>7.39</td><td>0.66</td></tr>
+            <tr><td>2</td><td>1.0</td><td>2.72</td><td>0.24</td></tr>
+            <tr><td>3</td><td>0.1</td><td>1.11</td><td>0.10</td></tr>
+            <tr><td><b>Total</b></td><td></td><td>11.21</td><td>1.00</td></tr>
+        </tbody>
+    </table></div>
+    <p>Notice that the exponential exaggerates gaps between logits. Class 1's logit is only twice class 2's, but its probability is almost three times as large. Softmax also keeps the order of the logits, so the class with the highest logit always gets the highest probability. With only two classes, softmax reduces to the sigmoid function from the Classification lesson: the probability of class 1 is \(\sigma(z_1 - z_2)\).</p>
+    <h3>Cross-entropy loss for many classes</h3>
+    <p>The Classification lesson defined binary cross-entropy for two classes. The same idea extends to \(K\) classes. Write the true label as a <b>one-hot</b> vector \(y\): a 1 in the position of the correct class and 0 everywhere else. With softmax probabilities \(p\), the cross-entropy loss for one example is:</p>
+    \[L = -\sum_{k=1}^{K} y_k \log(p_k) = -\log(p_{c})\]
+    <p>Every term with \(y_k = 0\) disappears, so only the correct class \(c\) is left. Just as in the binary case, the loss is \(-\log\) of the probability the model gave the correct answer. Binary cross-entropy is the special case \(K = 2\).</p>
+    <p>Using the probabilities from the table above:</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>If the correct class is</th><th>Its probability</th><th>Loss \(-\log(p_c)\)</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>0.66</td><td>0.42</td></tr>
+            <tr><td>2</td><td>0.24</td><td>1.43</td></tr>
+            <tr><td>3</td><td>0.10</td><td>2.30</td></tr>
+        </tbody>
+    </table></div>
+    <p>The loss is small when the model put most of its probability on the right answer, and large when it did not. Over a dataset, the per-example losses are averaged. Training adjusts the weights to push the correct class's logit up relative to the others, which lowers this loss.</p>
+
 <p>A <b>fully connected layer</b> (also called a <b>dense layer</b>) is the basic computation unit in an MLP. It means every neuron in the layer receives input from every neuron in the previous layer. The term “dense” refers to this all-to-all connection pattern, where no input feature is ignored and all features contribute to every output neuron through learned weights.</p>
   </section>
 
