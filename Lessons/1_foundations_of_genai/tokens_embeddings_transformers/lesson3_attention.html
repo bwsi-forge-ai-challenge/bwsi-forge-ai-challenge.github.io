@@ -361,72 +361,182 @@
 
   <section>
     <h2>7. Looking at a Sentence from More Than One Perspective</h2>
-    
-    <p>So far, we've described attention as if there were only one attention mechanism. In reality, modern Transformers use <strong>multiple attention heads</strong> at the same time.</p>
-    
-    <p>Why? Because language contains many different kinds of relationships. Sometimes you need to understand grammar. Other times you need to connect a pronoun to the person it refers to, or recognize that two words have related meanings. One attention mechanism isn't likely to capture all of these patterns equally well.</p>
-    
-    <p>Instead, the model learns several attention mechanisms in parallel. Each one is called an <strong>attention head</strong>. During training, different heads naturally become good at noticing different kinds of relationships.</p>
-    
+
+    <p>Up to this point, our attention mechanism has relied on a single set of Query, Key, and Value weights (\(W_Q, W_K, W_V\)). In machine learning terms, that setup is called a <strong>single attention head</strong>.</p>
+
+    <p>Real-world transformer architectures don't rely on just one; they run several heads simultaneously side by side. This setup is known as <strong>multi-head attention</strong>. To understand why researchers introduced this layer of complexity, look at where a single head runs into a wall.</p>
+
+    <h3>The Limitation of a Single Head</h3>
+    <p>Consider this classic example:</p>
+    <p style="text-align:center; font-style:italic; padding:10px; background:#f8fafc;">"The animal didn't cross the street because it was too tired."</p>
+
+    <p>To make sense of the word <strong>"it,"</strong> a language model needs to resolve several questions at once:</p>
     <ul>
-        <li>One head might focus on nearby words that form common phrases.</li>
-        <li>Another head might learn grammatical relationships, such as matching subjects with their verbs.</li>
-        <li>A third head might connect pronouns like <em>she</em> or <em>they</em> to the people or objects they refer to.</li>
+        <li><strong>Coreference:</strong> What does "it" refer to? (<em>animal</em>, not <em>street</em>)</li>
+        <li><strong>Predicate/State:</strong> What condition is being described? (<em>was too tired</em>)</li>
+        <li><strong>Grammatical Role:</strong> How does it function syntactically? (subject of the verb <em>was</em>)</li>
     </ul>
-    
-    <p>These are just examples; the model isn't explicitly assigned these jobs. Instead, each head develops its own specialization as it learns from data.</p>
-    
-    <p>After every attention head finishes its work, their outputs are combined into a single representation. Looking at a sentence from several perspectives gives the model a much richer understanding than relying on just one attention mechanism.</p>
+
+    <p>With only one attention head, the model gets a single distribution of attention weights for "it," and those weights must sum up to \(1.0\). If the head allocates \(0.70\) of its attention budget to <em>animal</em>, only \(0.30\) remains for every other token in the sequence.</p>
+
+    <p>Because the resulting context vector is just a weighted sum of Value vectors, these distinct linguistic roles get smeared together into an undifferentiated average. Even worse, with only one \(W_Q\) and one \(W_K\), the model can only define "relevance" along a single dimension at any given moment.</p>
+
+    <h3>The Solution: Multiple Parallel Heads</h3>
+    <p>Multi-head attention solves this bottleneck by giving each head its own unique weight matrices: Head 1 uses \((W_Q^{(1)}, W_K^{(1)}, W_V^{(1)})\), Head 2 uses \((W_Q^{(2)}, W_K^{(2)}, W_V^{(2)})\), and so on.</p>
+
+    <p>Each head calculates its own Queries, Keys, and Values, scores token pairs independently, applies softmax, and creates its own contextualized representation. Because their weights differ, each head develops its own definition of relevance and tracks different patterns across the sentence.</p>
+
+    <p>Here is an intuitive snapshot of how two heads might break down the token <strong>"it"</strong>:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Attention Head</th><th>Primary Attention Target</th><th>Syntactic / Semantic Role Captured</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Head 1</strong></td><td><em>animal</em> (\(0.80\))</td><td><strong>Coreference:</strong> Identifies the noun being referenced.</td></tr>
+            <tr><td><strong>Head 2</strong></td><td><em>tired</em> (\(0.55\)), <em>was</em> (\(0.30\))</td><td><strong>State:</strong> Captures the condition being described.</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>Neither head has to compromise. One head focuses on tracking who the subject is, while another tracks what that subject is doing or feeling.</p>
+
+    <h3>Bringing the Heads Back Together</h3>
+    <p>Once each head computes its own output vector for a word, the model needs to collapse those parallel perspectives back into a single vector before moving downstream.</p>
+
+    <p>The mechanism is straightforward:</p>
+    <ol>
+        <li><strong>Concatenate:</strong> Line up the output vectors from every head side by side into one long vector.</li>
+        <li><strong>Project:</strong> Multiply that concatenated vector by an additional learned weight matrix, \(W_O\).</li>
+    </ol>
+    \[\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \dots, \text{head}_h)\,W_O\]
+
+    <p>The projection matrix \(W_O\) acts like an editor, blending the independent findings from each head into a unified, rich word representation.</p>
 
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_multi-headed_self-attention-recap.png"
             alt="Overview of multi-head self-attention with eight parallel heads">
-        <figcaption>Multi-head attention runs several Q/K/V projections in parallel, then concatenates and projects the results into one combined representation. Scroll horizontally on narrow screens to read all step labels.
+        <figcaption>The full multi-head process from the original Transformer, which used 8 heads: each head has its own \(W_Q, W_K, W_V\), the heads' outputs are concatenated, and \(W_O\) blends them into one vector per word. Scroll horizontally on narrow screens to read all step labels.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
+
+    <h3>More Heads Without the Computational Penalty</h3>
+    <p>It might seem like running 8 or 12 attention heads would multiply the computational workload by 8 or 12. In practice, it doesn't.</p>
+
+    <p>Instead of computing giant attention maps across the full embedding size, transformers divide the embedding dimensions evenly across the heads:</p>
+    \[\text{Head Dimension } (d_k) = \frac{d_{\text{model}}}{\text{Number of Heads } (h)}\]
+
+    <p>Take <strong>GPT-2 Small</strong> as a concrete example:</p>
+    <ul>
+        <li>Full model embedding dimension (\(d_{\text{model}}\)): \(768\)</li>
+        <li>Total heads (\(h\)): \(12\)</li>
+        <li>Dimension per head (\(d_k\)): \(768 \div 12 = 64\)</li>
+    </ul>
+
+    <p>Each head calculates its Query, Key, and Value vectors in a compact \(64\)-dimensional space. Concatenating the outputs of all 12 heads yields \(12 \times 64 = 768\) numbers, matching the original model dimension. The model isn't doing 12 times the work; it is dividing a single high-dimensional space into 12 smaller, specialized subspaces.</p>
+
+    <h3>What Do the Heads Actually Specialize In?</h3>
+    <p>Engineers don't handcraft duties for individual heads. At initialization, their weights are set randomly. As the model trains on massive text corpora through gradient descent, the heads naturally diverge to capture distinct linguistic features that minimize next-token prediction loss.</p>
+
+    <p>When researchers inspect trained architectures (such as BERT), they frequently observe recurring specializations:</p>
+    <ul>
+        <li><strong>Positional Heads:</strong> Heads that consistently attend to the immediate previous or next token (<a href="https://arxiv.org/abs/1906.04341" target="_blank" rel="noopener">Clark et al., 2019</a>; <a href="https://arxiv.org/abs/1905.09418" target="_blank" rel="noopener">Voita et al., 2019</a>).</li>
+        <li><strong>Coreference Heads:</strong> Heads that link pronouns (<em>she</em>, <em>they</em>, <em>it</em>) back to their antecedents across clauses (<a href="https://arxiv.org/abs/1906.04341" target="_blank" rel="noopener">Clark et al., 2019</a>).</li>
+        <li><strong>Syntactic Heads:</strong> Heads that map direct objects to transitive verbs, or verbs to their subjects, regardless of how many intervening words separate them (<a href="https://arxiv.org/abs/1906.04341" target="_blank" rel="noopener">Clark et al., 2019</a>; <a href="https://arxiv.org/abs/1905.09418" target="_blank" rel="noopener">Voita et al., 2019</a>).</li>
+    </ul>
+
+    <p>Interestingly, ablation studies show that not every head carries equal weight. Some heads perform subtle statistical work that resists straightforward human interpretation, and many can be pruned away post-training with minimal drop in performance (<a href="https://arxiv.org/abs/1905.09418" target="_blank" rel="noopener">Voita et al., 2019</a>). The specialization isn't programmed in advance; it emerges out of optimization.</p>
+
+    <details>
+        <summary>Quick Concept Check</summary>
+        <p><strong>Q1: Suppose a model uses an embedding size of \(512\) with \(8\) attention heads. What is the dimension of each individual head's Query vector?</strong></p>
+        <p><strong>A:</strong> \(512 \div 8 = 64\) dimensions.</p>
+        <p><strong>Q2: Why not just keep one attention head and make its Query and Key vectors much larger?</strong></p>
+        <p><strong>A:</strong> Expanding vector dimensions within a single head doesn't change the underlying math: a single head produces only <strong>one</strong> set of attention weights per token, and those weights must sum to \(1.0\). Larger vectors let a model evaluate more complex features along one plane, but they cannot allocate full attention to two separate words for two independent syntactic reasons simultaneously. Multiple heads provide separate attention budgets.</p>
+    </details>
   </section>
 
   <section>
-    <h2>8. One More Piece: How Does the Model Know Word Order?</h2>
-    
-    <p>So far, we've seen how attention decides <em>which</em> words are important. But there's one important question left:</p>
-    
-    <p>How does the model know where each word appears in the sentence?</p>
-    
-    <p>On its own, attention doesn't understand word order. It simply compares every word with every other word. Without additional information, these two sentences would contain the same words, just arranged differently:</p>
-    
-    <p style="text-align:center; font-style:italic; padding:10px; background:#f8fafc;">
-    "The dog bit the cat."<br>
-    "The cat bit the dog."
-    </p>
-    
-    <p>Even though the words are identical, the meaning is completely different because the order has changed.</p>
-    
-    <p>To solve this problem, Transformers add a small piece of information to every word before attention begins. This extra information tells the model where each word appears in the sentence.</p>
-    
-    <p>This is called <strong>positional encoding</strong> (or position encoding). You can think of it as giving every word an invisible position tag. Two identical words can now be distinguished because they appear in different locations.</p>
-<!--     
-    <p>For example, the word <em>the</em> at the beginning of a sentence receives a slightly different positional encoding than the word <em>the</em> appearing near the end.</p> -->
-    
-    <p>By combining the word embedding with its positional encoding, the model knows both what the word is and where it appears. That allows attention to understand sentences where word order matters.</p>
+    <h2>8. The Missing Piece: How Transformers Understand Word Order</h2>
+
+    <p>Attention does an exceptional job calculating which tokens relate to one another. But on its own, standard self-attention has a glaring blind spot: <strong>it is completely permutation-invariant.</strong> It has no built-in awareness of sequence order.</p>
+
+    <h3>Why Pure Attention Ignores Sequence Order</h3>
+    <p>Recall how an attention score is calculated between two tokens:</p>
+    \[\text{Score}(q_i, k_j) = q_i \cdot k_j^T\]
+
+    <p>The Query and Key vectors depend strictly on their respective token embeddings. The embedding for "dog" is looked up from the exact same row in the vocabulary matrix whether it sits at the beginning, middle, or end of a sequence.</p>
+
+    <p>Consider how self-attention processes these two distinct sentences:</p>
+    <ol>
+        <li><em>"The dog bit the cat."</em></li>
+        <li><em>"The cat bit the dog."</em></li>
+    </ol>
+
+    <p>Look at the verb <strong>"bit."</strong> In both sentences, the Query vector for <em>bit</em> is compared against the Key vectors for the identical set of vocabulary items: <em>the</em>, <em>dog</em>, <em>the</em>, and <em>cat</em>.</p>
+
+    <p>Because dot products depend purely on vector values and not sequence position, the resulting set of attention weights will be identical, merely reshuffled in order. When the Value vectors are weighted and summed, the final context vector for <em>bit</em> turns out identical in both sentences.</p>
+
+    <p>Without an intervention, the model cannot tell who bit whom.</p>
+
+    <p>Traditional Recurrent Neural Networks (RNNs) didn't face this issue because they ingested tokens sequentially, updating a hidden state one step at a time (\(t_1, t_2, \dots, t_n\)). Transformers achieve massive parallelism by processing all tokens at once, but that means word order must be injected explicitly.</p>
+
+    <h3>The Solution: Positional Encodings</h3>
+    <p>To give the model a sense of order, we assign a distinct coordinate vector, called a <strong>positional encoding</strong> (\(P_i\)), to every position index in the sequence.</p>
+
+    <p>Before the input enters the first self-attention layer, the token's semantic embedding (\(E_i\)) is summed element-wise with its positional vector (\(P_i\)):</p>
+    \[\text{Input Vector}_i = E_i + P_i\]
+
+<pre><code>   Word Embedding (E_i):   [ 0.35, -0.12,  0.88, ... ]  (What the token means)
++  Position Vector (P_i):  [ 0.02,  0.94, -0.41, ... ]  (Where the token is)
+------------------------------------------------------
+=  Final Input:            [ 0.37,  0.82,  0.47, ... ]  (Context-ready token)</code></pre>
+
+    <p>Because the position vector is <strong>added</strong> rather than concatenated, the input dimension stays unchanged, preserving the model's footprint. During training, the transformer learns to decouple semantic features from spatial coordinates directly from this combined vector.</p>
+
+    <p>Now, "dog" at index 2 and "dog" at index 5 enter the attention layer as distinct numerical vectors, generating distinct Queries, Keys, and Values. The attention scores naturally reflect both <em>what</em> a word means and <em>where</em> it sits.</p>
 
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_positional_encoding_example.png"
             alt="Positional encoding vectors added to word embedding vectors for three French words">
-        <figcaption>Positional encodings are added to word embeddings so the model knows both <em>what</em> each token is and <em>where</em> it sits in the sentence.
+        <figcaption>Each word's embedding is added to the position vector for its spot in the sentence, so the result carries both <em>what</em> the token is and <em>where</em> it sits.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>.</figcaption>
     </figure>
+
+    <h3>How Positional Vectors Are Generated</h3>
+    <p>Modern architectures typically rely on one of two methods to construct positional encodings:</p>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Method</th><th>How It Works</th><th>Key Characteristics</th><th>Used By</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Learned Embeddings</strong></td><td>Uses a dedicated lookup matrix where each position index (\(0, 1, \dots, N\)) has its own trainable vector.</td><td>Simple to optimize; bounded by a fixed maximum context length (\(N\)).</td><td>GPT-2, BERT</td></tr>
+            <tr><td><strong>Sinusoidal Functions</strong></td><td>Generates static position vectors using continuous sine and cosine functions across varying wavelengths.</td><td>Deterministic (no parameters to train); mathematically extrapolates to unseen lengths.</td><td>Original Transformer (<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener"><em>Attention Is All You Need</em></a>)</td></tr>
+        </tbody>
+    </table></div>
+
+    <h3>The Intuition Behind Sinusoidal Encodings</h3>
+    <p>The sinusoidal formulation from <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Vaswani et al. (2017)</a> defines the values of each dimension across positions using paired sine and cosine functions:</p>
+    \[PE_{(pos,\, 2i)} = \sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)\]
+    \[PE_{(pos,\, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)\]
+
+    <p>Where \(pos\) represents the position index in the sequence, and \(i\) represents the dimension index within the vector.</p>
+
+    <p>The underlying intuition is analogous to an <strong>analog clock face</strong>:</p>
+    <ul>
+        <li>The <strong>second hand</strong> rotates rapidly, completing a cycle every 60 seconds. It provides high precision for telling adjacent seconds apart.</li>
+        <li>The <strong>minute hand</strong> moves moderately, completing a cycle once an hour.</li>
+        <li>The <strong>hour hand</strong> moves slowly, completing a cycle across 12 hours, distinguishing broader blocks of time.</li>
+    </ul>
+
+    <p>Sinusoidal positional encodings operate on the same principle. Lower vector dimensions oscillate at high frequencies (short wavelengths), varying sharply between neighboring words. Higher dimensions oscillate at much lower frequencies (long wavelengths), changing gradually across long stretches of context.</p>
+
+    <p>Read together across all dimensions, every position index receives a unique numerical fingerprint. Furthermore, because trigonometric functions follow linear transformation identities (\(\cos(\alpha + \beta)\), \(\sin(\alpha + \beta)\)), this setup makes it straightforward for self-attention to learn relative distances between tokens regardless of their absolute positions in the text.</p>
 
     <figure class="figure-wide">
         <img referrerpolicy="no-referrer" src="https://jalammar.github.io/images/t/transformer_positional_encoding_large_example.png"
             alt="Heatmap of sinusoidal positional encodings across embedding dimensions">
-        <figcaption>The original Transformer uses sinusoidal functions across embedding dimensions, so low dimensions oscillate quickly while higher dimensions change slowly. This heatmap shows the full pattern with readable axis labels.
+        <figcaption>Sinusoidal position vectors for 20 positions (rows), each with 512 dimensions (columns). This version puts the sine dimensions in the left half and the cosine dimensions in the right half instead of alternating them. In each half, columns further to the right change more slowly from row to row.
             Source: Jay Alammar, <a href="https://jalammar.github.io/illustrated-transformer/" target="_blank">The Illustrated Transformer</a>; based on Vaswani et al., <a href="https://arxiv.org/abs/1706.03762" target="_blank">Attention Is All You Need</a>.</figcaption>
     </figure>
-    
-    <p style="font-size:0.9em;color:#64748b;">
-    Each position in the sentence is assigned its own numerical encoding. This positional information is added to the word embedding before the attention mechanism begins, allowing the model to distinguish between identical words that appear in different places.
-    </p>
   </section>
 
   <section>
