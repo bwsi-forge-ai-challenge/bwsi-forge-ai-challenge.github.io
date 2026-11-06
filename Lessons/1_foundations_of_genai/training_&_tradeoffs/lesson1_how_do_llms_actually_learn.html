@@ -31,72 +31,13 @@
   <section>
     <p>The difference is scale. Instead of fitting a line to a few hundred housing prices, an LLM reads enormous amounts of text and adjusts <strong>billions</strong> of weights so it gets better at one deceptively simple task: <strong>predict the next token</strong>.</p>
 
-    <p>This lesson walks through where training data comes from, what pretraining and fine-tuning actually do, why RLHF exists, and why "bigger model + more data" keeps showing up in the news.</p>
+    <p>This lesson starts with an overview of the full training pipeline, then walks through each stage: where training data comes from, what pretraining and fine-tuning actually do, why RLHF exists, and why "bigger model + more data" keeps showing up in the news.</p>
   </section>
 
   <section>
-    <h2>1. The Simple Idea at the Core</h2>
+    <h2>1. The Big Picture: From Raw Text to Assistant</h2>
 
-    <p>Remember training a neural network in the prerequisites? You had:</p>
-    <ul>
-        <li>A <strong>model</strong> with parameters (weights)</li>
-        <li>A <strong>loss function</strong> that scores how bad the predictions are</li>
-        <li><strong>Gradient descent</strong> to nudge weights in the direction that lowers the loss</li>
-    </ul>
-
-    <p>LLM training uses the exact same loop. The task is just framed as language modeling:</p>
-
-    <div class="highlight-box">
-        <strong>Next-token prediction:</strong> Given some text so far, predict the token that comes next. Repeat across trillions of examples. 
-    </div>
-
-    <div class="eq-panel">
-        Given tokens \(x_1, x_2, x_{t - 1}\), the model outputs a probability for every possible next token.<br>
-        Loss = how far those probabilities are from the true next token (cross-entropy).<br>
-        Update weights with gradient descent. Repeat.
-    </div>
-
-    <p>Example: for the phrase "The cat sat on the" the model might assign high probability to <em>mat</em>, moderate probability to <em>floor</em>, and low probability to <em>airplane</em>. When it picks the wrong token, the loss is high; backpropagation adjusts attention weights, embedding tables, and feed-forward layers so similar contexts do better next time.</p>
-
-    <p>Everything else (reasoning-like answers, translation, coding help) emerges from getting very good at this one prediction game across diverse text.</p>
-  </section>
-
-  <section>
-    <h2>2. Where Does the Training Data Come From?</h2>
-
-    <p>Pretraining data is mostly text scraped from the public internet and curated collections:</p>
-    <ul>
-        <li>Websites, encyclopedias, news, forums, blogs</li>
-        <li>Books and academic papers (where licensing allows)</li>
-        <li>Public code repositories</li>
-        <li>Reference material, Q&amp;A threads, documentation</li>
-    </ul>
-
-    <p><span class="stat-pill">Scale snapshot</span> GPT-3 was trained on roughly <strong>300 billion tokens</strong>. Modern frontier models often train on <strong>trillions</strong> of tokens, with many passes over filtered, deduplicated subsets of the web.</p>
-
-    <p>Quantity alone is not enough. Training teams invest heavily in <strong>data quality</strong>:</p>
-    <ul>
-        <li><strong>Filtering</strong> removes spam, boilerplate, and low-quality pages</li>
-        <li><strong>Deduplication</strong> makes sure the same article copied 10,000 times does not count 10,000 times</li>
-        <li><strong>Safety filtering</strong> reduces blatantly harmful or toxic content where possible</li>
-        <li><strong>Mixing</strong> balances code, prose, dialogue, and factual text so the model sees varied styles</li>
-    </ul>
-
-    <p>Bad data teaches bad habits. A model trained mostly on garbled forum spam will produce garbled forum spam, even with billions of parameters.</p>
-  </section>
-
-  <section>
-    <h2>3. Pretraining: The Expensive, Slow Phase</h2>
-
-    <p><strong>Pretraining</strong> is the first and largest training stage. The model reads huge swaths of text and repeatedly adjusts its billions of parameters to minimize next-token prediction error.</p>
-
-    <ul>
-        <li><strong>Duration:</strong> weeks to months on large GPU/TPU clusters</li>
-        <li><strong>Cost:</strong> millions to tens of millions of dollars for frontier models</li>
-        <li><strong>Output:</strong> a <strong>base model</strong>, strong at continuing text, but not necessarily helpful or safe to chat with</li>
-    </ul>
-
-    <p>A base model is like a very well-read autocomplete engine. It has absorbed grammar, facts, coding patterns, and style, but it was never explicitly taught to follow instructions or refuse harmful requests.</p>
+    <p>Before looking at any one stage, it helps to see the whole pipeline. A chatbot like ChatGPT is not trained in a single step. It goes through several stages, and each one starts from the model the previous stage produced:</p>
 
     <figure class="diagram-wrap">
         <svg viewBox="0 0 760 120" role="img" aria-label="Training pipeline from raw text to deployed assistant">
@@ -131,10 +72,89 @@
         </svg>
         <figcaption>The full path from scraped text to a product you can chat with. Pretraining does the heavy lifting; later stages shape behavior.</figcaption>
     </figure>
+
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Stage</th><th>What goes in</th><th>What the model learns</th><th>What comes out</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Data collection</strong></td><td>Web pages, books, code</td><td>Nothing yet. This stage gathers, filters, and cleans the text.</td><td>A training dataset of trillions of tokens</td></tr>
+            <tr><td><strong>Pretraining</strong></td><td>That dataset</td><td>Language, facts, and patterns, by predicting the next token</td><td>A <strong>base model</strong> that continues text</td></tr>
+            <tr><td><strong>Fine-tuning</strong></td><td>Thousands to millions of example conversations</td><td>How to follow instructions and answer like an assistant</td><td>An instruction-following model</td></tr>
+            <tr><td><strong>RLHF</strong></td><td>Human rankings of the model's answers</td><td>Which of several good answers people prefer</td><td>The assistant that gets deployed</td></tr>
+        </tbody>
+    </table></div>
+
+    <p>Two ideas tie the stages together. First, every stage uses the same basic machinery: a loss function and gradient descent, which is reviewed next. What changes from stage to stage is the data and what the loss rewards. Second, the stages are very unequal in cost. Pretraining uses almost all of the data, time, and money, while the later stages are comparatively quick adjustments. The scaling laws later in this lesson explain why pretraining keeps getting bigger.</p>
   </section>
 
   <section>
-    <h2>4. From Base Model to Assistant: Fine-Tuning</h2>
+    <h2>2. The Simple Idea at the Core</h2>
+
+    <p>Remember training a neural network in the prerequisites? You had:</p>
+    <ul>
+        <li>A <strong>model</strong> with parameters (weights)</li>
+        <li>A <strong>loss function</strong> that scores how bad the predictions are</li>
+        <li><strong>Gradient descent</strong> to nudge weights in the direction that lowers the loss</li>
+    </ul>
+
+    <p>LLM training uses the exact same loop. The task is just framed as language modeling:</p>
+
+    <div class="highlight-box">
+        <strong>Next-token prediction:</strong> Given some text so far, predict the token that comes next. Repeat across trillions of examples. 
+    </div>
+
+    <div class="eq-panel">
+        Given tokens \(x_1, x_2, x_{t - 1}\), the model outputs a probability for every possible next token.<br>
+        Loss = how far those probabilities are from the true next token (cross-entropy).<br>
+        Update weights with gradient descent. Repeat.
+    </div>
+
+    <p>Example: for the phrase "The cat sat on the" the model might assign high probability to <em>mat</em>, moderate probability to <em>floor</em>, and low probability to <em>airplane</em>. When it picks the wrong token, the loss is high; backpropagation adjusts attention weights, embedding tables, and feed-forward layers so similar contexts do better next time.</p>
+
+    <p>Everything else (reasoning-like answers, translation, coding help) emerges from getting very good at this one prediction game across diverse text.</p>
+  </section>
+
+  <section>
+    <h2>3. Where Does the Training Data Come From?</h2>
+
+    <p>Pretraining data is mostly text scraped from the public internet and curated collections:</p>
+    <ul>
+        <li>Websites, encyclopedias, news, forums, blogs</li>
+        <li>Books and academic papers (where licensing allows)</li>
+        <li>Public code repositories</li>
+        <li>Reference material, Q&amp;A threads, documentation</li>
+    </ul>
+
+    <p><span class="stat-pill">Scale snapshot</span> GPT-3 was trained on roughly <strong>300 billion tokens</strong>. Modern frontier models often train on <strong>trillions</strong> of tokens, with many passes over filtered, deduplicated subsets of the web.</p>
+
+    <p>Quantity alone is not enough. Training teams invest heavily in <strong>data quality</strong>:</p>
+    <ul>
+        <li><strong>Filtering</strong> removes spam, boilerplate, and low-quality pages</li>
+        <li><strong>Deduplication</strong> makes sure the same article copied 10,000 times does not count 10,000 times</li>
+        <li><strong>Safety filtering</strong> reduces blatantly harmful or toxic content where possible</li>
+        <li><strong>Mixing</strong> balances code, prose, dialogue, and factual text so the model sees varied styles</li>
+    </ul>
+
+    <p>Bad data teaches bad habits. A model trained mostly on garbled forum spam will produce garbled forum spam, even with billions of parameters.</p>
+  </section>
+
+  <section>
+    <h2>4. Pretraining: The Expensive, Slow Phase</h2>
+
+    <p><strong>Pretraining</strong> is the first and largest training stage. The model reads huge swaths of text and repeatedly adjusts its billions of parameters to minimize next-token prediction error.</p>
+
+    <ul>
+        <li><strong>Duration:</strong> weeks to months on large GPU/TPU clusters</li>
+        <li><strong>Cost:</strong> millions to tens of millions of dollars for frontier models</li>
+        <li><strong>Output:</strong> a <strong>base model</strong>, strong at continuing text, but not necessarily helpful or safe to chat with</li>
+    </ul>
+
+    <p>A base model is like a very well-read autocomplete engine. It has absorbed grammar, facts, coding patterns, and style, but it was never explicitly taught to follow instructions or refuse harmful requests.</p>
+  </section>
+
+  <section>
+    <h2>5. From Base Model to Assistant: Fine-Tuning</h2>
 
     <p>A raw pretrained model <em>continues</em> text. Ask it a question, and it might respond with more questions, random forum posts, or an incomplete sentence, because that is what "predict the next token" looked like on the internet.</p>
 
@@ -164,7 +184,7 @@
   </section>
 
   <section>
-    <h2>5. Reinforcement Learning from Human Feedback (RLHF, Conceptual)</h2>
+    <h2>6. Reinforcement Learning from Human Feedback (RLHF, Conceptual)</h2>
 
     <p>Even after fine-tuning, two answers can both be "valid" but one is clearer, kinder, or more accurate. <strong>RLHF</strong> (reinforcement learning from human feedback) adds a preference layer:</p>
     <ol>
@@ -182,41 +202,30 @@
   </section>
 
   <section>
-    <h2>6. Why Scale Matters (Scaling Laws)</h2>
+    <h2>7. Why Scale Matters (Scaling Laws)</h2>
 
-    <p>Researchers discovered something surprising: for a fixed architecture family, <strong>bigger models + more training data + more compute</strong> tend to produce smoothly better performance. Plot loss or benchmark score against model size and you often see a predictable downward curve, the famous <strong>scaling laws</strong>.</p>
-
-    <figure class="diagram-wrap">
-        <svg viewBox="0 0 520 260" role="img" aria-label="Simplified scaling law chart showing better performance as model size increases">
-            <line x1="60" y1="220" x2="480" y2="220" stroke="#334155" stroke-width="1.5"/>
-            <line x1="60" y1="40" x2="60" y2="220" stroke="#334155" stroke-width="1.5"/>
-            <text x="270" y="248" text-anchor="middle" font-size="11" fill="#475569">Model size (parameters) →</text>
-            <text x="22" y="130" text-anchor="middle" font-size="11" fill="#475569" transform="rotate(-90 22 130)">Performance ↑</text>
-            <text x="68" y="232" font-size="9" fill="#64748b">100M</text>
-            <text x="200" y="232" font-size="9" fill="#64748b">1B</text>
-            <text x="340" y="232" font-size="9" fill="#64748b">10B</text>
-            <text x="450" y="232" font-size="9" fill="#64748b">100B+</text>
-            <path d="M 80 200 C 180 190, 260 120, 440 55" fill="none" stroke="#2563eb" stroke-width="3"/>
-            <circle cx="80" cy="200" r="4" fill="#2563eb"/>
-            <circle cx="200" cy="165" r="4" fill="#2563eb"/>
-            <circle cx="340" cy="105" r="4" fill="#2563eb"/>
-            <circle cx="440" cy="55" r="4" fill="#2563eb"/>
-            <text x="400" y="48" font-size="10" fill="#1d4ed8" font-weight="600">frontier models</text>
-            <text x="320" y="95" font-size="9" fill="#64748b">emergent skills appear</text>
-        </svg>
-        <figcaption>Simplified trend: larger models trained on more data generally score better on hard benchmarks, which is why parameter counts and training tokens dominate AI headlines.</figcaption>
-    </figure>
+    <p>Researchers discovered something surprising: for a fixed architecture family, <strong>bigger models + more training data + more compute</strong> tend to produce smoothly better performance. Plot loss against model size and you see a predictable downward curve, the famous <strong>scaling laws</strong>.</p>
 
     <h3>What the scaling laws actually say</h3>
-    <p>"Scaling laws" refers to two main results. Both describe the model's <strong>loss</strong> (how wrong its next-token predictions are, from section 1) rather than benchmark scores, because loss can be measured precisely.</p>
+    <p>"Scaling laws" refers to two main results. Both describe the model's <strong>loss</strong> (how wrong its next-token predictions are) rather than benchmark scores, because loss can be measured precisely.</p>
 
     <p><strong>1. Loss falls as a power law (Kaplan et al., OpenAI, 2020).</strong> When a model is not held back by the other two factors, its loss depends on the number of parameters \(N\), the number of training tokens \(D\), and the training compute \(C\) in the same simple way:</p>
     \[ L(N) \approx \left(\frac{N_c}{N}\right)^{0.076} \qquad L(D) \approx \left(\frac{D_c}{D}\right)^{0.095} \qquad L(C) \approx \left(\frac{C_c}{C}\right)^{0.050} \]
     <p>Here \(N_c\), \(D_c\), and \(C_c\) are constants fitted from experiments. These are <strong>power laws</strong>: each time you multiply model size by the same factor, loss drops by the same <em>percentage</em>. Because the exponents are small, the gains are steady but expensive. Making a model 10&#215; bigger cuts loss by only about 16%, since \(10^{-0.076} \approx 0.84\). Plotted on log-scale axes, each law is a straight line, and these lines held across more than seven orders of magnitude of model size. That predictability is what lets a lab test small models cheaply and forecast how a large one will perform before spending millions to train it.</p>
 
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 620 330" role="img" aria-label="Log-log plot of the Kaplan et al. scaling law: test loss falls along a straight line from about 6.8 at a thousand parameters to about 2.3 at 1.5 billion, extrapolated to about 1.6 for GPT-3" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><rect x="70.0" y="40" width="361.0" height="230" fill="#eff6ff"/><line x1="70.0" y1="40" x2="70.0" y2="270" stroke="#e2e8f0"/><text x="70.0" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">3</tspan></text><line x1="128.4" y1="40" x2="128.4" y2="270" stroke="#e2e8f0"/><text x="128.4" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">4</tspan></text><line x1="186.9" y1="40" x2="186.9" y2="270" stroke="#e2e8f0"/><text x="186.9" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">5</tspan></text><line x1="245.3" y1="40" x2="245.3" y2="270" stroke="#e2e8f0"/><text x="245.3" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">6</tspan></text><line x1="303.8" y1="40" x2="303.8" y2="270" stroke="#e2e8f0"/><text x="303.8" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">7</tspan></text><line x1="362.2" y1="40" x2="362.2" y2="270" stroke="#e2e8f0"/><text x="362.2" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">8</tspan></text><line x1="420.7" y1="40" x2="420.7" y2="270" stroke="#e2e8f0"/><text x="420.7" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">9</tspan></text><line x1="479.1" y1="40" x2="479.1" y2="270" stroke="#e2e8f0"/><text x="479.1" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">10</tspan></text><line x1="537.6" y1="40" x2="537.6" y2="270" stroke="#e2e8f0"/><text x="537.6" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">11</tspan></text><line x1="596.0" y1="40" x2="596.0" y2="270" stroke="#e2e8f0"/><text x="596.0" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10<tspan dy="-5" font-size="8">12</tspan></text><line x1="70" y1="242.9" x2="596" y2="242.9" stroke="#e2e8f0"/><text x="62.0" y="246.9" font-size="11" text-anchor="end" fill="#64748b">1.5</text><line x1="70" y1="208.1" x2="596" y2="208.1" stroke="#e2e8f0"/><text x="62.0" y="212.1" font-size="11" text-anchor="end" fill="#64748b">2</text><line x1="70" y1="158.9" x2="596" y2="158.9" stroke="#e2e8f0"/><text x="62.0" y="162.9" font-size="11" text-anchor="end" fill="#64748b">3</text><line x1="70" y1="124.0" x2="596" y2="124.0" stroke="#e2e8f0"/><text x="62.0" y="128.0" font-size="11" text-anchor="end" fill="#64748b">4</text><line x1="70" y1="74.9" x2="596" y2="74.9" stroke="#e2e8f0"/><text x="62.0" y="78.9" font-size="11" text-anchor="end" fill="#64748b">6</text><line x1="70" y1="40.0" x2="596" y2="40.0" stroke="#e2e8f0"/><text x="62.0" y="44.0" font-size="11" text-anchor="end" fill="#64748b">8</text><line x1="70" y1="270" x2="596" y2="270" stroke="#94a3b8"/><line x1="70" y1="40" x2="70" y2="270" stroke="#94a3b8"/><text x="250.5" y="56.0" font-size="11" text-anchor="middle" fill="#1d4ed8">range of models Kaplan et al. trained</text><path d="M70.0,59.9 L76.0,62.1 L82.0,64.3 L88.0,66.5 L94.1,68.6 L100.1,70.8 L106.1,73.0 L112.1,75.2 L118.1,77.4 L124.1,79.6 L130.2,81.7 L136.2,83.9 L142.2,86.1 L148.2,88.3 L154.2,90.5 L160.2,92.7 L166.3,94.8 L172.3,97.0 L178.3,99.2 L184.3,101.4 L190.3,103.6 L196.3,105.8 L202.4,108.0 L208.4,110.1 L214.4,112.3 L220.4,114.5 L226.4,116.7 L232.4,118.9 L238.4,121.1 L244.5,123.2 L250.5,125.4 L256.5,127.6 L262.5,129.8 L268.5,132.0 L274.5,134.2 L280.6,136.3 L286.6,138.5 L292.6,140.7 L298.6,142.9 L304.6,145.1 L310.6,147.3 L316.7,149.4 L322.7,151.6 L328.7,153.8 L334.7,156.0 L340.7,158.2 L346.7,160.4 L352.8,162.5 L358.8,164.7 L364.8,166.9 L370.8,169.1 L376.8,171.3 L382.8,173.5 L388.8,175.7 L394.9,177.8 L400.9,180.0 L406.9,182.2 L412.9,184.4 L418.9,186.6 L424.9,188.8 L431.0,190.9" fill="none" stroke="#2563eb" stroke-width="2.5"/><path d="M431.0,190.9 L433.7,191.9 L436.5,192.9 L439.2,193.9 L442.0,194.9 L444.7,195.9 L447.5,196.9 L450.2,197.9 L453.0,198.9 L455.7,199.9 L458.5,200.9 L461.2,201.9 L464.0,202.9 L466.7,203.9 L469.5,204.9 L472.2,205.9 L475.0,206.9 L477.7,207.9 L480.5,208.9 L483.2,209.9 L486.0,210.9 L488.7,211.9 L491.5,212.9 L494.2,213.9 L497.0,214.9 L499.7,215.9 L502.5,216.9 L505.2,217.9 L508.0,218.9 L510.7,219.9 L513.5,220.9 L516.2,221.9 L519.0,222.9 L521.7,223.9 L524.5,224.9 L527.2,225.9 L530.0,226.9 L532.7,227.9 L535.5,228.9 L538.2,229.9 L541.0,230.9 L543.7,231.9 L546.5,232.9 L549.2,233.9 L552.0,234.9 L554.7,235.9 L557.5,236.9 L560.2,237.9 L563.0,238.9 L565.7,239.9 L568.5,240.9 L571.2,241.9 L574.0,242.9 L576.7,243.9 L579.5,244.9 L582.2,245.9 L585.0,246.9 L587.7,247.9 L590.5,248.9 L593.2,249.9 L596.0,250.8" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6 5"/><text x="531.9" y="199.6" font-size="11" text-anchor="middle" fill="#1d4ed8">extrapolated</text><path d="M245.3,123.6 H303.8 V144.8" fill="none" stroke="#1b1f24" stroke-width="1" stroke-dasharray="3 3"/><text x="274.6" y="116.6" font-size="10" text-anchor="middle" fill="#1b1f24">10× bigger</text><text x="309.8" y="138.2" font-size="10" text-anchor="start" fill="#1b1f24">loss × 0.84</text><circle cx="358.1" cy="164.5" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"><title>GPT-2 small: about 8.5e+07 non-embedding parameters, predicted loss 2.87</title></circle><text x="358.1" y="186.5" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">GPT-2 small</text><circle cx="431.0" cy="190.9" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"><title>GPT-2 XL: about 1.5e+09 non-embedding parameters, predicted loss 2.30</title></circle><text x="431.0" y="212.9" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">GPT-2 XL</text><circle cx="551.6" cy="234.7" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"><title>GPT-3: about 1.7e+11 non-embedding parameters, predicted loss 1.61</title></circle><text x="551.6" y="222.7" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">GPT-3</text><text x="333.0" y="316.0" font-size="12" text-anchor="middle" fill="#1b1f24">Model size: non-embedding parameters (log scale)</text><text x="18.0" y="155.0" font-size="12" text-anchor="middle" fill="#1b1f24" transform="rotate(-90 18 155.0)">Test loss (log scale)</text><text x="70.0" y="22.0" font-size="12" text-anchor="start" fill="#1b1f24" font-weight="600">L(N) = (8.8 × 10<tspan dy="-5" font-size="8">13</tspan><tspan dy="5"> / N)</tspan><tspan dy="-5" font-size="8">0.076</tspan></text></svg>
+        <figcaption>The Kaplan et al. (2020) fit for loss against model size, plotted from the paper's published constants. On log-scale axes the power law is a straight line: every 10&#215; increase in size multiplies the loss by about 0.84. The solid part covers the sizes the authors actually trained; the dashed part is the forecast. The GPT points mark where each model's size falls on the fitted line, not measured losses. Hover over a point for details.</figcaption>
+    </figure>
+
     <p><strong>2. Grow data as fast as model size (Hoffmann et al., DeepMind, 2022, the "Chinchilla" paper).</strong> Training compute is roughly</p>
     \[ C \approx 6 \, N \, D \]
     <p>floating-point operations, so a fixed budget forces a trade-off between a bigger model and more training data. The Chinchilla study found that for the lowest loss at a given budget, parameters and tokens should grow <em>in equal proportion</em>, at about <strong>20 training tokens per parameter</strong>. Many earlier models were far too large for the amount of data they saw. DeepMind showed this by training <strong>Chinchilla</strong> (70B parameters, 1.4 trillion tokens) with the same compute as their earlier <strong>Gopher</strong> (280B parameters, 300 billion tokens). Chinchilla was 4&#215; smaller and outperformed Gopher on nearly every benchmark.</p>
+
+    <figure class="diagram-wrap">
+        <svg viewBox="0 0 620 330" role="img" aria-label="Log-log plot of parameters against training tokens. A dashed line marks 20 tokens per parameter. GPT-3 and Gopher sit far below it, Chinchilla sits on it, and Llama 3 8B sits far above it." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><line x1="70.0" y1="40" x2="70.0" y2="270" stroke="#e2e8f0"/><text x="70.0" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">1B</text><line x1="245.3" y1="40" x2="245.3" y2="270" stroke="#e2e8f0"/><text x="245.3" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">10B</text><line x1="420.7" y1="40" x2="420.7" y2="270" stroke="#e2e8f0"/><text x="420.7" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">100B</text><line x1="596.0" y1="40" x2="596.0" y2="270" stroke="#e2e8f0"/><text x="596.0" y="288.0" font-size="11" text-anchor="middle" fill="#64748b">1T</text><line x1="70" y1="270.0" x2="596" y2="270.0" stroke="#e2e8f0"/><text x="62.0" y="274.0" font-size="11" text-anchor="end" fill="#64748b">10B</text><line x1="70" y1="212.5" x2="596" y2="212.5" stroke="#e2e8f0"/><text x="62.0" y="216.5" font-size="11" text-anchor="end" fill="#64748b">100B</text><line x1="70" y1="155.0" x2="596" y2="155.0" stroke="#e2e8f0"/><text x="62.0" y="159.0" font-size="11" text-anchor="end" fill="#64748b">1T</text><line x1="70" y1="97.5" x2="596" y2="97.5" stroke="#e2e8f0"/><text x="62.0" y="101.5" font-size="11" text-anchor="end" fill="#64748b">10T</text><line x1="70" y1="40.0" x2="596" y2="40.0" stroke="#e2e8f0"/><text x="62.0" y="44.0" font-size="11" text-anchor="end" fill="#64748b">100T</text><line x1="70" y1="270" x2="596" y2="270" stroke="#94a3b8"/><line x1="70" y1="40" x2="70" y2="270" stroke="#94a3b8"/><line x1="70.0" y1="252.7" x2="596.0" y2="80.2" stroke="#1b1f24" stroke-width="2" stroke-dasharray="7 5"/><text x="130.0" y="219.0" font-size="11" text-anchor="start" fill="#1b1f24" font-weight="600" transform="rotate(-18.2 130.0 219.0)">Chinchilla rule: 20 tokens per parameter</text><text x="590.0" y="56.0" font-size="11" text-anchor="end" fill="#64748b" font-style="italic">more data per parameter</text><text x="590.0" y="260.0" font-size="11" text-anchor="end" fill="#64748b" font-style="italic">less data per parameter</text><circle cx="463.3" cy="185.1" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"><title>GPT-3: 175 billion parameters, 300 billion tokens, about 1.7 tokens per parameter</title></circle><text x="463.3" y="207.1" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">GPT-3 (1.7:1)</text><circle cx="499.1" cy="185.1" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"><title>Gopher: 280 billion parameters, 300 billion tokens, about 1.1 tokens per parameter</title></circle><text x="511.1" y="189.1" font-size="11" text-anchor="start" fill="#1b1f24" font-weight="600">Gopher (1.1:1)</text><circle cx="393.5" cy="146.6" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"><title>Chinchilla: 70 billion parameters, 1.4 trillion tokens, about 20 tokens per parameter</title></circle><text x="381.5" y="136.6" font-size="11" text-anchor="end" fill="#1b1f24" font-weight="600">Chinchilla (20:1)</text><circle cx="228.3" cy="87.4" r="6" fill="#2563eb" stroke="#fff" stroke-width="2"><title>Llama 3 8B: 8 billion parameters, 15 trillion tokens, about 1,875 tokens per parameter</title></circle><text x="238.3" y="91.4" font-size="11" text-anchor="start" fill="#1b1f24" font-weight="600">Llama 3 8B (1,875:1)</text><text x="333.0" y="316.0" font-size="12" text-anchor="middle" fill="#1b1f24">Parameters (log scale)</text><text x="18.0" y="155.0" font-size="12" text-anchor="middle" fill="#1b1f24" transform="rotate(-90 18 155.0)">Training tokens (log scale)</text><text x="70.0" y="22.0" font-size="12" text-anchor="start" fill="#1b1f24" font-weight="600">Model size vs. training data</text></svg>
+        <figcaption>Real models plotted by parameter count and training tokens, with the tokens-per-parameter ratio in parentheses. Models below the dashed Chinchilla line saw less data than the rule recommends for their size; models above it were deliberately trained on more. Hover over a point for exact numbers.</figcaption>
+    </figure>
 
     <div class="highlight-box">
         <p><strong>Worked example: GPT-3.</strong> GPT-3 has 175 billion parameters and was trained on 300 billion tokens. Its training compute was about \(6 \times 175\text{B} \times 300\text{B} \approx 3 \times 10^{23}\) operations. That is under 2 tokens per parameter. By the Chinchilla rule, a model that size calls for about \(20 \times 175\text{B} = 3.5\) trillion tokens, more than 10&#215; what GPT-3 actually saw.</p>
@@ -236,7 +245,7 @@
   </section>
 
   <section>
-    <h2>7. Try It: Spot the Difference</h2>
+    <h2>8. Try It: Spot the Difference</h2>
     <div class="interactive-box">
         <p>Same prompt, two responses. One comes from a <strong>base / completion-style</strong> model; the other from an <strong>instruction-tuned</strong> assistant. Read both, guess which is which, then check your answer.</p>
         <p><strong>Prompt:</strong></p>
@@ -264,7 +273,7 @@
   </section>
 
   <section>
-    <!--<h2>8. Reflect on the Pipeline</h2>
+    <!--<h2>9. Reflect on the Pipeline</h2>
     <div class="interactive-box">
         <label class="reflect-label" for="tt-reflect-1">If you were training a customer service chatbot, what kind of fine-tuning examples would you want to collect?</label>
         <textarea class="reflect-input" id="tt-reflect-1" placeholder="Think about tone, refund policies, escalation paths, multilingual support…"></textarea>
