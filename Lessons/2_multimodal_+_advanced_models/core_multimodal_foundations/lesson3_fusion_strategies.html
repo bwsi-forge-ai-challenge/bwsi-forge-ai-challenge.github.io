@@ -24,13 +24,13 @@
 
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Core Multimodal Foundations</p>
-    <h1>Fusion Strategies &amp; Architecture Paradigms</h1>
-    <p class="lede">In Lesson 2, we looked at how to turn different modalities into vectors that can live in a shared space. Once our data has been embedded into feature vectors or sequences of patch vectors, we face a crucial design decision: where inside the network should those streams merge?</p>
+    <h1>Multimodal Fusion Strategies &amp; Architecture Paradigms</h1>
+    <p class="lede">In the previous lesson, we looked at how to map different inputs into a shared space. Once an image has been cut into patch vectors and a sound clip has been turned into a sequence of feature vectors, an important design question comes up: at what point in the network should these separate streams merge?</p>
   </header>
 
   <section>
-    <p>Fuse too early, and a single noisy or missing sensor can corrupt everything the network computes. Fuse too late, and the model can no longer spot cases where the meaning exists only in the <em>combination</em> of senses.</p>
-    <p>This lesson walks through how each option works, what it costs, and how it fails, for the three major fusion strategies: <strong>early</strong> (feature-level), <strong>late</strong> (decision-level), and <strong>intermediate</strong> or hybrid (cross-attention and gating).</p>
+    <p>Merge them at the very first layer, and a single broken or missing sensor can derail everything the network computes after it. Wait until the final prediction, and the model can no longer discover meaning that only shows up in the <em>interplay</em> between senses.</p>
+    <p>This lesson walks through the three main ways multimodal systems combine their inputs, <strong>early</strong>, <strong>late</strong>, and <strong>intermediate</strong> fusion, along with how each one fails and what goes wrong when you train them.</p>
 
     <div class="highlight-box">
         <p><strong>What you should already know.</strong> This lesson builds on:</p>
@@ -45,7 +45,7 @@
 
   <section>
     <h2>1. The Fusion Taxonomy</h2>
-    <p>Think of a multimodal network as a set of parallel pipelines, one per sense. Data flows forward through each pipeline layer by layer, which is called the <strong>forward pass</strong>. The <strong>fusion point</strong> is the place where information is first allowed to cross from one pipeline into another.</p>
+    <p>Think of a multimodal network as a set of parallel pipelines, one for each input. Data moves forward through each pipeline layer by layer, which is called the <strong>forward pass</strong>. The <strong>fusion point</strong> is the stage where information is first allowed to pass from one pipeline to another.</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 660 330" role="img" aria-label="Three fusion strategies. Early fusion concatenates image and audio, then runs one joint backbone. Intermediate fusion runs encoder layers for each modality, then exchanges information through cross-attention or gating. Late fusion runs a full model per modality and averages or votes on their predictions." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
@@ -95,80 +95,206 @@
     </figure>
 
     <ul>
-        <li><strong>Early fusion:</strong> features are stacked (or combined) at the very first layer. A single shared <strong>backbone</strong>, meaning the main body of the network, processes the combined input from step zero.</li>
-        <li><strong>Late fusion:</strong> independent single-modality networks run all the way to their own final predictions. An <strong>ensemble</strong> step then merges those predictions, by averaging, voting, or a small classifier.</li>
-        <li><strong>Intermediate (hybrid) fusion:</strong> each modality first passes through its own layers, and then the modalities exchange information partway through the network using special cross-modal layers.</li>
+        <li><strong>Early fusion (feature level):</strong> the features are combined at the very first layer. A single shared <strong>backbone</strong>, meaning the main body of the network, processes the combined input from the start.</li>
+        <li><strong>Late fusion (decision level):</strong> a separate network for each modality runs all the way to its own prediction. Those predictions are then merged by averaging, voting, or a small classifier.</li>
+        <li><strong>Intermediate (hybrid) fusion:</strong> each modality first passes through its own layers to build mid-level features. After that, cross-modal layers such as attention blocks or learned gates let the modalities exchange information.</li>
     </ul>
   </section>
 
   <section>
-    <h2>2. Early Fusion: Merging the Features</h2>
-    <p>Early fusion combines the raw inputs, or low-level features of them, right at the entrance of the network. The two most common ways are to concatenate the vectors (Lesson 2) or to project each one with its own weight matrix and add the results:</p>
-    \[ \mathbf{x}_{\text{fused}} = \left[\, \mathbf{x}_v \,\Vert\, \mathbf{x}_a \,\right] \qquad \text{or} \qquad \mathbf{x}_{\text{fused}} = \mathbf{W}_v \mathbf{x}_v + \mathbf{W}_a \mathbf{x}_a \]
-    <p>Here \(\mathbf{x}_v\) is the visual input, \(\mathbf{x}_a\) is the audio input, and \(\Vert\) means "glue the two vectors end to end."</p>
+    <h2>2. Early Fusion: Merging Features</h2>
+    <p>Early fusion combines the raw inputs, or simple features of them, right at the entrance of the network. The most common way is to concatenate the visual features \(\mathbf{x}_v\) and the audio features \(\mathbf{x}_a\) into one vector, just like the concatenation in Lesson 2:</p>
+    \[ \mathbf{x}_{\text{fused}} = \left[\, \mathbf{x}_v \,\Vert\, \mathbf{x}_a \,\right] \]
 
     <h3>Example: audio-visual speech recognition</h3>
-    <p>A classic use case is <strong>audio-visual speech recognition</strong>: transcribing speech using both the sound and video of the speaker's mouth. Audio is commonly described as a <strong>spectrogram</strong>, a picture of how much energy the sound has at each frequency over time. (The audio deep dive covers spectrograms in detail.) Every 20 milliseconds, the system takes one slice of the spectrogram and concatenates it with a vector describing the shape of the speaker's lips at that moment.</p>
-    <p>Because the two signals are merged step by step, even the network's first layers can learn tightly synchronized events. For example, the lips press together a fraction of a second <em>before</em> the burst of sound in a "p" or "b" shows up in the spectrogram. A network that only combined the two at the end would never see that timing.</p>
+    <p>A classic use case is <strong>audio-visual speech recognition</strong>: transcribing speech using both the sound and a video of the speaker's lips. The audio is usually represented as a <strong>spectrogram</strong>, the picture of sound you met in Lesson 1 (the audio unit covers it in detail). Every 20 milliseconds, the system takes one slice of the spectrogram and concatenates it with a vector describing the shape of the speaker's lips at that same moment.</p>
+    <p>Because the two signals are joined from the first layer, even the network's earliest filters can pick up tightly synchronized events. For example, a speaker's lips press together a fraction of a second <em>before</em> the burst of sound in a "p" or "b." A network that only combined the two streams near the end would blur away those millisecond-level offsets.</p>
 
-    <h3>Strengths</h3>
+    <h3>Trade-offs and failure modes</h3>
     <ul>
-        <li><strong>Discovers low-level interactions.</strong> It can learn fine-grained links in time and space that get washed out once each modality has been summarized by many layers.</li>
-        <li><strong>One network.</strong> Only one model has to be trained and stored, instead of a separate model for every modality.</li>
-    </ul>
-
-    <h3>Vulnerabilities</h3>
-    <ul>
-        <li><strong>Strict synchronization.</strong> All modalities must arrive at the same rate, or be resampled onto a common clock, before they can be stacked.</li>
-        <li><strong>A missing input breaks everything.</strong> The first layer expects every modality. If one stream disappears, say a lens cap is left on or a microphone is unplugged, the network receives zeros or random noise in that part of its input. That is <strong>out-of-distribution</strong> data: a kind of input the network never saw during training. Because those values flow through every weight in the network, the result is often a confident, completely wrong answer rather than a slightly less confident right one.</li>
+        <li><strong>Strength: fine-grained interactions.</strong> It can learn links in time and space that get washed out once each modality has been summarized by many layers, and only one network has to be trained and stored.</li>
+        <li><strong>Strict synchronization.</strong> Every stream has to be lined up on the same clock, or resampled onto a shared time grid, before the vectors can be stacked.</li>
+        <li><strong>A missing input breaks everything.</strong> The first layer expects complete vectors from every modality. If a camera feed drops out or a microphone is unplugged, that part of the input becomes zeros or random noise. This is <strong>out-of-distribution</strong> data: a kind of input the network never saw during training. Because it enters at layer zero, it flows through every weight matrix after it, and the result is often a confident, completely wrong answer instead of an honest "I'm not sure."</li>
     </ul>
   </section>
 
   <section>
-    <h2>3. Late Fusion: Combining the Decisions</h2>
-    <p>Late fusion treats each modality as an independent expert. Each modality gets its own complete network that is trained to make a prediction on its own, and the predictions are only combined at the end:</p>
-    \[ \hat{\mathbf{y}} = \sum_{m=1}^{M} w_m\, f_m(\mathbf{x}_m) \qquad \text{where } \sum_{m=1}^{M} w_m = 1 \]
-    <p>Here \(M\) is the number of modalities, \(f_m\) is the model for modality \(m\), \(f_m(\mathbf{x}_m)\) is its prediction, and \(w_m\) is how much weight that prediction gets. The weights can all be equal (\(1/M\)), tuned to whatever works best on held-out validation data, or chosen on the fly based on how confident each model is about the current input. The final prediction \(\hat{\mathbf{y}}\) is a weighted average.</p>
+    <h2>3. Late Fusion: Combining Independent Decisions</h2>
+    <p>Why do we need to merge anything at all if individual models can already make predictions on their own?</p>
+    <p>Say you're building a security monitor for a quiet library. You set up a high-resolution camera and a directional microphone. You train a computer vision model to look at video frames and output the probability of an intruder, and you train an audio model to listen to sound clips and do the same.</p>
+    <p>At 2:00 AM, the vision model spots a flashlight beam moving across the room and reports an 85% chance of an intruder. At the same second, the microphone hears complete silence and reports a 10% chance.</p>
+    <p>The system can't sound one alarm and stay quiet at the same time. Whatever happens next (calling security, logging the event, doing nothing) needs a single answer: sound the alarm, or stay quiet.</p>
+    <p>That is the motivation behind <strong>late fusion</strong>, also called <strong>decision-level fusion</strong>. Instead of forcing raw pixels and raw sound waves to interact inside one big network, each modality runs through its own specialized model. Once every model has reached its own verdict, we merge those verdicts into one final score:</p>
 
-    <div class="worked">
-        <p><strong>Worked example: surviving a sensor failure.</strong> A smart doorbell decides whether a person is at the door.</p>
-        <ul>
-            <li>The vision model \(f_v\) outputs \(P(\text{person}) = 0.94\).</li>
-            <li>The audio model \(f_a\) outputs \(P(\text{person}) = 0.86\).</li>
-        </ul>
-        <p>With equal weights, the combined confidence is</p>
-        \[ \hat{P} = \frac{0.94 + 0.86}{2} = \mathbf{0.90} \]
-        <p>Now the microphone cable is cut. The audio model has nothing to go on, so it outputs 0.50, which means "no idea":</p>
-        \[ \hat{P}_{\text{degraded}} = \frac{0.94 + 0.50}{2} = \mathbf{0.72} \]
-        <p>The confidence drops, but the decision is still correct. Better still, if the system explicitly detects that the audio sensor is dead, it can drop that term and rely 100% on vision.</p>
-    </div>
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Late fusion in the library example. The camera feeds a vision model that outputs 0.85. The microphone feeds an audio model that outputs 0.10. The two pipelines never share features. A weighted sum combines the two verdicts into one score, 0.475 with equal weights, which decides whether to sound the alarm." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs>
+          <marker id="lf-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker>
+        </defs>
+        <g font-size="12.5" text-anchor="middle" fill="#1b1f24">
+          <rect x="15" y="25" width="135" height="56" rx="8" fill="#dcfce7" stroke="#16a34a"/><text x="82" y="48" font-weight="600">Camera</text><text x="82" y="66" font-size="11.5">flashlight beam</text>
+          <rect x="15" y="165" width="135" height="56" rx="8" fill="#fef3c7" stroke="#d97706"/><text x="82" y="188" font-weight="600">Microphone</text><text x="82" y="206" font-size="11.5">silence</text>
+          <rect x="185" y="25" width="120" height="56" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="245" y="49">Vision model</text><text x="245" y="66" font-size="11" fill="#5b6672">(full network)</text>
+          <rect x="185" y="165" width="120" height="56" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="245" y="189">Audio model</text><text x="245" y="206" font-size="11" fill="#5b6672">(full network)</text>
 
-    <h3>Strengths</h3>
+          <text x="400" y="38" font-size="12">verdict</text>
+          <rect x="345" y="46" width="110" height="14" rx="3" fill="#eef1f5"/><rect x="345" y="46" width="93.5" height="14" rx="3" fill="#16a34a"/>
+          <text x="400" y="78" font-weight="700">&#375;<tspan font-size="9" dy="3">vision</tspan><tspan dy="-3"> = 0.85</tspan></text>
+          <text x="400" y="178" font-size="12">verdict</text>
+          <rect x="345" y="186" width="110" height="14" rx="3" fill="#eef1f5"/><rect x="345" y="186" width="11" height="14" rx="3" fill="#d97706"/>
+          <text x="400" y="218" font-weight="700">&#375;<tspan font-size="9" dy="3">audio</tspan><tspan dy="-3"> = 0.10</tspan></text>
+
+          <text x="245" y="128" font-size="11.5" fill="#5b6672" font-style="italic">the two pipelines never share features</text>
+
+          <rect x="485" y="88" width="110" height="70" rx="8" fill="#e0e7ff" stroke="#4f46e5"/><text x="540" y="112" font-weight="600">Weighted sum</text><text x="540" y="131" font-size="11.5">0.5 &#215; 0.85 +</text><text x="540" y="146" font-size="11.5">0.5 &#215; 0.10</text>
+          <rect x="615" y="88" width="98" height="70" rx="8" fill="#fde2e2" stroke="#b91c1c"/><text x="664" y="113" font-weight="700">&#375; = 0.475</text><text x="664" y="132" font-size="11">one verdict:</text><text x="664" y="147" font-size="11">alarm or quiet</text>
+        </g>
+        <line x1="20" y1="123" x2="135" y2="123" stroke="#94a3b8" stroke-dasharray="5 4"/>
+        <line x1="355" y1="123" x2="460" y2="123" stroke="#94a3b8" stroke-dasharray="5 4"/>
+        <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#lf-a)">
+          <line x1="150" y1="53" x2="183" y2="53"/><line x1="150" y1="193" x2="183" y2="193"/>
+          <line x1="305" y1="53" x2="340" y2="53"/><line x1="305" y1="193" x2="340" y2="193"/>
+          <path d="M460 53 C 472 53, 472 100, 483 108"/><path d="M460 193 C 472 193, 472 146, 483 138"/>
+          <line x1="595" y1="123" x2="613" y2="123"/>
+        </g>
+      </svg>
+      <figcaption>Each sensor gets its own complete model. Their final verdicts are the only thing that ever gets combined.</figcaption>
+    </figure>
+
+    \[ \hat{y} = \sum_{m=1}^{M} w_m \cdot \hat{y}_m \]
+    <p>Here's what each term means:</p>
     <ul>
-        <li><strong>Fault isolation and modular upgrades.</strong> If a better vision model is released, you can swap it in without retraining or touching the audio model.</li>
-        <li><strong>Flexible hardware.</strong> Each model can run separately, even on different chips. A phone might run the audio model on a small low-power audio processor and the vision model on a separate chip designed for neural networks.</li>
+        <li>\(M\) is the number of modalities you're combining. In the library, \(M = 2\): vision and audio.</li>
+        <li>\(\hat{y}_m\) is the standalone verdict from modality \(m\). Here \(\hat{y}_{\text{vision}} = 0.85\) and \(\hat{y}_{\text{audio}} = 0.10\).</li>
+        <li>\(w_m\) is how much we trust that sensor's opinion. The weights are required to add up to 1 (\(\sum w_m = 1\)), so the final answer is still a valid probability.</li>
+        <li>\(\hat{y}\) is the merged score the system actually acts on.</li>
     </ul>
 
-    <h3>Vulnerability: the cross-modal blind spot</h3>
-    <p>Late fusion cannot capture meaning that only exists in the combination. Take a video where someone says "Oh, fantastic" in a flat voice while rolling their eyes. Evaluated separately:</p>
-    <div class="table-wrap"><table>
-        <thead><tr><th>Model</th><th>What it sees</th><th>Prediction</th></tr></thead>
-        <tbody>
-            <tr><td>Text</td><td>The word "fantastic"</td><td>Positive</td></tr>
-            <tr><td>Audio</td><td>A flat, low pitch</td><td>Neutral or bored</td></tr>
-            <tr><td>Vision</td><td>A face that is not smiling</td><td>Neutral</td></tr>
-            <tr><td><strong>Late fusion</strong></td><td>An average of the three</td><td><strong>Positive / neutral</strong></td></tr>
-        </tbody>
-    </table></div>
-    <p>The system misses the sarcasm entirely. The real meaning comes from the <em>mismatch</em> between the words and the tone, and no single model ever sees both.</p>
+    <h3>Deciding how much to trust each sensor</h3>
+    <p>The main design question in late fusion is how to set the weights \(w_m\). There are three common approaches:</p>
+    <ul>
+        <li><strong>Equal trust (uniform averaging).</strong> If both sensors are about equally dependable, give them the same say, \(w_{\text{vision}} = w_{\text{audio}} = 0.5\). The final score is a plain average:
+            \[ \hat{y} = (0.5 \times 0.85) + (0.5 \times 0.10) = 0.475 \]</li>
+        <li><strong>Learned trust (validation tuning).</strong> Suppose past data shows the camera catches 95% of incidents, while the microphone is often fooled by wind or the air conditioning. You can tune the weights on held-out validation data and end up with something like \(w_{\text{vision}} = 0.8\) and \(w_{\text{audio}} = 0.2\):
+            \[ \hat{y} = (0.8 \times 0.85) + (0.2 \times 0.10) = 0.70 \]</li>
+        <li><strong>Dynamic trust (confidence gating).</strong> If a sensor can tell that its own input is bad (say the camera sees total darkness), the system can set \(w_{\text{vision}} = 0\) on the fly and let audio make the call alone.</li>
+    </ul>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 210" role="img" aria-label="The same two verdicts under three weighting schemes. Equal trust splits the weight 50/50 and gives 0.475. Learned trust gives vision 80 percent and audio 20 percent and gives 0.70. Dynamic trust, when the camera reports darkness, gives vision 0 and audio 100 percent, so the final score is just the audio verdict." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <g font-size="12.5" fill="#1b1f24">
+          <text x="185" y="22" text-anchor="middle" font-size="11.5" fill="#5b6672">how the weight is split</text>
+          <text x="525" y="22" text-anchor="middle" font-size="11.5" fill="#5b6672">final score &#375; (0 to 1)</text>
+
+          <text x="15" y="58" font-weight="600">Equal</text>
+          <rect x="85" y="42" width="100" height="24" fill="#16a34a" fill-opacity="0.85"/><rect x="185" y="42" width="100" height="24" fill="#d97706" fill-opacity="0.85"/>
+          <text x="135" y="59" text-anchor="middle" fill="#fff" font-weight="600">vision 0.5</text><text x="235" y="59" text-anchor="middle" fill="#fff" font-weight="600">audio 0.5</text>
+          <rect x="375" y="42" width="300" height="24" rx="3" fill="#eef1f5"/><rect x="375" y="42" width="142.5" height="24" rx="3" fill="#4f46e5"/>
+          <text x="525" y="59" font-weight="700" dx="0">&#160;0.475</text>
+
+          <text x="15" y="113" font-weight="600">Learned</text>
+          <rect x="85" y="97" width="160" height="24" fill="#16a34a" fill-opacity="0.85"/><rect x="245" y="97" width="40" height="24" fill="#d97706" fill-opacity="0.85"/>
+          <text x="165" y="114" text-anchor="middle" fill="#fff" font-weight="600">vision 0.8</text><text x="265" y="114" text-anchor="middle" fill="#fff" font-weight="600" font-size="11">0.2</text>
+          <rect x="375" y="97" width="300" height="24" rx="3" fill="#eef1f5"/><rect x="375" y="97" width="210" height="24" rx="3" fill="#4f46e5"/>
+          <text x="592" y="114" font-weight="700">0.70</text>
+
+          <text x="15" y="168" font-weight="600">Dynamic</text>
+          <text x="15" y="184" font-size="10.5" fill="#5b6672">(camera dark)</text>
+          <rect x="85" y="152" width="200" height="24" fill="#d97706" fill-opacity="0.85"/>
+          <text x="185" y="169" text-anchor="middle" fill="#fff" font-weight="600">audio 1.0 (vision 0)</text>
+          <text x="375" y="169">&#375; = &#375;<tspan font-size="9" dy="3">audio</tspan><tspan dy="-3">: audio alone makes the call</tspan></text>
+
+          <g stroke="#475569" stroke-width="1.5" fill="none"><line x1="300" y1="54" x2="360" y2="54"/><line x1="300" y1="109" x2="360" y2="109"/><line x1="300" y1="164" x2="360" y2="164"/></g>
+          <g fill="#475569"><path d="M358,50 L366,54 L358,58 Z"/><path d="M358,105 L366,109 L358,113 Z"/><path d="M358,160 L366,164 L358,168 Z"/></g>
+        </g>
+      </svg>
+      <figcaption>Same two verdicts (vision 0.85, audio 0.10), three ways of weighting them. Shifting trust toward the camera pushes the final score toward the camera's opinion.</figcaption>
+    </figure>
+
+    <h3>The real advantage: fault isolation</h3>
+    <p>The biggest practical benefit of late fusion is that the modalities never touch while features are being extracted.</p>
+    <p>If the microphone wire gets cut, the audio model has no signal, but the vision model keeps processing video as if nothing happened. You can unplug, retrain, or replace the vision network with a brand-new architecture next month without changing a single line of code or retraining a single weight in the audio pipeline. The two models can even run on different chips: a phone might run the audio model on a small low-power processor and the vision model on a chip designed for neural networks.</p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 170" role="img" aria-label="Fault isolation. The microphone wire is cut, so the audio pipeline produces nothing. The vision pipeline is unaffected and still sends its verdict of 0.85 to the fusion step." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs>
+          <marker id="lf-b" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker>
+        </defs>
+        <g font-size="12.5" text-anchor="middle" fill="#1b1f24">
+          <rect x="15" y="20" width="120" height="44" rx="8" fill="#dcfce7" stroke="#16a34a"/><text x="75" y="46" font-weight="600">Camera</text>
+          <rect x="185" y="20" width="130" height="44" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="250" y="46">Vision model</text>
+          <text x="400" y="47" font-weight="700">&#375;<tspan font-size="9" dy="3">vision</tspan><tspan dy="-3"> = 0.85</tspan></text>
+          <g opacity="0.45">
+            <rect x="15" y="106" width="120" height="44" rx="8" fill="#fef3c7" stroke="#d97706"/><text x="75" y="132" font-weight="600">Microphone</text>
+            <rect x="185" y="106" width="130" height="44" rx="8" fill="#f1f5f9" stroke="#475569" stroke-dasharray="5 4"/><text x="250" y="126">Audio model</text><text x="250" y="142" font-size="11">no signal</text>
+            <text x="400" y="133" font-weight="700">no verdict</text>
+          </g>
+          <rect x="520" y="55" width="185" height="60" rx="8" fill="#e0e7ff" stroke="#4f46e5"/><text x="612" y="80" font-weight="600">Fusion step</text><text x="612" y="99" font-size="11.5">still gets vision's answer</text>
+        </g>
+        <g stroke="#475569" stroke-width="1.5" fill="none">
+          <line x1="135" y1="42" x2="183" y2="42" marker-end="url(#lf-b)"/><line x1="315" y1="42" x2="345" y2="42" marker-end="url(#lf-b)"/>
+          <path d="M455 42 C 490 42, 495 70, 518 75" marker-end="url(#lf-b)"/>
+          <line x1="135" y1="128" x2="150" y2="128" opacity="0.45"/><line x1="170" y1="128" x2="183" y2="128" opacity="0.45"/>
+        </g>
+        <g stroke="#b91c1c" stroke-width="3" stroke-linecap="round"><line x1="152" y1="119" x2="168" y2="137"/><line x1="168" y1="119" x2="152" y2="137"/></g>
+        <text x="160" y="164" text-anchor="middle" font-size="11" fill="#b91c1c" font-weight="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">wire cut</text>
+      </svg>
+      <figcaption>A broken sensor takes down only its own pipeline. The other model keeps working, and the fusion step falls back on the verdicts it still has.</figcaption>
+    </figure>
+
+    <h3>The blind spot: missing the context</h3>
+    <p>Late fusion is modular and resilient, but it has one fundamental limitation: it can't see any interaction between the modalities.</p>
+    <p>Think about how people communicate. Someone says the word "brilliant" while rolling their eyes:</p>
+    <ul>
+        <li>The text model reads "brilliant" and predicts a 95% chance the sentiment is positive.</li>
+        <li>The vision model sees an eye-roll and predicts a 10% chance it's positive.</li>
+        <li>A late-fusion average blends these into \((0.95 + 0.10)/2 \approx 0.53\), and concludes the speaker is roughly neutral.</li>
+    </ul>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 220" role="img" aria-label="The sarcasm blind spot. The text model reads the word brilliant and says 0.95 positive. The vision model sees an eye roll and says 0.10 positive. Averaging gives about 0.53, which reads as neutral. The real meaning is sarcasm, which is negative and lives in the contradiction between the two, which neither model ever sees." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+        <defs>
+          <marker id="lf-c" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker>
+        </defs>
+        <g font-size="12.5" text-anchor="middle" fill="#1b1f24">
+          <rect x="15" y="18" width="130" height="62" rx="8" fill="#dbeafe" stroke="#2563eb"/><text x="80" y="44" font-size="11.5" fill="#5b6672">text</text><text x="80" y="64" font-size="15" font-weight="700">"brilliant"</text>
+          <rect x="15" y="122" width="130" height="80" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+          <text x="80" y="138" font-size="11.5" fill="#5b6672">video: eye-roll</text>
+          <circle cx="80" cy="170" r="24" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+          <ellipse cx="71" cy="164" rx="5.5" ry="6" fill="#fff" stroke="#1b1f24"/><ellipse cx="89" cy="164" rx="5.5" ry="6" fill="#fff" stroke="#1b1f24"/>
+          <circle cx="71" cy="160" r="2.6" fill="#1b1f24"/><circle cx="89" cy="160" r="2.6" fill="#1b1f24"/>
+          <line x1="70" y1="181" x2="90" y2="181" stroke="#1b1f24" stroke-width="2" stroke-linecap="round"/>
+
+          <rect x="180" y="28" width="115" height="42" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="237" y="54">Text model</text>
+          <rect x="180" y="141" width="115" height="42" rx="8" fill="#f1f5f9" stroke="#475569"/><text x="237" y="167">Vision model</text>
+          <text x="370" y="46" font-weight="700">0.95</text><text x="370" y="62" font-size="11" fill="#5b6672">"positive!"</text>
+          <text x="370" y="159" font-weight="700">0.10</text><text x="370" y="175" font-size="11" fill="#5b6672">"annoyed"</text>
+
+          <rect x="440" y="78" width="110" height="60" rx="8" fill="#e0e7ff" stroke="#4f46e5"/><text x="495" y="102">Average</text><text x="495" y="122" font-weight="700">&#8776; 0.53</text>
+          <text x="495" y="158" font-size="11.5" fill="#5b6672">"neutral"</text>
+          <rect x="580" y="50" width="128" height="118" rx="8" fill="#fde2e2" stroke="#b91c1c"/>
+          <text x="644" y="72" font-weight="700" fill="#b91c1c">Actual meaning:</text><text x="644" y="90" font-weight="700" fill="#b91c1c">sarcasm</text>
+          <text x="644" y="112" font-size="11">lives in the clash</text><text x="644" y="127" font-size="11">between the two,</text><text x="644" y="142" font-size="11">which neither model</text><text x="644" y="157" font-size="11">ever sees</text>
+        </g>
+        <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#lf-c)">
+          <line x1="145" y1="49" x2="178" y2="49"/><line x1="145" y1="162" x2="178" y2="162"/>
+          <line x1="295" y1="49" x2="340" y2="49"/><line x1="295" y1="162" x2="340" y2="162"/>
+          <path d="M400 49 C 420 49, 425 80, 438 92"/><path d="M400 162 C 420 162, 425 132, 438 124"/>
+        </g>
+        <text x="565" y="112" text-anchor="middle" font-size="20" font-weight="700" fill="#b91c1c" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">&#8800;</text>
+      </svg>
+      <figcaption>Each model is reasonable on its own, and the average is still wrong. The sarcasm only shows up when the words and the face are read together.</figcaption>
+    </figure>
+
+    <p>The system misses the sarcasm completely, because sarcasm doesn't live in the text alone or in the eye-roll alone. The meaning is in the <em>contradiction</em> between the two. Late fusion keeps the models separate until after they've each made up their minds, so neither one ever gets the chance to notice that the other sensor disagrees with it.</p>
   </section>
 
   <section>
-    <h2>4. Intermediate and Hybrid Fusion: Structured Interaction</h2>
-    <p>Intermediate fusion takes a middle path. Each modality is first encoded by its own layers into mid-level features, and then the modalities exchange information through special interaction layers. This is how most modern multimodal models work. Two mechanisms are especially common.</p>
+    <h2>4. Intermediate and Hybrid Fusion</h2>
+    <p>Intermediate fusion avoids both extremes. Each modality is first processed by its own encoder into mid-level features, and then the modalities interact through dedicated cross-modal layers. Most modern multimodal models work this way. Two mechanisms are especially common.</p>
 
     <h3>Mechanism A: cross-attention</h3>
-    <p>Recall the <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson3_attention.html">Attention</a> lesson. In <strong>self-attention</strong>, every token of a sentence produces a query (what it is looking for), a key (what it offers), and a value (the information it passes along), and all three come from the <em>same</em> sentence. In <strong>cross-attention</strong>, the queries come from one modality and the keys and values come from another:</p>
+    <p>Recall the <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson3_attention.html">Attention</a> lesson. In <strong>self-attention</strong>, the queries (\(Q\), what each token is looking for), keys (\(K\), what each token offers), and values (\(V\), the information it passes along) all come from the <em>same</em> sequence. In <strong>cross-attention</strong>, the queries come from one modality while the keys and values come from another:</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 720 150" role="img" aria-label="Cross-attention. Text tokens produce queries, image patches produce keys and values, and softmax of Q times K transpose over the square root of d, times V, gives text tokens that now carry information from the image." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
@@ -192,26 +318,23 @@
       <figcaption>Cross-attention: one modality asks the questions, the other supplies the answers.</figcaption>
     </figure>
 
-    \[ \text{CrossAttention}(\mathbf{X}_{\text{text}}, \mathbf{X}_{\text{img}}) = \text{softmax}\!\left(\frac{\mathbf{Q}_{\text{text}}\, \mathbf{K}_{\text{img}}^{\top}}{\sqrt{d_k}}\right) \mathbf{V}_{\text{img}} \]
-    <p>This is exactly the attention formula you already know; only the sources of \(\mathbf{Q}\), \(\mathbf{K}\), and \(\mathbf{V}\) have changed. (\(d_k\) is the length of each key vector, and dividing by \(\sqrt{d_k}\) keeps the scores from getting too large.) Every text token can now look at every image patch and pull in information from the relevant ones. In an image-captioning model, for example, when the model is about to write the word "stethoscope," the text side's query lines up best with the keys of the patches that contain the stethoscope, so those patches contribute the most.</p>
+    \[ \text{Attention}(Q_{\text{text}}, K_{\text{image}}, V_{\text{image}}) = \text{softmax}\!\left(\frac{Q_{\text{text}}\, K_{\text{image}}^{\top}}{\sqrt{d_k}}\right) V_{\text{image}} \]
+    <p>This is the same attention formula you already know; only the sources of \(Q\), \(K\), and \(V\) have changed. (\(d_k\) is the length of each key vector, and dividing by \(\sqrt{d_k}\) keeps the scores from getting too large.) In a model writing a caption for an image, each text token's query is scored against the keys of every image patch. When the model is about to write the name of an object, the attention weights concentrate on the patches that contain that object, like the dog example in Lesson 1, and those patches' features flow directly into the text being generated.</p>
 
     <h3>The cost of cross-attention</h3>
-    <p>Every query is compared with every key, so the work grows with the <em>product</em> of the two sequence lengths. Computer scientists write this with "big-O" notation, which describes how cost grows as the inputs get bigger:</p>
-    \[ \text{Cost} = \mathcal{O}(N_{\text{text}} \times N_{\text{img}} \times d) \]
+    <p>Every query is compared with every key. For \(N\) text queries and \(M\) image-patch keys, each attention head computes \(N \times M\) dot products. Computer scientists write this with "big-O" notation, which describes how the cost grows as the inputs get bigger:</p>
+    \[ \mathcal{O}(N \cdot M) \]
     <div class="worked">
-        <p><strong>Worked example.</strong> A model processes \(N_t = 256\) text tokens and an image of \(448 \times 448\) pixels, cut into \(14 \times 14\)-pixel patches.</p>
-        <p>Number of image patches:</p>
-        \[ N_i = \frac{448}{14} \times \frac{448}{14} = 32 \times 32 = \mathbf{1{,}024} \]
-        <p>Number of query&ndash;key comparisons for one attention head in one layer:</p>
-        \[ 256 \times 1{,}024 = \mathbf{262{,}144} \]
-        <p>Doubling the image resolution to \(896 \times 896\) gives \(64 \times 64 = 4{,}096\) patches, and the cost rises to \(256 \times 4{,}096 = 1{,}048{,}576\), over a million comparisons per head in every layer. Doubling the width and height quadruples the cost.</p>
+        <p><strong>Worked example.</strong> 64 text tokens attend to an image split into a \(14 \times 14\) grid of patches:</p>
+        \[ M = 14 \times 14 = 196 \text{ patches}, \qquad 64 \times 196 = \mathbf{12{,}544} \text{ dot products per head} \]
+        <p>Now double the image resolution, so the grid doubles along each side to \(28 \times 28 = 784\) patches:</p>
+        \[ 64 \times 784 = \mathbf{50{,}176} \text{ dot products per head} \]
+        <p>Doubling the width and height quadruples the cost, because the number of patches grows with the square of the resolution.</p>
     </div>
+    <p>Because that growth can quickly use up memory, high-resolution models often shrink the number of image tokens before cross-attention, for example by averaging neighboring patches together (<strong>pooling</strong>) or passing them through a small projection layer.</p>
 
     <h3>Mechanism B: gated multimodal units</h3>
-    <p>Some inputs are clear and some are not: an image can be blurred by fog, and speech can be garbled by wind. A fixed rule like "always trust vision 50%" works badly when quality changes from one example to the next. A <strong>gated multimodal unit</strong> (GMU; Arevalo et al., 2017) learns to decide, for every single input, how much to trust each modality:</p>
-    \[ \mathbf{h}_v = \tanh(\mathbf{W}_v \mathbf{x}_v), \qquad \mathbf{h}_t = \tanh(\mathbf{W}_t \mathbf{x}_t) \]
-    \[ \mathbf{z} = \sigma\big(\mathbf{W}_z [\,\mathbf{x}_v \,\Vert\, \mathbf{x}_t\,]\big) \]
-    \[ \mathbf{h}_{\text{fused}} = \mathbf{z} \odot \mathbf{h}_v + (\mathbf{1} - \mathbf{z}) \odot \mathbf{h}_t \]
+    <p>Fixed mixing weights work badly when input quality changes from one moment to the next. A camera lens can be blocked by snow while the radar keeps working, or an image can be blurry while its caption is perfectly clear. A rule like "always trust vision 50%" can't adapt. A <strong>gated multimodal unit</strong> (GMU; Arevalo et al., 2017) instead computes a fresh set of mixing weights for every example, based on what the inputs look like:</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 720 190" role="img" aria-label="Gated multimodal unit. The visual feature passes through a tanh layer to h_v, and the text feature through a tanh layer to h_t. Both features are also concatenated and passed through a sigmoid to make the gate z. The output is z times h_v plus one minus z times h_t." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
@@ -241,31 +364,29 @@
       <figcaption>A gated multimodal unit. The gate looks at both inputs and decides how to mix the two processed features.</figcaption>
     </figure>
 
-    <p>Reading the equations piece by piece:</p>
-    <ul>
-        <li>\(\mathbf{h}_v\) and \(\mathbf{h}_t\) are the visual and text features after one layer each. \(\tanh\) is an activation function that squashes every number into the range \(-1\) to \(1\).</li>
-        <li>\(\mathbf{z}\) is the <strong>gate</strong>. It looks at <em>both</em> inputs together and passes them through the <strong>sigmoid</strong> \(\sigma\), which squashes every number into the range 0 to 1. So \(\mathbf{z}\) is a vector of numbers between 0 and 1, one per feature.</li>
-        <li>\(\odot\) means multiply entry by entry. The output takes a fraction \(z\) of each visual feature and the remaining fraction \(1 - z\) of the matching text feature: a learned, per-example blend.</li>
-    </ul>
-    <p>In practice:</p>
-    <ul>
-        <li>If an image is dark or blurry, the gate moves toward \(\mathbf{z} \to \mathbf{0}\), which turns down the noisy visual features and relies on the text.</li>
-        <li>If the text is garbled, say by a typo or a word the model has never seen, while the image is sharp, the gate moves toward \(\mathbf{z} \to \mathbf{1}\) and relies on vision.</li>
-    </ul>
-    <p>Nobody programs these rules. The gate's weights \(\mathbf{W}_z\) are learned by backpropagation along with everything else, because trusting the clearer input lowers the loss.</p>
+    <p>It works in three steps:</p>
+    <ol>
+        <li><strong>Candidate features.</strong> The visual input \(\mathbf{x}_v\) and text input \(\mathbf{x}_t\) each pass through their own layer. \(\tanh\) is an activation function that squashes every number into the range \(-1\) to \(1\):
+            \[ \mathbf{h}_v = \tanh(\mathbf{W}_v \mathbf{x}_v), \qquad \mathbf{h}_t = \tanh(\mathbf{W}_t \mathbf{x}_t) \]</li>
+        <li><strong>The gate.</strong> The two inputs are concatenated and passed through a layer with a <strong>sigmoid</strong> \(\sigma\), which squashes every number into the range 0 to 1. The result, \(\mathbf{z}\), has one value between 0 and 1 for each feature:
+            \[ \mathbf{z} = \sigma\big(\mathbf{W}_z [\,\mathbf{x}_v \,\Vert\, \mathbf{x}_t\,]\big) \]</li>
+        <li><strong>The blend.</strong> The output takes a fraction \(z\) of each visual feature and the remaining \(1 - z\) of the matching text feature. The symbol \(\odot\) means multiply entry by entry:
+            \[ \mathbf{h}_{\text{fused}} = \mathbf{z} \odot \mathbf{h}_v + (\mathbf{1} - \mathbf{z}) \odot \mathbf{h}_t \]</li>
+    </ol>
+    <p>If an image is dark or blurry, the gate learns to output values near 0, turning down the noisy visual features and leaning on the text. If the text is garbled while the image is sharp, the gate moves toward 1 and leans on vision. Nobody writes these rules by hand: the gate's weights \(\mathbf{W}_z\) are learned by backpropagation along with everything else, because trusting the clearer input lowers the loss.</p>
   </section>
 
   <section>
-    <h2>5. Training Instability: The "Lazy Modality" Problem</h2>
-    <p>Training early or intermediate fusion networks end to end, meaning all the parts at once with one loss, reveals a common problem called <strong>modality collapse</strong>, also known as <strong>modality laziness</strong> (Wang et al., 2020).</p>
+    <h2>5. Training Problems: Modality Collapse</h2>
+    <p>Training an early or intermediate fusion network end to end, meaning all the parts at once with one loss, often runs into a problem called <strong>modality collapse</strong> or <strong>modality laziness</strong> (Wang et al., 2020). You met a version of it in Lesson 2 with concatenation.</p>
 
-    <h3>What goes wrong</h3>
-    <p>Different modalities are learned at different speeds. In video action classification (labeling what is happening in a clip), the audio often contains a quick, easy clue, such as the crash of bowling pins, while the video frames are full of detail that takes much longer to learn from.</p>
-    <p>Gradient descent takes the path of least resistance. It lowers the loss fastest by improving the audio-side weights, and once the audio clues explain most of the training labels, the loss gives the vision side very little reason to change. In terms of gradient sizes (\(\Vert \cdot \Vert\) means the size, or norm, of a vector):</p>
-    \[ \Vert \nabla_{\mathbf{W}_v} \mathcal{L} \Vert \ll \Vert \nabla_{\mathbf{W}_a} \mathcal{L} \Vert \]
-    <p>Read it as "the gradient reaching the vision weights is much smaller than the gradient reaching the audio weights." The vision encoder barely learns, and the final model performs no better than an audio-only classifier, even though it carries millions of unused vision weights.</p>
+    <h3>Why it happens: modalities learn at different speeds</h3>
+    <p>In video action classification (labeling what is happening in a clip), the audio often contains a quick, obvious clue, like the crash of bowling pins. The video frames, on the other hand, are full of detail that takes many more training steps to make sense of.</p>
+    <p>Gradient descent takes the path of least resistance. The weights on the fast-learning audio side improve first, and once the audio clues explain most of the training labels, the overall loss is already low. That leaves very little gradient flowing into the slower vision side. Writing \(\mathbf{g}\) for the gradient reaching each branch and \(\Vert \cdot \Vert\) for its size:</p>
+    \[ \Vert \mathbf{g}_{\text{vision}} \Vert \ll \Vert \mathbf{g}_{\text{audio}} \Vert \]
+    <p>The vision encoder barely gets any training signal and stalls. You end up with a "multimodal" model that is really an audio-only model carrying millions of unused vision weights.</p>
 
-    <h3>Stabilization strategies</h3>
+    <h3>How to prevent it</h3>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 700 215" role="img" aria-label="Two fixes. Modality dropout randomly blanks each modality with probability p before its encoder. Auxiliary losses attach a small prediction head to each encoder, so the total loss is the fused loss plus alpha times the vision loss plus beta times the audio loss." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
@@ -303,52 +424,54 @@
     </figure>
 
     <ul>
-        <li><strong>Modality dropout.</strong> During training, randomly replace an entire modality's input with zeros (or a special learned "missing" vector) with some probability \(p\), typically between 0.1 and 0.3. The network cannot depend on any single input, so every encoder has to stay useful. As a bonus, the model is already prepared for a missing sensor when it is deployed.</li>
+        <li><strong>Modality dropout.</strong> During training, randomly replace an entire modality's input with zeros (or a special learned "missing" vector) with some probability \(p\), usually between 0.1 and 0.3. The network can't rely on any single input, so every encoder has to learn something useful. As a bonus, the model is already used to a missing sensor when it is deployed.</li>
         <li><strong>Auxiliary unimodal losses.</strong> Attach a small extra prediction head to each encoder, give each head its own loss, and add them to the main loss:
             \[ \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{fused}} + \alpha\, \mathcal{L}_{\text{vision}} + \beta\, \mathcal{L}_{\text{audio}} \]
-            Here \(\alpha\) and \(\beta\) are small weights you choose. Because each encoder must also make a prediction by itself, a strong training signal reaches every encoder no matter what the fusion layer decides to rely on.</li>
-        <li><strong>Gradient blending.</strong> Wang et al.'s own fix: measure how fast each modality is learning, and scale each branch's gradients so that the slower-learning modality keeps receiving a useful signal.</li>
+            Here \(\alpha\) and \(\beta\) are small weights you choose. Because each encoder also has to make a prediction on its own, a strong training signal reaches every encoder no matter what the fusion layers end up relying on.</li>
+        <li><strong>Gradient blending.</strong> Wang et al.'s own fix: track how fast each modality is learning, and scale each branch's gradients so the slower modality keeps getting a useful signal.</li>
     </ul>
-
   </section>
 
   <section>
-    <h2>6. Architectural Decision Matrix</h2>
-    <p>Use this table when deciding where to place the fusion point in a system:</p>
+    <h2>6. Architecture Decision Matrix</h2>
+    <p>Use this table when deciding where to put the fusion point in a system:</p>
     <div class="table-wrap"><table>
         <thead>
-            <tr><th></th><th>Early fusion</th><th>Intermediate / cross-attention</th><th>Late fusion</th></tr>
+            <tr><th></th><th>Early fusion</th><th>Intermediate fusion</th><th>Late fusion</th></tr>
         </thead>
         <tbody>
-            <tr><td><strong>Cross-modal interactions</strong></td><td>High: fine-grained, physical timing</td><td>Very high: each token can attend to the exact patches it needs</td><td>Almost none: just a weighted average of predictions</td></tr>
-            <tr><td><strong>Missing input</strong></td><td>Extremely fragile unless the missing values are explicitly filled in or masked</td><td>Moderate: resilient if trained with modality dropout</td><td>Robust: leave out the missing model's prediction</td></tr>
-            <tr><td><strong>Compute</strong></td><td>Low: one shared model</td><td>High: cross-attention compares \(N_1 \times N_2\) pairs</td><td>Medium: several models, run in parallel</td></tr>
-            <tr><td><strong>Upgrades</strong></td><td>Hard: changing one sensor means retraining everything</td><td>Medium: new encoders must be re-aligned with the fusion layers</td><td>Easy: swap or retrain one branch on its own</td></tr>
-            <tr><td><strong>Timing</strong></td><td>All inputs must arrive in lockstep</td><td>Two stages: encoders in parallel, then fusion</td><td>Fully parallel, even on separate devices</td></tr>
+            <tr><td><strong>Cross-modal interactions</strong></td><td>High: catches precise timing between synchronized signals</td><td>Very high: each token can attend to exactly the parts of the other modality it needs</td><td>Low: only averages independent predictions</td></tr>
+            <tr><td><strong>Missing inputs</strong></td><td>Fragile: a missing input puts the network in a state it has never seen</td><td>Moderate: holds up well if trained with modality dropout</td><td>Robust: just re-weight or drop the missing model</td></tr>
+            <tr><td><strong>Compute</strong></td><td>Low: one shared network</td><td>High: cross-attention compares \(N \times M\) pairs</td><td>Moderate: several networks running in parallel</td></tr>
+            <tr><td><strong>Upgrades</strong></td><td>Hard: changing one sensor means retraining everything</td><td>Moderate: encoders can be pretrained separately and connected with projection layers, like the projection heads in Lesson 2</td><td>Easy: swap out any single model</td></tr>
+            <tr><td><strong>Timing</strong></td><td>Inputs must arrive in strict lockstep</td><td>Flexible: each encoder processes its input before the fusion layers line them up</td><td>Fully independent: the models can even run at different times or on different devices</td></tr>
         </tbody>
     </table></div>
 
     <details>
-        <summary>Check your understanding: cross-attention sequence scaling</summary>
-        <p><strong>Question:</strong> A drone processes a forward camera image of \(224 \times 224\) pixels, split into \(16 \times 16\)-pixel patches, and audio from four microphones, processed into a sequence of 64 audio tokens. A fusion block computes cross-attention with the audio tokens as queries and the image patches as keys.</p>
+        <summary>Exercise 1: the cost of cross-attention</summary>
+        <p><strong>Question:</strong> A drone navigates using a forward camera image of \(224 \times 224\) pixels, split into \(16 \times 16\)-pixel patches, and a microphone array that produces 64 audio tokens. A fusion block runs cross-attention with the audio tokens as queries and the image patches as keys.</p>
         <ol>
-            <li>How many patches does the vision encoder produce?</li>
-            <li>What is the shape of the attention-weight matrix \(\mathbf{A} = \text{softmax}(\mathbf{Q}\mathbf{K}^{\top} / \sqrt{d})\) for a single attention head?</li>
+            <li>How many patches does the image produce?</li>
+            <li>How many query&ndash;key dot products does one attention head compute?</li>
+            <li>What is the shape of the attention-weight matrix \(\mathbf{A}\)?</li>
         </ol>
         <p><strong>Solution:</strong></p>
-        \[ N_v = \frac{224}{16} \times \frac{224}{16} = 14 \times 14 = \mathbf{196} \text{ visual tokens} \]
-        <p>With 64 audio queries and 196 visual keys, \(\mathbf{Q}\mathbf{K}^{\top}\) has one row per query and one column per key:</p>
-        \[ \mathbf{A} \in \mathbb{R}^{64 \times 196} \quad (\mathbf{12{,}544} \text{ attention weights per head}) \]
+        \[ \frac{224}{16} \times \frac{224}{16} = 14 \times 14 = \mathbf{196} \text{ patches} \]
+        <p>Each of the 64 audio queries is compared with each of the 196 image keys:</p>
+        \[ 64 \times 196 = \mathbf{12{,}544} \text{ dot products} \]
+        <p>The attention matrix has one row per query and one column per key:</p>
+        \[ \mathbf{A} \in \mathbb{R}^{64 \times 196} \]
     </details>
 
     <details>
-        <summary>Check your understanding: diagnosing a sensor failure</summary>
-        <p><strong>Question:</strong> A station estimates wildfire risk from a thermal camera and a humidity sensor. During a fire, thick smoke covers the thermal camera, so its images become random static. The humidity sensor still works and reports severe drought: 8% humidity. Describe what happens under early fusion (trained without modality dropout), late fusion, and a gated multimodal unit.</p>
+        <summary>Exercise 2: a sensor failure</summary>
+        <p><strong>Question:</strong> A wildfire detection station estimates risk using an infrared thermal camera and a humidity sensor. Thick smoke blinds the thermal camera, so its images become random noise. The humidity sensor still works and reports severe drought: 8% relative humidity. Compare what happens under early fusion, late fusion, and a gated multimodal unit.</p>
         <p><strong>Solution:</strong></p>
         <ul>
-            <li><strong>Early fusion:</strong> the static is out-of-distribution input. It is mixed with the humidity readings in the very first layer, corrupting every feature after it, and the network can miss the fire warning entirely.</li>
-            <li><strong>Late fusion:</strong> the thermal model is unsure (\(P \approx 0.50\)) and the humidity model reports high risk (\(P = 0.95\)). The average is \(\hat{P} = (0.50 + 0.95)/2 = 0.725\), so the alarm still triggers.</li>
-            <li><strong>Gated fusion (GMU):</strong> the gate recognizes the noisy thermal features, turns the thermal channel down (its share of \(\mathbf{z}\) moves toward 0), and passes the clear humidity information through to the decision layers.</li>
+            <li><strong>Early fusion:</strong> the noise from the blinded camera enters the first layer alongside the humidity reading. It corrupts the hidden features from there on, and the network can no longer reliably use the humidity signal.</li>
+            <li><strong>Late fusion:</strong> the thermal model is unsure (\(P \approx 0.50\)), while the humidity model reports extreme risk (\(P \approx 0.98\)). The average, \((0.50 + 0.98)/2 \approx 0.74\), is still high enough to trigger the alarm.</li>
+            <li><strong>Gated multimodal unit:</strong> the gate recognizes that the thermal features are noise and turns them down (\(\mathbf{z} \to 0\)), so the clear humidity features drive the prediction.</li>
         </ul>
     </details>
   </section>
@@ -356,10 +479,10 @@
   <section>
     <h2>Key Takeaways</h2>
     <ul>
-        <li><strong>Early fusion</strong> merges features at the input. It captures fine-grained timing between modalities but needs synchronized inputs and fails badly when one is missing.</li>
-        <li><strong>Late fusion</strong> averages independent predictions. It is modular, parallel, and robust to sensor failure, but blind to meaning that only exists in the combination, such as sarcasm.</li>
-        <li><strong>Intermediate fusion</strong> exchanges information partway through, using <strong>cross-attention</strong> (one modality's queries against another's keys and values) or <strong>gated units</strong> (a learned, per-example blend). Cross-attention's cost grows with the product of the two sequence lengths.</li>
-        <li>End-to-end training can let one modality dominate. <strong>Modality dropout</strong>, <strong>auxiliary losses</strong>, and <strong>gradient blending</strong> keep every encoder learning.</li>
+        <li><strong>A spectrum of choices:</strong> where you fuse trades detailed, low-level interactions (early fusion) against modularity and fault tolerance (late fusion).</li>
+        <li><strong>Cross-attention lets one modality look things up in another:</strong> queries from one sequence attend directly to keys and values from the other, at a cost of \(\mathcal{O}(N \cdot M)\).</li>
+        <li><strong>Gates decide how much to trust each input:</strong> gated multimodal units learn a per-example blend based on how reliable each signal looks.</li>
+        <li><strong>Watch out for modality collapse:</strong> when one modality learns faster, the network can ignore the others. Modality dropout, auxiliary losses, and gradient blending keep every encoder learning.</li>
     </ul>
   </section>
 

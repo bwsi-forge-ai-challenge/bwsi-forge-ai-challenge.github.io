@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running Experiments You Can Trust · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+<script src="../../../js/forge-math.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Synthesis &amp; Deployment</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Synthesis &amp; Deployment</p>
+    <h1>Running Experiments You Can Trust</h1>
+    <p class="lede">One impressive output proves very little about a generative model. Because these systems are inherently random and capable of occasional brilliance, you can tell almost any story you want just by cherry-picking your favorite results.</p>
+    <p>In this lesson, we&rsquo;ll walk through how to run experiments whose numbers actually hold up: setting fair baselines, isolating which parts of a pipeline are responsible for a result, putting honest error bars on small sample sizes, running unbiased human evaluations, and turning bad outputs into useful clues.</p>
+  </header>
+
+  <section>
+    <h2>1. Predict Before You Run</h2>
+    <p>When a generative model spits out dozens of variations, it is all too easy to look at the results afterward and invent a plausible-sounding story to explain them. The simplest antidote to hindsight bias is to write down what you expect to happen, and why, <em>before</em> you run the experiment.</p>
+    <p>For example: "Lowering the LoRA rank from 32 to 4 will make the captions sound much closer to the base model, because a rank-4 update lacks the capacity to hold the target style."</p>
+    <p>Once you run the test, compare the outcome to your prediction. Getting a prediction wrong isn't a failure; it is actually the most valuable thing an experiment can give you, because it proves your mental model of the system was off. Log your predictions, results, and pivots in a dated lab notebook so you can look back later and trace how your understanding evolved.</p>
+  </section>
+
+  <section>
+    <h2>2. Baselines and Controls</h2>
+    <p>A metric sitting in isolation tells you nothing. Saying "Our captions achieved a CLIPScore of 31" only carries meaning when placed right next to an alternative system tested on the <em>exact same</em> inputs. That point of comparison is your <strong>baseline</strong>. (As we saw in <a href="lesson2_fine_tuning_for_style.html">Fine-Tuning for a Style</a>, the baseline that matters most for a fine-tuned model isn't the raw base model; it is the base model paired with a really good prompt.)</p>
+    <p>For a comparison to be fair, change exactly one variable at a time. If you pit your fine-tuned model against a base model while also changing the prompt, the sampler, and the random seeds, you have no way of knowing which change actually moved the needle. Lock everything else down:</p>
+    <ul>
+        <li>Use the exact same held-out inputs, selected before you look at any outputs.</li>
+        <li>Keep all generation settings identical (sampling temperature, guidance scale, step count).</li>
+        <li>Fix your random seeds so both systems start from the exact same initial noise.</li>
+    </ul>
+    <p>Because generative models are stochastic, running the same prompt with two different seeds can produce wildly different quality. Never rely on a single roll of the dice: run multiple seeds across a batch of inputs, and report both the average and the spread.</p>
+  </section>
+
+  <section>
+    <h2>3. Ablations: Which Part Mattered?</h2>
+    <p>When you build a complex system, how do you know which pieces actually earned their keep? You run an <strong>ablation</strong>: you strip out or revert one component at a time and measure what happens. If you added a fancy training trick, train once with it and once without it; the difference between the two runs is what that trick truly bought you.</p>
+    <p>In a multi-step pipeline, this same logic answers an even trickier question: which stage is causing the biggest loss in fidelity? Using a <strong>leave-one-out</strong> analysis, you swap one fine-tuned step back to its original base model while leaving the rest of the pipeline intact, then watch how the end-to-end score shifts.</p>
+    <p>Consider a three-step pipeline that captions a photo (Step A), rewrites that caption into an image prompt (Step B), and generates a new picture (Step C). Measuring the CLIP similarity between the final generated image and the original photo gives us the following breakdown:</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Configuration</th><th>Step A (Captioner)</th><th>Step B (Rewriter)</th><th>Step C (Generator)</th><th>End-to-End Similarity</th><th>Change vs. Full</th></tr></thead>
+        <tbody>
+            <tr><td><strong>Full system</strong></td><td>Fine-tuned</td><td>Fine-tuned</td><td>Fine-tuned</td><td>0.52</td><td>(reference)</td></tr>
+            <tr><td><strong>Swap A to base</strong></td><td>Base model</td><td>Fine-tuned</td><td>Fine-tuned</td><td>0.63</td><td>+0.11</td></tr>
+            <tr><td><strong>Swap B to base</strong></td><td>Fine-tuned</td><td>Base model</td><td>Fine-tuned</td><td>0.54</td><td>+0.02</td></tr>
+            <tr><td><strong>Swap C to base</strong></td><td>Fine-tuned</td><td>Fine-tuned</td><td>Base model</td><td>0.58</td><td>+0.06</td></tr>
+        </tbody>
+    </table></div>
+
+    <div class="worked">
+        <p><strong>Reading the result.</strong> Every swap back to a base model raises the fidelity score, confirming that adding style costs some factual content across the board. However, Step A (the fine-tuned captioner) is clearly the main culprit (+0.11): its stylized descriptions drop visual details that later stages can never recover. Meanwhile, the prompt rewriter barely moves the needle at all (+0.02).</p>
+    </div>
+
+    <p>Keep two cautions in mind when reading ablations:</p>
+    <ul>
+        <li><strong>Effects don't always add up neatly:</strong> Pipeline stages interact with each other, so swapping two components at once can produce a bigger or smaller shift than the sum of swapping them individually.</li>
+        <li><strong>Tiny shifts might just be noise:</strong> A small bump like Step B's +0.02 could easily be random luck, which brings us to error bars.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. How Sure Are You? Bootstrap Confidence Intervals</h2>
+    <p>Suppose you measure the similarity between 8 generated images and their originals, getting these scores:</p>
+    <p style="text-align:center;font-family:var(--mono);">0.71, 0.64, 0.80, 0.58, 0.75, 0.69, 0.62, 0.77</p>
+    <p>The average is 0.695. Still, with only 8 examples, grabbing a different batch of 8 could easily have landed at 0.66 or 0.73. A <strong>confidence interval</strong> puts a boundary around that uncertainty: a 95% confidence interval is constructed so that if you repeated the entire experiment many times, roughly 95% of those intervals would capture the true underlying average.</p>
+    <p>The <strong>bootstrap</strong> is a wonderfully intuitive way to calculate a confidence interval without heavy math formulas. It treats your small sample as a stand-in for the whole population:</p>
+    <ol>
+        <li>Draw 8 scores from your original list of 8 <em>with replacement</em> (meaning some scores get picked twice, and others get skipped).</li>
+        <li>Calculate the average of that resampled batch.</li>
+        <li>Repeat this process thousands of times (say, 10,000 resamples).</li>
+        <li>Take the middle 95% of those simulated averages (from the 2.5th percentile to the 97.5th percentile).</li>
+    </ol>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 250" role="img" aria-label="Histogram of 10,000 bootstrap resample means. Most fall between 0.65 and 0.74, which is the 95 percent confidence interval, shaded." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<rect x="210.0" y="22" width="297.0" height="178" fill="#dbeafe" opacity="0.6"/>
+<rect x="61.0" y="199.9" width="28.0" height="0.1" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="91.0" y="199.3" width="28.0" height="0.7" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="121.0" y="197.9" width="28.0" height="2.1" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="151.0" y="193.2" width="28.0" height="6.8" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="181.0" y="182.0" width="28.0" height="18.0" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="211.0" y="166.1" width="28.0" height="33.9" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="241.0" y="139.6" width="28.0" height="60.4" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="271.0" y="97.7" width="28.0" height="102.3" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="301.0" y="60.0" width="28.0" height="140.0" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="331.0" y="40.0" width="28.0" height="160.0" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="361.0" y="43.0" width="28.0" height="157.0" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="391.0" y="55.8" width="28.0" height="144.2" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="421.0" y="95.2" width="28.0" height="104.8" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="451.0" y="133.0" width="28.0" height="67.0" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="481.0" y="161.0" width="28.0" height="39.0" rx="2" fill="#2563eb" fill-opacity="0.85"/>
+<rect x="511.0" y="184.9" width="28.0" height="15.1" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="541.0" y="193.5" width="28.0" height="6.5" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="571.0" y="198.0" width="28.0" height="2.0" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="601.0" y="199.8" width="28.0" height="0.2" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<rect x="631.0" y="199.9" width="28.0" height="0.1" rx="2" fill="#2563eb" fill-opacity="0.35"/>
+<line x1="60" y1="200" x2="660" y2="200" stroke="#475569"/>
+<text x="75.0" y="218" text-anchor="middle" font-size="11.5" fill="#5b6672">0.60</text>
+<text x="225.0" y="218" text-anchor="middle" font-size="11.5" fill="#5b6672">0.65</text>
+<text x="375.0" y="218" text-anchor="middle" font-size="11.5" fill="#5b6672">0.70</text>
+<text x="525.0" y="218" text-anchor="middle" font-size="11.5" fill="#5b6672">0.75</text>
+<text x="360.0" y="238" text-anchor="middle" font-size="12.5" fill="#1b1f24">mean similarity in one bootstrap resample (10,000 resamples)</text>
+<line x1="210.0" y1="16" x2="210.0" y2="200" stroke="#1b1f24" stroke-width="1.5" stroke-dasharray="5 4"/>
+<line x1="507.0" y1="16" x2="507.0" y2="200" stroke="#1b1f24" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="204.0" y="30" text-anchor="end" font-size="11.5" fill="#1b1f24">0.65</text><text x="513.0" y="30" font-size="11.5" fill="#1b1f24">0.74</text>
+<text x="358.5" y="16" text-anchor="middle" font-size="12" font-weight="700" fill="#1d4ed8">middle 95%</text>
+      </svg>
+      <figcaption>Averages of 10,000 bootstrap resamples of the 8 scores above. The middle 95% runs from about 0.65 to 0.74, so the result is reported as 0.70 [0.65, 0.74].</figcaption>
+    </figure>
+
+    <p>For our 8 scores above, that middle 95% spans roughly from 0.65 to 0.74, allowing you to report your result honestly as <strong>0.70 [0.65, 0.74]</strong>.</p>
+
+    <h3>Comparing two systems: bootstrap the difference</h3>
+    <p>When comparing two models on the exact same inputs, don't compute two separate confidence intervals and eyeball whether they overlap. Instead, calculate the per-input difference first, and bootstrap those differences. This cancels out the noise caused by some test inputs simply being harder than others.</p>
+    <div class="worked">
+        <p><strong>Worked example: paired bootstrapping.</strong> Imagine scoring a fine-tuned captioner against a prompted baseline on the same 10 images. Subtracting the baseline score from the fine-tuned score for each image gives:</p>
+        <p style="text-align:center;font-family:var(--mono);">+0.02, &minus;0.01, +0.04, 0.00, &minus;0.01, +0.03, +0.02, +0.01, &minus;0.01, +0.04</p>
+        <p>The average gain is +0.013, and bootstrapping those 10 differences yields a 95% confidence interval of [+0.001, +0.025]. Because the entire interval sits just above zero, the fine-tuned model likely has a slight edge, though the interval is wide enough relative to the gain that testing more images would make your conclusion far more solid. (If the interval had crossed zero, the only honest conclusion would be "no clear difference.")</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Human Evaluation</h2>
+    <p>Automated metrics are ultimately just proxies for human perception. When you care about style, mood, or aesthetic quality, the only definitive test is asking real people. Even then, a human study is only trustworthy if its design stops you from accidentally nudging raters toward your preferred answer:</p>
+    <ul>
+        <li><strong>Blind the study:</strong> Raters should never know which model produced which output.</li>
+        <li><strong>Randomize presentation order:</strong> People naturally favor the first or left-hand option in a pair, and fatigue sets in during long sessions. Shuffle both the sequence of items and which side each model appears on.</li>
+        <li><strong>Ask one clear question:</strong> "Which caption better describes this image?" produces much cleaner data than a vague "Which one is better?"</li>
+        <li><strong>Match the format to the task:</strong> Pairwise comparisons (A or B?) are fast and reliable. A 1&ndash;5 rating scale captures more nuance, though different people calibrate their internal scales differently. Style attribution ("Which of these styles is this?") gives you a concrete baseline for random guessing: with \(k\) choices, blind guessing succeeds \(\frac{1}{k}\) of the time.</li>
+        <li><strong>Put error bars on human scores too:</strong> Collect enough ratings to run the exact same bootstrap confidence intervals on your human preference percentages.</li>
+    </ul>
+
+    <h3>Do the raters actually agree?</h3>
+    <p>If two human raters constantly disagree, your instructions might be ambiguous, or the difference between your models might be too subtle to see. However, raw agreement percentages can be deceptive, because two people guessing randomly will still agree part of the time by pure luck. <strong>Cohen&rsquo;s kappa</strong> (\(\kappa\)) corrects for chance agreement:</p>
+    \[ \kappa = \frac{p_o - p_e}{1 - p_e} \]
+    <p>Here, \(p_o\) is the actual fraction of items where both raters agreed, and \(p_e\) is the agreement you would expect if each rater guessed at random according to their own overall "yes/no" habits. A score of \(\kappa = 1\) means perfect agreement, while \(\kappa = 0\) means they agree no more often than chance.</p>
+
+    <div class="worked">
+        <p><strong>Worked example: calculating agreement.</strong> Two raters evaluate 50 images, answering "Is this image in the target style?"</p>
+        <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Rater 2: Yes</th><th>Rater 2: No</th><th>Total</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Rater 1: Yes</strong></td><td>20</td><td>5</td><td>25</td></tr>
+                <tr><td><strong>Rater 1: No</strong></td><td>10</td><td>15</td><td>25</td></tr>
+                <tr><td><strong>Total</strong></td><td>30</td><td>20</td><td>50</td></tr>
+            </tbody>
+        </table></div>
+        <p>They agree on \(20 + 15 = 35\) out of 50 images, so raw agreement is \(p_o = \frac{35}{50} = 0.70\). However, Rater 1 says "yes" 50% of the time (0.50) and Rater 2 says "yes" 60% of the time (0.60). By pure chance, they would both say "yes" \(0.50 \times 0.60 = 0.30\) of the time, and both say "no" \(0.50 \times 0.40 = 0.20\) of the time, giving a chance agreement rate of \(p_e = 0.30 + 0.20 = 0.50\).</p>
+        <p>Plugging those in gives \(\kappa = \frac{0.70 - 0.50}{1 - 0.50} = 0.40\). While "70% agreement" sounds impressive on paper, subtracting chance reveals only fair-to-moderate consistency. Providing clearer definitions or reference examples would likely sharpen that score.</p>
+    </div>
+    <p>(Note: Use Cohen's kappa for two raters; for three or more, use <strong>Fleiss' kappa</strong> or <strong>Krippendorff's alpha</strong>.)</p>
+
+    <h3>When metrics and people disagree</h3>
+    <p>Sooner or later, your automated metrics and your human raters will point in opposite directions. A captioner that mechanically lists every object in a frame might earn a stellar CLIPScore while human readers find it stiff and robotic; a music generator might post a great FAD score while listeners immediately hear annoying audio glitches.</p>
+    <p>Neither side is automatically "right." Pull up the exact examples where the metric and the humans clash and inspect them closely. Usually, you will find that the metric is accurately measuring something real, just a narrower slice of quality than what human users actually care about.</p>
+  </section>
+
+  <section>
+    <h2>6. Learning From Failures</h2>
+    <p>Bad outputs are goldmines of diagnostic data, provided you do more than just laugh at them in a Slack channel. Treat every intriguing failure like a miniature scientific experiment:</p>
+    <ol>
+        <li><strong>Document it precisely:</strong> Log the exact prompt/input, the bad output, the random seed, and the model checkpoint so anyone can reproduce it on demand.</li>
+        <li><strong>Formulate one concrete hypothesis:</strong> Guess a specific mechanism, for example, "The model ignores exact counts in the prompt."</li>
+        <li><strong>Run the smallest test that could prove you wrong:</strong> Change a single variable and check whether the failure behaves the way your hypothesis predicts.</li>
+    </ol>
+    <p>Imagine an image generator asked for "three red apples on a table" that repeatedly draws two or four apples instead. If your hypothesis is that the model ignores counts, run a quick test: generate 20 images each for "one apple," "two apples," and "three apples" using fixed seeds, and tally the results. If the apple counts barely budge across prompts, your hypothesis holds up.</p>
+    <p>On the other hand, if your hypothesis is that your fine-tuning captions rarely included numbers, you don't need to generate images at all; you test that by searching your training dataset for number words. Different guesses require different tests, and an untested hypothesis is just storytelling.</p>
+  </section>
+
+  <section>
+    <h2>7. Reproducibility and Fresh Data</h2>
+    <p>An experimental result you cannot rerun is hard to trust, especially for your future self two weeks down the line. For every run, log your full configuration, random seeds, exact model checkpoint (a cryptographic file hash is best), hardware setup, and runtime. Save your failed runs right alongside your successes. Ideally, a single command should be able to regenerate every single number in your results table directly from saved logs.</p>
+    <p>Finally, remember that a finding derived from test inputs you curated yourself might only hold true for that specific batch. Rerunning your core evaluation on a brand-new set of inputs you have never looked at before is the strongest proof that your gains are real.</p>
+  </section>
+
+  <section>
+    <h2>Check Your Understanding</h2>
+    <details>
+        <summary>Question 1: a tempting comparison</summary>
+        <p><strong>Question:</strong> A teammate claims their fine-tuned image model "clearly beats" the base model, showing off 5 hand-picked outputs from each generated with different prompts. What is wrong with this comparison, and how do you fix it?</p>
+        <p><strong>Answer:</strong> Cherry-picking 5 outputs showcases best-case outliers rather than typical behavior, and changing the prompts alters two variables at once. To fix it, generate outputs from both models using the exact same held-out prompts, identical random seeds, and identical generation settings. Then score the entire batch and report the average alongside a bootstrap confidence interval.</p>
+    </details>
+    <details>
+        <summary>Question 2: reading an interval</summary>
+        <p><strong>Question:</strong> You compute a 95% bootstrap confidence interval for "fine-tuned minus prompted" and get [&minus;0.02, +0.05]. What can you legitimately conclude?</p>
+        <p><strong>Answer:</strong> Because the interval crosses zero, the data cannot confirm a real difference: your fine-tuned model could be slightly better or slightly worse than the prompt alone. Collecting more evaluation examples will narrow that range.</p>
+    </details>
+    <details>
+        <summary>Question 3: chance level</summary>
+        <p><strong>Question:</strong> In a blind attribution study with 4 possible styles, human raters match outputs to the right style 31% of the time. Is the target style coming through?</p>
+        <p><strong>Answer:</strong> Barely. Pure random guessing across 4 options succeeds 25% of the time, so 31% is only a slim margin above chance. Check the bootstrap confidence interval: if 25% falls inside that range, you cannot claim the style is reliably recognizable.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li><strong>Predict first, run second:</strong> Write down what you expect to happen before running an experiment, and keep a dated log of both wins and surprises.</li>
+        <li><strong>Isolate one variable against a real baseline:</strong> Compare against a strong prompted baseline on the exact same held-out inputs, using identical seeds and sampler settings.</li>
+        <li><strong>Use ablations to find bottlenecks:</strong> Leave-one-out swaps reveal which component or pipeline step actually drives gains or losses, though keep an eye out for interactions between steps.</li>
+        <li><strong>Quantify uncertainty with the bootstrap:</strong> Put 95% confidence intervals on your averages, and always bootstrap the per-input differences when comparing two models head-to-head.</li>
+        <li><strong>Keep human studies honest:</strong> Blind and randomize every trial, measure rater consistency with Cohen's kappa, and compare style attribution against random guessing.</li>
+        <li><strong>Interrogate failures and protect reproducibility:</strong> Turn weird outputs into falsifiable hypotheses, log exact checkpoints and seeds for every run, and verify your final conclusions on fresh data.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul>
+        <li><strong>scipy.stats.bootstrap:</strong> SciPy's built-in function for computing bootstrap confidence intervals, including support for paired sample differences. <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html" target="_blank" rel="noopener">Docs</a></li>
+        <li><strong>scikit-learn cohen_kappa_score:</strong> A straightforward utility for calculating Cohen's kappa from two sets of rater labels. <a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html" target="_blank" rel="noopener">Docs</a></li>
+        <li><strong>The Machine Learning Reproducibility Checklist (Pineau):</strong> A practical standard for what details to log so anyone can reproduce your experiments. <a href="https://www.cs.mcgill.ca/~jpineau/ReproducibilityChecklist.pdf" target="_blank" rel="noopener">PDF</a></li>
+        <li><strong>Human Evaluation of Automatically Generated Text (van der Lee et al., 2021):</strong> Best practices for designing, running, and reporting trustworthy human evaluation studies. <a href="https://doi.org/10.1016/j.csl.2020.101151" target="_blank" rel="noopener">Article</a></li>
+    </ul>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson3_evaluation_benchmarks_and_safety.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Evaluation, Benchmarks, and Safety</span>
+    </a>
+    <a class="pager__next" href="lesson5_assignment.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Assignment: Evaluate a Multimodal Model</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

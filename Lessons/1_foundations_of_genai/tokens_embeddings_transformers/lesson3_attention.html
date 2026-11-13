@@ -7,6 +7,50 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+  .pe-scroll { overflow-x: auto; }
+  .pe-text { min-height: 8.5rem; margin-bottom: 0.6rem; padding: 0.8rem 1rem; border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; background: var(--note-bg); }
+  .pe-text > :last-child { margin-bottom: 0; }
+  .pe-slider { display: flex; align-items: center; gap: 0.75rem; margin: 0.4rem 0 0.8rem; }
+  .pe-slider input { flex: 1; }
+  .pe-slider output { min-width: 2.5rem; font-weight: 700; font-family: var(--mono); }
+  #pe-svg text { fill: var(--text); font-family: var(--font); }
+  #pe-svg .pe-muted { fill: var(--muted); }
+  #pe-svg .pe-accent { fill: var(--accent); }
+  #pe-svg .pe-chip { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; cursor: pointer; }
+  #pe-svg .pe-chip.on { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  #pe-svg .pe-face { fill: var(--surface); stroke: var(--border); stroke-width: 2; }
+  #pe-svg .pe-face.on { stroke: var(--accent); }
+  #pe-svg .pe-axis { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 3; }
+  #pe-svg .pe-arc { fill: none; stroke: var(--accent); stroke-width: 6; stroke-opacity: 0.25; stroke-linecap: round; }
+  #pe-svg .pe-hand { stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; }
+  #pe-svg .pe-tip { fill: var(--accent); }
+  #pe-svg .pe-cell { stroke: var(--surface); stroke-width: 2; }
+  #pe-svg .pe-cell.pos { fill: var(--warn); }
+  #pe-svg .pe-cell.neg { fill: var(--accent); }
+  #pe-svg .pe-cell.empty { fill: var(--code-bg); fill-opacity: 1; }
+  #pe-svg .pe-rowbox { fill: none; stroke: var(--text); stroke-width: 2; }
+  #pe-svg .pe-faded { opacity: 0.3; }
+  .mh-text { min-height: 8.5rem; margin-bottom: 0.6rem; padding: 0.8rem 1rem; border-left: 4px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; background: var(--note-bg); }
+  .mh-text > :last-child { margin-bottom: 0; }
+  .mh-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0.4rem 0 0.8rem; }
+  .mh-controls input[type="range"] { flex: 1; min-width: 10rem; }
+  .mh-controls output { min-width: 2.5rem; font-weight: 700; font-family: var(--mono); }
+  .mh-controls button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  #mh-svg text { fill: var(--text); font-family: var(--font); }
+  #mh-svg .mh-muted { fill: var(--muted); }
+  #mh-svg .mh-onwhite { fill: #fff; }
+  #mh-svg .mh-track { fill: var(--code-bg); }
+  #mh-svg .mh-base { stroke: var(--border); stroke-width: 1.5; }
+  #mh-svg .mh-query { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  #mh-svg .mh-box { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+  #mh-svg .mh-cell { stroke: var(--surface); stroke-width: 2; }
+  #mh-svg .mh-cell.plain { fill: var(--muted); fill-opacity: 0.55; }
+  #mh-svg .mh-link { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  #mh-svg .mh-arrowhead { fill: var(--muted); }
+  .pe-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.2rem 0 0.8rem; font-size: 0.85em; color: var(--muted); }
+  .pe-swatch { display: inline-block; width: 0.9em; height: 0.9em; margin-right: 0.35em; border-radius: 3px; vertical-align: -0.1em; }
+</style>
 </head>
 <body class="genai">
 
@@ -540,6 +584,77 @@
   </section>
 
   <section>
+    <h2>9. Activity: From One Head to Many</h2>
+    <p>This walkthrough builds multi-head attention one piece at a time, using the sentence from Section 7: <em>"The animal didn't cross the street because it was too tired."</em> We follow the word <em>it</em> as the query. The attention weights are made up for illustration, but they follow the same rules a real model does: each head's weights add up to 1. Step through with the buttons and use the controls under the picture when they appear.</p>
+
+    <div class="interactive-box" id="mh-demo">
+        <div class="step-pills" id="mh-pills"></div>
+        <div class="pe-scroll"><svg id="mh-svg" viewBox="0 0 760 400" role="img" aria-label="Multi-head attention walkthrough. Bars above each word show how much attention the word it pays to that word, one row per attention head." style="display: block; width: 100%; min-width: 600px; height: auto;"></svg></div>
+        <div class="mh-controls" id="mh-slider-row">
+            <label for="mh-animal">Attention on <em>animal</em></label>
+            <input type="range" id="mh-animal" min="0.05" max="0.9" step="0.05" value="0.35">
+            <output id="mh-animal-out" for="mh-animal">0.35</output>
+        </div>
+        <div class="mh-controls" id="mh-heads-row">
+            <span>Number of heads:</span>
+            <button data-h="1">1</button>
+            <button data-h="2">2</button>
+            <button data-h="4">4</button>
+        </div>
+        <div class="mh-text" id="mh-text" aria-live="polite"></div>
+        <div>
+            <button id="mh-prev">&#9664; Back</button>
+            <button id="mh-next" class="primary">Next &#9654;</button>
+            <button id="mh-reset">Reset</button>
+        </div>
+    </div>
+
+    <details>
+        <summary>Check your answers to the Explore questions</summary>
+        <ol>
+            <li>\(8 \div 4 = 2\). Each head's Query, Key and Value vectors have 2 numbers, and concatenating the 4 heads gives \(4 \times 2 = 8\) numbers again.</li>
+            <li>A single head's weights must add up to 1, and \(0.80 + 0.55 = 1.35\). Two heads each get their own budget of 1, so one can spend 0.80 on <em>animal</em> while the other spends 0.55 on <em>tired</em>.</li>
+            <li>Without \(W_O\), the first slots of the vector would only ever hold Head 1's findings and the last slots only Head 2's. \(W_O\) lets every number in the final vector draw on what every head found, so the next layer gets one blended representation of <em>it</em>.</li>
+        </ol>
+    </details>
+  </section>
+
+  <section>
+    <h2>10. Activity: Build a Positional Encoding by Hand</h2>
+    <p>The formula above is easier to understand once you watch it run. This walkthrough builds sinusoidal position vectors for the sentence <em>"The dog bit the cat"</em>, using a tiny model with \(d_{\text{model}} = 8\) so every number fits on screen. Step through it with the buttons, and click a word or drag the slider to change the position.</p>
+
+    <div class="interactive-box" id="pe-demo">
+        <div class="step-pills" id="pe-pills"></div>
+        <div class="pe-scroll"><svg id="pe-svg" viewBox="0 0 760 400" role="img" aria-label="Positional encoding walkthrough. Each pair of dimensions is a clock hand that turns at its own speed as the position increases." style="display: block; width: 100%; min-width: 600px; height: auto;"></svg></div>
+        <div class="pe-legend">
+            <span><i class="pe-swatch" style="background: var(--warn);"></i>positive value</span>
+            <span><i class="pe-swatch" style="background: var(--accent);"></i>negative value</span>
+            <span>darker = larger magnitude</span>
+        </div>
+        <div class="pe-slider" id="pe-slider-row">
+            <label for="pe-pos">Position</label>
+            <input type="range" id="pe-pos" min="0" max="100" step="1" value="1">
+            <output id="pe-pos-out" for="pe-pos">1</output>
+        </div>
+        <div class="pe-text" id="pe-text" aria-live="polite"></div>
+        <div>
+            <button id="pe-prev">&#9664; Back</button>
+            <button id="pe-next" class="primary">Next &#9654;</button>
+            <button id="pe-reset">Reset</button>
+        </div>
+    </div>
+
+    <details>
+        <summary>Check your answers to the Explore questions</summary>
+        <ol>
+            <li>Hand 2. At position 6 the fast hand has turned 6 radians, just short of one full turn (\(2\pi \approx 6.28\)), so it points almost straight up again. Hand 2 has only turned 0.6 radians, so it sits clearly to the right of 12 o'clock and the two vectors differ.</li>
+            <li>The fast hand comes back to nearly the same spot about every 6.28 positions, so with only that hand, positions like 0, 6, 13 and 19 would look almost the same. The slower hands are what keep far-apart positions distinct.</li>
+            <li>Each hand uses two dimensions (one sine, one cosine), so a 512-dimensional model has 256 hands, with speeds spread smoothly from 1 down to about \(1/10000\).</li>
+        </ol>
+    </details>
+  </section>
+
+  <section>
     <h2>Recommended Learning Resources</h2>
     <ul>
         <li><strong>Attention Is All You Need (Vaswani et al., 2017):</strong> The original research paper that introduced this idea. <a href="https://arxiv.org/abs/1706.03762" target="_blank">arXiv paper</a></li>
@@ -565,6 +680,442 @@
 <footer class="site-footer">
   <a href="../../../index.html">Back to course home</a>
 </footer>
+
+<script>
+    (function () {
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.getElementById('mh-svg');
+        const slider = document.getElementById('mh-animal');
+        const out = document.getElementById('mh-animal-out');
+        const WORDS = ['The', 'animal', "didn't", 'cross', 'the', 'street', 'because', 'it', 'was', 'too', 'tired'];
+        const IT = 7, ANIMAL = 1, TIRED = 10;
+        const COLORS = ['#0f766e', '#c2410c', '#7c3aed', '#be185d'];
+        // Made-up attention weights from "it" to each word. Each row adds up to 1.
+        const SINGLE = [0.02, 0.35, 0.03, 0.03, 0.02, 0.12, 0.04, 0.08, 0.10, 0.01, 0.20];
+        const HEADS = [
+            { role: 'who is "it"?', w: [0.02, 0.80, 0.02, 0.02, 0.01, 0.05, 0.01, 0.05, 0.01, 0.005, 0.005] },
+            { role: 'what state?', w: [0.005, 0.02, 0.01, 0.01, 0.005, 0.005, 0.005, 0.04, 0.30, 0.05, 0.55] },
+            { role: 'previous word', w: [0.01, 0.03, 0.01, 0.02, 0.02, 0.06, 0.70, 0.10, 0.03, 0.01, 0.01] },
+            { role: 'next word', w: [0.005, 0.02, 0.005, 0.005, 0.005, 0, 0.02, 0.08, 0.72, 0.08, 0.06] }
+        ];
+        const X = i => 110 + i * 58;
+        let step = 0;
+        let animal = 0.35;
+        let nHeads = 2;
+
+        function el(tag, attrs, text) {
+            const node = document.createElementNS(NS, tag);
+            for (const k in attrs) node.setAttribute(k, attrs[k]);
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function tradeoff() {
+            const rest = 1 - SINGLE[ANIMAL];
+            return SINGLE.map((w, i) => (i === ANIMAL ? animal : w * (1 - animal) / rest));
+        }
+
+        function arrow(g, d) {
+            g.appendChild(el('path', { d, class: 'mh-link' }));
+            const m = d.match(/(-?[\d.]+) (-?[\d.]+)$/);
+            const x = +m[1], y = +m[2];
+            g.appendChild(el('path', { d: `M ${x - 5} ${y - 8} L ${x} ${y} L ${x + 5} ${y - 8} Z`, class: 'mh-arrowhead' }));
+        }
+
+        function cells(g, x, y, count, fill, w) {
+            for (let i = 0; i < count; i++) {
+                const c = el('rect', { x: x + i * w, y, width: w, height: w, rx: 4, class: 'mh-cell' + (fill ? '' : ' plain') });
+                if (fill) c.setAttribute('fill', fill);
+                g.appendChild(c);
+            }
+        }
+
+        // One row of bars per head, above the shared row of words.
+        function attnRows(g, rows, opts) {
+            const top = 14, area = opts.mix ? 205 : 245, rowH = area / rows.length, barMax = rowH - 26;
+            rows.forEach((r, k) => {
+                const yb = top + (k + 1) * rowH - 4;
+                g.appendChild(el('line', { x1: 80, y1: yb, x2: 725, y2: yb, class: 'mh-base' }));
+                g.appendChild(el('text', { x: 8, y: yb - barMax / 2 - 2, 'font-size': 13, 'font-weight': 700, fill: r.color }, r.name));
+                const sum = r.w.reduce((a, b) => a + b, 0);
+                g.appendChild(el('text', { x: 8, y: yb - barMax / 2 + 14, 'font-size': 11, class: 'mh-muted' }, r.role || 'sum = ' + sum.toFixed(2)));
+                r.w.forEach((w, i) => {
+                    const h = Math.max(w * barMax, 1);
+                    g.appendChild(el('rect', { x: X(i) - 17, y: yb - h, width: 34, height: h, rx: 3, fill: r.color, 'fill-opacity': 0.85 }));
+                    if (w >= 0.05) g.appendChild(el('text', { x: X(i), y: yb - h - 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600 }, w.toFixed(2)));
+                });
+            });
+            const ty = top + area + 22;
+            g.appendChild(el('rect', { x: X(IT) - 24, y: ty - 16, width: 48, height: 24, rx: 6, class: 'mh-query' }));
+            WORDS.forEach((word, i) => g.appendChild(el('text', { x: X(i), y: ty, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': i === IT ? 700 : 400 }, word)));
+            g.appendChild(el('text', { x: X(IT), y: ty + 22, 'text-anchor': 'middle', 'font-size': 11, class: 'mh-muted' }, 'query'));
+            if (!opts.mix) return;
+            const my = ty + 46;
+            g.appendChild(el('text', { x: 8, y: my, 'font-size': 12, class: 'mh-muted' }, 'Output vector for "it" is a blend of the Value vectors, in these proportions:'));
+            rows.forEach((r, k) => {
+                const y = my + 12 + k * 34;
+                g.appendChild(el('text', { x: 8, y: y + 18, 'font-size': 12, 'font-weight': 700, fill: r.color }, r.name + ' output'));
+                g.appendChild(el('rect', { x: 140, y, width: 585, height: 26, rx: 4, class: 'mh-track' }));
+                let x = 140;
+                r.w.forEach((w, i) => {
+                    const wd = w * 585;
+                    if (wd <= 0) return;
+                    g.appendChild(el('rect', { x, y, width: wd, height: 26, fill: r.color, 'fill-opacity': 0.25 + 0.75 * Math.min(w / 0.6, 1), stroke: 'var(--surface)', 'stroke-width': 1.5 }));
+                    if (wd > 62) g.appendChild(el('text', { x: x + wd / 2, y: y + 17, 'text-anchor': 'middle', 'font-size': 11.5, 'font-weight': 600, class: 'mh-onwhite' }, WORDS[i] + ' ' + Math.round(w * 100) + '%'));
+                    x += wd;
+                });
+            });
+        }
+
+        function head(k) {
+            return { name: 'Head ' + (k + 1), color: COLORS[k], w: HEADS[k].w };
+        }
+
+        function sceneSplit(g) {
+            g.appendChild(el('text', { x: 380, y: 28, 'text-anchor': 'middle', 'font-size': 13, class: 'mh-muted' }, 'Embedding of "it" (d_model = 8 numbers)'));
+            cells(g, 260, 38, 8, null, 30);
+            [0, 1].forEach(k => {
+                const bx = 60 + k * 340, cx = bx + 150;
+                arrow(g, `M ${380 + (k ? 40 : -40)} 72 C ${380 + (k ? 40 : -40)} 100, ${cx} 92, ${cx} 118`);
+                g.appendChild(el('rect', { x: bx, y: 122, width: 300, height: 210, rx: 10, class: 'mh-box', stroke: COLORS[k] }));
+                g.appendChild(el('text', { x: cx, y: 148, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: COLORS[k] }, 'Head ' + (k + 1)));
+                g.appendChild(el('text', { x: cx, y: 168, 'text-anchor': 'middle', 'font-size': 12, class: 'mh-muted' }, 'its own W_Q, W_K, W_V'));
+                ['query q', 'key k', 'value v'].forEach((lab, j) => {
+                    const y = 184 + j * 42;
+                    g.appendChild(el('text', { x: cx - 70, y: y + 21, 'text-anchor': 'end', 'font-size': 12.5 }, lab));
+                    cells(g, cx - 56, y, 4, COLORS[k], 30);
+                });
+                g.appendChild(el('text', { x: cx, y: 322, 'text-anchor': 'middle', 'font-size': 11.5, class: 'mh-muted' }, '8 numbers in, 4 numbers out'));
+            });
+            g.appendChild(el('text', { x: 380, y: 368, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700 }, 'd_k = d_model ÷ heads = 8 ÷ 2 = 4'));
+        }
+
+        function sceneConcat(g) {
+            const defs = el('defs', {});
+            const grad = el('linearGradient', { id: 'mh-blend', x1: 0, y1: 0, x2: 1, y2: 1 });
+            grad.appendChild(el('stop', { offset: '0%', 'stop-color': COLORS[0] }));
+            grad.appendChild(el('stop', { offset: '100%', 'stop-color': COLORS[1] }));
+            defs.appendChild(grad);
+            g.appendChild(defs);
+            g.appendChild(el('text', { x: 200, y: 26, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: COLORS[0] }, 'Head 1 output (mostly "animal")'));
+            cells(g, 140, 36, 4, COLORS[0], 30);
+            g.appendChild(el('text', { x: 560, y: 26, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: COLORS[1] }, 'Head 2 output (mostly "tired", "was")'));
+            cells(g, 500, 36, 4, COLORS[1], 30);
+            arrow(g, 'M 200 70 C 200 100, 320 100, 320 128');
+            arrow(g, 'M 560 70 C 560 100, 440 100, 440 128');
+            g.appendChild(el('text', { x: 245, y: 154, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700 }, '1. Concatenate'));
+            cells(g, 260, 133, 4, COLORS[0], 30);
+            cells(g, 380, 133, 4, COLORS[1], 30);
+            g.appendChild(el('text', { x: 515, y: 154, 'font-size': 12, class: 'mh-muted' }, '4 + 4 = 8 numbers'));
+            arrow(g, 'M 380 168 L 380 196');
+            g.appendChild(el('rect', { x: 300, y: 200, width: 160, height: 50, rx: 8, class: 'mh-box' }));
+            g.appendChild(el('text', { x: 380, y: 230, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700 }, '× W_O  (8 × 8)'));
+            g.appendChild(el('text', { x: 285, y: 230, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700 }, '2. Project'));
+            arrow(g, 'M 380 252 L 380 280');
+            cells(g, 260, 285, 8, 'url(#mh-blend)', 30);
+            g.appendChild(el('text', { x: 245, y: 306, 'text-anchor': 'end', 'font-size': 13, 'font-weight': 700 }, 'Final vector'));
+            g.appendChild(el('text', { x: 380, y: 345, 'text-anchor': 'middle', 'font-size': 13, class: 'mh-muted' }, 'Same size as the embedding. Every number now mixes what both heads found.'));
+        }
+
+        function sceneExplore(g) {
+            const rows = nHeads === 1
+                ? [{ name: 'Head 1', color: COLORS[0], w: SINGLE, role: 'does it all' }]
+                : HEADS.slice(0, nHeads).map((h, k) => Object.assign(head(k), { role: h.role }));
+            attnRows(g, rows, { mix: false });
+            const dk = 8 / nHeads, y = 340;
+            g.appendChild(el('text', { x: 8, y: y + 20, 'font-size': 12.5, 'font-weight': 700 }, 'Concat output'));
+            for (let i = 0; i < 8; i++) {
+                g.appendChild(el('rect', { x: 140 + i * 40, y, width: 40, height: 30, rx: 4, class: 'mh-cell', fill: COLORS[Math.floor(i / dk)] }));
+            }
+            g.appendChild(el('text', { x: 475, y: y + 20, 'font-size': 13 }, 'd_k = 8 ÷ ' + nHeads + ' = ' + dk + ' numbers per head'));
+        }
+
+        const steps = [
+            {
+                pill: 'One head', draw: g => attnRows(g, [{ name: 'Head 1', color: COLORS[0], w: SINGLE }], { mix: true }),
+                body: () => '<p>With a single head, <em>it</em> gets exactly one set of attention weights, and they have to add up to 1, like a budget. This head spends 0.35 on <em>animal</em>, 0.20 on <em>tired</em>, 0.12 on <em>street</em>, and small amounts on everything else.</p><p>The bottom bar shows what that means for the output: the new vector for <em>it</em> is a blend of every word\'s Value vector in those proportions.</p>'
+            },
+            {
+                pill: 'The trade-off', slider: true, draw: g => attnRows(g, [{ name: 'Head 1', color: COLORS[0], w: tradeoff() }], { mix: true }),
+                body: () => { const w = tradeoff(); return '<p>Drag the slider to give <em>animal</em> more attention. Right now <em>animal</em> gets ' + w[ANIMAL].toFixed(2) + ' and <em>tired</em> gets ' + w[TIRED].toFixed(2) + '.</p><p>Every bit of attention you give one word has to come from the others, because the total is stuck at 1. Push <em>animal</em> up to 0.80 and <em>tired</em> drops to about 0.06. One head cannot put most of its attention on two different words at once, so it ends up with a smeared average of "who is <em>it</em>" and "what state is <em>it</em> in".</p>'; }
+            },
+            {
+                pill: 'Add a second head', draw: g => attnRows(g, [head(0), head(1)], { mix: true }),
+                body: () => '<p>Now give the model a second head with its <em>own</em> \\(W_Q\\), \\(W_K\\) and \\(W_V\\). Different weights mean a different idea of which words are relevant.</p><p>Head 1 spends 0.80 on <em>animal</em> (who is <em>it</em>?). Head 2 spends 0.55 on <em>tired</em> and 0.30 on <em>was</em> (what state is it in?). Each head has its own budget of 1, so neither has to compromise, and we now get two separate output vectors for <em>it</em>, each focused on one job.</p>'
+            },
+            {
+                pill: 'Split the size', draw: sceneSplit,
+                body: () => '<p>Two heads does not mean twice the work. Each head reads the full embedding of <em>it</em>, but its \\(W_Q\\), \\(W_K\\) and \\(W_V\\) project it down to a smaller vector. With \\(d_{\\text{model}} = 8\\) and 2 heads, each head works with just 4 numbers:</p>\\[ d_k = \\frac{d_{\\text{model}}}{h} = \\frac{8}{2} = 4 \\]<p>Real models do the same thing at a larger scale. GPT-2 Small has \\(d_{\\text{model}} = 768\\) and 12 heads, so each head works in \\(768 \\div 12 = 64\\) dimensions.</p>'
+            },
+            {
+                pill: 'Concat + W_O', draw: sceneConcat,
+                body: () => '<p>Each head hands back a 4-number output for <em>it</em>. To get back to one vector:</p><ol><li><strong>Concatenate:</strong> lay the outputs side by side, giving \\(4 + 4 = 8\\) numbers, the same size as the original embedding.</li><li><strong>Project:</strong> multiply by the learned matrix \\(W_O\\), which mixes the slots so every number in the final vector can use what both heads found.</li></ol>\\[ \\text{MultiHead} = \\text{Concat}(\\text{head}_1, \\text{head}_2)\\, W_O \\]'
+            },
+            {
+                pill: 'Explore', heads: true, draw: sceneExplore,
+                body: () => '<p>Switch between 1, 2 and 4 heads. The extra heads show patterns researchers have found in trained models: one head looks at the previous word, another at the next word. Notice that more heads means fewer numbers per head, but the concatenated output is always 8 numbers. Try these, then check your answers below the activity:</p><ol><li>With 4 heads and \\(d_{\\text{model}} = 8\\), how many numbers are in each head\'s Query vector?</li><li>Head 1 puts 0.80 on <em>animal</em> and Head 2 puts 0.55 on <em>tired</em>. Why couldn\'t a single head do both?</li><li>What would be lost if we skipped \\(W_O\\) and passed the concatenated vector straight on?</li></ol>'
+            }
+        ];
+
+        function render() {
+            const s = steps[step];
+            document.getElementById('mh-slider-row').style.display = s.slider ? '' : 'none';
+            document.getElementById('mh-heads-row').style.display = s.heads ? '' : 'none';
+            slider.value = animal;
+            out.textContent = animal.toFixed(2);
+            document.querySelectorAll('#mh-heads-row button').forEach(b => b.classList.toggle('on', +b.dataset.h === nHeads));
+
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            const g = el('g', {});
+            s.draw(g);
+            svg.appendChild(g);
+
+            const text = document.getElementById('mh-text');
+            text.innerHTML = '<p><strong>Step ' + (step + 1) + ' of ' + steps.length + ' · ' + s.pill + '</strong></p>' + s.body();
+            if (window.MathJax && MathJax.typesetPromise) {
+                if (MathJax.typesetClear) MathJax.typesetClear([text]);
+                MathJax.typesetPromise([text]);
+            }
+            document.querySelectorAll('#mh-pills span').forEach((pill, idx) => pill.classList.toggle('active', idx === step));
+            document.getElementById('mh-prev').disabled = step === 0;
+            document.getElementById('mh-next').disabled = step === steps.length - 1;
+        }
+
+        function go(k) {
+            step = Math.max(0, Math.min(steps.length - 1, k));
+            render();
+        }
+
+        const pills = document.getElementById('mh-pills');
+        steps.forEach((s, idx) => {
+            const span = document.createElement('span');
+            span.textContent = s.pill;
+            span.addEventListener('click', () => go(idx));
+            pills.appendChild(span);
+        });
+
+        slider.addEventListener('input', () => { animal = +slider.value; render(); });
+        document.querySelectorAll('#mh-heads-row button').forEach(b => b.addEventListener('click', () => { nHeads = +b.dataset.h; render(); }));
+        document.getElementById('mh-prev').addEventListener('click', () => go(step - 1));
+        document.getElementById('mh-next').addEventListener('click', () => go(step + 1));
+        document.getElementById('mh-reset').addEventListener('click', () => { animal = 0.35; nHeads = 2; go(0); });
+        render();
+    })();
+</script>
+
+<script>
+    (function () {
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.getElementById('pe-svg');
+        const slider = document.getElementById('pe-pos');
+        const out = document.getElementById('pe-pos-out');
+        const WORDS = ['The', 'dog', 'bit', 'the', 'cat'];
+        const D = 8;
+        const SPEEDS = [0, 1, 2, 3].map(i => 1 / Math.pow(10000, 2 * i / D));
+        // Made-up embedding for "the", for illustration only.
+        const E_THE = [0.6, -0.4, 0.3, 0.8, -0.7, 0.2, -0.5, 0.4];
+        let step = 0;
+        let pos = 1;
+
+        function el(tag, attrs, text) {
+            const node = document.createElementNS(NS, tag);
+            for (const k in attrs) node.setAttribute(k, attrs[k]);
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+        const n = v => (v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2);
+
+        function encode(p) {
+            const v = [];
+            SPEEDS.forEach(w => { v.push(Math.sin(p * w)); v.push(Math.cos(p * w)); });
+            return v;
+        }
+
+        function cell(x, y, w, h, v, fontSize) {
+            const g = el('g', {});
+            if (v === null) {
+                g.appendChild(el('rect', { x, y, width: w, height: h, rx: 4, class: 'pe-cell empty' }));
+                g.appendChild(el('text', { x: x + w / 2, y: y + h / 2 + 4, 'text-anchor': 'middle', 'font-size': fontSize, class: 'pe-muted' }, '?'));
+                return g;
+            }
+            const op = 0.1 + 0.55 * Math.min(Math.abs(v), 1);
+            g.appendChild(el('rect', { x, y, width: w, height: h, rx: 4, class: 'pe-cell ' + (v >= 0 ? 'pos' : 'neg'), 'fill-opacity': op }));
+            g.appendChild(el('text', { x: x + w / 2, y: y + h / 2 + 4, 'text-anchor': 'middle', 'font-size': fontSize, 'font-weight': 600 }, n(v)));
+            return g;
+        }
+
+        function vectorRow(g, label, values, y, opts) {
+            const o = Object.assign({ x0: 170, w: 64, h: 38, font: 12.5 }, opts || {});
+            g.appendChild(el('text', { x: o.x0 - 14, y: y + o.h / 2 + 5, 'text-anchor': 'end', 'font-size': 14, 'font-weight': 600 }, label));
+            values.forEach((v, i) => g.appendChild(cell(o.x0 + i * o.w, y, o.w, o.h, v, o.font)));
+        }
+
+        function tokens(g, highlight) {
+            const w = 110, gap = 14, x0 = (760 - (5 * w + 4 * gap)) / 2;
+            WORDS.forEach((word, i) => {
+                const x = x0 + i * (w + gap);
+                const chip = el('rect', { x, y: 8, width: w, height: 34, rx: 8, class: 'pe-chip' + (highlight.includes(i) ? ' on' : '') });
+                chip.addEventListener('click', () => { setPos(i); });
+                g.appendChild(chip);
+                const t = el('text', { x: x + w / 2, y: 30, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 600, 'pointer-events': 'none' }, word);
+                g.appendChild(t);
+                g.appendChild(el('text', { x: x + w / 2, y: 58, 'text-anchor': 'middle', 'font-size': 12, class: highlight.includes(i) ? 'pe-accent' : 'pe-muted' }, 'pos ' + i));
+            });
+        }
+
+        function dial(g, k, active) {
+            const cx = 105 + k * 183, cy = 172, r = 56;
+            const theta = pos * SPEEDS[k];
+            const grp = el('g', active ? {} : { class: 'pe-faded' });
+            const names = ['Hand 1 (fastest)', 'Hand 2', 'Hand 3', 'Hand 4 (slowest)'];
+            grp.appendChild(el('text', { x: cx, y: cy - r - 12, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700 }, names[k]));
+            grp.appendChild(el('circle', { cx, cy, r, class: 'pe-face' + (active ? ' on' : '') }));
+            grp.appendChild(el('line', { x1: cx - r, y1: cy, x2: cx + r, y2: cy, class: 'pe-axis' }));
+            grp.appendChild(el('line', { x1: cx, y1: cy - r, x2: cx, y2: cy + r, class: 'pe-axis' }));
+            grp.appendChild(el('text', { x: cx, y: cy - r + 13, 'text-anchor': 'middle', 'font-size': 10, class: 'pe-muted' }, '0'));
+            const a = theta % (2 * Math.PI);
+            if (a > 0.02 && a < 2 * Math.PI - 0.02) {
+                const ra = r - 9;
+                const ex = cx + ra * Math.sin(a), ey = cy - ra * Math.cos(a);
+                grp.appendChild(el('path', { d: `M ${cx} ${cy - ra} A ${ra} ${ra} 0 ${a > Math.PI ? 1 : 0} 1 ${ex} ${ey}`, class: 'pe-arc' }));
+            }
+            const tx = cx + (r - 6) * Math.sin(theta), ty = cy - (r - 6) * Math.cos(theta);
+            grp.appendChild(el('line', { x1: cx, y1: cy, x2: tx, y2: ty, class: 'pe-hand' }));
+            grp.appendChild(el('circle', { cx: tx, cy: ty, r: 5, class: 'pe-tip' }));
+            grp.appendChild(el('circle', { cx, cy, r: 4, class: 'pe-tip' }));
+            const turns = Math.floor(theta / (2 * Math.PI));
+            grp.appendChild(el('text', { x: cx, y: cy + r + 20, 'text-anchor': 'middle', 'font-size': 12, class: 'pe-muted' }, 'dims ' + (2 * k) + ', ' + (2 * k + 1) + ' \u00b7 speed ' + SPEEDS[k]));
+            grp.appendChild(el('text', { x: cx, y: cy + r + 37, 'text-anchor': 'middle', 'font-size': 12.5 }, '\u03b8 = ' + pos + ' \u00d7 ' + SPEEDS[k] + ' = ' + theta.toFixed(theta < 1 ? 3 : 2)));
+            grp.appendChild(el('text', { x: cx, y: cy + r + 54, 'text-anchor': 'middle', 'font-size': 12, class: 'pe-muted' }, turns > 0 ? turns + (turns === 1 ? ' full turn' : ' full turns') + ' so far' : 'less than one turn'));
+            g.appendChild(grp);
+        }
+
+        function sceneSame(g) {
+            tokens(g, [0, 3]);
+            g.appendChild(el('text', { x: 380, y: 102, 'text-anchor': 'middle', 'font-size': 14, class: 'pe-muted' }, 'Embedding looked up for "The" at position 0'));
+            vectorRow(g, 'E(the)', E_THE, 115);
+            g.appendChild(el('text', { x: 380, y: 205, 'text-anchor': 'middle', 'font-size': 14, class: 'pe-muted' }, 'Embedding looked up for "the" at position 3'));
+            vectorRow(g, 'E(the)', E_THE, 218);
+            g.appendChild(el('text', { x: 380, y: 310, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700 }, 'Exactly the same 8 numbers.'));
+            g.appendChild(el('text', { x: 380, y: 334, 'text-anchor': 'middle', 'font-size': 14, class: 'pe-muted' }, 'Nothing here says which "the" came first.'));
+        }
+
+        function sceneClock(g, handsOn) {
+            tokens(g, pos < 5 ? [pos] : []);
+            for (let k = 0; k < 4; k++) dial(g, k, k < handsOn);
+            const P = encode(pos).map((v, i) => (i < 2 * handsOn ? v : null));
+            for (let d = 0; d < D; d++) {
+                g.appendChild(el('text', { x: 170 + d * 64 + 32, y: 323, 'text-anchor': 'middle', 'font-size': 11, class: 'pe-muted' }, (d % 2 ? 'cos' : 'sin') + ' d' + d));
+            }
+            vectorRow(g, 'P(' + pos + ')', P, 330, { h: 40 });
+        }
+
+        function sceneTable(g) {
+            tokens(g, pos < 5 ? [pos] : []);
+            const x0 = 170, w = 64, h = 21, y0 = 88;
+            for (let d = 0; d < D; d++) {
+                g.appendChild(el('text', { x: x0 + d * w + w / 2, y: y0 - 6, 'text-anchor': 'middle', 'font-size': 11, class: 'pe-muted' }, (d % 2 ? 'cos' : 'sin') + ' d' + d));
+            }
+            for (let p = 0; p < 12; p++) {
+                const y = y0 + p * h;
+                g.appendChild(el('text', { x: x0 - 12, y: y + 15, 'text-anchor': 'end', 'font-size': 12, class: p === pos ? 'pe-accent' : 'pe-muted', 'font-weight': p === pos ? 700 : 400 }, 'P(' + p + ')'));
+                encode(p).forEach((v, d) => g.appendChild(cell(x0 + d * w, y, w, h, v, 10.5)));
+            }
+            if (pos < 12) g.appendChild(el('rect', { x: x0 - 1, y: y0 + pos * h - 1, width: D * w + 2, height: h + 2, rx: 4, class: 'pe-rowbox' }));
+            g.appendChild(el('text', { x: x0 + w, y: y0 + 12 * h + 22, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600 }, '\u2190 hand 1: changes fast'));
+            g.appendChild(el('text', { x: x0 + 7 * w, y: y0 + 12 * h + 22, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600 }, 'hand 4: barely moves \u2192'));
+        }
+
+        function sceneAdd(g) {
+            tokens(g, [0, 3]);
+            [0, 3].forEach((p, b) => {
+                const y = 80 + b * 160;
+                const P = encode(p);
+                g.appendChild(el('text', { x: 20, y: y + 2, 'font-size': 13.5, 'font-weight': 700, class: 'pe-accent' }, '"the" at position ' + p));
+                vectorRow(g, 'E(the)', E_THE, y + 10, { h: 32, font: 12 });
+                vectorRow(g, '+ P(' + p + ')', P, y + 52, { h: 32, font: 12 });
+                vectorRow(g, '= input', E_THE.map((e, i) => e + P[i]), y + 94, { h: 32, font: 12 });
+            });
+        }
+
+        const steps = [
+            {
+                pill: 'The problem', slider: false, draw: sceneSame,
+                body: () => '<p>The word <em>the</em> appears twice in <em>"The dog bit the cat"</em>: at position 0 and at position 3. The embedding table hands both copies the same vector (8 made-up numbers here). Attention only sees these vectors, so it has no way to tell the two copies apart, or to know which came first.</p><p>We need a second vector that depends only on <em>where</em> a token sits. That is the positional encoding \\(P\\).</p>'
+            },
+            {
+                pill: 'One clock hand', slider: true, draw: g => sceneClock(g, 1),
+                body: () => { const t = pos * SPEEDS[0]; return '<p>Picture a clock hand that starts at 12 o\'clock and turns 1 radian (about 57&deg;) every time the position goes up by one. At position ' + pos + ' it has turned \\(\\theta = ' + pos + '\\).</p><p>The tip of the hand gives two numbers: how far right it points, \\(\\sin\\theta = ' + n(Math.sin(t)) + '\\), and how far up, \\(\\cos\\theta = ' + n(Math.cos(t)) + '\\). Those fill dimensions 0 and 1 of \\(P\\). Click different words and watch the hand move.</p>'; }
+            },
+            {
+                pill: 'Slower hands', slider: true, draw: g => sceneClock(g, 4),
+                body: () => '<p>One hand is not enough. It comes back around every \\(2\\pi \\approx 6.28\\) positions, so position 0 and position 6 point almost the same way. The fix is the same one a real clock uses: add slower hands.</p><p>Each pair of dimensions gets its own hand, and each hand turns 10 times slower than the one before it. These speeds come straight from the formula: with \\(d_{\\text{model}} = 8\\), hand \\(i\\) turns at \\(1/10000^{2i/8}\\), which gives 1, 0.1, 0.01 and 0.001. Reading all four hands gives the full vector \\(P(' + pos + ')\\).</p>'
+            },
+            {
+                pill: 'The fingerprint', slider: true, max: 11, draw: sceneTable,
+                body: () => '<p>Stack the vectors for positions 0 to 11 and you get this table. The left columns (the fast hand) swing between orange and blue from one row to the next. The right columns (the slow hands) hardly change at all over 12 positions.</p><p>Look down the rows: no two are the same. Every position gets its own fingerprint, the same way 3:15 and 9:15 look different on a clock even though the minute hand is in the same place. This is the small version of the 512-column heatmap shown earlier in the lesson.</p>'
+            },
+            {
+                pill: 'Add it in', slider: false, draw: sceneAdd,
+                body: () => '<p>Finally, the position vector is added to the word\'s embedding, one cell at a time: \\(\\text{input} = E + P\\). Both copies of <em>the</em> start with the same \\(E\\), but they get different \\(P\\), so they reach attention as two different vectors.</p><p>Now the queries and keys built from them differ too, and the model can learn that the <em>the</em> before <em>dog</em> and the <em>the</em> before <em>cat</em> play different roles.</p>'
+            },
+            {
+                pill: 'Explore', slider: true, draw: g => sceneClock(g, 4),
+                body: () => '<p>Drag the slider up to 100. The fast hand spins through many full turns while the slowest hand barely leaves 12 o\'clock. Try these, then check your answers below the activity:</p><ol><li>Positions 0 and 6 have nearly the same fast hand. Which hand tells them apart?</li><li>Why would a model that only had the fast hand get confused in long text?</li><li>A real model with \\(d_{\\text{model}} = 512\\) uses the same idea. How many hands does it have?</li></ol>'
+            }
+        ];
+
+        function render() {
+            const s = steps[step];
+            const max = s.max || 100;
+            if (pos > max) pos = max;
+            slider.max = max;
+            slider.value = pos;
+            out.textContent = pos;
+            document.getElementById('pe-slider-row').style.display = s.slider ? '' : 'none';
+
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            const g = el('g', {});
+            s.draw(g);
+            svg.appendChild(g);
+
+            const text = document.getElementById('pe-text');
+            text.innerHTML = '<p><strong>Step ' + (step + 1) + ' of ' + steps.length + ' \u00b7 ' + s.pill + '</strong></p>' + s.body();
+            if (window.MathJax && MathJax.typesetPromise) {
+                if (MathJax.typesetClear) MathJax.typesetClear([text]);
+                MathJax.typesetPromise([text]);
+            }
+            document.querySelectorAll('#pe-pills span').forEach((pill, idx) => pill.classList.toggle('active', idx === step));
+            document.getElementById('pe-prev').disabled = step === 0;
+            document.getElementById('pe-next').disabled = step === steps.length - 1;
+        }
+
+        function setPos(p) {
+            if (!steps[step].slider) return;
+            pos = p;
+            render();
+        }
+
+        function go(k) {
+            step = Math.max(0, Math.min(steps.length - 1, k));
+            render();
+        }
+
+        const pills = document.getElementById('pe-pills');
+        steps.forEach((s, idx) => {
+            const span = document.createElement('span');
+            span.textContent = s.pill;
+            span.addEventListener('click', () => go(idx));
+            pills.appendChild(span);
+        });
+
+        slider.addEventListener('input', () => setPos(+slider.value));
+        document.getElementById('pe-prev').addEventListener('click', () => go(step - 1));
+        document.getElementById('pe-next').addEventListener('click', () => go(step + 1));
+        document.getElementById('pe-reset').addEventListener('click', () => { pos = 1; go(0); });
+        render();
+    })();
+</script>
 
 </body>
 </html>
