@@ -1,0 +1,8 @@
+# Toy member A: no downloads. Copy this file to make another member.
+member: A
+style: "plain toy baseline"
+stages:
+  C: {backend: toy_captioner}
+  M: {backend: toy_composer, duration: 10}
+  L: {backend: toy_listener}
+  G: {backend: toy_generator}

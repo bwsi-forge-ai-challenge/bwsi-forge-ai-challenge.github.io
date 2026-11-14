@@ -1,0 +1,26 @@
+# Member B: the same base models with style prompts, i.e. the "prompted" variant for a noir style.
+# After fine-tuning, add  checkpoint: path/to/your/lora  under each stage.
+member: B
+style: "1940s radio noir"
+device: auto
+stages:
+  C:
+    backend: blip
+    model: Salesforce/blip-image-captioning-base
+    style_prompt: "a grainy black and white noir photograph of"   # BLIP continues this prefix
+  M:
+    backend: musicgen
+    model: facebook/musicgen-small
+    style_prompt: "smoky 1940s jazz, muted trumpet, vinyl crackle"
+    duration: 10
+  L:
+    backend: clap_tags
+    model: laion/clap-htsat-unfused
+    template: "A {mood} {genre} number, {instruments} drifting through the smoke at {tempo} BPM."
+    vocab:
+      mood: [moody, tense, melancholy, sultry, nervous]
+  G:
+    backend: sd_turbo
+    model: stabilityai/sd-turbo
+    style_prompt: "1940s film noir, grainy black and white photograph, hard shadows"
+    steps: 1

@@ -1,0 +1,26 @@
+# Member A with real base models. This is the zero-shot variant for E1: no style prompt, no checkpoint.
+#
+# For each stage:
+#   backend:      which registered backend to use (see telephone/backends/)
+#   model:        Hugging Face model id of the base model
+#   checkpoint:   path to your fine-tuned LoRA folder (leave out for the base model)
+#   style_prompt: text added to the prompt (the "prompted" variant in E1)
+# Any other key is passed to the backend (duration, steps, vocab, template, ...).
+member: A
+style: "base models, no style"
+device: auto            # auto picks cuda, then mps, then cpu; set per stage to override
+stages:
+  C:
+    backend: blip
+    model: Salesforce/blip-image-captioning-base
+  M:
+    backend: musicgen
+    model: facebook/musicgen-small
+    duration: 10        # seconds; the contract allows 10-30
+  L:
+    backend: clap_tags
+    model: laion/clap-htsat-unfused
+  G:
+    backend: sd_turbo
+    model: stabilityai/sd-turbo
+    steps: 1

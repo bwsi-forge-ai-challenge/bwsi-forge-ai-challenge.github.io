@@ -1,0 +1,12 @@
+# Toy mode needs only the first five. The real backends and metrics need the rest.
+numpy
+scipy
+pillow
+pyyaml
+matplotlib
+torch
+transformers
+diffusers
+accelerate
+peft
+huggingface_hub

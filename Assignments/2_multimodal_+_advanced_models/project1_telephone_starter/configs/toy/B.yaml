@@ -1,0 +1,8 @@
+# Toy member B: same backends, different style prompts, so swapping A and B in a chain changes the output.
+member: B
+style: "sunny toy"
+stages:
+  C: {backend: toy_captioner, style_prompt: "Sunny day!"}
+  M: {backend: toy_composer, duration: 10}
+  L: {backend: toy_listener, style_prompt: "Sunny day!"}
+  G: {backend: toy_generator, style_prompt: "yellow"}
