@@ -38,7 +38,7 @@
 
   <section>
     <h2>2. Baselines and Controls</h2>
-    <p>A metric sitting in isolation tells you nothing. Saying "Our captions achieved a CLIPScore of 31" only carries meaning when placed right next to an alternative system tested on the <em>exact same</em> inputs. That point of comparison is your <strong>baseline</strong>. (As we saw in <a href="lesson2_fine_tuning_for_style.html">Fine-Tuning for a Style</a>, the baseline that matters most for a fine-tuned model isn't the raw base model; it is the base model paired with a really good prompt.)</p>
+    <p>A metric sitting in isolation tells you nothing. Saying "Our captions achieved a CLIPScore of 31" only carries meaning when placed right next to an alternative system tested on the <em>exact same</em> inputs. That point of comparison is your <strong>baseline</strong>. (As we saw in <a href="lesson1_fine_tuning_for_style.html">Fine-Tuning for a Style</a>, the baseline that matters most for a fine-tuned model isn't the raw base model; it is the base model paired with a really good prompt.)</p>
     <p>For a comparison to be fair, change exactly one variable at a time. If you pit your fine-tuned model against a base model while also changing the prompt, the sampler, and the random seeds, you have no way of knowing which change actually moved the needle. Lock everything else down:</p>
     <ul>
         <li>Use the exact same held-out inputs, selected before you look at any outputs.</li>
@@ -231,11 +231,11 @@
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
-    <a class="pager__prev" href="lesson3_evaluation_benchmarks_and_safety.html">
+    <a class="pager__prev" href="lesson2_evaluation_benchmarks_and_safety.html">
       <span class="pager__label">Previous</span>
       <span class="pager__title">Evaluation, Benchmarks, and Safety</span>
     </a>
-    <a class="pager__next" href="lesson5_assignment.html">
+    <a class="pager__next" href="lesson4_assignment.html">
       <span class="pager__label">Next</span>
       <span class="pager__title">Assignment: Evaluate a Multimodal Model</span>
     </a>
