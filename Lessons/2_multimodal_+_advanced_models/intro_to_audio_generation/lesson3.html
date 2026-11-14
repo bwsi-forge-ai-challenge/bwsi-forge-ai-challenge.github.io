@@ -36,18 +36,6 @@
   </section>
 
   <section>
-    <div class="roadmap"><strong>Deep Dive Roadmap: Audio Generation</strong>
-<ol>
-<li><strong>Sound as Waveforms &amp; Spectrograms</strong></li>
-<li><strong>Recipes (MIDI) vs. Records (Raw Audio)</strong></li>
-<li class="here"><strong>Audio Tokens &amp; Neural Codecs (EnCodec, SoundStream, DAC)</strong> <em>(You are here)</em></li>
-<li><strong>Conditioning Mechanisms: Steering Audio Models</strong></li>
-<li><strong>Modern Architectures (AudioCraft, Diffusion Models) &amp; Evaluation</strong></li>
-</ol>
-</div>
-  </section>
-
-  <section>
     <h2>1. Why Sample-Level Autoregression Fails at Scale</h2>
 <p>It is tempting to ask: <em>Why not quantize raw PCM samples into 256 amplitude buckets (like 8-bit \(\mu\)-law in early WaveNet architectures) and train a Transformer directly on raw samples?</em></p>
 <p>The core barrier is sequence length and attention complexity:</p>
