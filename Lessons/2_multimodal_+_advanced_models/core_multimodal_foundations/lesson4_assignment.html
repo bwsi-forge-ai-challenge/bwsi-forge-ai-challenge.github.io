@@ -31,10 +31,10 @@
     <div class="assignment-box">
         <strong>Starter notebook:</strong> <code>similarity_matrices_assignment.ipynb</code><br>
         <strong>Environment:</strong> Google Colab or local Python with NumPy, PyTorch, and Matplotlib. A CPU is enough; no GPU or model downloads are needed.<br>
-        <strong>Suggested time:</strong> 1.5 to 2 hours<br>
+        <strong>Suggested time:</strong> about 1 hour<br>
         <strong>Companion reading:</strong> <a href="lesson2_representation_and_latent_spaces.html">Multimodal Representation and Latent Spaces</a>
     </div>
-    <p>Download the starter notebook below, complete the TODOs inside it, and run all cells before submitting. Each part ends with a check cell that tells you whether your code is correct.</p>
+    <p>Download the starter notebook below, complete the TODOs inside it, and run all cells before submitting.</p>
     <p>
         <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/similarity_matrices_assignment.ipynb" download="similarity_matrices_assignment.ipynb"><strong>Download similarity_matrices_assignment.ipynb</strong></a>
     </p>
@@ -48,10 +48,10 @@
         </thead>
         <tbody>
             <tr><td><strong>1</strong></td><td>Write cosine similarity</td><td>Similarity depends on direction, not length</td></tr>
-            <tr><td><strong>2</strong></td><td>Build a 4 &#215; 4 image-by-caption similarity matrix with one matrix multiplication, then retrieve in both directions</td><td>How a shared space turns matching into a lookup</td></tr>
+            <tr><td><strong>2</strong></td><td>Build a 4 &#215; 4 image-by-caption similarity matrix, then retrieve in both directions</td><td>How a shared space turns matching into a lookup</td></tr>
             <tr><td><strong>3</strong></td><td>Try to compare features from two simulated encoders with different sizes, then add random projection heads</td><td>Matching the shapes is not the same as matching the meaning</td></tr>
-            <tr><td><strong>4</strong></td><td>Implement the symmetric InfoNCE loss and train two projection heads</td><td>Contrastive training makes a diagonal appear on pairs the model never saw</td></tr>
-            <tr><td><strong>5</strong></td><td>Sweep the temperature and plot test accuracy</td><td>Why the temperature has a sweet spot</td></tr>
+            <tr><td><strong>4</strong></td><td>Write part of the symmetric InfoNCE loss, then train two projection heads</td><td>Contrastive training makes a diagonal appear on pairs the model never saw</td></tr>
+            <tr><td><strong>5</strong></td><td>See how the temperature changes test accuracy</td><td>Why the temperature has a sweet spot</td></tr>
         </tbody>
     </table></div>
     <p>Parts 2, 4, and 5 each end with a short written reflection, stored as a Python string in the notebook.</p>
@@ -61,7 +61,7 @@
     <h2>Submitting Your Work</h2>
     <ol class="checklist">
         <li>Complete every TODO and all three reflections (<code>part2_reflection</code>, <code>part4_reflection</code>, and <code>part5_reflection</code>).</li>
-        <li>Run every cell in the notebook from top to bottom and confirm that every check cell passes.</li>
+        <li>Run every cell in the notebook from top to bottom without errors.</li>
         <li>Export the notebook as a Python script (<strong>File &rarr; Download &rarr; Download .py</strong> in Colab) and rename it to <code>firstname_lastname_similarity.py</code>.</li>
         <!-- TODO: replace href="#" with the Gradescope assignment link. -->
         <li>Submit only that <code>.py</code> file on <strong>Gradescope</strong>: <a href="#" target="_blank">Similarity Matrices assignment</a>.</li>
