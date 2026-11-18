@@ -24,18 +24,18 @@
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Building &amp; Evaluating Multimodal Pipelines</p>
     <h1>Assignment: Evaluate a Multimodal Model</h1>
-    <p class="lede">Find an open vision-language model on Hugging Face, build an evaluation harness that tests whether it actually looks at the image, and report what you found in an evaluation card.</p>
+    <p class="lede">Test a small open vision-language model to find out whether it actually looks at the image or just guesses from the question.</p>
   </header>
 
   <section>
     <div class="assignment-box">
         <strong>Starter notebook:</strong> <code>multimodal_evaluation_assignment.ipynb</code><br>
-        <strong>Environment:</strong> Google Colab with a free T4 GPU, using an open model from Hugging Face that you choose.<br>
-        <strong>Suggested time:</strong> 2 to 2.5 hours<br>
+        <strong>Environment:</strong> Google Colab with a free T4 GPU. The notebook loads the model for you.<br>
+        <strong>Suggested time:</strong> about 1 hour<br>
         <strong>Companion reading:</strong> <a href="lesson2_evaluation_benchmarks_and_safety.html">Evaluation, Benchmarks, and Safety</a>
     </div>
-    <p>Download the starter notebook below, complete the TODOs inside it, and run all cells before submitting. Each part ends with a check cell that tells you whether your code is correct. The notebook includes two practice models with known behavior, so you can test your evaluation code before running your real model.</p>
-    <p>The test set is 30 pairs of real photos (about 5 MB). The notebook downloads them for you. If that download fails, download the zip below, upload it in Colab's <strong>Files</strong> panel, and run the download cell again. You will also take a few photos of your own for Part 5, so have a phone camera handy.</p>
+    <p>Download the starter notebook below, complete the TODOs inside it, and run all cells before submitting.</p>
+    <p>The test set is 30 pairs of real photos (about 5 MB). The notebook downloads them for you. If that download fails, download the zip below, upload it in Colab's <strong>Files</strong> panel, and run the download cell again.</p>
     <p>
         <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/multimodal_evaluation_assignment.ipynb" download="multimodal_evaluation_assignment.ipynb"><strong>Download multimodal_evaluation_assignment.ipynb</strong></a><br>
         <a href="../../../Assignments/2_multimodal_+_advanced_models/multimodal_eval_images.zip" download="multimodal_eval_images.zip"><strong>Download multimodal_eval_images.zip</strong></a> (only if the notebook's download fails)
@@ -49,25 +49,21 @@
             <tr><th>Part</th><th>Task</th><th>What it shows</th></tr>
         </thead>
         <tbody>
-            <tr><td><strong>1</strong></td><td>Choose an image-and-text model on Hugging Face that fits a free T4, record what its model card claims, and wrap it in an <code>ask(image, question)</code> function</td><td>How to read a model card and run a model you did not build</td></tr>
-            <tr><td><strong>2</strong></td><td>Write <code>normalize</code> and <code>extract_answer</code> to score free-form answers against a provided set of 30 pairs of real photos</td><td>Why exact string matching is unfair to chatty models</td></tr>
-            <tr><td><strong>3</strong></td><td>Write <code>run_condition</code> to ask every question under one condition and time each model call</td><td>Accuracy per category and latency per question</td></tr>
-            <tr><td><strong>4</strong></td><td>Implement the reliance gap, change rate, and flip rate, then combine everything into <code>evaluate_model</code></td><td>Whether the model uses the image or guesses from the question</td></tr>
-            <tr><td><strong>5</strong></td><td>Design a test category of your own with pairs of photos you take, and evaluate your model on it</td><td>How to write a test whose answers depend on the input</td></tr>
-            <tr><td><strong>6</strong></td><td>Fill in an evaluation card: summary, grounding verdict, claimed versus measured results, limitations, and a deployment recommendation</td><td>How to report an evaluation honestly</td></tr>
+            <tr><td><strong>1</strong></td><td>Write <code>extract_answer</code> to score free-form answers fairly</td><td>Why exact string matching is unfair to chatty models</td></tr>
+            <tr><td><strong>2</strong></td><td>Write <code>run_condition</code> to ask every question under one condition, then run the model on 30 pairs of real photos</td><td>Accuracy per category and latency per question</td></tr>
+            <tr><td><strong>3</strong></td><td>Write the reliance gap, change rate, and flip rate, then build <code>evaluate_model</code> from <code>run_condition</code></td><td>Whether the model uses the image or guesses from the question</td></tr>
         </tbody>
     </table></div>
-    <p>Parts 3 and 4 each end with a short written reflection, stored as a Python string in the notebook.</p>
+    <p>Parts 2 and 3 each end with a short written reflection, stored as a Python string in the notebook.</p>
   </section>
 
   <section>
     <h2>Submitting Your Work</h2>
     <ol class="checklist">
-        <li>Complete every TODO, both reflections (<code>part3_reflection</code> and <code>part4_reflection</code>), and every field of the evaluation card. Keep every function name and signature exactly as given: the autograder tests your evaluation functions on its own models, through the <code>ask_fn</code> argument.</li>
-        <li>Run every cell in the notebook from top to bottom and confirm that every check cell passes.</li>
+        <li>Complete every TODO and both reflections (<code>part2_reflection</code> and <code>part3_reflection</code>). Keep every function name and signature exactly as given: the autograder tests your evaluation functions on its own models, through the <code>ask_fn</code> argument.</li>
+        <li>Run every cell in the notebook from top to bottom without errors.</li>
         <li>Export the notebook as a Python script (<strong>File &rarr; Download &rarr; Download .py</strong> in Colab) and rename it to <code>firstname_lastname_model_eval.py</code>.</li>
-        <!-- TODO: replace href="#" with the Gradescope assignment link. -->
-        <li>Submit only that <code>.py</code> file on <strong>Gradescope</strong>: <a href="#" target="_blank">Evaluate a Multimodal Model assignment</a>.</li>
+        <li>Submit only that <code>.py</code> file on <strong>Gradescope</strong>: <a href="https://www.gradescope.com/courses/1365457/assignments/9080962" target="_blank">Evaluate a Multimodal Model assignment</a>.</li>
     </ol>
     <p>If you can't access the Gradescope link, go to the Gradescope for this class (if you are logged in you should be able to see this course when you visit the <a href="https://www.gradescope.com/">Gradescope home page</a>), select this course, and then pick the <b>Evaluate a Multimodal Model</b> assignment.</p>
   </section>
