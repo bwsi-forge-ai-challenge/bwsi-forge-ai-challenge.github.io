@@ -30,7 +30,7 @@
 
   <section>
     <p>That is a <strong>record</strong> of sound.</p>
-<p>There is an entirely different way to represent music in machine learning: as a <strong>recipe</strong>. Instead of recording how the air moved, you record the instructions required to make the sound in the first place—which key was pressed, when it was struck, how hard it was hit, and when it was released.</p>
+<p>There is an entirely different way to represent music in machine learning: as a <strong>recipe</strong>. Instead of recording how the air moved, you record the instructions required to make the sound in the first place: which key was pressed, when it was struck, how hard it was hit, and when it was released.</p>
 <p>This recipe format is known as <strong>MIDI</strong> (Musical Instrument Digital Interface).</p>
 <p>The divide between symbolic recipes and continuous records shapes modern generative audio:</p>
 <ul>
@@ -86,7 +86,7 @@
 
 <div class="interactive-box">
 <strong>Interactive: MIDI → Hz → hear it</strong>
-<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Enter a MIDI note, see \(f(n)\), and play a sine at that frequency. A real instrument at the same MIDI number would add the harmonics from Lesson 1—MIDI stores the recipe, not the timbre.</p>
+<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Enter a MIDI note, see \(f(n)\), and play a sine at that frequency. A real instrument at the same MIDI number would add the harmonics from Lesson 1. MIDI stores the recipe, not the timbre.</p>
 <p>MIDI note \(n\): <input type="number" id="calc-midi" value="60" min="0" max="127" style="width:70px;">
 <button type="button" class="primary" id="midi-play">Play this pitch</button>
 <button type="button" id="midi-stop">Stop</button></p>
@@ -123,7 +123,7 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 
 <figure>
 <img src="assets/m4_waveform_side.png" alt="Log-magnitude spectrogram of rendered notes">
-<figcaption><strong>Figure.</strong> After you render MIDI to audio, an STFT looks like this (log |STFT|). That is the <em>record</em>: harmonics and timing in the spectrogram, not an editable note list. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> After you render MIDI to audio, an STFT looks like this (log |STFT|). That is the <em>record</em>: harmonics and timing in the spectrogram, not an editable note list. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
   </section>
 
@@ -143,11 +143,11 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 
 <figure>
 <img src="assets/m1_piano_roll.png" alt="Piano roll with repeating motifs circled">
-<figcaption><strong>Figure.</strong> Piano roll: pitch ↑, time →. Gray bars are notes; circled pink phrases show a motif repeated (and once transposed). Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Piano roll: pitch ↑, time →. Gray bars are notes; circled pink phrases show a motif repeated (and once transposed). Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 <figure>
 <img src="assets/m1_piano_roll_velocity.png" alt="Pitch versus time as colored bars">
-<figcaption><strong>Figure.</strong> Another pitch × time view of a polyphonic phrase (same layout as a piano roll). Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Another pitch × time view of a polyphonic phrase (same layout as a piano roll). Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <div class="interactive-box">
@@ -187,7 +187,7 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 <h3>The Compression Advantage for Transformers</h3>
 <ul>
 <li>A 4-note musical phrase consumes <strong>17 discrete tokens</strong> in REMI.</li>
-<li>The total vocabulary size (bars + positions + pitches + durations + velocities) is typically <strong>a few thousand tokens</strong>—comparable to a standard Byte-Pair Encoding (BPE) subword vocabulary in NLP.</li>
+<li>The total vocabulary size (bars + positions + pitches + durations + velocities) is typically <strong>a few thousand tokens</strong>, comparable to a standard Byte-Pair Encoding (BPE) subword vocabulary in NLP.</li>
 <li>Generating 30 seconds of symbolic music requires roughly <strong>500 to 1,500 tokens</strong>, fitting easily within standard Transformer context windows.</li>
 </ul>
 <p>However, this compression comes with an expressive tradeoff: REMI cannot capture the resonant timber of a hollow-body guitar, the breath of a vocalist, room acoustics, or subtle audio distortions. Those details exist only in the continuous acoustic record.</p>
@@ -211,7 +211,7 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 <p>The Google Bach Doodle demonstrated conditional symbolic generation at scale. The engine behind the Doodle is <strong>Coconet</strong>, an architecture trained on 389 four-part Bach chorales.</p>
 
 <div class="tool-box">
-<p style="margin-top:0;"><strong>Try it:</strong> <a href="https://www.google.com/doodles/celebrating-johann-sebastian-bach" target="_blank" rel="noopener">Google Doodle — Celebrating J.S. Bach</a> · Background: <a href="https://magenta.withgoogle.com/coconet" target="_blank" rel="noopener">Magenta Coconet</a></p>
+<p style="margin-top:0;"><strong>Try it:</strong> <a href="https://www.google.com/doodles/celebrating-johann-sebastian-bach" target="_blank" rel="noopener">Google Doodle: Celebrating J.S. Bach</a> · Background: <a href="https://magenta.withgoogle.com/coconet" target="_blank" rel="noopener">Magenta Coconet</a></p>
 </div>
 
 <h3>Mathematical Formulation</h3>
@@ -226,19 +226,60 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 <ol>
 <li><strong>Conditioning (\(c\)):</strong> The user writes a simple soprano melody on the grid.</li>
 <li><strong>Masking:</strong> The remaining three voices (Alto, Tenor, Bass) are masked out (set to unknown).</li>
-<li><strong>Infilling Iteration:</strong> The network evaluates the global context, predicts probability distributions across valid pitches for the missing cells, and samples notes iteratively using Gibbs-like sampling until all four voices are complete.</li>
+<li><strong>Infilling Iteration:</strong> The network evaluates the global context, predicts probability distributions across valid pitches for the missing cells, and fills them in a few notes at a time: it guesses, erases some of its least confident guesses, and guesses again until all four voices are complete.</li>
 </ol>
 <p>Coconet demonstrates why symbolic models excel at compositional logic: the network learns harmonic counterpoint rules directly without expending parameter capacity reconstructing waveforms or audio fidelity.</p>
   </section>
 
-<div class="bridge">
-<strong>Recommended Learning Resources</strong>
-<ul style="margin:8px 0 0;">
-<li><a href="https://www.midi.org/midi-articles/about-midi-part-1-overview" target="_blank" rel="noopener">About MIDI</a> — what NOTE_ON actually sends</li>
-<li>Huang &amp; Yang, 2020 — REMI event tokens for music transformers</li>
-<li><a href="https://magenta.withgoogle.com/coconet" target="_blank" rel="noopener">Magenta Coconet</a> — counterpoint infilling behind the Bach Doodle</li>
+  <section>
+    <h2>8. Conditional vs. Unconditional Generation</h2>
+<p>The Bach Doodle is an example of <strong>conditional</strong> generation: you supply something (a soprano melody) and the model writes music that fits it. You met the two kinds of generative model in <a href="../../1_foundations_of_genai/what_is_genai/lesson2_generative_vs_discriminative_models.html">Generative vs. Discriminative Models</a>:</p>
+<ul>
+<li><strong>Unconditional, \(P(x)\):</strong> the model invents music from nothing but what it learned in training. A Coconet with every voice masked would write a brand-new chorale, but you would have no say in what it sounds like.</li>
+<li><strong>Conditional, \(P(x \mid c)\):</strong> the model is steered by an input \(c\). In the Doodle, \(c\) is your melody. In text-to-music systems such as MusicGen, \(c\) is a text prompt. In audio continuation, \(c\) is the first few seconds of a recording.</li>
 </ul>
-</div>
+<figure class="diagram-wrap">
+<svg viewBox="0 0 680 210" role="img" aria-label="Top row: unconditional generation. The model alone produces a melody. Bottom row: conditional generation. A melody, a text prompt or an audio clip goes into the model, which produces music that fits it." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" style="max-width:680px;width:100%;">
+<defs><marker id="cg-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs>
+<text x="10" y="22" font-size="13" font-weight="700" fill="#1b1f24">Unconditional</text>
+<rect x="250" y="34" width="120" height="50" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="310" y="64" text-anchor="middle" font-size="13" fill="#1b1f24">Model</text>
+<line x1="372" y1="59" x2="440" y2="59" stroke="#475569" stroke-width="1.5" marker-end="url(#cg-a)"/>
+<g fill="#2563eb"><rect x="450" y="66" width="30" height="9" rx="2"/><rect x="484" y="54" width="30" height="9" rx="2"/><rect x="518" y="42" width="30" height="9" rx="2"/><rect x="552" y="58" width="30" height="9" rx="2"/><rect x="586" y="70" width="30" height="9" rx="2"/></g>
+<text x="533" y="100" text-anchor="middle" font-size="11.5" fill="#5b6672">any music it likes</text>
+<line x1="10" y1="118" x2="670" y2="118" stroke="#e2e8f0"/>
+<text x="10" y="142" font-size="13" font-weight="700" fill="#1b1f24">Conditional</text>
+<g font-size="12" fill="#1b1f24">
+<rect x="20" y="152" width="150" height="24" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="95" y="168" text-anchor="middle">&#9835; your melody</text>
+<rect x="20" y="180" width="150" height="24" rx="6" fill="#dbeafe" stroke="#2563eb"/><text x="95" y="196" text-anchor="middle">"calm lo-fi piano"</text>
+</g>
+<line x1="172" y1="178" x2="246" y2="178" stroke="#475569" stroke-width="1.5" marker-end="url(#cg-a)"/>
+<text x="210" y="170" text-anchor="middle" font-size="11" fill="#5b6672">c</text>
+<rect x="250" y="153" width="120" height="50" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="310" y="183" text-anchor="middle" font-size="13" fill="#1b1f24">Model</text>
+<line x1="372" y1="178" x2="440" y2="178" stroke="#475569" stroke-width="1.5" marker-end="url(#cg-a)"/>
+<g fill="#16a34a"><rect x="450" y="184" width="30" height="9" rx="2"/><rect x="484" y="176" width="30" height="9" rx="2"/><rect x="518" y="168" width="30" height="9" rx="2"/><rect x="552" y="176" width="30" height="9" rx="2"/><rect x="586" y="184" width="30" height="9" rx="2"/></g>
+<text x="533" y="160" text-anchor="middle" font-size="11.5" fill="#5b6672">music that fits c</text>
+</svg>
+<figcaption>Unconditional models sample whatever they like; conditional models are steered by an input \(c\).</figcaption>
+</figure>
+<p>How does \(c\) get into the model? The same ways you saw in <a href="../core_multimodal_foundations/lesson3_fusion_strategies.html">Multimodal Fusion Strategies</a>: put the condition in front of the sequence as extra tokens, or let the generator look it up with cross-attention. Lesson 3 shows how a text-to-music model uses this once audio itself has been turned into tokens.</p>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://midi.org/tutorial-on-midi-and-music-synthesis" target="_blank" rel="noopener">About MIDI Tutorial Series (The MIDI Association)</a>
+          <span class="desc">What NOTE_ON and the other MIDI messages actually send.</span></li>
+        <li><a href="https://arxiv.org/abs/2002.00212" target="_blank" rel="noopener">Pop Music Transformer (Huang &amp; Yang, 2020)</a>
+          <span class="desc">The paper that introduced REMI event tokens for music Transformers.</span></li>
+        <li><a href="https://arxiv.org/abs/1903.07227" target="_blank" rel="noopener">Counterpoint by Convolution (Huang et al., 2017)</a>
+          <span class="desc">Coconet, the infilling model behind the Bach Doodle. The <a href="https://magenta.withgoogle.com/coconet" target="_blank" rel="noopener">Magenta Coconet page</a> is a gentler introduction.</span></li>
+        <li><a href="https://arxiv.org/abs/2306.05284" target="_blank" rel="noopener">Simple and Controllable Music Generation (Copet et al., 2023)</a>
+          <span class="desc">MusicGen, a text- and melody-conditioned music model.</span></li>
+        <li><a href="https://arxiv.org/abs/2207.12598" target="_blank" rel="noopener">Classifier-Free Diffusion Guidance (Ho &amp; Salimans, 2022)</a>
+          <span class="desc">A common trick for making a model follow its condition more strongly.</span></li>
+    </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
@@ -381,7 +422,7 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
     });
     function schedulePlay() {
         if (!countNotes()) {
-            panel.textContent = 'No notes on the grid — click cells to add some, then hit Play.';
+            panel.textContent = 'No notes on the grid. Click cells to add some, then hit Play.';
             return;
         }
         var step = 0.25;

@@ -3,10 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steering the AI: Conditioning and Guidance · F.O.R.G.E. AI Challenge</title>
+<title>Music Captioning · F.O.R.G.E. AI Challenge</title>
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+.mc-scroll { overflow-x: auto; }
+.mc-scroll svg { min-width: 600px; }
+</style>
 </head>
 <body class="genai">
 
@@ -24,222 +28,250 @@
 
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Audio Generation</p>
-    <h1>Steering the AI: Conditioning and Guidance</h1>
-    <p class="lede">In Lesson 3, we turned continuous audio waveforms into discrete streams of neural codec tokens.</p>
+    <h1>Music Captioning: From Sound Back to Words</h1>
+    <p class="lede">The audio deep dive went from text to sound. This lesson goes the other way: a model listens to a clip and writes a description of it. Music captioners pair an audio encoder with a language model, and they have their own problems, mostly about where the training captions come from and what a caption can honestly claim.</p>
   </header>
 
+  <div class="callout callout--note">
+    <p class="callout__title">What you should already know</p>
+    <ul>
+        <li>Mel spectrograms from <a href="../intro_to_audio_generation/lesson1.html">Turning Sound into Numbers</a> and codec tokens from <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a>.</li>
+        <li>Conditional generation from <a href="../intro_to_audio_generation/lesson2.html">Recipes vs. Records</a> (Section 8) and the text-to-music pipeline from <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a> (Section 6).</li>
+        <li>Prefix (early) fusion and cross-attention from <a href="../core_multimodal_foundations/lesson3_fusion_strategies.html">Fusion Strategies</a>.</li>
+        <li>Contrastive training and CLIP from <a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">Representation &amp; Latent Spaces</a>.</li>
+        <li>Next-token prediction and cross-entropy loss from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html">Transformers: Putting It All Together</a>.</li>
+    </ul>
+  </div>
+
   <section>
-    <p>An unconstrained autoregressive Transformer trained on these tokens will generate audio that sounds like a random walk through its training distribution. It might drift from a classical piano sonata into heavy metal guitar feedback, followed by a snippet of spoken podcast dialogue.</p>
-<p>To build useful generative models, we need a mathematical steering wheel.</p>
-<p><strong>Conditioning</strong> is the mechanism that reshapes the probability distribution at every single autoregressive step. Instead of sampling from a generic prior \(P(a_t \mid a_{&lt;t})\), we condition generation on an external control signal \(c\):</p>
-<div class="eq-panel">\[ P(a_t \mid a_{1}, \dots, a_{t-1}, \mathbf{c}) \]</div>
-<p>Where \(\mathbf{c}\) can be a natural language prompt (<code>"lo-fi hip hop beat with warm piano"</code>), an audio prefix (continuing an existing 3-second recording), a melody pitch contour, or an empty set (\(\emptyset\)).</p>
+    <h2>1. Running Text-to-Music Backwards</h2>
+    <p>In a text-to-music model, the text is the condition and audio tokens are the output. A music captioner swaps the two. The audio is the condition, and the model predicts a caption one word at a time:</p>
+    <div class="eq-panel">\[ P(w_1, \dots, w_N \mid \text{audio}) = \prod_{t=1}^{N} P(w_t \mid w_{&lt;t}, \text{audio}) \]</div>
+    <p>This is the same next-token prediction a language model does, with one extra input. Training uses cross-entropy on the caption tokens. During training the decoder is shown the true previous words of the caption (called <strong>teacher forcing</strong>), so every position can be scored in one pass. At generation time it has to use its own previous words instead.</p>
+    <p>Two things make captioning music harder than it looks:</p>
+    <ul>
+        <li><strong>There is no single right answer.</strong> "Mellow late-night jazz with brushed drums" and "A slow trio piece, piano and upright bass, quiet and warm" can both be correct for the same clip. Scoring against one reference caption punishes good descriptions that use different words.</li>
+        <li><strong>Paired data is scarce.</strong> There are millions of captioned images but only a few thousand music clips with sentences written by people. Most music datasets have tags (genre, mood, instrument) instead of sentences. Section 4 is about what to do with that.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>1. How Conditioning Reshapes the Softmax Distribution</h2>
-<p>At any generation step \(t\), the final linear layer of an audio language model outputs a vector of raw, unnormalized scores called <strong>logits</strong> (\(z_1, z_2, \dots, z_V\)) across the vocabulary of \(V\) codebook entries.</p>
-<p>The model converts these logits into a valid probability distribution using the <strong>Softmax function</strong>:</p>
-<div class="eq-panel">\[ P(a_t = i \mid a_{&lt;t}, \mathbf{c}) = \frac{\exp(z_i)}{\sum_{j=1}^{V} \exp(z_j)} \]</div>
-<p>Conditioning does not alter the sampling formula itself. Instead, <strong>it modifies the underlying logit vector \(z\) before the Softmax is evaluated.</strong></p>
+    <h2>2. The Recipe: Encoder, Projection, Decoder</h2>
+    <p>Most music captioners have three parts:</p>
+    <ol>
+        <li>An <strong>audio encoder</strong> turns the clip into a sequence of feature vectors, usually one per short slice of time. It is pretrained and usually frozen.</li>
+        <li>A <strong>projection</strong> (a linear layer or a small MLP) maps those vectors into the size the language model expects. It often also pools neighbouring frames together so there are fewer of them. This part is small and trained from scratch.</li>
+        <li>A <strong>text decoder</strong> (a pretrained language model) reads the projected audio vectors and writes the caption. It is fine-tuned, either all of its weights or only a small set of added ones (you will meet LoRA, the most common way to do this, in the image unit).</li>
+    </ol>
 
-<h3>Worked Numerical Example: Unconditioned vs. Conditioned Logits</h3>
-<p>Consider a toy vocabulary of 5 prototype sound tokens:</p>
-<div class="eq-panel">\[ \text{Vocabulary} = \{\text{soft\_pad}, \text{guitar\_pluck}, \text{distorted\_riff}, \text{brush\_kit}, \text{glitch\_noise}\} \]</div>
+    <figure class="diagram-wrap">
+      <div class="mc-scroll">
+      <svg viewBox="0 0 720 250" role="img" aria-label="A waveform goes into a frozen audio encoder, which outputs 750 frame vectors. A trained pool-and-projection layer turns them into 30 audio tokens. The audio tokens are placed in front of the caption so far, and the text decoder predicts the next word." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<defs><marker id="mc-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs>
+<path d="M18,54 l6,-14 l6,26 l6,-30 l6,34 l6,-22 l6,14 l6,-8 l6,4" fill="none" stroke="#2563eb" stroke-width="2"/>
+<text x="45" y="92" text-anchor="middle" font-size="12" fill="#1b1f24">10 s clip</text>
+<line x1="80" y1="52" x2="117" y2="52" stroke="#475569" stroke-width="1.5" marker-end="url(#mc-a)"/>
+<rect x="120" y="28" width="160" height="48" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="200" y="50" text-anchor="middle" font-size="12.5" fill="#1b1f24">Audio encoder</text><text x="200" y="66" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">pretrained, frozen</text>
+<line x1="280" y1="52" x2="417" y2="52" stroke="#475569" stroke-width="1.5" marker-end="url(#mc-a)"/>
+<text x="348" y="44" text-anchor="middle" font-size="11.5" fill="#5b6672">750 frame vectors</text>
+<text x="348" y="68" text-anchor="middle" font-size="11" fill="#5b6672">(750 × 768)</text>
+<rect x="420" y="28" width="170" height="48" rx="8" fill="#ffffff" stroke="#475569" stroke-width="1.5"/><text x="505" y="50" text-anchor="middle" font-size="12.5" fill="#1b1f24">Pool + projection</text><text x="505" y="66" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">small, trained from scratch</text>
+<path d="M505,76 L505,104 L120,104 L120,131" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#mc-a)"/>
+<text x="320" y="98" text-anchor="middle" font-size="11" fill="#5b6672">30 audio tokens (30 × 1024)</text>
+<rect x="30" y="136" width="24" height="26" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+<rect x="58" y="136" width="24" height="26" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+<rect x="86" y="136" width="24" height="26" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+<rect x="114" y="136" width="24" height="26" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+<text x="152" y="154" text-anchor="middle" font-size="13" fill="#1b1f24">…</text>
+<rect x="166" y="136" width="24" height="26" rx="4" fill="#dbeafe" stroke="#2563eb"/>
+<rect x="204" y="136" width="40" height="26" rx="4" fill="#ffffff" stroke="#94a3b8"/><text x="224" y="153" text-anchor="middle" font-size="12" fill="#1b1f24">A</text>
+<rect x="248" y="136" width="48" height="26" rx="4" fill="#ffffff" stroke="#94a3b8"/><text x="272" y="153" text-anchor="middle" font-size="12" fill="#1b1f24">slow</text>
+<rect x="300" y="136" width="56" height="26" rx="4" fill="#ffffff" stroke="#94a3b8"/><text x="328" y="153" text-anchor="middle" font-size="12" fill="#1b1f24">piano</text>
+<text x="110" y="184" text-anchor="middle" font-size="11" fill="#5b6672">audio prefix</text>
+<text x="280" y="184" text-anchor="middle" font-size="11" fill="#5b6672">caption so far</text>
+<line x1="362" y1="149" x2="397" y2="149" stroke="#475569" stroke-width="1.5" marker-end="url(#mc-a)"/>
+<rect x="400" y="125" width="170" height="48" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="485" y="147" text-anchor="middle" font-size="12.5" fill="#1b1f24">Text decoder</text><text x="485" y="163" text-anchor="middle" font-size="11" fill="#b45309" font-weight="600">pretrained, fine-tuned</text>
+<line x1="570" y1="149" x2="597" y2="149" stroke="#475569" stroke-width="1.5" marker-end="url(#mc-a)"/>
+<text x="604" y="145" font-size="11" fill="#5b6672">next word</text>
+<text x="604" y="162" font-size="13" font-weight="700" fill="#1b1f24">"ballad"</text>
+<text x="360" y="225" text-anchor="middle" font-size="11.5" fill="#5b6672">The decoder treats the audio tokens like extra words at the start of the sequence and attends to them at every step.</text>
+      </svg>
+      </div>
+      <figcaption>A prefix-style music captioner. The dashed box is frozen; the white box is trained from scratch; the orange box starts pretrained and is fine-tuned. Shapes are an example, worked through below.</figcaption>
+    </figure>
 
-<h4>Case A: Unconditioned Generation (\(\mathbf{c} = \emptyset\))</h4>
-<p>When no condition is supplied, the network relies on its baseline training priors. The logits are nearly uniform:</p>
-<div class="table-wrap"><table>
-<tr><th>Token (\(i\))</th><th>Logit (\(z_i\))</th><th>Exponential \(\exp(z_i)\)</th><th>Probability \(P(i)\)</th></tr>
-<tr><td><code>soft_pad</code></td><td>\(1.0\)</td><td>\(\exp(1.0) \approx 2.718\)</td><td>\(\mathbf{19.4\%}\)</td></tr>
-<tr><td><code>guitar_pluck</code></td><td>\(1.2\)</td><td>\(\exp(1.2) \approx 3.320\)</td><td>\(\mathbf{23.7\%}\)</td></tr>
-<tr><td><code>distorted_riff</code></td><td>\(0.8\)</td><td>\(\exp(0.8) \approx 2.226\)</td><td>\(\mathbf{15.9\%}\)</td></tr>
-<tr><td><code>brush_kit</code></td><td>\(1.1\)</td><td>\(\exp(1.1) \approx 3.004\)</td><td>\(\mathbf{21.5\%}\)</td></tr>
-<tr><td><code>glitch_noise</code></td><td>\(1.0\)</td><td>\(\exp(1.0) \approx 2.718\)</td><td>\(\mathbf{19.4\%}\)</td></tr>
-<tr><td><strong>Total Sum</strong></td><td>—</td><td>\(\sum \approx 13.986\)</td><td><strong>\(100.0\%\)</strong></td></tr>
-</table></div>
-<p>The distribution is diffuse. The sampler is almost equally likely to emit a chill synth pad, a drum brush, or a distorted riff.</p>
+    <h3>Tracing the shapes</h3>
+    <p>Here is one clip moving through an example captioner. The encoder numbers match MERT-95M, a music encoder introduced in the next section; the decoder width is an example.</p>
+    <figure class="diagram-wrap">
+      <div class="mc-scroll">
+      <svg viewBox="0 0 720 360" role="img" aria-label="Tensor shapes for one clip. 1: a 10 second audio clip at 24 kHz has shape 240,000. 2: the frozen audio encoder outputs 75 frames per second with 768 dimensions, shape 750 by 768. 3: pooling every 25 frames gives 30 by 768. 4: the trained projection maps to the decoder width, 30 by 1024, the audio tokens. 5: concatenating 20 caption token embeddings gives 50 by 1024. 6: the text decoder outputs logits of shape 50 by V, and the loss is computed only on the 20 caption positions." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+<defs><marker id="ts-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs>
+<rect x="15" y="20" width="210" height="125" rx="10" fill="#ffffff" stroke="#94a3b8"/>
+<text x="30" y="44" font-size="12" font-weight="700" fill="#5b6672">1</text>
+<text x="120" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Audio clip</text>
+<text x="120" y="63" text-anchor="middle" font-size="11.5" fill="#5b6672">10 s at 24 kHz</text>
+<text x="120" y="98" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(240,000,)</text>
+<text x="120" y="125" text-anchor="middle" font-size="11.5" fill="#5b6672">raw samples</text>
+<line x1="225" y1="82" x2="252" y2="82" stroke="#475569" stroke-width="1.5" marker-end="url(#ts-a)"/>
+<rect x="255" y="20" width="210" height="125" rx="10" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/>
+<text x="270" y="44" font-size="12" font-weight="700" fill="#5b6672">2</text>
+<text x="360" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Frozen audio encoder</text>
+<text x="360" y="63" text-anchor="middle" font-size="11.5" fill="#5b6672">75 frames/s, 768 dims each</text>
+<text x="360" y="98" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(750, 768)</text>
+<text x="360" y="125" text-anchor="middle" font-size="11.5" fill="#5b6672">one vector per frame</text>
+<line x1="465" y1="82" x2="492" y2="82" stroke="#475569" stroke-width="1.5" marker-end="url(#ts-a)"/>
+<rect x="495" y="20" width="210" height="125" rx="10" fill="#ffffff" stroke="#94a3b8"/>
+<text x="510" y="44" font-size="12" font-weight="700" fill="#5b6672">3</text>
+<text x="600" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Pool every 25 frames</text>
+<text x="600" y="63" text-anchor="middle" font-size="11.5" fill="#5b6672">one vector per third of a second</text>
+<text x="600" y="98" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(30, 768)</text>
+<text x="600" y="125" text-anchor="middle" font-size="11.5" fill="#5b6672">750 ÷ 25 = 30</text>
+<path d="M600,145 L600,170 L120,170 L120,192" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#ts-a)"/>
+<rect x="15" y="195" width="210" height="125" rx="10" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+<text x="30" y="219" font-size="12" font-weight="700" fill="#5b6672">4</text>
+<text x="120" y="219" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Trained projection</text>
+<text x="120" y="238" text-anchor="middle" font-size="11.5" fill="#5b6672">to the decoder's width</text>
+<text x="120" y="273" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(30, 1024)</text>
+<text x="120" y="300" text-anchor="middle" font-size="11.5" fill="#5b6672">30 "audio tokens"</text>
+<line x1="225" y1="257" x2="252" y2="257" stroke="#475569" stroke-width="1.5" marker-end="url(#ts-a)"/>
+<rect x="255" y="195" width="210" height="125" rx="10" fill="#ffffff" stroke="#94a3b8"/>
+<text x="270" y="219" font-size="12" font-weight="700" fill="#5b6672">5</text>
+<text x="360" y="219" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Concatenate</text>
+<text x="360" y="238" text-anchor="middle" font-size="11.5" fill="#5b6672">+ 20 caption token embeddings</text>
+<text x="360" y="273" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(50, 1024)</text>
+<text x="360" y="300" text-anchor="middle" font-size="11.5" fill="#5b6672">30 audio + 20 text positions</text>
+<line x1="465" y1="257" x2="492" y2="257" stroke="#475569" stroke-width="1.5" marker-end="url(#ts-a)"/>
+<rect x="495" y="195" width="210" height="125" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="510" y="219" font-size="12" font-weight="700" fill="#b45309">6</text>
+<text x="600" y="219" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Text decoder</text>
+<text x="600" y="238" text-anchor="middle" font-size="11.5" fill="#5b6672">logits at every position</text>
+<text x="600" y="273" text-anchor="middle" font-size="17" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#2563eb">(50, V)</text>
+<text x="600" y="296" text-anchor="middle" font-size="11.5" fill="#b45309">loss only on the 20</text>
+<text x="600" y="310" text-anchor="middle" font-size="11.5" fill="#b45309">caption positions</text>
+<text x="360" y="346" text-anchor="middle" font-size="11.5" fill="#5b6672">V is the size of the decoder's vocabulary.</text>
+      </svg>
+      </div>
+      <figcaption>Tensor shapes for one 10-second clip passing through an example captioner. The dashed box is frozen, the dark-outlined box is trained from scratch, and the orange box is the fine-tuned decoder.</figcaption>
+    </figure>
+    <p>Pooling is a trade-off. Fewer audio tokens make training faster and force the projection to summarize, but a change that lasts less than one pooled window (a short drum fill, a single sung word) can disappear.</p>
 
-<h4>Case B: Conditioned on Prompt \(\mathbf{c} = \text{"Heavy Metal, Electric Guitar"}\)</h4>
-<p>Through cross-attention to the prompt, the network injects strong positive energy into guitar/metal tokens (\(\Delta z = +2.0\)) and suppresses calm/acoustic tokens (\(\Delta z = -1.0\)):</p>
-<div class="table-wrap"><table>
-<tr><th>Token (\(i\))</th><th>Conditioned Logit (\(z_i\))</th><th>Exponential \(\exp(z_i)\)</th><th>Probability \(P(i)\)</th></tr>
-<tr><td><code>soft_pad</code></td><td>\(1.0 - 1.0 = \mathbf{0.0}\)</td><td>\(\exp(0.0) = 1.000\)</td><td>\(\mathbf{3.3\%}\)</td></tr>
-<tr><td><code>guitar_pluck</code></td><td>\(1.2 - 1.0 = \mathbf{0.2}\)</td><td>\(\exp(0.2) \approx 1.221\)</td><td>\(\mathbf{4.0\%}\)</td></tr>
-<tr><td><code>distorted_riff</code></td><td>\(0.8 + 2.0 = \mathbf{2.8}\)</td><td>\(\exp(2.8) \approx 16.445\)</td><td>\(\mathbf{53.6\%}\)</td></tr>
-<tr><td><code>brush_kit</code></td><td>\(1.1 - 1.0 = \mathbf{0.1}\)</td><td>\(\exp(0.1) \approx 1.105\)</td><td>\(\mathbf{3.6\%}\)</td></tr>
-<tr><td><code>glitch_noise</code></td><td>\(1.0 + 1.0 = \mathbf{2.0}\)</td><td>\(\exp(2.0) \approx 7.389\)</td><td>\(\mathbf{24.1\%}\)</td></tr>
-<tr><td><strong>Total Sum</strong></td><td>—</td><td>\(\sum \approx 30.670\)</td><td><strong>\(100.0\%\)</strong></td></tr>
-</table></div>
-<p>Because exponentiation acts multiplicatively, shifting the logit of <code>distorted_riff</code> up to \(2.8\) causes its probability mass to jump from <strong>\(15.9\%\) to \(53.6\%\)</strong>, heavily biasing the autoregressive engine toward the desired genre.</p>
-
-<div class="interactive-box">
-<strong>Interactive: Softmax from logits</strong>
-<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Edit the five logits. The bars are \(\exp(z_i)/\sum\exp(z_j)\). Try the unconditioned row \((1.0, 1.2, 0.8, 1.1, 1.0)\), then the conditioned row \((0.0, 0.2, 2.8, 0.1, 2.0)\).</p>
-<div id="sm-inputs"></div>
-<div id="sm-bars"></div>
-<p class="status" id="sm-sum" style="font-size:0.88em;color:#64748b;"></p>
-</div>
+    <h3>Prefix or cross-attention?</h3>
+    <p>The first figure in this section shows the <strong>prefix</strong> approach: audio tokens are placed in front of the words, in the same sequence. The other option is <strong>cross-attention</strong>, as in the text-to-music model from <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a> but with the roles reversed: the caption tokens are the queries and the audio features supply the keys and values. Prefixing is easier to bolt onto an existing language model because it adds no new layers. Cross-attention adds layers that start untrained, but it handles long audio sequences without making the text sequence longer. Both are forms of the intermediate fusion you saw in <a href="../core_multimodal_foundations/lesson3_fusion_strategies.html">Fusion Strategies</a>.</p>
   </section>
 
   <section>
-    <h2>2. Text Conditioning via Cross-Attention</h2>
-<p>In production systems like Meta's <strong>MusicGen</strong>, text instructions are not concatenated as prefix tokens in the main sequence. Instead, text conditioning is injected via <strong>Cross-Attention</strong> layers embedded within every Transformer decoder block.</p>
-<pre class="shape-trail">Text Prompt: "Calm lo-fi piano"
-   │
-   ▼
-[ Frozen Text Encoder (e.g., T5-Large) ]
-   │
-   ▼
-Text Embeddings E_text ∈ ℝ^(L × d_text)
-   │
-   ├───────────────────────────────┐
-   │ (Keys K_text, Values V_text)  │
-   ▼                               ▼
-[ Transformer Decoder Block 1 ] ──► [ Transformer Decoder Block N ]
-   ▲                               ▲
-   │ (Queries Q_audio)             │ (Queries Q_audio)
-Audio Token Stream a_&lt;t ───────────┴───────────────────────────────</pre>
-
-<figure>
-<img src="assets/m4_musicgen_arch.png" alt="Text encoder, audio tokens, transformer decoder, audio decoder">
-<figcaption><strong>Figure.</strong> MusicGen-style stack: text encoder + audio tokens → transformer decoder (causal self-attention + cross-attention) → audio decoder → waveform. Original figure: Kreuk et al., <a href="https://arxiv.org/abs/2209.15352" target="_blank" rel="noopener">&ldquo;AudioGen: Textually Guided Audio Generation&rdquo;</a>, 2022. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
-</figure>
-<figure>
-<img src="assets/m4_diffusion_cond.png" alt="Three DiT conditioning block designs">
-<figcaption><strong>Figure.</strong> Three ways a condition \(c\) can enter a generative block: adaptive layer-norm, extra cross-attention, or concatenate on the sequence. MusicGen uses cross-attention; diffusion transformers often use adaLN. Original figure: Peebles &amp; Xie, <a href="https://arxiv.org/abs/2212.09748" target="_blank" rel="noopener">&ldquo;Scalable Diffusion Models with Transformers (DiT)&rdquo;</a>, 2023. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
-</figure>
-
-<h3>The Cross-Attention Mechanism</h3>
-<ol>
-<li><strong>Text Encoding:</strong> A frozen pre-trained text model (such as T5-Large or CLAP) transforms a prompt of length \(L\) into a continuous sequence of contextual vectors \(E_{\text{text}} \in \mathbb{R}^{L \times d_{\text{text}}}\).</li>
-<li><strong>Key/Value Projections:</strong> These text embeddings are projected into Key (\(K_{\text{text}}\)) and Value (\(V_{\text{text}}\)) matrices and cached once:
-<div class="eq-panel">\[ K_{\text{text}} = E_{\text{text}} W_K, \quad V_{\text{text}} = E_{\text{text}} W_V \]</div>
-</li>
-<li><strong>Audio Queries:</strong> At each generation step \(t\), the current state of the generated audio tokens \(a_{&lt;t}\) forms the Query matrix (\(Q_{\text{audio}} = H_{\text{audio}} W_Q\)).</li>
-<li><strong>Attention Computation:</strong>
-<div class="eq-panel">\[ \text{CrossAttention}(Q_{\text{audio}}, K_{\text{text}}, V_{\text{text}}) = \text{softmax}\left(\frac{Q_{\text{audio}} K_{\text{text}}^T}{\sqrt{d_k}}\right) V_{\text{text}} \]</div>
-</li>
-</ol>
-<p>This formulation allows the model to dynamically look up relevant tokens from the prompt at every step. When generating a solo section, the queries attend heavily to <code>"piano"</code>; when laying down the rhythmic groove, they attend to <code>"lo-fi beat"</code>.</p>
+    <h2>3. Which Audio Encoder?</h2>
+    <p>The encoder decides what the decoder can possibly "hear." Two widely used families learn very different things:</p>
+    <ul>
+        <li><strong>CLAP's audio encoder</strong> was trained contrastively on audio and caption pairs, the audio version of CLIP. Its features already line up with language, so a small projection can connect them to a decoder. It is trained to summarize a whole clip as one vector, so it is good at overall genre, mood and instruments and weaker at what happens when.</li>
+        <li><strong>MERT</strong> was trained only on music, with no text at all. It learns by predicting hidden parts of a clip, using targets built from codec tokens (like those in <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a>) and a pitch-based spectrogram. Its frame-level features carry detail about pitch, rhythm and timbre, but they say nothing about words, so the projection and decoder have to learn the whole mapping to language from your paired data.</li>
+    </ul>
+    <div class="table-wrap"><table>
+        <thead><tr><th></th><th>CLAP audio encoder</th><th>MERT</th></tr></thead>
+        <tbody>
+            <tr><td>Trained on</td><td>Audio paired with text</td><td>Music only</td></tr>
+            <tr><td>Typical output</td><td>One vector per clip (frame features exist before pooling)</td><td>One vector per frame</td></tr>
+            <tr><td>Strong at</td><td>Genre, mood, overall sound</td><td>Pitch, key, beat, instrument detail</td></tr>
+            <tr><td>Weak at</td><td>Timing and structure inside the clip</td><td>Anything about language</td></tr>
+            <tr><td>Paired data needed</td><td>Less</td><td>More</td></tr>
+        </tbody>
+    </table></div>
+    <p>A complete pretrained captioner (for example, one released with a music captioning paper) bundles an encoder and decoder that were already trained together. Starting from one is the fastest path to a working model. Building your own from an encoder and a decoder gives you more control over each part, at the cost of more training.</p>
   </section>
 
   <section>
-    <h2>3. Audio Prompting &amp; Continuation: Working with Prefixes</h2>
-<p>Conditioning is not limited to text. In <strong>Audio Continuation</strong>, the model extends an existing audio snippet while preserving its key, tempo, and timbre.</p>
-<p>Because neural codecs represent audio as a regular grid of \((F \times K)\) discrete indices, audio conditioning is exact:</p>
-<ol>
-<li>Pass a reference audio clip of duration \(T_{\text{prefix}}\) through the frozen neural codec encoder.</li>
-<li>Quantize the latents into \(F_{\text{prefix}} \times K\) discrete token IDs.</li>
-<li>Lock these prefix tokens into the Transformer's context buffer as fixed historical tokens (\(a_1, \dots, a_{N_{\text{prefix}}}\)).</li>
-<li>Run standard autoregressive sampling starting strictly at index \(N_{\text{prefix}} + 1\).</li>
-</ol>
-<pre class="shape-trail">Audio Prefix (Fixed History):           Generated Continuation (Sampled):
-Frame 0      Frame 1      ...  Frame F   Frame F+1    Frame F+2    ...
-[ k1,0 ] ──► [ k1,1 ] ──► ... ──► [ k1,F ] ──► [ k1,F+1 ] ──► [ k1,F+2 ] ──► ...
-[ k2,0 ] ──► [ k2,1 ] ──► ... ──► [ k2,F ] ──► [ k2,F+1 ] ──► [ k2,F+2 ] ──► ...
-[ k3,0 ] ──► [ k3,1 ] ──► ... ──► [ k3,F ] ──► [ k3,F+1 ] ──► [ k3,F+2 ] ──► ...
-[ k4,0 ] ──► [ k4,1 ] ──► ... ──► [ k4,F ] ──► [ k4,F+1 ] ──► [ k4,F+2 ] ──► ...
-└──────────────┬────────────────────────┘ └──────────────┬───────────────────┘
-   Copied directly from Reference Audio     Generated Autoregressively by LM</pre>
+    <h2>4. Where Captions Come From</h2>
+    <p>The decoder learns its vocabulary and sentence shapes entirely from the text side of the training data. Whatever voice the captions have, the model will have. So the question "where do my captions come from?" decides both how accurate the model is and how it sounds.</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Source</th><th>Example</th><th>Strength</th><th>Risk</th></tr></thead>
+        <tbody>
+            <tr><td>Captions written by people</td><td>MusicCaps (about 5,500 clips described by musicians), Song Describer (about 1,100 captions)</td><td>Accurate and varied</td><td>Small; may not match your vocabulary</td></tr>
+            <tr><td>Tags filled into templates</td><td>Tags from MTG-Jamendo or FMA turned into sentences by rules you write</td><td>Large, and only says what the tags say</td><td>Every caption has the same few shapes</td></tr>
+            <tr><td>Tags rewritten by a language model</td><td>LP-MusicCaps (about 2.2 million captions generated from tags)</td><td>Large and fluent</td><td>Can invent details the tags never mentioned</td></tr>
+            <tr><td>Prompts of generated music</td><td>Clips from a text-to-music model, paired with the prompt that made them</td><td>Unlimited and on-style</td><td>The prompt says what was asked for, not what came out</td></tr>
+        </tbody>
+    </table></div>
+    <p>The last row is the easiest to get wrong. If a text-to-music model was asked for "harp and strings" but produced only strings, the pair teaches the captioner to say "harp" when there is none. A captioner trained this way also learns the habits of that one generator rather than how music sounds in general.</p>
+    <p>Generated or rewritten captions are <strong>synthetic data</strong>. A common pattern is to mix real and synthetic pairs and treat the mix ratio as something you test, not assume. Whatever the mix, evaluate on captions written by people that the model never trained on, or you will be measuring how well it copies the synthetic source.</p>
 
-<h3>Worked Calculation: Prefix Token Budget</h3>
-<p>Assume a \(32\text{ kHz}\) neural codec with a framing rate of \(50\text{ Hz}\) and \(K = 4\) residual codebooks.</p>
-<p>To provide a <strong>4.0-second drum loop</strong> as a prompt and generate <strong>6.0 seconds of new music</strong>:</p>
-<ul>
-<li>Prefix Frames: \(F_{\text{prefix}} = 4.0\text{ s} \times 50\text{ frames/s} = \mathbf{200\text{ frames}}\)</li>
-<li>Prefix Tokens: \(200\text{ frames} \times 4\text{ codebooks} = \mathbf{800\text{ tokens}}\)</li>
-<li>New Frames to Generate: \(F_{\text{gen}} = 6.0\text{ s} \times 50\text{ frames/s} = \mathbf{300\text{ frames}}\)</li>
-<li>New Token Steps: \(300\text{ frames} \times 4\text{ codebooks} = \mathbf{1,200\text{ tokens}}\)</li>
-<li>Total Sequence Length: \(800 + 1,200 = \mathbf{2,000\text{ tokens}}\)</li>
-</ul>
   </section>
 
   <section>
-    <h2>4. Classifier-Free Guidance (CFG): Amplifying Adherence</h2>
-<p>Even with cross-attention, autoregressive models often under-index on prompt conditioning. Left to standard sampling, the model may default to generic pop progressions rather than following nuanced prompt instructions like <code>"ambient drone with microtonal flute"</code>.</p>
-<p><strong>Classifier-Free Guidance (CFG)</strong> pushes the model toward its conditioning signal without requiring a separate classifier network. Note: It <em>encourages</em> prompt adherence; it cannot guarantee it, especially for concepts the model rarely saw during training.</p>
-
-<h3>How CFG Works</h3>
-<ol>
-<li><strong>Training with Dropout:</strong> During training, the conditioning signal \(\mathbf{c}\) is randomly dropped (replaced with a null token \(\emptyset\)) on a fraction of batches (typically \(10\text{ to }20\%\)). The single Transformer learns both the conditional distribution \(P(a_t \mid a_{&lt;t}, \mathbf{c})\) and the unconditional prior \(P(a_t \mid a_{&lt;t}, \emptyset)\).</li>
-<li><strong>Dual Inference Forward Pass:</strong> At inference time, the model executes two forward passes at every step:
-<ul>
-<li>A conditional forward pass producing logits: \(z_{\mathbf{c}} = \text{Model}(a_{&lt;t}, \mathbf{c})\)</li>
-<li>An unconditional forward pass producing logits: \(z_{\emptyset} = \text{Model}(a_{&lt;t}, \emptyset)\)</li>
-</ul>
-</li>
-<li><strong>Linear Extrapolation:</strong> The final guided logit vector is computed by moving away from the unconditional baseline in the direction of the prompt:
-<div class="eq-panel">\[ z_{\text{guided}} = z_{\emptyset} + w \cdot (z_{\mathbf{c}} - z_{\emptyset}) \]</div>
-Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
-</li>
-</ol>
-<pre class="shape-trail">Logit Space Extrapolation:
-
- Unconditioned Logits (z_∅) ──────► Prompted Logits (z_c) ──────► Final Guided Logits (z_guided)
-                                      [ Vector Difference: (z_c - z_∅) ]
-                                      &lt;───────────────────────────────&gt;
-                                            Scaled by Factor w &gt; 1.0</pre>
-
-<h3>Practical Effects of the Guidance Scale (\(w\))</h3>
-<ul>
-<li><strong>\(w = 1.0\):</strong> Standard conditional sampling (no guidance boost).</li>
-<li><strong>\(w = 3.0\text{ to }5.0\) (Sweet Spot):</strong> Noticeable boost in prompt adherence, cleaner instrumental separation, and tighter rhythmic fidelity.</li>
-<li><strong>\(w &gt; 8.0\) (Over-guidance):</strong> The logit distribution becomes overly peaked, leading to metallic high-frequency artifacts, repetitive musical loops, and dynamic range clipping.</li>
-</ul>
+    <h2>5. Augmenting Audio Without Lying to the Labels</h2>
+    <p>Augmentation makes new training examples by changing existing ones, which is useful when paired data is scarce. For audio-text pairs (whether you are training a captioner or a text-to-music model), the rule is simple: <strong>an augmentation is safe only if every claim in the caption is still true afterwards.</strong> If a claim changes, either update the caption to match or don't use that augmentation.</p>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Augmentation</th><th>What it changes</th><th>Caption claims it can break</th></tr></thead>
+        <tbody>
+            <tr><td>Random crop or offset</td><td>Which part of the song you hear</td><td>"Starts with a drum intro," "builds to a loud ending"</td></tr>
+            <tr><td>Gain change, added noise, reverb</td><td>Loudness and recording quality</td><td>"Clean studio sound," "intimate and dry"</td></tr>
+            <tr><td>Time stretch</td><td>Tempo (and feel, if large)</td><td>Any BPM or tempo word; possibly mood</td></tr>
+            <tr><td>Pitch shift</td><td>Key; large shifts also change timbre</td><td>The key; "deep male vocal"; instrument identity</td></tr>
+            <tr><td>Mixing stems or two clips</td><td>Which instruments are present</td><td>The instrument list; "solo piano"</td></tr>
+        </tbody>
+    </table></div>
+    <p>Small, label-preserving changes (a short crop, a little gain or noise) are usually safe for captions about genre and mood. Changes to tempo and pitch are safe only when you update the caption with them. Mixing is the most powerful and the most dangerous: it can teach a model about combinations it has rarely heard, but only if the caption lists every instrument in the mix.</p>
   </section>
 
   <section>
-    <h2>5. Comparison of Conditioning Paradigms Across Audio Generation</h2>
-<div class="table-wrap"><table>
-<tr><th>Paradigm</th><th>Input Condition \(\mathbf{c}\)</th><th>Injection Method</th><th>Strengths</th><th>Limitations</th></tr>
-<tr><td><strong>Text Conditioning</strong></td><td>Natural language string</td><td>Cross-attention over frozen text embeddings (T5, CLAP)</td><td>Highly expressive; accessible to non-musicians</td><td>Coarse control; cannot specify exact note pitches or rhythms</td></tr>
-<tr><td><strong>Audio Prefix (Continuation)</strong></td><td>Pre-existing waveform snippet</td><td>Direct concatenation of encoded codec tokens</td><td>Seamless transitions; preserves exact audio fidelity and timbre</td><td>Limited to extending linear chronology</td></tr>
-<tr><td><strong>Symbolic Conditioning (Melody)</strong></td><td>MIDI pitch matrix or chromagram</td><td>Feature map addition or cross-attention</td><td>Precise control over pitch contours and harmony</td><td>Requires musical knowledge to write explicit input melodies</td></tr>
-<tr><td><strong>Multi-Modal Steering</strong></td><td>Text prompt + Audio reference</td><td>Joint cross-attention + prefix caching</td><td>Directs global style via text while anchoring instrumentation via audio</td><td>High risk of prompt conflict (e.g., <code>"smooth jazz"</code> prompt over death metal drums)</td></tr>
-</table></div>
-
-<div class="interactive-box">
-<strong>Lab: Prompt Steering Board</strong>
-<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Toggle genre / instrument / mood tags and watch a mock next-token distribution reshape — the same Softmax idea as §1, with conditioning shifting probability mass.</p>
-<p style="margin-top:0;"><strong>Genre</strong></p>
-<div id="tags-genre"></div>
-<p><strong>Instrument</strong></p>
-<div id="tags-inst"></div>
-<p><strong>Mood</strong></p>
-<div id="tags-mood"></div>
-<p style="font-size:0.9em;color:#64748b;">Active prompt: <code id="active-prompt">()</code></p>
-<button type="button" id="clear-tags">Clear all tags (unconditioned)</button>
-<h3 style="margin-bottom:8px;">Mock next-token probabilities</h3>
-<div id="prob-chart"></div>
-<p id="steer-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;"></p>
-</div>
-
-<div class="tool-box">
-<p style="margin-top:0;"><strong>Try it live:</strong> <a href="https://huggingface.co/spaces/facebook/MusicGen" target="_blank" rel="noopener">MusicGen on Hugging Face</a></p>
-<p>Compare a specific prompt (e.g. <code>calm lo-fi hip hop, dusty drums, warm electric piano</code>) against a vague one (<code>music</code>) and listen for how conditioning strength shows up in the output.</p>
-</div>
+    <h2>6. What Music Captioners Get Wrong</h2>
+    <ul>
+        <li><strong>Falling back on common words.</strong> If most training captions mention drums, the model will mention drums for a solo cello. Compare how often each word appears in the model's captions with how often it appears in human references.</li>
+        <li><strong>Confident but wrong numbers.</strong> Tempo estimates are often off by exactly half or double, because a beat at 70 BPM and one at 140 BPM can sound like the same pulse. A stated BPM is worth checking against a beat tracker.</li>
+        <li><strong>Vague moods.</strong> "Relaxing" fits almost any slow clip. Mood words that fit everything carry no information, even when they are technically correct.</li>
+        <li><strong>Ignoring the audio.</strong> A decoder can learn to write a plausible caption from its language knowledge alone. Feed it silence, white noise or two very different clips: if the captions barely change, the audio isn't getting through. Possible causes include a projection that never trained, a bug in how features are passed, or training captions so uniform that the audio never mattered.</li>
+    </ul>
   </section>
 
   <section>
-    <h2>6. Troubleshooting Generative Failure Modes</h2>
-<div class="table-wrap"><table>
-<tr><th>Failure Symptom</th><th>Underlying Cause</th><th>Corrective Action</th></tr>
-<tr><td><strong>Generic, bland audio output</strong></td><td>Low CFG scale (\(w \approx 1.0\)) or overly broad prompt</td><td>Increase CFG scale to \(w = 3.5\text{–}5.0\); add specific instrumentation, tempo, and genre descriptors.</td></tr>
-<tr><td><strong>Harsh metallic noise / distortion</strong></td><td>Over-guidance from excessively high CFG (\(w &gt; 8.0\))</td><td>Reduce guidance scale to \(w = 3.0\text{–}4.0\).</td></tr>
-<tr><td><strong>Model repeats a single bar indefinitely</strong></td><td>Temperature too low (\(\tau &lt; 0.5\)) causing mode collapse</td><td>Increase temperature to \(\tau = 0.8\text{–}1.0\), or increase Top-\(p\) to \(0.95\).</td></tr>
-<tr><td><strong>Audio ignores continuation prefix</strong></td><td>Prefix too short (e.g., \(\lt 1.0\text{ s}\)) or mismatch in sample rate</td><td>Provide at least \(3.0\text{ to }5.0\text{ seconds}\) of clean prefix audio.</td></tr>
-<tr><td><strong>Total musical chaos / out-of-tune notes</strong></td><td>Sampling temperature too high (\(\tau &gt; 1.4\)) or Top-\(p\) unbound</td><td>Lower temperature to \(\tau = 0.85\) and set Top-\(p = 0.90\).</td></tr>
-</table></div>
+    <h2>Check Your Understanding</h2>
+    <h3>Question 1: A stretched clip</h3>
+    <p>A clip is tagged "90 BPM, relaxed, A minor." You time-stretch it to play 1.5× faster. Which tags can you keep?</p>
+    <details>
+        <summary>Show answer</summary>
+        <p>The key stays A minor, because time stretching keeps pitch. The tempo becomes 135 BPM. "Relaxed" may no longer be true at 135 BPM, so either listen and relabel the mood or use a smaller stretch where the mood clearly survives.</p>
+    </details>
+    <h3>Question 2: The same caption every time</h3>
+    <p>Your captioner writes nearly the same sentence for a jazz ballad and a techno track. Give two possible causes and a quick test for each.</p>
+    <details>
+        <summary>Show answer</summary>
+        <p>The audio may not be reaching the decoder (an untrained or disconnected projection): test by feeding silence and real clips and comparing the outputs. Or the training captions may be too uniform, for example from only a few templates: test by counting distinct sentences or opening words in the training set.</p>
+    </details>
+    <h3>Question 3: Choosing an encoder</h3>
+    <p>Why does a captioner built on MERT features usually need more paired data than one built on CLAP features?</p>
+    <details>
+        <summary>Show answer</summary>
+        <p>CLAP's features were trained to line up with text, so the projection only has to make a small adjustment. MERT's features know a lot about music but nothing about language, so the projection and decoder have to learn the whole mapping from sound to words from your paired examples.</p>
+    </details>
   </section>
 
-<div class="bridge">
-<strong>Further reading</strong>
-<ul style="margin:8px 0 0;">
-<li>MusicGen / AudioCraft papers and <a href="https://ai.meta.com/blog/audiocraft-musicgen-audiogen-encodec-generative-ai-audio/" target="_blank" rel="noopener">Meta AudioCraft blog</a></li>
-<li>Classifier-Free Guidance (Ho &amp; Salimans) — same linear mix used in image diffusion, applied here to token logits</li>
-</ul>
-</div>
+  <section>
+    <h2>Key Takeaways</h2>
+    <ul>
+        <li>A music captioner is next-token prediction conditioned on audio: a frozen audio encoder, a small trained projection and a fine-tuned text decoder.</li>
+        <li>The encoder sets what the model can hear. Text-aligned encoders (CLAP) need less paired data; music-only encoders (MERT) keep more musical detail.</li>
+        <li>The captions set how the model talks. Templates are accurate but repetitive, rewritten captions are fluent but can invent details, and generator prompts describe what was asked for, not what came out.</li>
+        <li>Evaluate on human-written captions the model never trained on.</li>
+        <li>An augmentation is safe only if the caption stays true. Update tempo, key and instrument claims when the audio changes.</li>
+        <li>Check that the audio matters: captions for silence and for real music should differ.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://arxiv.org/abs/2301.11325" target="_blank" rel="noopener">MusicLM: Generating Music From Text (Agostinelli et al., 2023)</a>
+          <span class="desc">Introduced the MusicCaps dataset of musician-written captions.</span></li>
+        <li><a href="https://arxiv.org/abs/2311.10057" target="_blank" rel="noopener">The Song Describer Dataset (Manco et al., 2023)</a>
+          <span class="desc">Human-written music captions intended for evaluation.</span></li>
+        <li><a href="https://arxiv.org/abs/2307.16372" target="_blank" rel="noopener">LP-MusicCaps (Doh et al., 2023)</a>
+          <span class="desc">Generating music captions from tags with a language model, and what goes wrong.</span></li>
+        <li><a href="https://arxiv.org/abs/2306.00107" target="_blank" rel="noopener">MERT: Acoustic Music Understanding Model (Li et al., 2023)</a>
+          <span class="desc">A self-supervised music encoder.</span></li>
+        <li><a href="https://arxiv.org/abs/2211.06687" target="_blank" rel="noopener">LAION-CLAP: Contrastive Language-Audio Pretraining (Wu et al., 2022)</a>
+          <span class="desc">Contrastive audio-text pretraining, the audio version of CLIP.</span></li>
+        <li><a href="https://github.com/iver56/audiomentations" target="_blank" rel="noopener">audiomentations (GitHub)</a>
+          <span class="desc">A Python library of audio augmentations, including time stretch and pitch shift.</span></li>
+    </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
@@ -247,9 +279,9 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
       <span class="pager__label">Previous</span>
       <span class="pager__title">The Sound Dictionary: Audio Tokenization and Neural Codecs</span>
     </a>
-    <a class="pager__next" href="lesson5.html">
+    <a class="pager__next" href="lesson5_assignment.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Under the Hood of Real Audio AI</span>
+      <span class="pager__title">Assignment: From Sound to Tokens</span>
     </a>
   </nav>
 </main>
@@ -258,134 +290,6 @@ Where \(w \ge 1.0\) is the <strong>Guidance Scale</strong> (or CFG weight).
   <a href="../../../index.html">Back to course home</a>
 </footer>
 
-<script>
-(function () {
-    var TAGS = {
-        genre: ['Lo-Fi', 'Metal', 'Jazz', 'Ambient'],
-        instrument: ['Guitar', 'Piano', 'Synth', 'Drums'],
-        mood: ['Chill', 'Aggressive', 'Dreamy', 'Chaotic']
-    };
-    var selected = { genre: null, instrument: null, mood: null };
-
-    var TOKENS = [
-        { id: 'soft_pad', label: 'soft_pad', base: 0.08, like: { genre: ['Lo-Fi','Ambient','Jazz'], instrument: ['Synth','Piano'], mood: ['Chill','Dreamy'] } },
-        { id: 'guitar_pluck', label: 'guitar_pluck', base: 0.07, like: { genre: ['Lo-Fi','Jazz'], instrument: ['Guitar'], mood: ['Chill','Dreamy'] } },
-        { id: 'dist_riff', label: 'distorted_riff', base: 0.06, like: { genre: ['Metal'], instrument: ['Guitar'], mood: ['Aggressive','Chaotic'] } },
-        { id: 'brush_kit', label: 'brush_kit', base: 0.07, like: { genre: ['Jazz','Lo-Fi'], instrument: ['Drums'], mood: ['Chill'] } },
-        { id: 'blast_beat', label: 'blast_beat', base: 0.05, like: { genre: ['Metal'], instrument: ['Drums'], mood: ['Aggressive','Chaotic'] } },
-        { id: 'piano_arp', label: 'piano_arp', base: 0.07, like: { genre: ['Ambient','Jazz','Lo-Fi'], instrument: ['Piano'], mood: ['Dreamy','Chill'] } },
-        { id: 'glitch', label: 'glitch_noise', base: 0.09, like: { genre: [], instrument: [], mood: ['Chaotic'] }, cha: true },
-        { id: 'random', label: 'random_clang', base: 0.10, like: { genre: [], instrument: [], mood: ['Chaotic'] }, cha: true }
-    ];
-
-    function mountTags(group, elId) {
-        var el = document.getElementById(elId);
-        TAGS[group].forEach(function (t) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'chip';
-            b.textContent = t;
-            b.addEventListener('click', function () {
-                selected[group] = selected[group] === t ? null : t;
-                renderTags();
-                renderProbs();
-            });
-            el.appendChild(b);
-        });
-    }
-
-    function renderTags() {
-        ['genre','instrument','mood'].forEach(function (g) {
-            var parent = document.getElementById('tags-' + (g === 'instrument' ? 'inst' : g));
-            Array.prototype.forEach.call(parent.querySelectorAll('.chip'), function (chip) {
-                chip.classList.toggle('selected', selected[g] === chip.textContent);
-            });
-        });
-        var parts = [];
-        if (selected.genre) parts.push(selected.genre);
-        if (selected.instrument) parts.push(selected.instrument);
-        if (selected.mood) parts.push(selected.mood);
-        document.getElementById('active-prompt').textContent = parts.length ? parts.join(', ') : '(unconditioned)';
-    }
-
-    function scoreToken(tok) {
-        var score = tok.base;
-        var any = selected.genre || selected.instrument || selected.mood;
-        if (!any) return score;
-        var hits = 0, checks = 0;
-        ['genre','instrument','mood'].forEach(function (g) {
-            if (!selected[g]) return;
-            checks++;
-            if (tok.like[g].indexOf(selected[g]) >= 0) hits++;
-            else if (tok.cha) hits -= 0.5;
-        });
-        if (tok.cha && any && selected.mood !== 'Chaotic') score *= 0.25;
-        else if (checks) score *= (0.4 + 1.6 * (hits / checks));
-        if (selected.mood === 'Chaotic' && tok.cha) score *= 2.2;
-        return Math.max(0.01, score);
-    }
-
-    function renderProbs() {
-        var scored = TOKENS.map(function (t) { return { t: t, s: scoreToken(t) }; });
-        var sum = scored.reduce(function (a, b) { return a + b.s; }, 0);
-        scored.sort(function (a, b) { return b.s - a.s; });
-        var html = '';
-        scored.forEach(function (row) {
-            var pct = row.s / sum;
-            html += '<div class="prob-row"><span class="prob-label">' + row.t.label + '</span>' +
-                '<div class="prob-bar-bg"><div class="prob-bar' + (row.t.cha ? ' warn' : '') + '" style="width:' + (pct * 100) + '%"></div></div>' +
-                '<span class="prob-pct">' + (pct * 100).toFixed(1) + '%</span></div>';
-        });
-        document.getElementById('prob-chart').innerHTML = html;
-        var top = scored[0].t.label;
-        var any = selected.genre || selected.instrument || selected.mood;
-        document.getElementById('steer-note').textContent = any
-            ? 'Conditioning boosts “' + top + '” and related matches; mismatched / chaotic tokens are suppressed.'
-            : 'No tags → flatter prior. Chaotic tokens compete freely with musical ones.';
-    }
-
-    mountTags('genre', 'tags-genre');
-    mountTags('instrument', 'tags-inst');
-    mountTags('mood', 'tags-mood');
-    document.getElementById('clear-tags').addEventListener('click', function () {
-        selected = { genre: null, instrument: null, mood: null };
-        renderTags();
-        renderProbs();
-    });
-    renderTags();
-    renderProbs();
-})();
-
-(function () {
-    var names = ['soft_pad','guitar_pluck','distorted_riff','brush_kit','glitch_noise'];
-    var start = [1.0, 1.2, 0.8, 1.1, 1.0];
-    var box = document.getElementById('sm-inputs');
-    if (!box) return;
-    names.forEach(function (n, i) {
-        var row = document.createElement('div');
-        row.style.margin = '6px 0';
-        row.innerHTML = '<label style="display:inline-block;width:140px;font-family:monospace;font-size:0.85em;">' + n +
-            '</label><input type="number" step="0.1" value="' + start[i] + '" data-i="' + i + '" style="width:80px;">';
-        box.appendChild(row);
-    });
-    function render() {
-        var z = Array.prototype.map.call(box.querySelectorAll('input'), function (el) { return parseFloat(el.value) || 0; });
-        var exps = z.map(function (v) { return Math.exp(v); });
-        var s = exps.reduce(function (a, b) { return a + b; }, 0);
-        var html = '';
-        names.forEach(function (n, i) {
-            var p = exps[i] / s;
-            html += '<div class="prob-row"><span class="prob-label">' + n + '</span>' +
-                '<div class="prob-bar-bg"><div class="prob-bar" style="width:' + (p * 100) + '%"></div></div>' +
-                '<span class="prob-pct">' + (p * 100).toFixed(1) + '%</span></div>';
-        });
-        document.getElementById('sm-bars').innerHTML = html;
-        document.getElementById('sm-sum').textContent = 'Σ P = 1.000 (check). Largest logit is token ' + names[z.indexOf(Math.max.apply(null, z))] + '.';
-    }
-    box.addEventListener('input', render);
-    render();
-})();
-</script>
 
 </body>
 </html>

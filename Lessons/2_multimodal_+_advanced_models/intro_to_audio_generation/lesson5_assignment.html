@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment: From Sound to Tokens · F.O.R.G.E. AI Challenge</title>
+<link rel="stylesheet" href="../../../css/forge.css">
+<script src="../../../js/theme.js"></script>
+</head>
+<body class="genai">
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Multimodal &amp; Advanced Models</span>
+      <span>Deep Dive: Audio Generation</span>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+
+  <header class="page-header">
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Audio Generation</p>
+    <h1>Assignment: From Sound to Tokens</h1>
+    <p class="lede">Follow a melody from note numbers to a waveform, then to a spectrogram, then to a short stream of tokens from a tiny sound dictionary: a hands-on version of the pipeline from this unit.</p>
+  </header>
+
+  <section>
+    <div class="assignment-box">
+        <strong>Starter notebook:</strong> <code>audio_tokens_assignment.ipynb</code><br>
+        <strong>Environment:</strong> Google Colab or local Python with NumPy and Matplotlib. A CPU is enough; no GPU or downloads are needed.<br>
+        <strong>Suggested time:</strong> about 1 hour<br>
+        <strong>Companion reading:</strong> <a href="lesson1.html">Turning Sound into Numbers</a> and <a href="lesson3.html">The Sound Dictionary</a>
+    </div>
+    <p>Download the starter notebook below, upload it to Google Colab (<strong>File &rarr; Upload notebook</strong>), complete the TODOs inside it, and run all cells before submitting. Each part has a short explanation and a written reflection.</p>
+    <p>
+        <a id="notebook-download-link" href="../../../Assignments/2_multimodal_+_advanced_models/audio_tokens_assignment.ipynb" download="audio_tokens_assignment.ipynb"><strong>Download audio_tokens_assignment.ipynb</strong></a>
+    </p>
+  </section>
+
+  <section>
+    <h2>What You Will Do</h2>
+    <div class="table-wrap"><table>
+        <thead>
+            <tr><th>Part</th><th>Task</th><th>What it shows</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>1</strong></td><td>Convert MIDI note numbers to frequencies, play a melody, and record a high note at two sample rates</td><td>Why the sample rate must be more than twice the highest frequency</td></tr>
+            <tr><td><strong>2</strong></td><td>Cut the waveform into overlapping frames and view the spectrogram with a short and a long window</td><td>The trade-off between seeing <em>when</em> and seeing <em>which pitch</em></td></tr>
+            <tr><td><strong>3</strong></td><td>Snap spectrogram frames to their nearest codebook entry, then stack four codebooks</td><td>How residual codebooks turn audio into a short stream of tokens, coarse to fine</td></tr>
+        </tbody>
+    </table></div>
+    <p>Each part ends with a short written reflection, stored as a Python string in the notebook.</p>
+  </section>
+
+  <section>
+    <h2>Submitting Your Work</h2>
+    <ol class="checklist">
+        <li>Complete every TODO and all three reflections (<code>part1_reflection</code>, <code>part2_reflection</code>, and <code>part3_reflection</code>).</li>
+        <li>Run every cell in the notebook from top to bottom without errors.</li>
+        <li>Export the notebook as a Python script (<strong>File &rarr; Download &rarr; Download .py</strong> in Colab) and rename it to <code>firstname_lastname_audio.py</code>.</li>
+        <!-- TODO: replace href="#" with the Gradescope assignment link. -->
+        <li>Submit only that <code>.py</code> file on <strong>Gradescope</strong>: <a href="#" target="_blank">From Sound to Tokens assignment</a>.</li>
+    </ol>
+    <p>If you can't access the Gradescope link, go to the Gradescope for this class (if you are logged in you should be able to see this course when you visit the <a href="https://www.gradescope.com/">Gradescope home page</a>), select this course, and then pick the <b>From Sound to Tokens</b> assignment.</p>
+  </section>
+
+  <nav class="pager" aria-label="Lesson navigation">
+    <a class="pager__prev" href="lesson4.html">
+      <span class="pager__label">Previous</span>
+      <span class="pager__title">Music Captioning: From Sound Back to Words</span>
+    </a>
+    <a class="pager__next" href="UnitQuiz.html">
+      <span class="pager__label">Next</span>
+      <span class="pager__title">Unit Quiz: Audio Generation</span>
+    </a>
+  </nav>
+
+</main>
+
+<footer class="site-footer">
+  <a href="../../../index.html">Back to course home</a>
+</footer>
+
+</body>
+</html>

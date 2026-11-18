@@ -1,0 +1,545 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\index.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:index.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 12,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "__init__.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\__init__.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:41.143Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "toy.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\toy.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:39.813Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "hf.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\backends\\hf.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:38.287Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "__init__.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\__init__.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:33.859Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "stage.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\stage.py",
+              "ViewState": "AQIAAA8AAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:30.287Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "media.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\media.py",
+              "ViewState": "AQIAAFcAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:25.376Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "evaluate.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\evaluate.py",
+              "ViewState": "AQIAAGkAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:15.889Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "chain.py",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py",
+              "RelativeDocumentMoniker": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py",
+              "RelativeToolTip": "Assignments\\2_multimodal_\u002B_advanced_models\\project1_telephone_starter\\telephone\\chain.py",
+              "ViewState": "AQIAAFcAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHfSURBVDhPpZCxaxNhGMZ/9zVJaUuDUlq1FBWLZBFTCXo4BFyU1qGKi4OkIHhkzF/g0KF00M2lR9YUdDDQQVAcJILoQUd1UNRmkhoRm8RL777v7nOoCZd4AcEH3uF5nvd73vd74X\u002BgtTai3LIsHeWDEEJct217a1DvwbIs7bpubFUqFW3b9naxWLwWfSOipAvHcfqqi0KhkMtms3cty1rsaomeG4FpmoMSANVqlXQ6nQMWgacMC4hOBchduEj\u002ByjKjScGh8SS1Wq3nxQZEN3j1eY/Vrfe8rTeQvsf89ARLS1cz5XIZ/uUGXxptQiVRUhJIybudXaZn52a7vbEBpmkyNb/A69YM9W8tDEJOTI2hpI\u002BSkvOZH2f13sNAB\u002B07sV9wHIdH9Unquz9RvoeUPtL3UFISKkky\u002BAT7HwTi6FpsgGma3N9\u002Bg5I\u002BKaFZyU8wOpJChwHnjiuE9wKCXyC/zsQGOI7DeELjtiUPbgky6Wd/HA3KBelC4AIpNfQGl88cQ0mfI5PugRhKkM2DUk0INYwtPI/dAGAlf4rbl06T6DyBVgeCABJzYPhwcm0V8ICNvwJKpVIf37h3IxSyKVAuBMDIYQAMw1jvaxwGrYNl3Xq5o79vat3Y3Nedj4\u002B11je7/m\u002BXOuyzFtDhUgAAAABJRU5ErkJggg==",
+              "WhenOpened": "2026-11-16T02:48:11.339Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "lesson3.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson3.html",
+              "ViewState": "AQIAAPIAAAAAAAAAAAAAwAUBAAA6AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-14T04:08:53.136Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "lesson1_fine_tuning_for_style.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson1_fine_tuning_for_style.html",
+              "ViewState": "AQIAANgAAAAAAAAAAAAAAO0AAAAoAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:15:16.826Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "lesson5.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson5.html",
+              "ViewState": "AQIAABAAAAAAAAAAAAAQwCgAAAALAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:10:10.312Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "lesson1.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson1.html",
+              "ViewState": "AQIAADUBAAAAAAAAAAAAwIUAAABEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:16:25.758Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "UnitQuiz.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\UnitQuiz.html",
+              "ViewState": "AQIAADkAAAAAAAAAAAAAABgAAABVAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:05:26.944Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "lesson2_evaluation_benchmarks_and_safety.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson2_evaluation_benchmarks_and_safety.html",
+              "ViewState": "AQIAABkBAAAAAAAAAAAAACgBAAAoAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:28:36.367Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "lesson2.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson2.html",
+              "ViewState": "AQIAABoAAAAAAAAAAAAQwCkAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-14T04:08:49.156Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "lesson1.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson1.html",
+              "ViewState": "AQIAAJ4AAAAAAAAAAAAAAK0AAAA8AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:14:09.332Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "UnitQuiz.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\UnitQuiz.html",
+              "ViewState": "AQIAAAoAAAAAAAAAAAAAwCAAAABaAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:01:02.926Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "lesson4.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson4.html",
+              "ViewState": "AQIAAGIAAAAAAAAAAAAAwHIAAABZAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:11:09.118Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "lesson6.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_audio_generation\\lesson6.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAMAAAAWAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:01:18.399Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "lesson4_putting_it_all_together_choosing_the_right_model.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html",
+              "RelativeDocumentMoniker": "Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html",
+              "RelativeToolTip": "Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\lesson4_putting_it_all_together_choosing_the_right_model.html",
+              "ViewState": "AQIAAHYBAAAAAAAAAAAAwIYBAAAzAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:20:58.485Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "UnitQuiz.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html",
+              "RelativeDocumentMoniker": "Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html",
+              "RelativeToolTip": "Lessons\\1_foundations_of_genai\\training_\u0026_tradeoffs\\UnitQuiz.html",
+              "ViewState": "AQIAABYAAAAAAAAAAAAAwCYAAAAzAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:21:04.713Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "lesson4.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson4.html",
+              "ViewState": "AQIAAH8AAAAAAAAAAAAAwJkAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:21:24.843Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "lesson3_running_experiments.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\lesson3_running_experiments.html",
+              "ViewState": "AQIAAN0AAAAAAAAAAAAAwO0AAAAoAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:21:35.974Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "index.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\index.html",
+              "RelativeDocumentMoniker": "index.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\index.html",
+              "RelativeToolTip": "index.html",
+              "ViewState": "AQIAAMkAAAAAAAAAAAAAwOIAAAAGAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:20:52.387Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "lesson5_assignment.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\intro_to_image_generation_models\\lesson5_assignment.html",
+              "ViewState": "AQIAADoAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:12:35.658Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "UnitQuiz.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\UnitQuiz.html",
+              "ViewState": "AQIAABcAAAAAAAAAAAAAwCcAAAAoAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:06:32.969Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "MultimodalFeedback.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\synthesis_and_deployment\\MultimodalFeedback.html",
+              "ViewState": "AQIAAB4AAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:06:39.815Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "UnitQuiz.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\UnitQuiz.html",
+              "ViewState": "AQIAABsAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:04:14.638Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "lesson2_representation_and_latent_spaces.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson2_representation_and_latent_spaces.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:02:30.435Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "lesson1_introduction_to_multimodality.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson1_introduction_to_multimodality.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:02:46.516Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "lesson4_assignment.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson4_assignment.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAADAAAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:00:15.794Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "lesson3_fusion_strategies.html",
+              "DocumentMoniker": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html",
+              "RelativeDocumentMoniker": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html",
+              "ToolTip": "C:\\Users\\micha\\bwsi-forge-ai-challenge.github.io\\Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html",
+              "RelativeToolTip": "Lessons\\2_multimodal_\u002B_advanced_models\\core_multimodal_foundations\\lesson3_fusion_strategies.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-11-13T04:02:28.095Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

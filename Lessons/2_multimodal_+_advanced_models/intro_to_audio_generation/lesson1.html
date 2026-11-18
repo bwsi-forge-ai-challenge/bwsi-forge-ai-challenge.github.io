@@ -31,14 +31,14 @@
   <section>
     <aside class="callout callout--note">
       <p class="callout__title">Where this fits</p>
-      <p>Speech recognition and text-to-audio models both work on spectrograms or audio tokens. This deep dive explains those representations from the ground up. It is the background for the <strong>Speak</strong> and <strong>Listen</strong> stations in Project 1.</p>
+      <p>Speech recognition and text-to-audio models both work on spectrograms or audio tokens. This deep dive explains those representations from the ground up. It is the background for the <strong>Composer (M)</strong> and <strong>Listener (L)</strong> stages of the Project 1 telephone game.</p>
     </aside>
     <p>If you've worked with modern Generative AI, you're already used to thinking about data as structured matrices:</p>
 <ul>
 <li><strong>Text</strong> is a sequence of discrete token IDs mapped to learned vector embeddings.</li>
 <li><strong>Vision</strong> is a regular spatial grid of pixels with color channels (\(3 \times H \times W\)).</li>
 </ul>
-<p>Sound feels completely different. At its physical core, sound is continuous mechanical vibration—air molecules colliding and oscillating. Before a neural network can compose a symphony, synthesize human speech, or separate vocal stems, we have to turn that continuous wave into a tensor.</p>
+<p>Sound feels completely different. At its physical core, sound is continuous mechanical vibration: air molecules colliding and oscillating. Before a neural network can compose a symphony, synthesize human speech, or separate vocal stems, we have to turn that continuous wave into a tensor.</p>
 <p>This lesson builds audio representations from first principles: from the physics of vibrating air, to digital sampling, to the mathematical lens of the Fourier Transform.</p>
   </section>
 
@@ -50,21 +50,25 @@
 <div class="eq-panel">\[ y(t) = A \sin(2\pi f t + \phi) \]</div>
 <p>Every point on this wave is governed by three primary variables:</p>
 <ul>
-<li><strong>Amplitude (\(A\)):</strong> How far the wave deviates from ambient air pressure. In the physical world, amplitude drives perceived loudness; in digital audio tensors, it is normalized to the range \([-1.0, +1.0]\).</li>
-<li><strong>Frequency (\(f\)):</strong> The number of full compression-rarefaction cycles completed each second, measured in <strong>Hertz (Hz)</strong>. We perceive frequency as musical pitch.</li>
+<li><strong>Amplitude (\(A\)):</strong> How far the wave deviates from ambient air pressure, often thought of as the "height" of the wave. In the physical world, amplitude drives perceived loudness; in digital audio tensors, it is normalized to the range \([-1.0, +1.0]\).</li>
+<li><strong>Frequency (\(f\)):</strong> The number of complete cycles each second, measured in <strong>Hertz (Hz)</strong>. We perceive frequency as musical pitch.</li>
+<li><strong>Phase (\(\phi\)):</strong> The offset of the cycle at time \(t = 0\). While our ears are mostly insensitive to the absolute phase of an isolated sine wave, phase becomes critical when multiple waves interact: waves in phase reinforce each other, while waves out of phase cancel out.</li>
+</ul>
+
+Another useful variable we often consider is:
+<ul>
 <li><strong>Period (\(T\)):</strong> The duration of one complete cycle in seconds. Because frequency is cycles per second, period is its direct inverse:
 <div class="eq-panel">\[ T = \frac{1}{f} \]</div>
 </li>
-<li><strong>Phase (\(\phi\)):</strong> The offset of the cycle at time \(t = 0\). While our ears are mostly insensitive to the absolute phase of an isolated sine wave, phase becomes critical when multiple waves interact—waves in phase reinforce each other, while waves out of phase cancel out.</li>
 </ul>
 
 <figure>
 <img src="assets/m1_spectrum.png" alt="Chirp waveform: frequency rising over time">
-<figcaption><strong>Figure.</strong> A chirp <em>waveform</em> (time on the x-axis, amplitude on the y-axis): frequency rises continuously from left to right. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> A chirp <em>waveform</em> (time on the x-axis, amplitude on the y-axis): frequency rises continuously from left to right. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 <figure>
 <img src="assets/m4_waveform_side.png" alt="Log-frequency spectrogram of a musical phrase">
-<figcaption><strong>Figure.</strong> A log-frequency spectrogram of the same kind of musical material: time left→right, frequency bottom→top, brightness = energy. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> A log-frequency spectrogram of the same kind of musical material: time left→right, frequency bottom→top, brightness = energy. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <h3>Concrete Intuition: Halving Frequency Doubles Wavelength</h3>
@@ -103,12 +107,12 @@
 
 <figure>
 <img src="assets/m1_waveform_example.png" alt="Frequency spectrum of a complex tone">
-<figcaption><strong>Figure.</strong> A frequency <em>spectrum</em>: energy at the fundamental plus harmonics (peaks at integer multiples of \(f_0\)). Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> A frequency <em>spectrum</em>: energy at the fundamental plus harmonics (peaks at integer multiples of \(f_0\)). Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <div class="interactive-box">
 <strong>Interactive: Harmonic synthesizer</strong>
-<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Mix harmonics of \(f_0 = 220\text{ Hz}\). Try the presets for flute-like vs sawtooth-like timbre.</p>
+<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">Mix harmonics of \(f_0 = 220\text{ Hz}\). Try a strong fundamental with weak harmonics (flute-like), then turn every harmonic up (bright and buzzy).</p>
 <div class="ctrl">\(A_1\) (fundamental): <input type="range" id="h1" min="0" max="1" step="0.01" value="1"> <span id="h1-lbl">1.00</span></div>
 <div class="ctrl">\(A_2\) (2×): <input type="range" id="h2" min="0" max="1" step="0.01" value="0"> <span id="h2-lbl">0.00</span></div>
 <div class="ctrl">\(A_3\) (3×): <input type="range" id="h3" min="0" max="1" step="0.01" value="0"> <span id="h3-lbl">0.00</span></div>
@@ -116,8 +120,6 @@
 <div class="ctrl">\(A_5\) (5×): <input type="range" id="h5" min="0" max="1" step="0.01" value="0"> <span id="h5-lbl">0.00</span></div>
 <button class="primary" id="harm-play">Play chord of sines</button>
 <button id="harm-stop">Stop</button>
-<button id="harm-flute">Preset: flute-like</button>
-<button id="harm-saw">Preset: sawtooth-like</button>
 <div class="viz-label">Summed waveform</div>
 <canvas id="harm-wave" width="700" height="140"></canvas>
 <div class="viz-label">Spectrum (harmonic amplitudes)</div>
@@ -137,7 +139,7 @@
 
 <figure>
 <img src="assets/m4_spectrogram_side.png" alt="Close-up of discrete samples along a waveform">
-<figcaption><strong>Figure.</strong> Zoomed view of a digitized waveform: continuous pressure becomes discrete samples along time. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Zoomed view of a digitized waveform: continuous pressure becomes discrete samples along time. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <h3>Calculating Raw Audio Memory Footprints</h3>
@@ -151,18 +153,6 @@
 <li>File size on disk: \(15,876,000 \times 2\text{ bytes} \approx \mathbf{31.75\text{ MB}}\)</li>
 </ul>
 
-<div class="interactive-box">
-<strong>Interactive: PCM size calculator</strong>
-<div class="ctrl">Duration (s): <input type="number" id="calc-duration" value="180" min="0.1" step="0.1" style="width:100px;"></div>
-<div class="ctrl">Sample rate \(f_s\): <input type="number" id="calc-rate" value="44100" min="8000" step="100" style="width:120px;"> Hz</div>
-<div class="ctrl">Channels:
-<select id="calc-channels">
-<option value="1">1 (mono)</option>
-<option value="2" selected>2 (stereo)</option>
-</select>
-</div>
-<div class="shape-trail" id="calc-out"></div>
-</div>
   </section>
 
   <section>
@@ -218,13 +208,13 @@
 
 <figure>
 <img src="assets/m1_waveform_example.png" alt="Spectrum showing harmonic peaks">
-<figcaption><strong>Figure.</strong> Spectrum of a complex tone: each peak is a frequency component revealed by the Fourier transform. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Spectrum of a complex tone: each peak is a frequency component revealed by the Fourier transform. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
   </section>
 
   <section>
     <h2>7. The Short-Time Fourier Transform (STFT) &amp; The Spectrogram</h2>
-<p>Running a single FFT across an entire 3-minute recording gives you the total frequency recipe of the whole song at once—it tells you <em>that</em> a C-major chord was played, but not <em>when</em>.</p>
+<p>Running a single FFT across an entire 3-minute recording gives you the total frequency recipe of the whole song at once. It tells you <em>that</em> a C-major chord was played, but not <em>when</em>.</p>
 <p>To track how music and speech evolve over time, we use the <strong>Short-Time Fourier Transform (STFT)</strong>:</p>
 <ol>
 <li>Extract a small sliding window of length \(N\) (e.g., \(N = 2048\) samples, or \(\approx 46.4\text{ ms}\)).</li>
@@ -236,11 +226,11 @@
 
 <figure>
 <img src="assets/m1_spectrogram_triad.png" alt="Spectrogram of a frequency chirp">
-<figcaption><strong>Figure.</strong> Spectrogram of a chirp: a bright ridge climbs in frequency as time advances. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Spectrogram of a chirp: a bright ridge climbs in frequency as time advances. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 <figure>
 <img src="assets/m4_waveform_side.png" alt="Log spectrogram of music">
-<figcaption><strong>Figure.</strong> Log-frequency spectrogram of a musical phrase — harmonics appear as stacked horizontal bands. Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Log-frequency spectrogram of a musical phrase. Harmonics appear as stacked horizontal bands. Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <h3>Dimensionality and Tensor Math</h3>
@@ -257,13 +247,6 @@
 </ul>
 </div>
 
-<div class="interactive-box">
-<strong>Interactive: STFT shape explorer</strong>
-<p style="margin:8px 0 12px;font-size:0.95em;color:#475569;">For a fixed 1 s clip at 44.1 kHz, change \(N\) and \(H\) and watch frequency resolution vs frame count.</p>
-<div class="ctrl">Window \(N\): <input type="range" id="stft-n" min="256" max="4096" step="256" value="2048"> <span id="stft-n-lbl">2048</span></div>
-<div class="ctrl">Hop \(H\): <input type="range" id="stft-h" min="64" max="1024" step="64" value="512"> <span id="stft-h-lbl">512</span></div>
-<div class="shape-trail" id="stft-out"></div>
-</div>
 
 <h3>The Fundamental Time-Frequency Tradeoff</h3>
 <p>The STFT is bound by the acoustic uncertainty principle: <strong>you cannot achieve arbitrarily fine time resolution and arbitrarily fine frequency resolution simultaneously.</strong></p>
@@ -282,15 +265,15 @@
 <li>In the bass and mid-range (\(&lt; 1000\text{ Hz}\)), the filters are tightly packed, preserving critical harmonic and vocal formant detail.</li>
 <li>In high frequencies (\(&gt; 4000\text{ Hz}\)), the filters widen substantially, compressing high-frequency air and noise into fewer parameters.</li>
 </ul>
-<p>By compressing \(1025\) linear frequency bins down to <strong>80 or 128 Mel bands</strong>, we dramatically shrink the model's tensor footprint while prioritizing the exact acoustic features human ears care about. This makes the Mel Spectrogram one of the most widely used representations for voice cloning, speech recognition, and diffusion-based audio models.</p>
+<p>By compressing \(1025\) linear frequency bins down to <strong>80 or 128 Mel bands</strong>, we dramatically shrink the model's tensor footprint while prioritizing the exact acoustic features human ears care about. This makes the Mel Spectrogram one of the most widely used inputs for speech recognition, voice cloning, and music models.</p>
 
 <figure>
 <img src="assets/m2_melspectrogram.png" alt="Mel scale curve">
-<figcaption><strong>Figure.</strong> Mel scale: Hz → Mel is compressive at high frequencies (more resolution where hearing is finer). Adapted from Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> Mel scale: Hz → Mel is compressive at high frequencies (more resolution where hearing is finer). Adapted from Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 <figure>
 <img src="assets/m2_spectrogram_wiki.png" alt="Cochlea diagram">
-<figcaption><strong>Figure.</strong> The cochlea is tonotopically organized — different places respond to different frequencies — which motivates perceptual frequency warping. Original figure: Kern, Heid, Steeb, Stoop &amp; Stoop, &ldquo;Biophysical Parameters Modification Could Overcome Essential Hearing Gaps,&rdquo; <em>PLoS Computational Biology</em>, 2008, <a href="https://creativecommons.org/licenses/by/2.5/" target="_blank" rel="noopener">CC BY 2.5</a>, via <a href="https://commons.wikimedia.org/wiki/File:Uncoiled_cochlea_with_basilar_membrane.png" target="_blank" rel="noopener">Wikimedia Commons</a>. Shown in Machine Learning for Music (University of Washington), used with instructor permission.</figcaption>
+<figcaption><strong>Figure.</strong> The cochlea is tonotopically organized (different places respond to different frequencies), which motivates perceptual frequency warping. Original figure: Kern, Heid, Steeb, Stoop &amp; Stoop, &ldquo;Biophysical Parameters Modification Could Overcome Essential Hearing Gaps,&rdquo; <em>PLoS Computational Biology</em>, 2008, <a href="https://creativecommons.org/licenses/by/2.5/" target="_blank" rel="noopener">CC BY 2.5</a>, via <a href="https://commons.wikimedia.org/wiki/File:Uncoiled_cochlea_with_basilar_membrane.png" target="_blank" rel="noopener">Wikimedia Commons</a>. Shown in Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 
 <div class="interactive-box" id="audio-viz">
@@ -310,14 +293,16 @@
 </div>
   </section>
 
-<div class="bridge">
-<strong>Recommended Learning Resources</strong>
-<ul style="margin:8px 0 0;">
-<li><a href="https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem" target="_blank" rel="noopener">Nyquist–Shannon sampling theorem</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Short-time_Fourier_transform" target="_blank" rel="noopener">Short-time Fourier transform (STFT)</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Mel_scale" target="_blank" rel="noopener">Mel scale</a></li>
-</ul>
-</div>
+  <section>
+    <h2>Recommended Learning Resources</h2>
+    <ul class="link-list">
+        <li><a href="https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem" target="_blank" rel="noopener">Nyquist&ndash;Shannon Sampling Theorem (Wikipedia)</a>
+          <span class="desc">Why the sample rate must be more than twice the highest frequency, and where aliasing comes from.</span></li>
+        <li><a href="https://en.wikipedia.org/wiki/Short-time_Fourier_transform" target="_blank" rel="noopener">Short-Time Fourier Transform (Wikipedia)</a>
+          <span class="desc">How sliding windows turn a waveform into a spectrogram.</span></li>
+        <li><a href="https://en.wikipedia.org/wiki/Mel_scale" target="_blank" rel="noopener">Mel Scale (Wikipedia)</a>
+          <span class="desc">The perceptual pitch scale behind mel spectrograms.</span></li>
+    </ul>
   </section>
 
   <nav class="pager" aria-label="Lesson navigation">
@@ -469,22 +454,6 @@
         });
         document.getElementById('harm-play').addEventListener('click', play);
         document.getElementById('harm-stop').addEventListener('click', stop);
-        document.getElementById('harm-saw').addEventListener('click', function () {
-            [1, 0.5, 0.33, 0.25, 0.2].forEach(function (v, i) {
-                var el = document.getElementById(ids[i]);
-                el.value = v;
-                document.getElementById(ids[i] + '-lbl').textContent = v.toFixed(2);
-            });
-            draw();
-        });
-        document.getElementById('harm-flute').addEventListener('click', function () {
-            [1, 0.15, 0.05, 0.02, 0].forEach(function (v, i) {
-                var el = document.getElementById(ids[i]);
-                el.value = v;
-                document.getElementById(ids[i] + '-lbl').textContent = v.toFixed(2);
-            });
-            draw();
-        });
         draw();
     })();
 
@@ -527,61 +496,6 @@
         draw();
     })();
 
-    /* ---- PCM calculator ---- */
-    (function () {
-        var durEl = document.getElementById('calc-duration');
-        var rateEl = document.getElementById('calc-rate');
-        var chEl = document.getElementById('calc-channels');
-        var outEl = document.getElementById('calc-out');
-        function update() {
-            var T = parseFloat(durEl.value) || 0;
-            var fs = parseFloat(rateEl.value) || 44100;
-            var ch = parseInt(chEl.value, 10) || 1;
-            var mono = Math.round(T * fs);
-            var total = mono * ch;
-            var bytes = total * 2;
-            var mb = bytes / (1024 * 1024);
-            outEl.textContent =
-                'T = ' + T + ' s,  fs = ' + fs + ' Hz,  channels = ' + ch + '\n' +
-                'mono samples = T × fs = ' + mono.toLocaleString() + '\n' +
-                'total samples  = ' + total.toLocaleString() + '\n' +
-                'PCM 16-bit size = ' + bytes.toLocaleString() + ' B ≈ ' + mb.toFixed(3) + ' MB\n' +
-                'Nyquist f_max ≈ ' + (fs / 2).toLocaleString() + ' Hz';
-        }
-        durEl.addEventListener('input', update);
-        rateEl.addEventListener('input', update);
-        chEl.addEventListener('change', update);
-        update();
-    })();
-
-    /* ---- STFT shape ---- */
-    (function () {
-        var nEl = document.getElementById('stft-n');
-        var hEl = document.getElementById('stft-h');
-        var out = document.getElementById('stft-out');
-        function update() {
-            var N = parseInt(nEl.value, 10);
-            var H = parseInt(hEl.value, 10);
-            if (H > N) H = N;
-            document.getElementById('stft-n-lbl').textContent = N;
-            document.getElementById('stft-h-lbl').textContent = H;
-            var fs = 44100, T = 1.0, samples = T * fs;
-            var nFreq = N / 2 + 1;
-            var df = fs / N;
-            var nFrames = 1 + Math.floor((samples - N) / H);
-            out.textContent =
-                '1 s clip @ 44100 Hz → ' + samples.toLocaleString() + ' samples\n' +
-                'frame duration = N/fs = ' + (N / fs * 1000).toFixed(2) + ' ms\n' +
-                'hop time       = H/fs = ' + (H / fs * 1000).toFixed(2) + ' ms\n' +
-                'Δf = fs/N      = ' + df.toFixed(2) + ' Hz per bin\n' +
-                'n_freqs = N/2+1 = ' + nFreq + '\n' +
-                'n_frames ≈ ' + nFrames + '\n' +
-                'spectrogram shape (freq × time) = (' + nFreq + ', ' + nFrames + ')';
-        }
-        nEl.addEventListener('input', update);
-        hEl.addEventListener('input', update);
-        update();
-    })();
 
     /* ---- live waveform / spectrogram ---- */
     (function () {
@@ -664,7 +578,7 @@
                 o.connect(g); g.connect(gain);
                 o.start(); extras.push(o);
             });
-            statusEl.textContent = '220 Hz plus harmonics — expect stacked horizontal bands.';
+            statusEl.textContent = '220 Hz plus harmonics: expect stacked horizontal bands.';
             draw();
         }
         function startNoise() {
@@ -686,17 +600,17 @@
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 sourceNode = ac.createMediaStreamSource(micStream);
                 sourceNode.connect(analyser);
-                statusEl.textContent = 'Microphone live — hum low, then whistle high.';
+                statusEl.textContent = 'Microphone live. Hum low, then whistle high.';
                 draw();
             } catch (err) {
                 statusEl.textContent = 'Mic blocked. Use the preset buttons instead.';
             }
         }
         document.getElementById('btn-bass').addEventListener('click', function () {
-            startTone(110, 'bass (110 Hz) — energy should sit low on the spectrogram');
+            startTone(110, 'bass (110 Hz): energy should sit low on the spectrogram');
         });
         document.getElementById('btn-whistle').addEventListener('click', function () {
-            startTone(1760, 'whistle (1760 Hz) — energy should sit high');
+            startTone(1760, 'whistle (1760 Hz): energy should sit high');
         });
         document.getElementById('btn-noise').addEventListener('click', startNoise);
         document.getElementById('btn-harmtone').addEventListener('click', startHarm);
