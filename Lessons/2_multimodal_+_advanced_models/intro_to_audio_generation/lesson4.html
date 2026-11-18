@@ -37,7 +37,7 @@
     <ul>
         <li>Mel spectrograms from <a href="../intro_to_audio_generation/lesson1.html">Turning Sound into Numbers</a> and codec tokens from <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a>.</li>
         <li>Conditional generation from <a href="../intro_to_audio_generation/lesson2.html">Recipes vs. Records</a> (Section 8) and the text-to-music pipeline from <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a> (Section 6).</li>
-        <li>Prefix (early) fusion and cross-attention from <a href="../core_multimodal_foundations/lesson3_fusion_strategies.html">Fusion Strategies</a>.</li>
+        <li>Intermediate fusion and cross-attention from <a href="../core_multimodal_foundations/lesson3_fusion_strategies.html">Fusion Strategies</a>.</li>
         <li>Contrastive training and CLIP from <a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">Representation &amp; Latent Spaces</a>.</li>
         <li>Next-token prediction and cross-entropy loss from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html">Transformers: Putting It All Together</a>.</li>
     </ul>
@@ -61,7 +61,7 @@
     <ol>
         <li>An <strong>audio encoder</strong> turns the clip into a sequence of feature vectors, usually one per short slice of time. It is pretrained and usually frozen.</li>
         <li>A <strong>projection</strong> (a linear layer or a small MLP) maps those vectors into the size the language model expects. It often also pools neighbouring frames together so there are fewer of them. This part is small and trained from scratch.</li>
-        <li>A <strong>text decoder</strong> (a pretrained language model) reads the projected audio vectors and writes the caption. It is fine-tuned, either all of its weights or only a small set of added ones (you will meet LoRA, the most common way to do this, in the image unit).</li>
+        <li>A <strong>text decoder</strong> (a pretrained language model) reads the projected audio vectors and writes the caption. It is fine-tuned, either all of its weights or only a small set of added ones.</li>
     </ol>
 
     <figure class="diagram-wrap">
