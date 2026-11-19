@@ -7,6 +7,23 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+  .fs-btns { margin: 8px 0 4px; display: flex; gap: 8px; }
+  .fs-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; margin: 12px 0 4px; }
+  .fs-row figure { margin: 0; text-align: center; }
+  .fs-row canvas { display: block; width: 130px; height: 130px; image-rendering: pixelated; border: 1px solid var(--border); border-radius: 4px; }
+  .fs-row figcaption { font-size: 0.8em; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+  .fs-op { font-size: 1.1em; text-align: center; min-width: 22px; }
+  .fs-op small { display: block; font-size: 0.7em; color: var(--muted); }
+  .fs-read { margin: 10px 0 0; padding: 8px 12px; background: var(--accent-soft); border-radius: 8px; font-size: 0.92em; }
+  .fs-cap { font-size: 0.85em; color: var(--muted); margin: 6px 0 14px; }
+  @media (max-width: 640px) { .fs-row canvas { width: 92px; height: 92px; } }
+  .sg-fig { margin: 14px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .sg-fig svg { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; }
+  .sg-fig svg text { fill: var(--text); font-family: var(--font); }
+  .sg-fig svg text.muted { fill: var(--muted); }
+  .sg-cap { font-size: 0.85em; color: var(--muted); margin-top: 8px; }
+</style>
 </head>
 <body class="genai">
 
@@ -28,6 +45,21 @@
   </header>
 
   <section>
+    <h2>Why generate images by removing noise?</h2>
+
+    <p>Making a brand-new image in one go is hard. A network would have to turn random numbers into a finished picture in a single pass, getting the layout, the objects and every fine detail right all at once.</p>
+
+    <p>Diffusion splits that one hard job into many easy ones. Destroying an image is easy: keep adding a little random noise until only static is left, and no learning is needed. Now do it slowly, in about 1000 tiny steps. Undoing <em>one</em> small step is easy, because the network only has to guess what a slightly cleaner image looks like. Start from pure static, undo the steps one after another, and a picture appears.</p>
+
+    <ul>
+        <li><strong>Simple, stable training:</strong> we add the noise ourselves, so we know the right answer to check the network's guess against.</li>
+        <li><strong>Variety:</strong> every different starting static gives a different picture.</li>
+        <li><strong>Steerable:</strong> we can nudge each step, for example with a text prompt.</li>
+        <li><strong>The cost:</strong> many steps means many network passes, so generation is slow. Later sections cover how to speed it up.</li>
+    </ul>
+  </section>
+
+  <section>
     <h2>1. Forward diffusion: adding noise</h2>
 
     <p>A diffusion model is trained by first destroying images. Start with a clean image \(x_0\) and, over \(T\) steps (typically \(T = 1000\)), add a little random Gaussian noise at each step until nothing but noise is left. Picture a statue buried by a blizzard until only static remains.</p>
@@ -38,11 +70,36 @@
 
     <p>Here \(x_t\) is the image after \(t\) noising steps, and \(\beta_t\) is a small number (for example between \(0.0001\) and \(0.02\)) that sets how much noise is added at step \(t\). The term \(\epsilon_t\) is fresh random noise with the same shape as the image, drawn from a standard normal distribution \(\mathcal{N}(0, I)\): every value is an independent draw from a bell curve with mean \(0\) and variance \(1\). The factor \(\sqrt{1 - \beta_t}\) shrinks the existing image slightly, so the total amount of signal plus noise stays about the same.</p>
 
+    <h3>See one step in action</h3>
+    <p>Pick a step \(t\). The left picture is the image before the step, the middle one is the fresh noise \(\epsilon_t\), and the right one is the result after the step. Notice how little one step changes, and how the change adds up over many steps.</p>
+
+    <div class="interactive-box" id="fs">
+      <label for="fs-t"><strong>Step \(t\):</strong> <span id="fs-tv">1</span> of 1000</label>
+      <input type="range" id="fs-t" min="1" max="1000" step="1" value="1" style="width:100%;max-width:520px;">
+      <div class="fs-btns">
+        <button type="button" id="fs-minus">&minus; one step</button>
+        <button type="button" id="fs-plus">+ one step</button>
+      </div>
+      <div class="fs-row">
+        <figure><canvas id="fs-a" width="48" height="48"></canvas><figcaption>\(x_{t-1}\)<br>before the step</figcaption></figure>
+        <div class="fs-op" id="fs-c1"></div>
+        <div class="fs-op">+</div>
+        <figure><canvas id="fs-e" width="48" height="48"></canvas><figcaption>\(\epsilon_t\)<br>fresh noise</figcaption></figure>
+        <div class="fs-op" id="fs-c2"></div>
+        <div class="fs-op">=</div>
+        <figure><canvas id="fs-b" width="48" height="48"></canvas><figcaption>\(x_t\)<br>after the step</figcaption></figure>
+      </div>
+      <p class="fs-read" id="fs-read"></p>
+    </div>
+    <p class="fs-cap">The noise picture is shown at full strength, but it is multiplied by the small number \(\sqrt{\beta_t}\) before it is added, which is why the image barely changes in one step. Here \(\beta_t\) grows from \(0.0001\) at \(t = 1\) to \(0.02\) at \(t = 1000\).</p>
+
     <p>You do not need to run the steps one by one. Define \(\alpha_t = 1 - \beta_t\) and let \(\bar{\alpha}_t = \alpha_1 \alpha_2 \cdots \alpha_t\) be the product of all of them so far. Then you can jump straight to any step \(t\):</p>
 
     <div class="eq-panel">
         \[ x_t = \sqrt{\bar{\alpha}_t}\; x_0 + \sqrt{1 - \bar{\alpha}_t}\; \epsilon, \qquad \epsilon \sim \mathcal{N}(0, I) \]
     </div>
+
+    <p>This is a strong claim: the noise from \(t\) separate steps has collapsed into <em>one</em> noise term. You can prove it yourself by <strong>induction on \(t\)</strong>. Try it as a challenge.</p>
 
     <p>So \(x_t\) is a weighted mix of the original image and one batch of noise. At \(t = 0\), \(\bar{\alpha}_t\) is close to \(1\) and the image is almost untouched. As \(t\) grows, \(\bar{\alpha}_t\) falls toward \(0\) and the image is replaced by noise.</p>
 
@@ -54,7 +111,7 @@
   <section>
     <h2>2. Training: learning to predict the noise</h2>
 
-    <p>The model is a neural network \(\epsilon_\theta(x_t, t)\), where \(\theta\) stands for its weights. It receives a noisy image and the step number \(t\) (so it knows how noisy the input is) and tries to predict the noise that was mixed in. Its architecture is usually a U-Net (a convolutional network with skip connections) or a transformer.</p>
+    <p>The model is a neural network written \(\epsilon_\theta(x_t, t)\). This network's job is to guess the noise \(\epsilon\) that was mixed into the image. The subscript \(\theta\) stands for the network's weights, which are what training adjusts, and the inputs in brackets are the noisy image \(x_t\) and the step number \(t\) (so it knows how noisy the input is). Written out: <em>the noise \(\epsilon\), as estimated by a network with weights \(\theta\), given \(x_t\) and \(t\)</em>. The true noise is \(\epsilon\); the network's guess is \(\epsilon_\theta\).</p>
 
     <p>One training step is:</p>
     <ol>
@@ -74,13 +131,13 @@
   <section>
     <h2>3. Sampling: removing noise step by step</h2>
 
-    <p>To generate a new image, start from pure noise \(x_T \sim \mathcal{N}(0, I)\) and walk backward. At each step the network predicts the noise in the current image, and a small amount of it is removed:</p>
+    <p>The noising process can be reversed. To generate a new image, start from pure noise \(x_T \sim \mathcal{N}(0, I)\) and walk backward, one step at a time. At each step the network predicts the noise in the current image, and a small amount of it is removed. The formula for going back one step, from \(x_t\) to \(x_{t-1}\), is below. You do not need to memorize it. Just understand what it is doing:</p>
 
     <div class="eq-panel">
-        \[ x_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( x_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\; \epsilon_\theta(x_t, t) \right) + \sigma_t\, z, \qquad z \sim \mathcal{N}(0, I) \]
+        \[ x_{t-1} = \frac{1}{\sqrt{\alpha_t}} \left( x_t - \frac{\beta_t}{\sqrt{1 - \bar{\alpha}_t}}\; \epsilon_\theta(x_t, t) \right) \]
     </div>
 
-    <p>Here \(\sigma_t\, z\) is a small amount of fresh random noise added back so that different runs give different images. Do not memorize the fractions. The pattern is <strong>current noisy image, minus a scaled prediction of its noise, plus a little randomness</strong>, repeated for \(t = T, \dots, 1\).</p>
+    <p>The pattern is <strong>current noisy image, minus a scaled prediction of its noise</strong>, repeated for \(t = T, \dots, 1\). Different runs give different images because each one starts from different random noise.</p>
 
     <div class="shape-trail">x = random noise                  # x_T
 for t in T, T-1, ..., 1:
@@ -88,10 +145,8 @@ for t in T, T-1, ..., 1:
     x = remove_some_noise(x, eps, t)
 return x                          # a new image</div>
 
-    <p>Every step is one full pass through the network, so \(1000\) steps is slow. Faster samplers such as DDIM and DPM++ reach similar quality in about \(20\) to \(50\) steps, and distilled models such as SD-Turbo get a usable image in \(1\) to \(4\).</p>
-
     <h3>Interactive: Step-by-Step Denoising Slider</h3>
-    <p>Drag the slider from \(t = 1000\) (pure noise) down to \(t = 0\) (clean image). The canvas simulates reverse diffusion on a simple target: circle, square, and a soft “face-like” blob. Watch structure emerge as noise is subtracted each step.</p>
+    <p>Drag the slider from \(t = 1000\) (pure noise) down to \(t = 0\) (clean image). The canvas shows the house picture from earlier coming back out of the noise. Watch structure emerge as noise is subtracted each step.</p>
 
     <div class="interactive-box">
         <p style="margin-top:0;"><strong>Timestep</strong> (sampling runs \(T \to 0\))</p>
@@ -100,69 +155,75 @@ return x                          # a new image</div>
             <br>
             <input type="range" id="t-slider" min="0" max="1000" value="1000">
         </label>
-        <div class="t-label" id="t-desc">Pure noise: no structure visible.</div>
-        <div class="step-pills" id="step-pills"></div>
         <p style="margin:12px 0 6px;">
             <button type="button" class="primary" id="play-btn">▶ Play denoising</button>
-            <button type="button" id="reset-btn">Reset to noise</button>
-            <button type="button" id="target-btn">Show clean target</button>
         </p>
         <canvas id="denoise-canvas" width="320" height="320"></canvas>
-        <p id="denoise-note" style="font-size:0.88em;color:#64748b;margin-bottom:0;">
-            Simulated update: \(x_{t-1} \leftarrow \text{blend}(x_t, x_0, \text{schedule}(t))\), 64×64 grid, fixed noise seed for reproducibility.
-        </p>
     </div>
+
+    <h3>Making each step cheaper: shrink the image first</h3>
+    <p>A \(512 \times 512\) colour image is \(786{,}432\) numbers, and running a large network on that \(1000\) times is expensive. Stable Diffusion avoids this by doing the diffusion on a much <strong>smaller version of the image</strong>. An <em>encoder</em> network squeezes the image down to a small grid of numbers (for example \(64 \times 64 \times 4\), about \(48\) times fewer numbers), and a <em>decoder</em> network can expand that small grid back into a full-size picture. All the noising and denoising happens on the small version, and at the very end the decoder turns the finished small version into the final image. The encoder and decoder are trained once and then kept frozen, and everything else in this section works the same way on the small version instead of the full image.</p>
+
+    <p>Squeezing an image down always throws away some information, so the decoded picture is never a perfect copy of what the small version stood for. Very fine detail, such as tiny text or small faces, is what suffers most. For image generation this is not a big problem: we are creating a new picture rather than reproducing an exact one, so a slightly softer fine detail is a price worth paying for being many times faster.</p>
   </section>
 
   <section>
-    <h2>4. Latent diffusion: denoise small, decode big</h2>
+    <h2>4. Steering the model with text</h2>
 
-    <p>A \(512 \times 512\) RGB image has \(512 \cdot 512 \cdot 3 = 786{,}432\) numbers, and running a large network \(1000\) times on that is expensive. Stable Diffusion avoids this by working in the compressed space of an autoencoder (a VAE). The encoder shrinks an image to a small <strong>latent</strong> of shape \(64 \times 64 \times 4\), which is \(16{,}384\) numbers, about \(48\) times fewer. The whole noising, training and sampling procedure above is then carried out on latents, and the decoder turns the final latent back into pixels.</p>
+    <p>To draw what you ask for, the denoiser also receives the prompt. A text encoder (such as the text half of CLIP, or T5) turns the prompt into a sequence of vectors \(c\), and cross-attention layers inside the denoiser let every location in the image look up the relevant words. This happens at every denoising step, so the network becomes \(\epsilon_\theta(x_t, t, c)\): the same noisy image \(x_t\) and step \(t\) as before, plus the prompt \(c\).</p>
 
-    <div class="shape-trail">sample z_T ~ N(0, I)          shape (64, 64, 4)
-for t = T ... 1:
-    z_{t-1} = denoise_step(z_t, model(z_t, t, text), t)
-image = VAE_decode(z_0)         shape (512, 512, 3)</div>
+    <figure class="sg-fig">
+      <svg viewBox="0 0 640 250" role="img" aria-label="The prompt is turned into word vectors, which the denoiser reads through cross-attention at every step, alongside the noisy image and the step number"><defs><marker id="mg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="8" y="14" width="150" height="46" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="83" y="34" text-anchor="middle" class="" style="font-size:12px;font-weight:400">&ldquo;a red cat</text><text x="83" y="50" text-anchor="middle" class="" style="font-size:12px;font-weight:400">on a sofa&rdquo;</text><text x="83" y="76" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">the prompt</text><line x1="160" y1="37" x2="196" y2="37" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mg)"/><rect x="198" y="14" width="110" height="46" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="253" y="34" text-anchor="middle" class="" style="font-size:12px;font-weight:400">text encoder</text><text x="253" y="50" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">(CLIP or T5)</text><line x1="310" y1="37" x2="346" y2="37" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mg)"/><rect x="350" y="22" width="26" height="30" rx="4" style="fill:#f59e0b"/><rect x="382" y="22" width="26" height="30" rx="4" style="fill:#f59e0b"/><rect x="414" y="22" width="26" height="30" rx="4" style="fill:#f59e0b"/><rect x="446" y="22" width="26" height="30" rx="4" style="fill:#f59e0b"/><rect x="478" y="22" width="26" height="30" rx="4" style="fill:#f59e0b"/><text x="430" y="76" text-anchor="middle" class="" style="font-size:12px;font-weight:700">word vectors c</text><rect x="8" y="136" width="110" height="70" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="63" y="164" text-anchor="middle" class="" style="font-size:12px;font-weight:400">noisy image</text><text x="63" y="182" text-anchor="middle" class="" style="font-size:13px;font-weight:700">x<tspan dy="3" font-size="9">t</tspan></text><text x="63" y="226" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">+ the step number t</text><line x1="120" y1="171" x2="196" y2="171" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mg)"/><rect x="198" y="112" width="250" height="124" rx="10" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="323" y="132" text-anchor="middle" class="" style="font-size:13px;font-weight:700">the denoiser</text><rect x="214" y="144" width="218" height="40" rx="8" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="323" y="168" text-anchor="middle" class="" style="font-size:12px;font-weight:700">cross-attention layers</text><text x="323" y="208" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">the rest of the network</text><line x1="430" y1="84" x2="372" y2="142" style="stroke:var(--muted);stroke-width:2;fill:none;stroke-width:3" marker-end="url(#mg)"/><text x="446" y="118" text-anchor="start" class="muted" style="font-size:11px;font-weight:400">every image location</text><text x="446" y="132" text-anchor="start" class="muted" style="font-size:11px;font-weight:400">looks up the</text><text x="446" y="146" text-anchor="start" class="muted" style="font-size:11px;font-weight:400">relevant words</text><line x1="450" y1="200" x2="486" y2="200" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mg)"/><rect x="488" y="172" width="144" height="56" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="560" y="194" text-anchor="middle" class="" style="font-size:12px;font-weight:400">predicted noise</text><text x="560" y="212" text-anchor="middle" class="" style="font-size:12px;font-weight:700">&epsilon;<tspan dy="3" font-size="9">&theta;</tspan><tspan dy="-3">(x</tspan><tspan dy="3" font-size="9">t</tspan><tspan dy="-3">, t, c)</tspan></text><text x="560" y="246" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">repeated at every step</text></svg>
+      <figcaption class="sg-cap">The prompt is turned into word vectors once. At every denoising step the denoiser reads them through its cross-attention layers (the same mechanism as in the vision-language lesson, with the roles swapped: here the image locations ask and the words answer), together with the noisy image and the step number.</figcaption>
+    </figure>
 
-    <p>The autoencoder is trained once, separately, and then kept fixed. During diffusion training each image is first encoded to a latent, which plays the role of \(x_0\). Nothing else about the objective changes.</p>
-  </section>
-
-  <section>
-    <h2>5. Steering the model with text</h2>
-
-    <p>To draw what you ask for, the denoiser also receives the prompt. A text encoder (such as the text half of CLIP, or T5) turns the prompt into a sequence of vectors \(c\), and cross-attention layers inside the denoiser let every location in the image look up the relevant words. This happens at every denoising step, so the network becomes \(\epsilon_\theta(z_t, t, c)\).</p>
-
-    <p><strong>Classifier-free guidance</strong> strengthens the effect. The model is trained with the caption randomly blanked out some of the time, so it learns both a prompted prediction \(\epsilon_c\) and an unprompted one \(\epsilon_\varnothing\). At sampling time it runs both and pushes the result away from the unprompted prediction:</p>
+    <h3>Classifier-free guidance: asking twice and exaggerating the difference</h3>
+    <p>Feeding in the prompt is not always enough. The model may follow it only loosely and draw a vague cat. <strong>Classifier-free guidance</strong> pushes the picture harder towards the prompt. At every step the model is asked <em>twice</em>:</p>
+    <ul>
+        <li><strong>With the prompt:</strong> &ldquo;what noise do I expect if this is a picture of a red cat on a sofa?&rdquo; This answer is \(\epsilon_c\).</li>
+        <li><strong>Without the prompt:</strong> &ldquo;what noise do I expect for any picture at all?&rdquo; This answer is \(\epsilon_\varnothing\).</li>
+    </ul>
+    <p>The gap between the two answers, \(\epsilon_c - \epsilon_\varnothing\), points in the direction that makes the picture more like <em>this prompt</em> rather than just any picture. Guidance starts from the unprompted answer and moves \(w\) times that gap towards the prompt:</p>
 
     <div class="eq-panel">
         \[ \hat{\epsilon} = \epsilon_\varnothing + w\, (\epsilon_c - \epsilon_\varnothing) \]
     </div>
 
-    <p>The guidance scale \(w\) is typically around \(7\) to \(8\) for Stable Diffusion 1.5. Larger \(w\) follows the prompt more closely, but too large gives oversaturated colors and distorted shapes, and it needs two network calls per step. Distilled models such as SD-Turbo are trained to work without guidance, which is why they use \(w\) off (<code>guidance_scale=0</code> in the <code>diffusers</code> library).</p>
+    <p>The number \(w\), the <strong>guidance scale</strong>, is a dial:</p>
+    <ul>
+        <li>\(w = 0\): the prompt is ignored, and \(\hat{\epsilon} = \epsilon_\varnothing\).</li>
+        <li>\(w = 1\): the plain prompted answer, \(\hat{\epsilon} = \epsilon_c\). No extra push.</li>
+        <li>\(w > 1\): the difference is exaggerated, so the image follows the prompt more strongly.</li>
+    </ul>
+
+    <p>One network can give both answers because it is trained with the caption randomly blanked out some of the time. It learns to predict the noise both with and without a prompt.</p>
   </section>
 
   <section>
-    <h2>6. Fine-tuning a diffusion model</h2>
+    <h2>5. Fine-tuning a diffusion model</h2>
 
-    <p>To teach a diffusion model a new subject or style, you keep training it on your own images and captions with the same noise-prediction loss. Updating every weight of a model with hundreds of millions of parameters is heavy, so two techniques are common.</p>
+    <p>To teach a diffusion model a new subject or style, you keep training it on your own images and captions, with the same noise-prediction task as before. Updating every weight of a model with hundreds of millions of parameters is heavy, so two techniques are common.</p>
 
-    <h3>LoRA: train a small update</h3>
-    <p>For a weight matrix \(W \in \mathbb{R}^{d \times k}\) in the network, LoRA freezes \(W\) and learns a low-rank update instead:</p>
+    <h3>LoRA: train a small add-on</h3>
+    <p>LoRA <strong>freezes</strong> the original weights, so they are never touched, and adds a small second path beside them. The same input goes down both paths:</p>
+    <ul>
+        <li>The <strong>original path</strong> does exactly what it always did.</li>
+        <li>The <strong>adapter path</strong> first <em>shrinks</em> the input to a short list (say 16 numbers instead of 1024), then <em>grows</em> it back to full length. Its output is added to the output of the original path.</li>
+    </ul>
+    <p>So the adapter only has to learn the <em>change</em> you want. Shrinking first means it has very few numbers to train, and it forces the change to be simple, which is enough to shift a style.</p>
 
-    <div class="eq-panel">
-        \[ W' = W + BA, \qquad B \in \mathbb{R}^{d \times r},\; A \in \mathbb{R}^{r \times k},\; r \ll \min(d, k) \]
-    </div>
-
-    <p>Only \(A\) and \(B\) are trained, which is \(r(d + k)\) numbers instead of \(dk\). For \(d = k = 1024\) and rank \(r = 16\), that is \(16 \cdot 2048 = 32{,}768\) numbers against \(1{,}048{,}576\), about \(3\%\). LoRA is usually applied to the attention layers, and the trained update is a small file that can be added to or removed from the base model.</p>
+    <figure class="sg-fig">
+      <svg viewBox="0 0 640 260" role="img" aria-label="LoRA: the input goes through the original frozen weights and through a small trained adapter at the same time, and the two results are added together."><defs><marker id="ml" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="10" y="95" width="70" height="50" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="45" y="124" text-anchor="middle" class="" style="font-size:12px;font-weight:400">input</text><rect x="170" y="22" width="230" height="70" rx="8" style="fill:var(--code-bg);stroke:var(--border);stroke-width:1.5"/><text x="285" y="52" text-anchor="middle" class="" style="font-size:13px;font-weight:700">the layer&#8217;s original weights</text><text x="285" y="72" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">frozen: never changed</text><polygon points="170,150 270,168 270,190 170,208" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><polygon points="300,168 400,150 400,208 300,190" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="220" y="183" text-anchor="middle" class="" style="font-size:11px;font-weight:400">shrink to a</text><text x="220" y="197" text-anchor="middle" class="" style="font-size:11px;font-weight:400">short list</text><text x="350" y="183" text-anchor="middle" class="" style="font-size:11px;font-weight:400">grow back</text><text x="350" y="197" text-anchor="middle" class="" style="font-size:11px;font-weight:400">to full length</text><line x1="270" y1="179" x2="298" y2="179" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><text x="285" y="226" text-anchor="middle" class="" style="font-size:13px;font-weight:700">LoRA adapter</text><text x="285" y="244" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">the only part that is trained</text><line x1="82" y1="108" x2="168" y2="66" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><line x1="82" y1="132" x2="168" y2="176" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><line x1="402" y1="62" x2="448" y2="110" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><line x1="402" y1="178" x2="448" y2="130" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><circle cx="462" cy="120" r="15" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="462" y="126" text-anchor="middle" class="" style="font-size:18px;font-weight:700">+</text><line x1="478" y1="120" x2="516" y2="120" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ml)"/><rect x="518" y="95" width="112" height="50" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="574" y="120" text-anchor="middle" class="" style="font-size:12px;font-weight:400">output</text><text x="574" y="136" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">(adjusted)</text><text x="285" y="112" text-anchor="middle" class="" style="font-size:11px;font-weight:400"></text></svg>
+      <figcaption class="sg-cap">The input goes through the original weights and through the adapter at the same time, and the two results are added. Only the adapter is trained.</figcaption>
+    </figure>
 
     <h3>DreamBooth: teach a new subject from a few images</h3>
-    <p>DreamBooth fine-tunes the model on a handful of images of one subject, each captioned with a rare identifier word (for example "a photo of sks dog"). The risk is that the model forgets what an ordinary dog looks like. A <strong>prior-preservation loss</strong> guards against this by adding a second term, computed on images the original model generates for the plain class prompt ("a photo of a dog"):</p>
+    <p>DreamBooth fine-tunes the model on a handful of images of one subject, each captioned with a rare made-up word (for example &ldquo;a photo of sks dog&rdquo;). The risk is that the model forgets what an ordinary dog looks like and starts drawing your dog for every dog. <strong>Prior preservation</strong> guards against this: while training on your photos, the model is also trained on ordinary pictures that the original model generates for the plain prompt &ldquo;a photo of a dog&rdquo;. Your photos teach it the new subject, and the ordinary pictures remind it what dogs in general look like.</p>
 
-    <div class="eq-panel">
-        \[ \mathcal{L} = \mathcal{L}_{\text{subject}} + \lambda\, \mathcal{L}_{\text{prior}} \]
-    </div>
-
-    <p>Here \(\mathcal{L}_{\text{subject}}\) is the usual loss on your images, \(\mathcal{L}_{\text{prior}}\) is the same loss on the generated class images, and \(\lambda\) sets how much weight the second term gets.</p>
+    <figure class="sg-fig">
+      <svg viewBox="0 0 640 230" role="img" aria-label="DreamBooth: a few photos of your subject and some ordinary images of the same kind of thing are both used to fine-tune the model, so it learns the new subject without forgetting the general idea."><defs><marker id="md" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="12" y="14" width="236" height="88" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="130" y="36" text-anchor="middle" class="" style="font-size:13px;font-weight:700">Your subject</text><text x="130" y="54" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">a few photos of one dog</text><text x="130" y="72" text-anchor="middle" class="" style="font-size:11px;font-weight:400">&ldquo;a photo of sks dog&rdquo;</text><rect x="100" y="80" width="18" height="14" rx="3" style="fill:#f59e0b"/><rect x="124" y="80" width="18" height="14" rx="3" style="fill:#f59e0b"/><rect x="148" y="80" width="18" height="14" rx="3" style="fill:#f59e0b"/><rect x="12" y="126" width="236" height="88" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="130" y="148" text-anchor="middle" class="" style="font-size:13px;font-weight:700">Ordinary dog images</text><text x="130" y="166" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">made by the original model</text><text x="130" y="184" text-anchor="middle" class="" style="font-size:11px;font-weight:400">&ldquo;a photo of a dog&rdquo;</text><rect x="100" y="192" width="18" height="14" rx="3" style="fill:var(--accent)"/><rect x="124" y="192" width="18" height="14" rx="3" style="fill:var(--accent)"/><rect x="148" y="192" width="18" height="14" rx="3" style="fill:var(--accent)"/><line x1="250" y1="58" x2="318" y2="100" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#md)"/><line x1="250" y1="170" x2="318" y2="132" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#md)"/><text x="262" y="46" text-anchor="start" class="muted" style="font-size:11px;font-weight:400">teaches the new subject</text><text x="262" y="200" text-anchor="start" class="muted" style="font-size:11px;font-weight:400">keeps the old knowledge</text><rect x="320" y="84" width="130" height="64" rx="8" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="385" y="112" text-anchor="middle" class="" style="font-size:13px;font-weight:700">fine-tune</text><text x="385" y="130" text-anchor="middle" class="" style="font-size:12px;font-weight:400">the model</text><line x1="452" y1="116" x2="512" y2="116" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#md)"/><rect x="514" y="76" width="118" height="80" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="573" y="104" text-anchor="middle" class="" style="font-size:11px;font-weight:400">learns your dog,</text><text x="573" y="120" text-anchor="middle" class="" style="font-size:11px;font-weight:400">still remembers</text><text x="573" y="136" text-anchor="middle" class="" style="font-size:11px;font-weight:400">what dogs are</text></svg>
+      <figcaption class="sg-cap">Two sets of images are used together: your subject, and ordinary images of the same kind of thing.</figcaption>
+    </figure>
 
     <h3>Other choices that matter</h3>
     <ul>
@@ -209,120 +270,68 @@ image = VAE_decode(z_0)         shape (512, 512, 3)</div>
     var ctx = canvas.getContext('2d');
     var slider = document.getElementById('t-slider');
     var tVal = document.getElementById('t-val');
-    var tDesc = document.getElementById('t-desc');
-    var note = document.getElementById('denoise-note');
-    var pills = document.getElementById('step-pills');
     var playing = false;
     var playId = null;
-    var showTargetOnly = false;
 
-    // Fixed noise seed (deterministic "blizzard")
-    var noiseGrid = [];
-    for (var y = 0; y < N; y++) {
-        noiseGrid[y] = [];
-        for (var x = 0; x < N; x++) {
-            noiseGrid[y][x] = (Math.random() * 2 - 1);
-        }
-    }
+    // Clean target x0: the house picture used earlier, shrunk to N x N, values in [-1, 1]
+    var big = document.createElement('canvas');
+    big.width = big.height = 224;
+    var c = big.getContext('2d');
+    var g = c.createLinearGradient(0, 0, 0, 150);
+    g.addColorStop(0, '#4aa3e8'); g.addColorStop(1, '#bfe3f7');
+    c.fillStyle = g; c.fillRect(0, 0, 224, 224);
+    c.fillStyle = '#ffd43b'; c.beginPath(); c.arc(176, 44, 24, 0, 7); c.fill();
+    c.fillStyle = '#7bc47f'; c.beginPath(); c.moveTo(0, 150); c.quadraticCurveTo(70, 100, 150, 140); c.lineTo(224, 130); c.lineTo(224, 224); c.lineTo(0, 224); c.fill();
+    c.fillStyle = '#4f9d57'; c.fillRect(0, 170, 224, 54);
+    c.fillStyle = '#e9d8b4'; c.fillRect(40, 118, 78, 56);
+    c.fillStyle = '#c0392b'; c.beginPath(); c.moveTo(30, 120); c.lineTo(79, 78); c.lineTo(128, 120); c.fill();
+    c.fillStyle = '#6b4226'; c.fillRect(70, 142, 18, 32);
+    c.fillStyle = '#7fc8f8'; c.fillRect(98, 130, 14, 14); c.fillRect(46, 130, 14, 14);
+    c.fillStyle = '#6b4226'; c.fillRect(176, 138, 8, 40);
+    c.fillStyle = '#2e7d32'; c.beginPath(); c.arc(180, 126, 24, 0, 7); c.fill();
+    var small = document.createElement('canvas');
+    small.width = small.height = N;
+    small.getContext('2d').drawImage(big, 0, 0, N, N);
+    var px = small.getContext('2d').getImageData(0, 0, N, N).data;
+    var clean = new Float32Array(N * N * 3);
+    for (var p = 0; p < N * N; p++) for (var ch = 0; ch < 3; ch++) clean[p * 3 + ch] = px[p * 4 + ch] / 127.5 - 1;
 
-    // Clean target: circle + square + face blob
-    var clean = [];
-    for (var y = 0; y < N; y++) {
-        clean[y] = [];
-        for (var x = 0; x < N; x++) {
-            var nx = (x / N - 0.5) * 2;
-            var ny = (y / N - 0.5) * 2;
-            var v = 0.25 + 0.1 * ny;
-            // circle left
-            if ((nx + 0.35) * (nx + 0.35) + ny * ny < 0.18) v = 0.82;
-            // square right
-            if (nx > 0.15 && nx < 0.55 && ny > -0.25 && ny < 0.25) v = 0.55;
-            // face blob center-bottom
-            var fx = nx * 0.9;
-            var fy = (ny - 0.45) * 1.2;
-            if (fx * fx + fy * fy < 0.12) v = 0.72;
-            // eyes
-            if ((fx + 0.12) * (fx + 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
-            if ((fx - 0.12) * (fx - 0.12) + (fy + 0.05) * (fy + 0.05) < 0.008) v = 0.15;
-            clean[y][x] = Math.max(0, Math.min(1, v));
-        }
-    }
+    // Fixed noise (seeded, so the picture is the same every time)
+    var seed = 20240;
+    function rnd() { seed = (seed + 0x6D2B79F5) | 0; var z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z; return ((z ^ (z >>> 14)) >>> 0) / 4294967296; }
+    var noise = new Float32Array(N * N * 3);
+    for (var i = 0; i < noise.length; i++) noise[i] = Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(6.283185307 * rnd());
 
-    function alphaBar(t) {
-        // ᾱ_t decreases from 1 to ~0
-        var frac = t / T;
-        return Math.pow(1 - frac, 2.2);
-    }
+    // The same noise schedule as the forward-diffusion section: beta from 0.0001 to 0.02 over 1000 steps
+    var abar = [1], prod = 1;
+    for (var s = 1; s <= T; s++) { prod *= 1 - (0.0001 + (0.02 - 0.0001) * (s - 1) / (T - 1)); abar.push(prod); }
 
-    function stateAt(t) {
-        var a = alphaBar(t);
-        var grid = [];
-        for (var y = 0; y < N; y++) {
-            grid[y] = [];
-            for (var x = 0; x < N; x++) {
-                var signal = Math.sqrt(a) * clean[y][x];
-                var noise = Math.sqrt(1 - a) * noiseGrid[y][x];
-                grid[y][x] = signal + noise;
+    var off = document.createElement('canvas');
+    off.width = off.height = N;
+    var offCtx = off.getContext('2d');
+    function draw(arr, a, b) {
+        var im = offCtx.createImageData(N, N);
+        for (var q = 0; q < N * N; q++) {
+            for (var h = 0; h < 3; h++) {
+                var v = arr ? a * arr[q * 3 + h] + b * noise[q * 3 + h] : clean[q * 3 + h];
+                im.data[q * 4 + h] = Math.max(0, Math.min(255, (v + 1) * 127.5));
             }
+            im.data[q * 4 + 3] = 255;
         }
-        return grid;
-    }
-
-    function drawGrid(grid) {
-        var cell = canvas.width / N;
-        for (var y = 0; y < N; y++) {
-            for (var x = 0; x < N; x++) {
-                var v = (grid[y][x] + 1) * 0.5;
-                v = Math.max(0, Math.min(1, v));
-                var g = Math.round(v * 255);
-                ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
-                ctx.fillRect(x * cell, y * cell, cell + 0.5, cell + 0.5);
-            }
-        }
-    }
-
-    function updateDesc(t) {
-        if (showTargetOnly) {
-            tDesc.textContent = 'Clean target x₀: no noise.';
-            return;
-        }
-        if (t >= 900) tDesc.textContent = 'Pure noise: no structure visible.';
-        else if (t >= 600) tDesc.textContent = 'Early reverse steps: faint ghost shapes.';
-        else if (t >= 300) tDesc.textContent = 'Mid denoising: circle and square separating from static.';
-        else if (t >= 50) tDesc.textContent = 'Late steps: edges sharpening; face blob emerging.';
-        else tDesc.textContent = 'Nearly clean: fine detail restored.';
-    }
-
-    function renderPills(t) {
-        var marks = [1000, 750, 500, 250, 100, 0];
-        pills.innerHTML = '';
-        marks.forEach(function (m) {
-            var s = document.createElement('span');
-            s.textContent = 't=' + m;
-            if (Math.abs(t - m) < 60 || (m === 0 && t < 30)) s.className = 'active';
-            pills.appendChild(s);
-        });
+        offCtx.putImageData(im, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(off, 0, 0, N, N, 0, 0, canvas.width, canvas.height);
     }
 
     function render() {
         var t = parseInt(slider.value, 10);
         tVal.textContent = t;
-        if (showTargetOnly) {
-            drawGrid(clean.map(function (row) { return row.map(function (v) { return v * 2 - 1; }); }));
-        } else {
-            drawGrid(stateAt(t));
-        }
-        updateDesc(t);
-        renderPills(t);
-        note.textContent = showTargetOnly
-            ? 'Showing ground-truth x₀ used during forward diffusion.'
-            : 'Simulated: x_t = √ᾱ_t · x₀ + √(1−ᾱ_t) · ε with ᾱ_t = (1 − t/T)^2.2. Drag t from 1000→0 to reverse.';
+        var a = abar[t];
+        draw(clean, Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    slider.addEventListener('input', function () {
-        showTargetOnly = false;
-        render();
-    });
+    slider.addEventListener('input', render);
 
     document.getElementById('play-btn').addEventListener('click', function () {
         if (playing) {
@@ -331,7 +340,6 @@ image = VAE_decode(z_0)         shape (512, 512, 3)</div>
             document.getElementById('play-btn').textContent = '▶ Play denoising';
             return;
         }
-        showTargetOnly = false;
         playing = true;
         document.getElementById('play-btn').textContent = '⏸ Pause';
         slider.value = T;
@@ -343,26 +351,81 @@ image = VAE_decode(z_0)         shape (512, 512, 3)</div>
                 document.getElementById('play-btn').textContent = '▶ Play denoising';
                 return;
             }
-            slider.value = Math.max(0, t - 18);
+            slider.value = Math.max(0, t - 12);
             render();
         }, 50);
     });
 
-    document.getElementById('reset-btn').addEventListener('click', function () {
-        playing = false;
-        clearInterval(playId);
-        document.getElementById('play-btn').textContent = '▶ Play denoising';
-        showTargetOnly = false;
-        slider.value = T;
-        render();
-    });
+    render();
+})();
+</script>
 
-    document.getElementById('target-btn').addEventListener('click', function () {
-        showTargetOnly = !showTargetOnly;
-        document.getElementById('target-btn').textContent = showTargetOnly ? 'Hide target' : 'Show clean target';
-        render();
-    });
+<script>
+/* One forward diffusion step on a small image: x_t = sqrt(1-beta_t) x_{t-1} + sqrt(beta_t) eps_t */
+(function () {
+    var S = 48, N = S * S * 3, T = 1000;
+    var big = document.createElement('canvas'); big.width = big.height = 224;
+    var c = big.getContext('2d');
+    var g = c.createLinearGradient(0, 0, 0, 150);
+    g.addColorStop(0, '#4aa3e8'); g.addColorStop(1, '#bfe3f7');
+    c.fillStyle = g; c.fillRect(0, 0, 224, 224);
+    c.fillStyle = '#ffd43b'; c.beginPath(); c.arc(176, 44, 24, 0, 7); c.fill();
+    c.fillStyle = '#7bc47f'; c.beginPath(); c.moveTo(0, 150); c.quadraticCurveTo(70, 100, 150, 140); c.lineTo(224, 130); c.lineTo(224, 224); c.lineTo(0, 224); c.fill();
+    c.fillStyle = '#4f9d57'; c.fillRect(0, 170, 224, 54);
+    c.fillStyle = '#e9d8b4'; c.fillRect(40, 118, 78, 56);
+    c.fillStyle = '#c0392b'; c.beginPath(); c.moveTo(30, 120); c.lineTo(79, 78); c.lineTo(128, 120); c.fill();
+    c.fillStyle = '#6b4226'; c.fillRect(70, 142, 18, 32);
+    c.fillStyle = '#7fc8f8'; c.fillRect(98, 130, 14, 14); c.fillRect(46, 130, 14, 14);
+    c.fillStyle = '#6b4226'; c.fillRect(176, 138, 8, 40);
+    c.fillStyle = '#2e7d32'; c.beginPath(); c.arc(180, 126, 24, 0, 7); c.fill();
+    var sm = document.createElement('canvas'); sm.width = sm.height = S;
+    sm.getContext('2d').drawImage(big, 0, 0, S, S);
+    var px = sm.getContext('2d').getImageData(0, 0, S, S).data, x0 = new Float32Array(N), i, p;
+    for (p = 0; p < S * S; p++) for (var ch = 0; ch < 3; ch++) x0[p * 3 + ch] = px[p * 4 + ch] / 127.5 - 1;
 
+    function beta(t) { return 0.0001 + (0.02 - 0.0001) * (t - 1) / (T - 1); }
+    function noise(t) {
+        var seed = (t * 7919 + 13) | 0, e = new Float32Array(N);
+        function rnd() { seed = (seed + 0x6D2B79F5) | 0; var z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z; return ((z ^ (z >>> 14)) >>> 0) / 4294967296; }
+        for (var k = 0; k < N; k++) e[k] = Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(6.283185307 * rnd());
+        return e;
+    }
+    function step(x, t) {
+        var b = beta(t), a = Math.sqrt(1 - b), s = Math.sqrt(b), e = noise(t), out = new Float32Array(N);
+        for (var k = 0; k < N; k++) out[k] = a * x[k] + s * e[k];
+        return out;
+    }
+    // checkpoints every 25 steps so any x_t can be rebuilt quickly
+    var cp = [x0], cur = x0;
+    for (var t = 1; t <= T; t++) { cur = step(cur, t); if (t % 25 === 0) cp.push(cur); }
+    function xAt(t) {
+        var k = Math.floor(t / 25), x = cp[k];
+        for (var s = k * 25 + 1; s <= t; s++) x = step(x, s);
+        return x;
+    }
+    function draw(id, arr, scale) {
+        var cv = document.getElementById(id), ctx = cv.getContext('2d'), im = ctx.createImageData(S, S);
+        for (var q = 0; q < S * S; q++) {
+            for (var h = 0; h < 3; h++) im.data[q * 4 + h] = Math.max(0, Math.min(255, (arr[q * 3 + h] * scale + 1) * 127.5));
+            im.data[q * 4 + 3] = 255;
+        }
+        ctx.putImageData(im, 0, 0);
+    }
+    var sl = document.getElementById('fs-t');
+    function render() {
+        var t = parseInt(sl.value, 10), b = beta(t), a = Math.sqrt(1 - b), s = Math.sqrt(b);
+        var xp = xAt(t - 1), e = noise(t), xt = step(xp, t);
+        draw('fs-a', xp, 1); draw('fs-e', e, 0.5); draw('fs-b', xt, 1);
+        document.getElementById('fs-tv').textContent = t;
+        document.getElementById('fs-c1').innerHTML = '&times;' + a.toFixed(4) + '<small>&radic;(1&minus;&beta;)</small>';
+        document.getElementById('fs-c2').innerHTML = '&times;' + s.toFixed(3) + '<small>&radic;&beta;</small>';
+        var d = 0; for (var k = 0; k < N; k++) d += Math.abs(xt[k] - xp[k]);
+        document.getElementById('fs-read').innerHTML = 'At step ' + t + ', &beta; = ' + b.toFixed(4) + ', so the step keeps ' + a.toFixed(4) + ' of the old image and adds ' + s.toFixed(3) + ' of fresh noise. On average each pixel value changes by only ' + (d / N).toFixed(3) + ' (the full range is 2).';
+    }
+    sl.addEventListener('input', render);
+    document.getElementById('fs-minus').addEventListener('click', function () { sl.value = Math.max(1, parseInt(sl.value, 10) - 1); render(); });
+    document.getElementById('fs-plus').addEventListener('click', function () { sl.value = Math.min(T, parseInt(sl.value, 10) + 1); render(); });
     render();
 })();
 </script>

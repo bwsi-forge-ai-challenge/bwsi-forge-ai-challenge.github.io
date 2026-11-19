@@ -7,6 +7,47 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+  .vd { margin: 16px 0 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .vd-lane { display: grid; grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr) 76px minmax(0, 1fr); align-items: center; margin: 4px 0 14px; }
+  .vd-lane--final { grid-template-columns: minmax(0, 1.4fr) 90px minmax(0, 1.6fr); margin-bottom: 0; }
+  .vd-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-height: 92px; justify-content: flex-end; }
+  .vd-cap { font-size: 0.78em; color: var(--muted); line-height: 1.3; }
+  .vd-cap strong { color: var(--text); }
+  .vd-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.72em; color: var(--accent); font-weight: 600; text-align: center; line-height: 1.2; }
+  .vd-arrow::after { content: "\2192"; font-size: 2.2em; font-weight: 400; line-height: 1; }
+  .vd-join { text-align: center; font-size: 0.85em; color: var(--accent); font-weight: 600; margin: 2px 0 10px; }
+  .vd-pic { display: grid; grid-template-columns: repeat(6, 11px); gap: 0; border: 1px solid var(--border); }
+  .vd-pic i { display: block; width: 11px; height: 11px; }
+  .vd-bars { display: inline-flex; align-items: flex-end; gap: 4px; height: 50px; }
+  .vd-bars i { display: block; width: 9px; border-radius: 2px; }
+  .vd-bars--img i, .vd-key--img { background: var(--accent); }
+  .vd-bars--txt i, .vd-key--txt { background: #f59e0b; }
+  .vd-bars em { font-style: normal; color: var(--muted); line-height: 1; }
+  .vd-seq { display: inline-flex; align-items: flex-end; gap: 10px; }
+  .vd-text { font-size: 0.85em; border: 1px dashed var(--border); border-radius: 6px; padding: 6px 8px; }
+  .vd-chips { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 3px; }
+  .vd-chips b { font-weight: 500; font-size: 0.78em; border: 1px solid #e0b24a; background: #fdf1d6; color: #1b1f24; border-radius: 4px; padding: 2px 5px; }
+  .vd-answer { font-size: 0.85em; border: 1px solid var(--accent); border-radius: 6px; padding: 6px 8px; background: var(--accent-soft); }
+  .vd-note { font-size: 0.85em; color: var(--muted); margin: 6px 0 16px; }
+  .vd-key { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; }
+  @media (max-width: 720px) {
+    .vd-lane, .vd-lane--final { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .vd-arrow { flex-direction: row; gap: 8px; padding: 2px 0; }
+    .vd-arrow::after { content: "\2193"; }
+  }
+  .cx-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 12px 0; }
+  @media (max-width: 720px) { .cx-row { grid-template-columns: minmax(0, 1fr); } }
+  .cx-fig { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .cx-fig--wide { margin: 12px 0; }
+  .cx-fig figcaption { margin-bottom: 4px; }
+  .cx-fig svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; }
+  .cx-fig svg text { fill: var(--text); font-family: var(--font); }
+  .cx-fig svg text.muted { fill: var(--muted); }
+  .cx-cap { font-size: 0.85em; color: var(--muted); margin: 8px 0 0; }
+  .cx-steps { margin: 12px 0; }
+  .cx-steps li { margin: 6px 0; }
+</style>
 </head>
 <body class="genai">
 
@@ -44,24 +85,62 @@
     </table></div>
 
     <p>Here \(L\) is the number of text tokens in the prompt. The connector exists because the encoder and the language model were trained separately and speak different "languages". Their vectors have different lengths (\(1024\) and \(4096\)), and, more importantly, the language model has never seen a CLIP feature, so it would not know what to do with one. The connector is trained to map each visual feature to a vector that lands in the right place among the word embeddings.</p>
+
+    <h3>The three parts in action</h3>
+    <p>Follow a photo and the question &ldquo;What is in this photo?&rdquo; through a VLM. Each bar below stands for one vector (a list of numbers). Taller bars are longer vectors.</p>
+
+    <div class="vd" role="group" aria-label="How an image and a question become one input sequence for the language model">
+      <div class="vd-lane">
+        <div class="vd-stage"><span class="vd-pic"><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#c0392b"></i><i style="background:#c0392b"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#c0392b"></i><i style="background:#c0392b"></i><i style="background:#c0392b"></i><i style="background:#c0392b"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#e9d8b4"></i><i style="background:#7cc4f2"></i><i style="background:#e9d8b4"></i><i style="background:#e9d8b4"></i><i style="background:#7cc4f2"></i><i style="background:#7cc4f2"></i><i style="background:#e9d8b4"></i><i style="background:#e9d8b4"></i><i style="background:#e9d8b4"></i><i style="background:#e9d8b4"></i><i style="background:#7cc4f2"></i><i style="background:#4f9d57"></i><i style="background:#4f9d57"></i><i style="background:#4f9d57"></i><i style="background:#4f9d57"></i><i style="background:#4f9d57"></i><i style="background:#4f9d57"></i></span><span class="vd-cap">image pixels</span></div>
+        <div class="vd-arrow"><span>vision encoder</span></div>
+        <div class="vd-stage"><span class="vd-bars vd-bars--img"><i style="height:22px"></i><i style="height:22px"></i><i style="height:22px"></i><i style="height:22px"></i><i style="height:22px"></i><em>&hellip;</em></span><span class="vd-cap">576 vectors<br>1024 numbers each</span></div>
+        <div class="vd-arrow"><span>connector</span></div>
+        <div class="vd-stage"><span class="vd-bars vd-bars--img"><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><em>&hellip;</em></span><span class="vd-cap"><strong>576 visual tokens</strong><br>4096 numbers each</span></div>
+      </div>
+
+      <div class="vd-lane">
+        <div class="vd-stage"><span class="vd-text">&ldquo;What is in this photo?&rdquo;</span><span class="vd-cap">the question</span></div>
+        <div class="vd-arrow"><span>split into tokens</span></div>
+        <div class="vd-stage"><span class="vd-chips"><b>What</b><b>is</b><b>in</b><b>this</b><b>photo</b><b>?</b></span><span class="vd-cap">L = 6 word tokens</span></div>
+        <div class="vd-arrow"><span>embedding lookup</span></div>
+        <div class="vd-stage"><span class="vd-bars vd-bars--txt"><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><em>&hellip;</em></span><span class="vd-cap"><strong>L word tokens</strong><br>4096 numbers each</span></div>
+      </div>
+
+      <div class="vd-join">&darr; placed one after the other in a single sequence &darr;</div>
+
+      <div class="vd-lane vd-lane--final">
+        <div class="vd-stage"><span class="vd-seq"><span class="vd-bars vd-bars--img"><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><em>&hellip;</em></span><span class="vd-bars vd-bars--txt"><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><i style="height:46px"></i><em>&hellip;</em></span></span><span class="vd-cap">visual tokens, then word tokens<br>(576 + L tokens)</span></div>
+        <div class="vd-arrow"><span>language model</span></div>
+        <div class="vd-stage"><span class="vd-answer">&ldquo;A&rdquo; &rarr; &ldquo;house&rdquo; &rarr; &ldquo;with&rdquo; &rarr; &hellip;</span><span class="vd-cap">answer, one word at a time</span></div>
+      </div>
+    </div>
+    <p class="vd-note"><span class="vd-key vd-key--img"></span> from the image &nbsp; <span class="vd-key vd-key--txt"></span> from the text. The two kinds of token are not added together; they are lined up as one sequence, and the language model reads them all at once. Bar heights are not to scale.</p>
   </section>
 
   <section>
     <h2>2. Projection layers</h2>
 
-    <p>A language model only understands vectors of its own embedding size, so the connector's first job is dimension matching. Its second job is deciding how many tokens to pass along.</p>
+    <p>A language model only understands vectors of its own embedding size, so the connector's first job is dimension matching: it turns each image feature into a vector of that size. Its second job is deciding <em>how many</em> tokens to pass along. Here \(\vec{z}_v\) is one of the \(N\) feature vectors from the vision encoder (one per image patch), and \(\vec{h}_v\) is the visual token the connector produces from it.</p>
 
     <div class="table-wrap"><table>
         <thead><tr><th>Connector</th><th>What it does</th><th>Tokens out</th><th>Used by</th></tr></thead>
         <tbody>
-            <tr><td>Linear adapter</td><td>One matrix: \(\vec{h}_v = W \vec{z}_v\)</td><td>Same as in (\(N\))</td><td>LLaVA</td></tr>
-            <tr><td>MLP</td><td>Two layers with a nonlinearity such as ReLU in between: \(\vec{h}_v = W_2\, \text{ReLU}(W_1 \vec{z}_v)\)</td><td>Same as in (\(N\))</td><td>LLaVA-1.5</td></tr>
-            <tr><td>Q-Former</td><td>A small transformer with \(32\) learned query vectors that cross-attend to the image features</td><td>Fixed at \(32\)</td><td>BLIP-2</td></tr>
-            <tr><td>Perceiver Resampler</td><td>Learned latent queries cross-attend to the image features</td><td>Fixed at \(64\)</td><td>Flamingo</td></tr>
+            <tr><td>Linear adapter</td><td>Multiplies every patch feature by one matrix \(W\): \(\vec{h}_v = W \vec{z}_v\). The simplest possible translator.</td><td>\(N\), the number of image patches, so one token per patch (\(N = 576\) for a \(336 \times 336\) image with \(14 \times 14\) patches)</td><td>LLaVA</td></tr>
+            <tr><td>MLP</td><td>Two layers with a nonlinearity such as ReLU in between: \(\vec{h}_v = W_2\, \text{ReLU}(W_1 \vec{z}_v)\). Can learn a more flexible translation than one matrix.</td><td>\(N\), one token per image patch (again \(576\) in LLaVA-1.5)</td><td>LLaVA-1.5</td></tr>
+            <tr><td>Q-Former</td><td>A small transformer with \(32\) learned query vectors that cross-attend to the image features and summarize them</td><td>Fixed at \(32\), whatever the image size</td><td>BLIP-2</td></tr>
+            <tr><td>Perceiver Resampler</td><td>A set of learned latent query vectors cross-attends to the image features and summarizes them</td><td>Fixed at \(64\), whatever the image size</td><td>Flamingo</td></tr>
         </tbody>
     </table></div>
 
-    <p>The last two use <strong>learned queries</strong>: a fixed set of vectors that ask the image "what is worth keeping?" using cross-attention, \(\text{CrossAttn}(Q_{\text{learned}}, K_{\text{image}}, V_{\text{image}})\). The output size is set by the number of queries, not by the image size. That is useful for high-resolution images or many video frames, at the price of throwing detail away.</p>
+    <p>The first two <strong>keep every patch</strong>. They translate each of the \(N\) feature vectors on its own, so the language model sees one token per patch. That keeps small objects and printed text readable, but a \(336 \times 336\) image already costs \(576\) tokens of the language model's context window, and a high-resolution image or many video frames can fill it quickly.</p>
+
+    <p>The last two <strong>compress</strong> the image using <strong>learned queries</strong>. A query is a vector that acts like a question put to the image, such as &ldquo;is there a person here?&rdquo; or &ldquo;what colours dominate?&rdquo;. The queries are not written by hand; they are parameters learned during training. Each query looks across all \(N\) patch features with cross-attention, gives more weight to the patches that help answer it, and returns one summary vector:</p>
+
+    <div class="eq-panel">
+        \[ \text{CrossAttn}(Q_{\text{learned}}, K_{\text{image}}, V_{\text{image}}) \]
+    </div>
+
+    <p>So \(32\) queries produce \(32\) tokens, whether the image has \(256\) patches or \(2{,}000\). The output size is set by the number of queries, not by the image size. That is useful for high-resolution images or many video frames, at the price of throwing detail away.</p>
 
     <p>The trade-off is token count against detail. Passing all \(576\) tokens keeps small objects and printed text readable but fills the context window. A Q-Former's \(32\) tokens are cheap but cannot hold fine detail.</p>
   </section>
@@ -77,28 +156,38 @@
     <h3>Cross-attention layers inside the model</h3>
     <p>New cross-attention layers are inserted between the layers of a frozen language model, and text positions attend to the visual tokens through them. Flamingo does this with gated layers whose gate starts at zero, so training begins from the original language model's behavior. This does not consume context length, but it needs new layers.</p>
 
+    <h3>Side by side</h3>
+    <div class="cx-row">
+      <figure class="cx-fig">
+        <figcaption><strong>Input-level concatenation</strong></figcaption>
+        <svg viewBox="0 0 340 300" role="img" aria-label="Input-level concatenation: visual tokens and text tokens enter the language model together as one sequence"><defs><marker id="ma" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="40" y="62" width="260" height="46" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="170" y="90" text-anchor="middle" class="" style="font-size:12px;font-weight:400">language model layer</text><rect x="40" y="128" width="260" height="46" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="170" y="156" text-anchor="middle" class="" style="font-size:12px;font-weight:400">language model layer</text><line x1="170" y1="128" x2="170" y2="112" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ma)"/><line x1="170" y1="62" x2="170" y2="28" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#ma)"/><text x="170" y="18" text-anchor="middle" class="muted" style="font-size:12px;font-weight:400">next word</text><line x1="170" y1="226" x2="170" y2="178" style="stroke:var(--muted);stroke-width:2;fill:none;stroke-width:3" marker-end="url(#ma)"/><rect x="60" y="232" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><rect x="98" y="232" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><rect x="136" y="232" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><rect x="174" y="232" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><rect x="212" y="232" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><rect x="250" y="232" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><path d="M60 270 h106 M174 270 h106" style="stroke:var(--border);stroke-width:2;fill:none"/><text x="113" y="288" text-anchor="middle" class="" style="font-size:12px;font-weight:400">visual tokens</text><text x="227" y="288" text-anchor="middle" class="" style="font-size:12px;font-weight:400">text tokens</text><text x="170" y="207" text-anchor="middle" class="" style="font-size:11px;font-weight:400"></text></svg>
+        <p class="cx-cap">Visual tokens join the text tokens in <em>one</em> sequence. The model's normal self-attention reads them all. Context length used: <strong>576 + L</strong>.</p>
+      </figure>
+      <figure class="cx-fig">
+        <figcaption><strong>Cross-attention layers</strong></figcaption>
+        <svg viewBox="0 0 340 300" role="img" aria-label="Cross-attention layers: only text tokens flow through the language model; a new cross-attention layer reads the visual tokens on the side"><defs><marker id="mb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="14" y="48" width="200" height="40" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="114" y="73" text-anchor="middle" class="" style="font-size:12px;font-weight:400">LM layer (frozen)</text><rect x="14" y="108" width="200" height="54" rx="8" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="114" y="130" text-anchor="middle" class="" style="font-size:12px;font-weight:700">NEW cross-attention layer</text><text x="114" y="148" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">gate starts at 0</text><rect x="14" y="182" width="200" height="40" rx="8" style="fill:var(--surface);stroke:var(--border);stroke-width:1.5"/><text x="114" y="207" text-anchor="middle" class="" style="font-size:12px;font-weight:400">LM layer (frozen)</text><line x1="114" y1="182" x2="114" y2="166" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mb)"/><line x1="114" y1="108" x2="114" y2="92" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mb)"/><line x1="114" y1="48" x2="114" y2="28" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mb)"/><text x="114" y="18" text-anchor="middle" class="muted" style="font-size:12px;font-weight:400">next word</text><line x1="114" y1="244" x2="114" y2="226" style="stroke:var(--muted);stroke-width:2;fill:none;stroke-width:3" marker-end="url(#mb)"/><rect x="54" y="248" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><rect x="92" y="248" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><rect x="130" y="248" width="30" height="30" rx="4" style="fill:#f59e0b;stroke:none"/><text x="114" y="288" text-anchor="middle" class="" style="font-size:12px;font-weight:400">text tokens only</text><rect x="268" y="100" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><rect x="268" y="138" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><rect x="268" y="176" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><text x="283" y="228" text-anchor="middle" class="" style="font-size:12px;font-weight:400">visual</text><text x="283" y="243" text-anchor="middle" class="" style="font-size:12px;font-weight:400">tokens</text><line x1="262" y1="135" x2="218" y2="135" style="stroke:var(--muted);stroke-width:2;fill:none;stroke-width:3" marker-end="url(#mb)"/><text x="240" y="124" text-anchor="middle" class="" style="font-size:12px;font-weight:700">K, V</text><text x="124" y="177" text-anchor="start" class="" style="font-size:12px;font-weight:700">Q</text></svg>
+        <p class="cx-cap">Only text tokens flow through the model. A <em>new</em> layer lets them look things up in the visual tokens on the side. Context length used: <strong>L only</strong>.</p>
+      </figure>
+    </div>
+
+    <h3>Inside one cross-attention layer</h3>
+    <p>Here is what happens to a single text token, the word &ldquo;dog&rdquo;, in the new layer.</p>
+    <figure class="cx-fig cx-fig--wide">
+      <svg viewBox="0 -10 560 260" role="img" aria-label="Inside a cross-attention layer: a text token asks a query, the visual tokens answer with weights, and the weighted sum is added to the text token"><defs><marker id="mc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs><rect x="10" y="97" width="86" height="42" rx="8" style="fill:#f59e0b;stroke:none"/><text x="53" y="123" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#1b1f24">&ldquo;dog&rdquo;</text><text x="53" y="158" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">a text token</text><rect x="210" y="14" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><line x1="98" y1="118" x2="206" y2="29" style="stroke:var(--muted);stroke-width:1;opacity:.6" marker-end="url(#mc)"/><rect x="258" y="22" width="7" height="14" rx="3" style="fill:#f59e0b"/><text x="271" y="34" text-anchor="start" class="" style="font-size:11px;font-weight:400">5%</text><rect x="210" y="62" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><line x1="98" y1="118" x2="206" y2="77" style="stroke:var(--muted);stroke-width:1;opacity:.6" marker-end="url(#mc)"/><rect x="258" y="70" width="13" height="14" rx="3" style="fill:#f59e0b"/><text x="277" y="82" text-anchor="start" class="" style="font-size:11px;font-weight:400">10%</text><rect x="210" y="110" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><line x1="98" y1="118" x2="206" y2="125" style="stroke:var(--muted);stroke-width:1;opacity:.6" marker-end="url(#mc)"/><rect x="258" y="118" width="62" height="14" rx="3" style="fill:#f59e0b"/><text x="326" y="130" text-anchor="start" class="" style="font-size:11px;font-weight:400">55%</text><rect x="210" y="158" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><line x1="98" y1="118" x2="206" y2="173" style="stroke:var(--muted);stroke-width:1;opacity:.6" marker-end="url(#mc)"/><rect x="258" y="166" width="29" height="14" rx="3" style="fill:#f59e0b"/><text x="293" y="178" text-anchor="start" class="" style="font-size:11px;font-weight:400">25%</text><rect x="210" y="206" width="30" height="30" rx="4" style="fill:var(--accent);stroke:none"/><line x1="98" y1="118" x2="206" y2="221" style="stroke:var(--muted);stroke-width:1;opacity:.6" marker-end="url(#mc)"/><rect x="258" y="214" width="7" height="14" rx="3" style="fill:#f59e0b"/><text x="271" y="226" text-anchor="start" class="" style="font-size:11px;font-weight:400">5%</text><text x="150" y="238" text-anchor="middle" class="muted" style="font-size:11px;font-weight:400">query Q compared with each key K</text><text x="53" y="82" text-anchor="middle" class="" style="font-size:11px;font-weight:700">1. asks a query</text><text x="225" y="7" text-anchor="middle" class="" style="font-size:11px;font-weight:700">2. visual tokens</text><text x="300" y="7" text-anchor="middle" class="" style="font-size:11px;font-weight:400"></text><rect x="400" y="86" width="100" height="64" rx="8" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"/><text x="450" y="110" text-anchor="middle" class="" style="font-size:12px;font-weight:700">3. weighted</text><text x="450" y="126" text-anchor="middle" class="" style="font-size:12px;font-weight:700">sum of the</text><text x="450" y="142" text-anchor="middle" class="" style="font-size:12px;font-weight:700">values V</text><path d="M380 118 H396" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mc)"/><path d="M450 152 V176" style="stroke:var(--muted);stroke-width:2;fill:none" marker-end="url(#mc)"/><text x="450" y="194" text-anchor="middle" class="" style="font-size:11px;font-weight:700">4. &times; gate (starts at 0),</text><text x="450" y="209" text-anchor="middle" class="" style="font-size:11px;font-weight:700">then added to the</text><text x="450" y="224" text-anchor="middle" class="" style="font-size:11px;font-weight:700">&ldquo;dog&rdquo; token</text></svg>
+      <p class="cx-cap">The percentages are made up to show the idea: in a trained model the weights come out large for the patches that show the dog.</p>
+    </figure>
+    <ol class="cx-steps">
+      <li><strong>The text token asks.</strong> It produces a <em>query</em> \(Q\): &ldquo;what in the image is relevant to me?&rdquo;</li>
+      <li><strong>The visual tokens answer.</strong> Each one offers a <em>key</em> \(K\) (what it contains) and a <em>value</em> \(V\) (the information it carries). The query is compared with every key, and softmax turns the scores into weights that add up to 100%.</li>
+      <li><strong>Blend.</strong> The values are mixed using those weights, so the patches that matter most contribute most.</li>
+      <li><strong>Add it in, gently.</strong> The result is multiplied by a gate and added to the text token. The gate starts at zero, so at the start of training the model behaves exactly like the original language model, and the image influence grows as the gate learns to open.</li>
+    </ol>
+
     <p>Training usually has two stages. First, only the connector is trained on image-caption pairs, with the encoder and the language model frozen, so visual tokens learn to land in the language model's embedding space. Second, the connector and the language model are fine-tuned on instruction data (questions and answers about images). The loss is the usual next-token loss, computed on the answer tokens only:</p>
 
     <div class="eq-panel">
         \[ P(y_t \mid y_{\lt t},\; \vec{h}_v,\; \vec{x}_{\text{text}}) \]
     </div>
-  </section>
-
-  <section>
-    <h2>4. Case studies</h2>
-
-    <div class="table-wrap"><table>
-        <thead><tr><th>Model</th><th>Vision side</th><th>Connector and injection</th><th>Notable idea</th></tr></thead>
-        <tbody>
-            <tr><td>LLaVA</td><td>CLIP ViT-L/14 encoder</td><td>Linear (v1) or MLP (v1.5) projector; tokens concatenated before the text</td><td>Simple recipe plus GPT-generated instruction data</td></tr>
-            <tr><td>BLIP-2</td><td>Frozen image encoder</td><td>Q-Former gives \(32\) tokens to a frozen language model</td><td>Bridge two frozen models with a small trainable module</td></tr>
-            <tr><td>Flamingo</td><td>Contrastively trained vision encoder</td><td>Perceiver Resampler gives \(64\) tokens; gated cross-attention layers inside a frozen language model</td><td>Interleaved image-text input and few-shot prompting</td></tr>
-            <tr><td>PaLM-E</td><td>ViT; also robot sensor states</td><td>Observations projected into the language embedding space and placed in the sequence</td><td>"Multimodal sentences" that mix text with images and robot state, for embodied tasks</td></tr>
-            <tr><td>Gemini</td><td>Natively multimodal</td><td>Trained jointly on text, images, audio, and video rather than bolting an encoder onto a finished language model</td><td>Few architecture details are public; the technical report describes one model across modalities</td></tr>
-        </tbody>
-    </table></div>
-
-    <p>These split into two camps. <em>Bolt-on</em> models (LLaVA, BLIP-2, Flamingo) join separately trained parts and train only the connector, or the connector plus fine-tuning. <em>Native</em> models (Gemini and GPT-4o) are trained across modalities from the start, which costs far more data and compute.</p>
   </section>
 
   <section>

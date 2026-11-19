@@ -7,6 +7,60 @@
 <link rel="stylesheet" href="../../../css/forge.css">
 <script src="../../../js/theme.js"></script>
 <script src="../../../js/forge-math.js"></script>
+<style>
+  .pf { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; gap: 6px; margin: 18px 0 6px; }
+  .pf-step { flex: 0 1 172px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 10px; text-align: center; position: relative; }
+  .pf-step--out { border-color: var(--accent); background: var(--accent-soft); }
+  .pf-step canvas { width: 100%; max-width: 160px; height: auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); display: block; margin: 0 auto 8px; }
+  .pf-num { position: absolute; top: -10px; left: -10px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.8em; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .pf-name { font-weight: 600; }
+  .pf-shape { font-family: var(--mono); font-size: 0.8em; color: var(--accent); margin: 2px 0 6px; }
+  .pf-note { font-size: 0.8em; color: var(--muted); line-height: 1.35; }
+  .pf-arrow { flex: 0 0 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 0.72em; color: var(--muted); line-height: 1.25; }
+  .pf-arrow::after { content: "\2192"; font-size: 2.2em; color: var(--accent); line-height: 1; }
+  .pf--wide { margin: 0; }
+  .pf-down { text-align: center; color: var(--accent); font-size: 0.85em; font-weight: 600; margin: 8px 0; }
+  .pf-wide { flex: 1 1 100%; text-align: left; }
+  .pf-wide .pf-name { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+  .pf-wide .pf-note { font-size: 0.88em; margin: 4px 0 10px; }
+  .pf-zoom { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .pf-zoom canvas, .pf-stackrow canvas { border: 1px solid var(--border); border-radius: 4px; margin: 0; image-rendering: pixelated; }
+  .pf-op { font-size: 1.6em; color: var(--accent); }
+  .pf-lab { font-size: 0.78em; color: var(--muted); text-align: center; margin-top: 4px; line-height: 1.3; }
+  .pf-planes { display: grid; grid-template-columns: repeat(3, 48px); gap: 4px; }
+  .pf-planes canvas { width: 48px; }
+  .pf-grow { flex: 1 1 220px; min-width: 0; }
+  .pf-stackrow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .pf-stackrow canvas { width: 160px; max-width: 100%; }
+  .pf-stackrow .pf-lab { flex: 1 1 200px; font-size: 0.85em; }
+  .pf-mat { display: flex; }
+  .pf-e { width: 120px; height: 128px; border: 2px solid var(--accent); border-radius: 4px; background: repeating-linear-gradient(0deg, transparent 0 15px, var(--border) 15px 16px), repeating-linear-gradient(90deg, transparent 0 15px, var(--border) 15px 16px), var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85em; text-align: center; }
+  .pf-e span { font-size: 0.78em; color: var(--muted); background: var(--surface); padding: 0 3px; }
+  .pe { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0; }
+  .pe-title { font-weight: 600; margin: 0 0 4px; }
+  .pe-sub { font-size: 0.88em; color: var(--muted); margin: 0 0 12px; }
+  .pe-grid { display: grid; grid-template-columns: minmax(0, 336px) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 720px) { .pe-grid { grid-template-columns: minmax(0, 1fr); } }
+  .pe canvas { display: block; width: 100%; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+  .pe canvas.pe-hit { max-width: 336px; cursor: crosshair; }
+  .pe canvas.pe-bars { max-width: 320px; }
+  .pe-readout { margin: 12px 0 0; padding: 8px 12px; background: var(--accent-soft); border-radius: 8px; font-size: 0.92em; }
+  .pe-row { font-size: 0.82em; color: var(--muted); margin: 10px 0 2px; }
+  .pe-scale { display: flex; align-items: center; gap: 6px; font-size: 0.78em; color: var(--muted); margin-top: 4px; max-width: 336px; }
+  .pe-scale i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #1e293b, #f59e0b); }
+  .ac-line { font-size: 1.05em; margin: 14px 0 6px; }
+  .ac-bar { height: 8px; border-radius: 4px; background: var(--code-bg); margin-top: 4px; min-width: 120px; overflow: hidden; }
+  .ac-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; }
+  .ac-bar i.hot { background: #f59e0b; }
+  .ac-cap { font-size: 0.88em; color: var(--muted); margin: 4px 0 0; }
+  .pf-cap { font-size: 0.85em; color: var(--muted); margin: 6px 0 16px; }
+  @media (max-width: 760px) {
+    .pf { flex-direction: column; align-items: center; }
+    .pf-step { flex: none; width: 100%; max-width: 240px; }
+    .pf-arrow { flex: none; flex-direction: row; gap: 8px; padding: 2px 0; }
+    .pf-arrow::after { content: "\2193"; }
+  }
+</style>
 </head>
 <body class="genai">
 
@@ -76,11 +130,65 @@
 
     <p>In code, steps 1 to 3 are a single strided convolution whose kernel size and stride both equal \(P\). That is why you will often see the patch embedding written as <code>Conv2d(3, 1024, kernel_size=16, stride=16)</code>.</p>
 
-    <div class="shape-trail">image                  (3, 224, 224)
-  → cut into 16x16     196 patches, each (3, 16, 16)
-  → flatten            (196, 768)
-  → linear projection  (196, 1024)     same matrix for every patch
-                                       these are the tokens</div>
+    <div class="pf" aria-label="Flow chart: image, cut into patches, flatten, project to tokens">
+      <div class="pf-step">
+        <div class="pf-num">1</div>
+        <canvas id="pf-c1" width="160" height="160"></canvas>
+        <div class="pf-name">Image</div>
+        <div class="pf-shape">(3, 224, 224)</div>
+        <div class="pf-note">The starting point: three colour planes of 224 &times; 224 pixels.</div>
+      </div>
+      <div class="pf-arrow"><span>cut into<br>16 &times; 16 tiles</span></div>
+      <div class="pf-step">
+        <div class="pf-num">2</div>
+        <canvas id="pf-c2" width="160" height="160"></canvas>
+        <div class="pf-name">Patches</div>
+        <div class="pf-shape">196 &times; (3, 16, 16)</div>
+        <div class="pf-note">Same pixels, now 196 separate small images. Nothing is lost.</div>
+      </div>
+    </div>
+    <div class="pf-down">flatten each patch into a list of numbers &darr;</div>
+    <div class="pf pf--wide">
+      <div class="pf-step pf-wide">
+        <div class="pf-num">3</div>
+        <div class="pf-name">Pixel vector <span class="pf-shape">(196, 768)</span></div>
+        <p class="pf-note">Zoom in on the orange patch. Its 16 &times; 16 pixels have three colour values each. Split the colours into three planes, then write all the values in one long line: red first, then green, then blue.</p>
+        <div class="pf-zoom">
+          <div><canvas id="pf-c3t" width="96" height="96" style="width:96px"></canvas><div class="pf-lab">the patch<br>16 &times; 16 pixels</div></div>
+          <span class="pf-op">&rarr;</span>
+          <div class="pf-planes">
+            <canvas id="pf-c3r" width="48" height="48"></canvas>
+            <canvas id="pf-c3g" width="48" height="48"></canvas>
+            <canvas id="pf-c3b" width="48" height="48"></canvas>
+            <div class="pf-lab" style="grid-column:1/4">3 colour planes<br>16 &times; 16 each</div>
+          </div>
+          <span class="pf-op">&rarr;</span>
+          <div class="pf-grow"><canvas id="pf-c3s" width="384" height="18" style="width:100%;max-width:384px"></canvas>
+            <div class="pf-lab">256 red + 256 green + 256 blue = <strong>768 numbers</strong> (the vector \(\vec{x}_i\))</div></div>
+        </div>
+        <div class="pf-stackrow">
+          <canvas id="pf-c3k" width="160" height="60"></canvas>
+          <div class="pf-lab" style="text-align:left">Do this for all 196 patches and stack the lists as rows: a table with <strong>196 rows and 768 columns</strong>. The orange line is the patch above.</div>
+        </div>
+      </div>
+    </div>
+    <div class="pf-down">multiply every row by the same matrix \(E\) &darr;</div>
+    <div class="pf pf--wide">
+      <div class="pf-step pf-step--out pf-wide">
+        <div class="pf-num">4</div>
+        <div class="pf-name">Tokens <span class="pf-shape">(196, 1024)</span></div>
+        <p class="pf-note">One matrix multiplication turns the 768 numbers of a patch into the 1024 numbers of its token. The sizes work out because the inner 768s match.</p>
+        <div class="pf-zoom">
+          <div class="pf-mat"><div class="pf-e"><strong>\(E\)</strong>1024 &times; 768<span>learned weights,<br>shared by all patches</span></div></div>
+          <span class="pf-op">&times;</span>
+          <div><canvas id="pf-c4x" width="20" height="128" style="width:20px"></canvas><div class="pf-lab">\(\vec{x}_i\)<br>768 &times; 1</div></div>
+          <span class="pf-op">=</span>
+          <div><canvas id="pf-c4z" width="20" height="128" style="width:20px"></canvas><div class="pf-lab">token \(\vec{z}_i\)<br>1024 &times; 1</div></div>
+        </div>
+        <p class="pf-note" style="margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--border);">That was <strong>one patch</strong>. The same multiplication by \(E\) is done for all 196 patches, giving 196 tokens of 1024 numbers each: a <strong>196 &times; 1024</strong> table of values, one row per patch. This table is what the transformer reads.</p>
+      </div>
+    </div>
+    <p class="pf-cap">The orange patch is followed through all four steps: the same patch, as a tile, then as a row, then as a token. The token colours come from a random \(E\), so only their layout is meaningful.</p>
 
     <h3>Interactive: Patchifier</h3>
 
@@ -121,6 +229,29 @@
     <p>Here \(\vec{h}_i \in \mathbb{R}^{D}\) is the input token for patch \(i\) that the transformer actually receives. The vector \(\vec{z}_i\) depends only on what the patch looks like, and \(\vec{p}_i\) depends only on where the patch is. Both have length \(D\), so they can be added entry by entry.</p>
 
     <p>Nothing in these vectors says that patch \(15\) is below patch \(1\). The model works that out from data, because it ends up giving nearby grid positions similar vectors. The original transformer instead used fixed sinusoidal position codes; ViT simply learns its position vectors.</p>
+
+    <div class="pe">
+      <p class="pe-title">Diagram: adding the position keeps the patch information</p>
+      <p class="pe-sub">Hover a patch. The three charts show its token \(\vec{z}\) (what it looks like), its position vector \(\vec{p}\) (where it is), and their sum \(\vec{h}\). In the bottom chart the grey bars are the original \(\vec{z}\): the sum follows them closely.</p>
+      <div class="pe-grid">
+        <div>
+          <canvas id="pe-map" width="336" height="336" class="pe-hit"></canvas>
+          <div class="pf-lab" id="pe-which"></div>
+        </div>
+        <div>
+          <p class="pe-row">\(\vec{z}\): the patch's content</p>
+          <canvas id="pe-bz" width="320" height="52" class="pe-bars"></canvas>
+          <p class="pe-row" style="text-align:center;margin:2px 0;font-size:1.2em;">+</p>
+          <p class="pe-row">\(\vec{p}\): the patch's position</p>
+          <canvas id="pe-bp" width="320" height="52" class="pe-bars"></canvas>
+          <p class="pe-row" style="text-align:center;margin:2px 0;font-size:1.2em;">=</p>
+          <p class="pe-row">\(\vec{h}\): the token the transformer receives (grey = the original \(\vec{z}\))</p>
+          <canvas id="pe-bh" width="320" height="52" class="pe-bars"></canvas>
+          <p class="pe-readout">Similarity of \(\vec{h}\) to the original \(\vec{z}\): <strong id="pe-sim"></strong> <span class="pe-row" style="margin:0">(1.00 would be identical)</span></p>
+        </div>
+      </div>
+      <p class="pf-cap">Illustration with a random \(E\) and made-up position vectors. In a trained ViT both vectors are learned, and they are long enough (up to 1024 entries) that adding one to the other does not erase the information in either.</p>
+    </div>
   </section>
 
   <section>
@@ -134,29 +265,29 @@
 
     <p>With \(N\) tokens, \(QK^{\top}\) is an \(N \times N\) matrix, so the cost grows with \(N^2\). At \(P = 16\), a \(224 \times 224\) image has \(196\) tokens and about \(196^2 = 38{,}416\) pairs per head. A \(384 \times 384\) image has \(576\) tokens and \(331{,}776\) pairs, which is about \(8.6\) times as many pairs for about \(2.9\) times as many pixels. This quadratic growth is the main reason high-resolution images and, later, video are expensive.</p>
 
-    <p>Two outputs are used downstream. A single summary vector for the whole image can be read out, for example by averaging the tokens, and this is what a classifier uses. The full sequence of patch tokens keeps spatial detail, and this is what most vision-language models pass to the language model.</p>
-  </section>
+    <h3>Calculator: how the cost grows</h3>
+    <p>Change the image size and the patch size and watch the token count and the number of attention pairs. The comparison column uses a 224 &times; 224 image with 16 &times; 16 patches as the starting point.</p>
 
-  <section>
-    <h2>5. Beyond vanilla ViT: Swin and ConvNeXt</h2>
+    <div class="interactive-box" id="ac">
+      <p style="margin-top:0;"><strong>Image size:</strong> <span id="ac-size-v">224</span> &times; <span id="ac-size-v2">224</span> pixels</p>
+      <input type="range" id="ac-size" min="64" max="1024" step="32" value="224" style="width:100%;max-width:420px;">
+      <p><strong>Patch size</strong></p>
+      <div id="ac-chips"></div>
 
-    <p>Plain ViT has two weak spots from the last section: attention over all \(N\) tokens costs \(N^2\), and it produces features at only one resolution. Two later models address these in different ways.</p>
+      <p class="ac-line" id="ac-line"></p>
 
-    <h3>Swin Transformer: attention in small windows</h3>
-    <p>Swin keeps the transformer but limits each token's attention to a small window of nearby tokens (for example \(7 \times 7 = 49\) tokens). The cost then grows in proportion to the number of tokens instead of its square. Alternate layers shift the window grid by a few patches, so information can still cross window borders. Between stages, each \(2 \times 2\) group of neighboring tokens is merged into one, so the token grid shrinks like the feature maps in a CNN. For a \(224 \times 224\) input it goes from \(56 \times 56\) to \(28 \times 28\), then \(14 \times 14\), then \(7 \times 7\).</p>
-
-    <h3>ConvNeXt: a CNN that borrows from transformers</h3>
-    <p>ConvNeXt asks whether the transformer's success came from attention itself or from other design choices. It starts from a standard ResNet and adopts transformer-era ideas one at a time, for example cutting the image into non-overlapping \(4 \times 4\) patches at the very start and using larger filters. The result matches Swin at a similar size while using only convolutions, which suggests that patchification and overall design matter as much as attention.</p>
-
-    <h3>What each one gives you</h3>
-    <div class="table-wrap"><table>
-        <thead><tr><th>Encoder</th><th>Output</th><th>Typical use</th></tr></thead>
+      <div class="table-wrap"><table>
+        <thead><tr><th></th><th>This setting</th><th>Compared with a 224 &times; 224 pixel image and a 16 &times; 16 patch size</th></tr></thead>
         <tbody>
-            <tr><td>ViT</td><td>One grid of tokens at a single resolution; every token attends to every other token</td><td>Classification, CLIP, and the vision part of most vision-language models</td></tr>
-            <tr><td>Swin</td><td>Features at several resolutions, from fine to coarse; attention within windows</td><td>Detection and segmentation, which need both fine and coarse detail</td></tr>
-            <tr><td>ConvNeXt</td><td>Features at several resolutions; convolutions only</td><td>The same tasks as Swin, with no attention</td></tr>
+          <tr><td>Pixels</td><td id="ac-px"></td><td><span id="ac-px-r"></span><div class="ac-bar"><i id="ac-px-b"></i></div></td></tr>
+          <tr><td>Tokens (N)</td><td id="ac-n"></td><td><span id="ac-n-r"></span><div class="ac-bar"><i id="ac-n-b"></i></div></td></tr>
+          <tr><td>Attention pairs per head (N&sup2;)</td><td id="ac-pairs"></td><td><span id="ac-pairs-r"></span><div class="ac-bar"><i id="ac-pairs-b" class="hot"></i></div></td></tr>
         </tbody>
-    </table></div>
+      </table></div>
+      <p class="ac-cap" id="ac-cap"></p>
+    </div>
+
+    <p>Two outputs are used downstream. A single summary vector for the whole image can be read out, for example by averaging the tokens, and this is what a classifier uses. The full sequence of patch tokens keeps spatial detail, and this is what most vision-language models pass to the language model.</p>
   </section>
 
   <section>
@@ -185,6 +316,203 @@
 </footer>
 
 <script>
+/* Shared 224 x 224 source image (sample scene or the reader's photo) used by the flow chart and the patchifier. */
+(function () {
+    var SRC = document.createElement('canvas');
+    SRC.width = SRC.height = 224;
+    var c = SRC.getContext('2d', { willReadFrequently: true });
+    window.forgeImg = null;
+    window.forgeSource = function () {
+        var img = window.forgeImg;
+        if (img) {
+            var s = Math.min(img.naturalWidth, img.naturalHeight);
+            c.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 224, 224);
+        } else {
+            var g = c.createLinearGradient(0, 0, 0, 150);
+            g.addColorStop(0, '#4aa3e8'); g.addColorStop(1, '#bfe3f7');
+            c.fillStyle = g; c.fillRect(0, 0, 224, 224);
+            c.fillStyle = '#ffd43b'; c.beginPath(); c.arc(176, 44, 24, 0, 7); c.fill();
+            c.fillStyle = '#7bc47f'; c.beginPath(); c.moveTo(0, 150); c.quadraticCurveTo(70, 100, 150, 140); c.lineTo(224, 130); c.lineTo(224, 224); c.lineTo(0, 224); c.fill();
+            c.fillStyle = '#4f9d57'; c.fillRect(0, 170, 224, 54);
+            c.fillStyle = '#e9d8b4'; c.fillRect(40, 118, 78, 56);
+            c.fillStyle = '#c0392b'; c.beginPath(); c.moveTo(30, 120); c.lineTo(79, 78); c.lineTo(128, 120); c.fill();
+            c.fillStyle = '#6b4226'; c.fillRect(70, 142, 18, 32);
+            c.fillStyle = '#7fc8f8'; c.fillRect(98, 130, 14, 14); c.fillRect(46, 130, 14, 14);
+            c.fillStyle = '#6b4226'; c.fillRect(176, 138, 8, 40);
+            c.fillStyle = '#2e7d32'; c.beginPath(); c.arc(180, 126, 24, 0, 7); c.fill();
+        }
+        return SRC;
+    };
+})();
+
+/* Flow chart: image -> patches -> pixel vectors -> tokens, following one highlighted patch. */
+(function () {
+    var G = 14, P = 16, SEL = 0, ORANGE = '#f59e0b';
+    var cv = [1, 2].map(function (i) { return document.getElementById('pf-c' + i); });
+    function rng(seed) {
+        return function () { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    }
+    var r = rng(5), E = [];
+    for (var j = 0; j < 64; j++) { var row = new Float32Array(768); for (var k = 0; k < 768; k++) row[k] = (r() * 2 - 1) * 0.06; E.push(row); }
+
+    function render() {
+        var src = window.forgeSource(), sc = src.getContext('2d'), W = 160, i, j, k, c;
+        var data = sc.getImageData(0, 0, 224, 224).data;
+
+        // Follow the patch with the most colour variety (largest spread of pixel values), so all three planes look different.
+        var best = -1;
+        for (i = 0; i < G * G; i++) {
+            var sum = [0, 0, 0], sq = [0, 0, 0], px0 = (i % G) * P, py0 = Math.floor(i / G) * P;
+            for (k = 0; k < 256; k++) {
+                var o = ((py0 + (k >> 4)) * 224 + px0 + (k & 15)) * 4;
+                for (var cc = 0; cc < 3; cc++) { sum[cc] += data[o + cc]; sq[cc] += data[o + cc] * data[o + cc]; }
+            }
+            var spread = 0;
+            for (cc = 0; cc < 3; cc++) spread += sq[cc] / 256 - (sum[cc] / 256) * (sum[cc] / 256);
+            if (spread > best) { best = spread; SEL = i; }
+        }
+
+        // 1. image
+        c = cv[0].getContext('2d'); c.drawImage(src, 0, 0, 224, 224, 0, 0, W, W);
+
+        // 2. patches, pulled apart with gaps
+        c = cv[1].getContext('2d'); c.clearRect(0, 0, W, W);
+        var cell = W / G, gap = 1.6;
+        for (i = 0; i < G * G; i++) {
+            var px = (i % G) * P, py = Math.floor(i / G) * P;
+            c.drawImage(src, px, py, P, P, (i % G) * cell + gap / 2, Math.floor(i / G) * cell + gap / 2, cell - gap, cell - gap);
+        }
+        c.strokeStyle = ORANGE; c.lineWidth = 2;
+        c.strokeRect((SEL % G) * cell, Math.floor(SEL / G) * cell, cell, cell);
+
+        // 3. the orange patch: tile -> colour planes -> one long strip, then all 196 stacked
+        var q, pid = sc.getImageData((SEL % G) * P, Math.floor(SEL / G) * P, P, P).data;
+        function big(canvas, imgData, size) {
+            var t = document.createElement('canvas'); t.width = t.height = P;
+            t.getContext('2d').putImageData(imgData, 0, 0);
+            var cc = canvas.getContext('2d'); cc.imageSmoothingEnabled = false; cc.clearRect(0, 0, size, size); cc.drawImage(t, 0, 0, size, size);
+        }
+        big(document.getElementById('pf-c3t'), new ImageData(new Uint8ClampedArray(pid), P, P), 96);
+        ['r', 'g', 'b'].forEach(function (nm, chx) {
+            var pl = new ImageData(P, P);
+            for (var n = 0; n < 256; n++) { pl.data[n * 4 + chx] = pid[n * 4 + chx]; pl.data[n * 4 + 3] = 255; }
+            big(document.getElementById('pf-c3' + nm), pl, 48);
+        });
+        c = document.getElementById('pf-c3s').getContext('2d'); c.clearRect(0, 0, 384, 18);
+        for (var ch2 = 0; ch2 < 3; ch2++) for (q = 0; q < 256; q++) {
+            var idx = ch2 * 256 + q, vv = pid[q * 4 + ch2];
+            c.fillStyle = 'rgb(' + (ch2 === 0 ? vv : 0) + ',' + (ch2 === 1 ? vv : 0) + ',' + (ch2 === 2 ? vv : 0) + ')';
+            c.fillRect((idx % 128) * 3, Math.floor(idx / 128) * 3, 3, 3);
+        }
+        var H = 60, rowH = H / (G * G), colsPer = 768 / W, vec = [];
+        c = document.getElementById('pf-c3k').getContext('2d'); c.clearRect(0, 0, W, H);
+        for (i = 0; i < G * G; i++) {
+            var x0 = (i % G) * P, y0 = Math.floor(i / G) * P, v = new Float32Array(768);
+            for (var ch = 0; ch < 3; ch++) for (k = 0; k < 256; k++) v[ch * 256 + k] = data[((y0 + (k >> 4)) * 224 + x0 + (k & 15)) * 4 + ch];
+            vec.push(v);
+            for (var col = 0; col < W; col++) {
+                var a = Math.floor(col * colsPer), s = 0;
+                for (k = a; k < a + colsPer; k++) s += v[k];
+                var val = Math.round(s / colsPer), chn = Math.floor(a / 256);
+                c.fillStyle = 'rgb(' + (chn === 0 ? val : 0) + ',' + (chn === 1 ? val : 0) + ',' + (chn === 2 ? val : 0) + ')';
+                c.fillRect(col, i * rowH, 1, rowH + 0.4);
+            }
+        }
+        c.strokeStyle = ORANGE; c.lineWidth = 2; c.strokeRect(1, SEL * rowH - 1, W - 2, 3);
+
+        // 4. matrix product for the orange patch, then all 196 tokens stacked
+        c = document.getElementById('pf-c4x').getContext('2d'); c.clearRect(0, 0, 20, 128);
+        for (q = 0; q < 128; q++) {
+            var m = 0; for (k = 0; k < 6; k++) m += vec[SEL][q * 6 + k]; m = Math.round(m / 6);
+            var pl2 = Math.floor(q / (128 / 3));
+            c.fillStyle = 'rgb(' + (pl2 === 0 ? m : 0) + ',' + (pl2 === 1 ? m : 0) + ',' + (pl2 === 2 ? m : 0) + ')';
+            c.fillRect(0, q, 20, 1);
+        }
+        var zc = document.getElementById('pf-c4z').getContext('2d'); zc.clearRect(0, 0, 20, 128);
+        function heat(cx, t, rx, ry, rw, rh) {
+            t = Math.max(-1, Math.min(1, t / 1.2));
+            cx.fillStyle = t >= 0 ? 'rgba(59,130,246,' + (0.15 + 0.85 * t) + ')' : 'rgba(245,158,11,' + (0.15 + 0.85 * -t) + ')';
+            cx.fillRect(rx, ry, rw, rh);
+        }
+        var x = new Float32Array(768);
+        for (k = 0; k < 768; k++) x[k] = vec[SEL][k] / 127.5 - 1;
+        for (j = 0; j < 64; j++) {
+            var z = 0, ew = E[j]; for (k = 0; k < 768; k++) z += ew[k] * x[k];
+            heat(zc, z, 0, j * 2, 20, 2);
+        }
+    }
+    render();
+    window.addEventListener('forge-src', render);
+})();
+</script>
+
+<script>
+/* Section 3 diagram: h = z + p keeps the information in z. */
+(function () {
+    var G = 14, D = 64, P = 16, cv = document.getElementById('pe-map'), ctx = cv.getContext('2d');
+    var seed = 31;
+    function rnd() { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+    var E = [], F = [], H = [], A = [], B = [], j, k;
+    for (j = 0; j < D; j++) {
+        var row = new Float32Array(768); for (k = 0; k < 768; k++) row[k] = (rnd() * 2 - 1) * 0.06; E.push(row);
+        F.push(0.15 + rnd() * 0.5); H.push(0.15 + rnd() * 0.5); A.push(rnd() * 6.28); B.push(rnd() * 6.28);
+    }
+    var Z = [], sel = { x: 7, y: 7 };
+    function computeZ() {
+        var data = window.forgeSource().getContext('2d').getImageData(0, 0, 224, 224).data, i, x = new Float32Array(768);
+        Z = [];
+        for (i = 0; i < G * G; i++) {
+            var x0 = (i % G) * P, y0 = Math.floor(i / G) * P, z = new Float32Array(D);
+            for (var c = 0; c < 3; c++) for (k = 0; k < 256; k++) x[c * 256 + k] = data[((y0 + (k >> 4)) * 224 + x0 + (k & 15)) * 4 + c] / 127.5 - 1;
+            for (j = 0; j < D; j++) { var s = 0, e = E[j]; for (k = 0; k < 768; k++) s += e[k] * x[k]; z[j] = s; }
+            Z.push(z);
+        }
+    }
+    function pvec(x, y) {
+        var v = new Float32Array(D);
+        for (var j = 0; j < D; j++) v[j] = 0.25 * (Math.sin((y + 1) * F[j] + A[j]) + Math.sin((x + 1) * H[j] + B[j]));
+        return v;
+    }
+    function cos(a, b) {
+        var s = 0, na = 0, nb = 0;
+        for (var i = 0; i < a.length; i++) { s += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+        return s / Math.sqrt(na * nb);
+    }
+    function bars(id, arr, ref) {
+        var cn = document.getElementById(id), c = cn.getContext('2d'), w = cn.width, h = cn.height, bw = w / arr.length, mid = h / 2, sc = (mid - 3) / 2, i;
+        c.clearRect(0, 0, w, h);
+        c.strokeStyle = 'rgba(128,128,128,.5)'; c.beginPath(); c.moveTo(0, mid); c.lineTo(w, mid); c.stroke();
+        function bar(v, x, bwid, color) { v = Math.max(-2, Math.min(2, v)) * sc; c.fillStyle = color; c.fillRect(x, v >= 0 ? mid - v : mid, bwid, Math.abs(v)); }
+        if (ref) for (i = 0; i < arr.length; i++) bar(ref[i], i * bw + 1, bw - 2, 'rgba(148,163,184,0.6)');
+        for (i = 0; i < arr.length; i++) bar(arr[i], i * bw + 1 + (ref ? bw * 0.22 : 0), bw - 2 - (ref ? bw * 0.44 : 0), arr[i] >= 0 ? '#3b82f6' : '#f59e0b');
+    }
+    function render() {
+        var cell = cv.width / G, i, z = Z[sel.y * G + sel.x];
+        ctx.drawImage(window.forgeSource(), 0, 0, 224, 224, 0, 0, cv.width, cv.width);
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+        for (i = 0; i <= G; i++) { ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, cv.width); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(cv.width, i * cell); ctx.stroke(); }
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.strokeRect(sel.x * cell + 1.5, sel.y * cell + 1.5, cell - 3, cell - 3);
+        document.getElementById('pe-which').textContent = 'Patch ' + (sel.y * G + sel.x + 1) + ' (row ' + (sel.y + 1) + ', column ' + (sel.x + 1) + ')';
+
+        var p = pvec(sel.x, sel.y), hh = new Float32Array(D);
+        for (j = 0; j < D; j++) hh[j] = z[j] + p[j];
+        bars('pe-bz', z); bars('pe-bp', p); bars('pe-bh', hh, z);
+        document.getElementById('pe-sim').textContent = cos(hh, z).toFixed(2);
+    }
+    function pick(e) {
+        var r = cv.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * G), y = Math.floor((e.clientY - r.top) / r.height * G);
+        if (x < 0 || y < 0 || x >= G || y >= G || (x === sel.x && y === sel.y)) return;
+        sel = { x: x, y: y }; render();
+    }
+    cv.addEventListener('pointermove', pick); cv.addEventListener('pointerdown', pick);
+    window.addEventListener('forge-src', function () { computeZ(); render(); });
+    computeZ(); render();
+})();
+</script>
+
+<script>
 (function () {
     var sizeEl = document.getElementById('pz-size');
     var canvas = document.getElementById('pz-canvas');
@@ -208,20 +536,7 @@
         document.getElementById('pz-a').textContent = fmt(n * n);
 
         var w = canvas.width;
-        if (userImg) {
-            // center-crop to a square, then scale to the canvas
-            var side = Math.min(userImg.naturalWidth, userImg.naturalHeight);
-            var sx = (userImg.naturalWidth - side) / 2;
-            var sy = (userImg.naturalHeight - side) / 2;
-            ctx.drawImage(userImg, sx, sy, side, side, 0, 0, w, w);
-        } else {
-            var grad = ctx.createLinearGradient(0, 0, w, w);
-            grad.addColorStop(0, '#38bdf8');
-            grad.addColorStop(0.5, '#a78bfa');
-            grad.addColorStop(1, '#f472b6');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, w);
-        }
+        ctx.drawImage(window.forgeSource(), 0, 0, 224, 224, 0, 0, w, w);
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.lineWidth = g > 28 ? 0.5 : 1;
         for (var i = 0; i <= g; i++) {
@@ -267,6 +582,8 @@
             userImg = img;
             msgEl.textContent = 'Using ' + file.name + ' (' + img.naturalWidth + ' × ' + img.naturalHeight + ' pixels, cropped to a square).';
             URL.revokeObjectURL(url);
+            window.forgeImg = img;
+            window.dispatchEvent(new Event('forge-src'));
             render();
         };
         img.onerror = function () {
@@ -280,12 +597,50 @@
         userImg = null;
         fileEl.value = '';
         msgEl.textContent = '';
+        window.forgeImg = null;
+        window.dispatchEvent(new Event('forge-src'));
         render();
     });
 
     sizeEl.addEventListener('input', render);
     renderChips();
     render();
+})();
+</script>
+
+<script>
+/* Section 4 calculator: attention cost versus image size and patch size. */
+(function () {
+    var sizeEl = document.getElementById('ac-size'), chipsEl = document.getElementById('ac-chips'), patch = 16;
+    var BASE_PX = 224 * 224, BASE_N = 196, BASE_PAIRS = 196 * 196;
+    function fmt(n) { return n.toLocaleString('en-US'); }
+    function ratio(x) { return (x >= 10 ? Math.round(x) : x.toFixed(1)) + '×'; }
+    // bars use a log scale: the full bar is 10,000 times the baseline
+    function bar(id, x) { document.getElementById(id).style.width = Math.max(1, Math.min(100, (Math.log10(Math.max(x, 0.0001)) + 1) / 5 * 100)) + '%'; }
+    function render() {
+        var size = parseInt(sizeEl.value, 10), g = Math.floor(size / patch), n = g * g, pairs = n * n, px = size * size;
+        document.getElementById('ac-size-v').textContent = size;
+        document.getElementById('ac-size-v2').textContent = size;
+        document.getElementById('ac-line').innerHTML = 'N = (' + size + ' / ' + patch + ')&sup2; = <strong>' + fmt(n) + '</strong> tokens, so N&sup2; = <strong>' + fmt(pairs) + '</strong> pairs.';
+        document.getElementById('ac-px').textContent = fmt(px);
+        document.getElementById('ac-n').textContent = fmt(n);
+        document.getElementById('ac-pairs').textContent = fmt(pairs);
+        var rp = px / BASE_PX, rn = n / BASE_N, rq = pairs / BASE_PAIRS;
+        document.getElementById('ac-px-r').textContent = ratio(rp);
+        document.getElementById('ac-n-r').textContent = ratio(rn);
+        document.getElementById('ac-pairs-r').textContent = ratio(rq);
+        bar('ac-px-b', rp); bar('ac-n-b', rn); bar('ac-pairs-b', rq);
+        document.getElementById('ac-cap').textContent = 'Bars use a log scale (the full bar is 10,000×). ' +
+            (size % patch ? 'The image size is not a multiple of the patch size, so the last partial patch is dropped here. ' : '') +
+            'Doubling the image side makes about 4× the tokens but about 16× the pairs.';
+    }
+    [8, 16, 32].forEach(function (p) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.p = p; b.textContent = p + ' × ' + p;
+        b.addEventListener('click', function () { patch = p; chips(); render(); });
+        chipsEl.appendChild(b);
+    });
+    function chips() { Array.prototype.forEach.call(chipsEl.querySelectorAll('.chip'), function (c) { c.classList.toggle('selected', parseInt(c.dataset.p, 10) === patch); }); }
+    sizeEl.addEventListener('input', render); chips(); render();
 })();
 </script>
 
