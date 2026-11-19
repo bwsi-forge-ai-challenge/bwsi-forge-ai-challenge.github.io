@@ -103,13 +103,9 @@
 <strong>Interactive: Coarse to fine</strong>
 <p class="sd-note">Click to move \(z\). Blue dots are codebook 1, green dots are codebook 2 (placed around the blue winner), orange dots are codebook 3. Add codebooks and watch the approximation close in on \(z\) while the error bar shrinks.</p>
 <p style="margin:0 0 8px;"><label>Codebooks used: <input type="range" id="rvq-k" min="1" max="3" step="1" value="1"> <strong id="rvq-k-lbl">1</strong></label></p>
-<canvas id="rvq-canvas" class="sd-canvas" width="700" height="320"></canvas>
+<canvas id="rvq-canvas" class="sd-canvas" width="700" height="720"></canvas>
 <div class="sd-chips" id="rvq-chips"></div>
 </div>
-<figure>
-<img src="assets/m4_quantized_lm.png" alt="Residual codebooks across time steps">
-<figcaption><strong>Figure.</strong> What a codec produces: one column of IDs per time frame, one row per codebook (\(k_1\) coarse, \(k_4\) finest). Original figure: Copet et al., <a href="https://arxiv.org/abs/2306.05284" target="_blank" rel="noopener">&ldquo;Simple and Controllable Music Generation (MusicGen)&rdquo;</a>, 2023. Shown in Machine Learning for Music (University of Washington).</figcaption>
-</figure>
 <ul>
 <li><strong>Codebook 1</strong> captures the big picture: pitch, loud vowels, drum hits.</li>
 <li><strong>Codebooks 2 to 4</strong> restore detail: breathiness, distortion, room reverb.</li>
@@ -149,13 +145,13 @@
 <figcaption><strong>Figure.</strong> Inside stage 2: the text encoder feeds cross-attention in every Transformer block, while causal self-attention runs over the audio tokens so far. Original figure: Kreuk et al., <a href="https://arxiv.org/abs/2209.15352" target="_blank" rel="noopener">&ldquo;AudioGen: Textually Guided Audio Generation&rdquo;</a>, 2022. Shown in Machine Learning for Music (University of Washington).</figcaption>
 </figure>
 <h3>Following the shapes for 10 seconds of music</h3>
-<p>Each row's output is the next row's input:</p>
+<p>Each row's output is the next row's input. Two kinds of data take turns: <strong>tokens</strong> are whole-number IDs picked from a fixed list (like the token IDs from <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson1_tokenization.html">Tokenization</a>), and <strong>vectors</strong> are lists of real numbers that can take any value, like 0.37 or &minus;1.82 (like <a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson2_embeddings.html">embeddings</a>).</p>
 <div class="table-wrap"><table>
 <tr><th>Stage</th><th>What runs</th><th>Input</th><th>Output</th></tr>
-<tr><td><strong>Read the prompt</strong></td><td>Tokenizer + frozen T5 encoder</td><td>Text: <code>"lo-fi guitar, chill rain"</code></td><td>Continuous matrix: <code>(12, 1024)</code></td></tr>
-<tr><td><strong>Generate tokens</strong></td><td>Transformer with cross-attention</td><td>Continuous matrix <code>(12, 1024)</code> + audio tokens so far</td><td>Token grid: <code>(500, 4)</code> (500 frames &times; 4 codebooks)</td></tr>
-<tr><td><strong>Look up entries</strong></td><td>Sum the 4 codebook entries per frame</td><td>Token grid: <code>(500, 4)</code></td><td>Frame vectors: <code>(500, 128)</code></td></tr>
-<tr><td><strong>Rebuild audio</strong></td><td>Frozen codec decoder</td><td>Frame vectors: <code>(500, 128)</code></td><td>Waveform: <code>(320,000,)</code> samples at 32 kHz</td></tr>
+<tr><td><strong>Read the prompt</strong></td><td>Tokenizer + frozen T5 encoder</td><td>Text: <code>"lo-fi guitar, chill rain"</code></td><td>Prompt vectors: <code>(12, 1024)</code><br><small>one vector of 1,024 real numbers per text token</small></td></tr>
+<tr><td><strong>Generate tokens</strong></td><td>Transformer with cross-attention</td><td>Prompt vectors <code>(12, 1024)</code> + audio tokens so far</td><td>Audio tokens: <code>(500, 4)</code><br><small>whole-number IDs: 500 frames &times; 4 codebooks</small></td></tr>
+<tr><td><strong>Look up entries</strong></td><td>Sum the 4 codebook entries per frame</td><td>Audio tokens: <code>(500, 4)</code></td><td>Frame vectors: <code>(500, 128)</code><br><small>one vector of 128 real numbers per 20 ms frame</small></td></tr>
+<tr><td><strong>Rebuild audio</strong></td><td>Frozen codec decoder</td><td>Frame vectors: <code>(500, 128)</code></td><td>Waveform: <code>(320,000,)</code><br><small>one number per sample at 32 kHz</small></td></tr>
 </table></div>
 <div class="tool-box">
 <p style="margin-top:0;"><strong>Try it:</strong> <a href="https://huggingface.co/spaces/facebook/MusicGen" target="_blank" rel="noopener">facebook/MusicGen</a> on Hugging Face &middot; Background: <a href="https://ai.meta.com/blog/audiocraft-musicgen-audiogen-encodec-generative-ai-audio/" target="_blank" rel="noopener">AudioCraft blog</a></p>
@@ -236,7 +232,8 @@
 <script>
 (function () {
     var COLORS = ['#2563eb', '#16a34a', '#d97706', '#9333ea'];
-    var PX = 40, PY = 30, PW = 260, PH = 260;            // plot square
+    var PX = 40, PY = 30, PW = 260, PH = 260;            // plot square (each widget sets its own)
+    function geom(g) { PX = g[0]; PY = g[1]; PW = g[2]; PH = g[3]; }
     function toXY(p) { return { x: PX + p[0] * PW, y: PY + PH - p[1] * PH }; }
     function fromEvent(canvas, e) {
         var r = canvas.getBoundingClientRect();
@@ -265,16 +262,24 @@
             c.closePath(); c.fill();
         }
     }
-    function bars(c, x0, y0, w, h, title, labels, values, colors, highlight) {
+    function bars(c, x0, y0, w, h, title, labels, values, colors, highlight, fixedMax, showValues) {
         c.fillStyle = '#1b1f24'; c.font = 'bold 13px system-ui, sans-serif'; c.fillText(title, x0, y0 - 10);
-        var max = Math.max.apply(null, values.concat([1e-9]));
+        var max = fixedMax || Math.max.apply(null, values.concat([1e-9]));
+        if (showValues) w -= 60;
         var rowH = h / labels.length;
         for (var i = 0; i < labels.length; i++) {
-            var y = y0 + i * rowH, bw = (w - 80) * values[i] / max;
+            var v = values[i] === null ? 0 : values[i];
+            var y = y0 + i * rowH, bw = (w - 80) * Math.min(1, v / max);
+            if (v < 1e-9) bw = 0;
             c.fillStyle = '#475569'; c.font = '12px system-ui, sans-serif'; c.fillText(labels[i], x0, y + rowH / 2 + 4);
             c.fillStyle = '#e2e8f0'; c.fillRect(x0 + 80, y + rowH * 0.2, w - 80, rowH * 0.6);
             c.fillStyle = colors[i]; c.globalAlpha = (highlight === undefined || highlight === i) ? 1 : 0.45;
-            c.fillRect(x0 + 80, y + rowH * 0.2, Math.max(2, bw), rowH * 0.6); c.globalAlpha = 1;
+            if (bw > 0) c.fillRect(x0 + 80, y + rowH * 0.2, Math.max(2, bw), rowH * 0.6);
+            c.globalAlpha = 1;
+            if (showValues && values[i] !== null) {
+                c.fillStyle = '#475569'; c.font = '12px system-ui, sans-serif';
+                c.fillText(values[i] < 1e-9 ? '0' : values[i].toFixed(3), x0 + w + 8, y + rowH / 2 + 4);
+            }
         }
     }
     function chips(el, prefix, ids, colors) {
@@ -290,7 +295,9 @@
         var book = [[0, 0], [1, 0], [0, 1], [1, 1]];
         var tint = ['#dbeafe', '#dcfce7', '#fef3c7', '#f3e8ff'];
         var z = [0.2, 0.9];
+        var G = [40, 30, 260, 260];
         function draw() {
+            geom(G);
             c.clearRect(0, 0, canvas.width, canvas.height);
             for (var x = 0; x < PW; x += 4) for (var y = 0; y < PH; y += 4) {
                 c.fillStyle = tint[nearest([x / PW, 1 - y / PH], book)];
@@ -306,10 +313,10 @@
             book.forEach(function (e, i) { dot(c, e, i === w ? 11 : 8, COLORS[i], i === w ? '#0f172a' : null); });
             dot(c, z, 7, '#dc2626', '#fff');
             bars(c, 380, 60, 300, 220, 'Distance from z to each entry', ['entry 0', 'entry 1', 'entry 2', 'entry 3'],
-                 book.map(function (e) { return Math.sqrt(d2(z, e)); }), COLORS, w);
+                 book.map(function (e) { return Math.sqrt(d2(z, e)); }), COLORS, w, Math.SQRT2, true);
             chips(document.getElementById('vq-chips'), 'Stored audio token:', [w], [COLORS[w]]);
         }
-        canvas.addEventListener('click', function (e) { z = fromEvent(canvas, e); draw(); });
+        canvas.addEventListener('click', function (e) { geom(G); z = fromEvent(canvas, e); draw(); });
         draw();
     })();
 
@@ -325,7 +332,10 @@
             return out;
         }
         var STAGE_COL = ['#2563eb', '#16a34a', '#d97706'];
+        var G = [110, 20, 480, 480];
+        var MAX_ERR = Math.sqrt(2) / 6;     // worst case after codebook 1 (z in a corner of a grid cell)
         function draw() {
+            geom(G);
             var K = parseInt(slider.value, 10);
             document.getElementById('rvq-k-lbl').textContent = K;
             c.clearRect(0, 0, canvas.width, canvas.height);
@@ -336,9 +346,9 @@
                 var book = grid(step, center);
                 var best = nearest(z, book);
                 if (k < K) {
-                    book.forEach(function (e, i) { dot(c, e, k === 0 ? 7 : (k === 1 ? 5 : 3.5), i === best ? STAGE_COL[k] : STAGE_COL[k] + '55'); });
+                    book.forEach(function (e, i) { dot(c, e, k === 0 ? 10 : (k === 1 ? 7 : 4.5), i === best ? STAGE_COL[k] : STAGE_COL[k] + '55'); });
                     if (prev) arrow(c, prev, book[best], STAGE_COL[k], false);
-                    dot(c, book[best], k === 0 ? 9 : (k === 1 ? 7 : 5), STAGE_COL[k], '#0f172a');
+                    dot(c, book[best], k === 0 ? 12 : (k === 1 ? 9 : 6), STAGE_COL[k], '#0f172a');
                     ids.push(best);
                 }
                 errs.push(Math.sqrt(d2(z, book[best])));
@@ -346,14 +356,15 @@
                 if (k === K - 1) var shown = approx;
             }
             arrow(c, shown, z, '#dc2626', true);
-            dot(c, z, 6, '#dc2626', '#fff');
-            var vals = errs.map(function (e, i) { return i < K ? e : 0; });
-            bars(c, 380, 60, 300, 180, 'Remaining error after each codebook', ['after 1', 'after 2', 'after 3'], vals, STAGE_COL);
+            dot(c, z, 7, '#dc2626', '#fff');
+            var vals = errs.map(function (e, i) { return i < K ? e : null; });
+            bars(c, G[0], 560, G[2], 120, 'Remaining error after each codebook (distance from the approximation to z)',
+                 ['after 1', 'after 2', 'after 3'], vals, STAGE_COL, undefined, MAX_ERR, true);
             c.fillStyle = '#64748b'; c.font = '12px system-ui, sans-serif';
-            c.fillText('Each extra codebook shrinks the error about 3×.', 380, 270);
+            c.fillText('All bars use the same scale. Each extra codebook can cut the error about 3×.', G[0], 705);
             chips(document.getElementById('rvq-chips'), 'This frame is stored as:', ids, STAGE_COL);
         }
-        canvas.addEventListener('click', function (e) { z = fromEvent(canvas, e); draw(); });
+        canvas.addEventListener('click', function (e) { geom(G); z = fromEvent(canvas, e); draw(); });
         slider.addEventListener('input', draw);
         draw();
     })();
