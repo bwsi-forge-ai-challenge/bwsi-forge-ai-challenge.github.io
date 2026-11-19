@@ -285,7 +285,7 @@
     <p>Plain sampling has its own problem: the <strong>long tail</strong>. A real vocabulary has 50,257 tokens, and most of them are poor choices with tiny probabilities. Tiny is not zero, though. If the 50,000 least likely tokens each have a probability of 0.000002, together they still hold 10% of the probability. Over a 400-token answer, a strange token is almost certain to be picked at some point, and because every chosen token is appended to the input, one bad pick can derail everything after it.</p>
     <p>The three settings below fix this by reshaping or trimming the probabilities before the sample is drawn.</p>
 
-    <h3>Temperature</h3>
+    <h3 id="temperature">Temperature</h3>
     <p><strong>Temperature</strong> \(T\) divides every logit by the same number before softmax is applied:</p>
     \[ p_i = \frac{e^{z_i / T}}{\sum_{j} e^{z_j / T}} \]
     <ul>

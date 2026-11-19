@@ -107,7 +107,7 @@
     \[ \mathbf{x}_{\text{fused}} = \left[\, \mathbf{x}_v \,\Vert\, \mathbf{x}_a \,\right] \]
 
     <h3>Example: audio-visual speech recognition</h3>
-    <p>A classic use case is <strong>audio-visual speech recognition</strong>: transcribing speech using both the sound and a video of the speaker's lips. The audio is usually represented as a <strong>spectrogram</strong>, the picture of sound you met in Lesson 1 (the audio unit covers it in detail). Every 20 milliseconds, the system takes one slice of the spectrogram and concatenates it with a vector describing the shape of the speaker's lips at that same moment.</p>
+    <p>A classic use case is <strong>audio-visual speech recognition</strong>: transcribing speech using both the sound and a video of the speaker's lips. The audio is usually represented as a <strong>spectrogram</strong>, the picture of sound you met in Lesson 1. Every 20 milliseconds, the system takes one slice of the spectrogram and concatenates it with a vector describing the shape of the speaker's lips at that same moment.</p>
     <p>Because the two signals are joined from the first layer, even the network's earliest filters can pick up tightly synchronized events. For example, a speaker's lips press together a fraction of a second <em>before</em> the burst of sound in a "p" or "b." A network that only combined the two streams near the end would blur away those millisecond-level offsets.</p>
 
     <h3>Trade-offs and failure modes</h3>
@@ -448,15 +448,15 @@
         </tbody>
     </table></div>
 
+    <h3>Exercise 1: The cost of cross-attention</h3>
+    <p>A drone navigates using a forward camera image of \(224 \times 224\) pixels, split into \(16 \times 16\)-pixel patches, and a microphone array that produces 64 audio tokens. A fusion block runs cross-attention with the audio tokens as queries and the image patches as keys.</p>
+    <ol>
+        <li>How many patches does the image produce?</li>
+        <li>How many query&ndash;key dot products does one attention head compute?</li>
+        <li>What is the shape of the attention-weight matrix \(\mathbf{A}\)?</li>
+    </ol>
     <details>
-        <summary>Exercise 1: the cost of cross-attention</summary>
-        <p><strong>Question:</strong> A drone navigates using a forward camera image of \(224 \times 224\) pixels, split into \(16 \times 16\)-pixel patches, and a microphone array that produces 64 audio tokens. A fusion block runs cross-attention with the audio tokens as queries and the image patches as keys.</p>
-        <ol>
-            <li>How many patches does the image produce?</li>
-            <li>How many query&ndash;key dot products does one attention head compute?</li>
-            <li>What is the shape of the attention-weight matrix \(\mathbf{A}\)?</li>
-        </ol>
-        <p><strong>Solution:</strong></p>
+        <summary>Show solution</summary>
         \[ \frac{224}{16} \times \frac{224}{16} = 14 \times 14 = \mathbf{196} \text{ patches} \]
         <p>Each of the 64 audio queries is compared with each of the 196 image keys:</p>
         \[ 64 \times 196 = \mathbf{12{,}544} \text{ dot products} \]
@@ -464,10 +464,10 @@
         \[ \mathbf{A} \in \mathbb{R}^{64 \times 196} \]
     </details>
 
+    <h3>Exercise 2: A sensor failure</h3>
+    <p>A wildfire detection station estimates risk using an infrared thermal camera and a humidity sensor. Thick smoke blinds the thermal camera, so its images become random noise. The humidity sensor still works and reports severe drought: 8% relative humidity. Compare what happens under early fusion, late fusion, and a gated multimodal unit.</p>
     <details>
-        <summary>Exercise 2: a sensor failure</summary>
-        <p><strong>Question:</strong> A wildfire detection station estimates risk using an infrared thermal camera and a humidity sensor. Thick smoke blinds the thermal camera, so its images become random noise. The humidity sensor still works and reports severe drought: 8% relative humidity. Compare what happens under early fusion, late fusion, and a gated multimodal unit.</p>
-        <p><strong>Solution:</strong></p>
+        <summary>Show solution</summary>
         <ul>
             <li><strong>Early fusion:</strong> the noise from the blinded camera enters the first layer alongside the humidity reading. It corrupts the hidden features from there on, and the network can no longer reliably use the humidity signal.</li>
             <li><strong>Late fusion:</strong> the thermal model is unsure (\(P \approx 0.50\)), while the humidity model reports extreme risk (\(P \approx 0.98\)). The average, \((0.50 + 0.98)/2 \approx 0.74\), is still high enough to trigger the alarm.</li>

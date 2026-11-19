@@ -65,7 +65,7 @@
     </figure>
 
     <h3>Roadblock A: the shapes don't match</h3>
-    <p>The two encoders are built and trained independently, so nothing forces their outputs to be the same size. In the base CLIP model (a well-known image-and-text model from OpenAI), the image encoder outputs 768 numbers and the text encoder outputs 512. In math notation, \(\mathbf{z}_{\text{img}} \in \mathbb{R}^{768}\) and \(\mathbf{z}_{\text{text}} \in \mathbb{R}^{512}\), where \(\mathbb{R}^{768}\) ("R to the 768") just means "a list of 768 real numbers." A dot product multiplies matching entries and adds them up, so it simply isn't defined between a list of 768 numbers and a list of 512.</p>
+    <p>The two encoders are built and trained independently, so nothing forces their outputs to be the same size. In the base CLIP model (a well-known image-and-text model from OpenAI), the image encoder outputs 768 numbers and the text encoder outputs 512. Formally, \(\mathbf{z}_{\text{img}} \in \mathbb{R}^{768}\) and \(\mathbf{z}_{\text{text}} \in \mathbb{R}^{512}\). A dot product multiplies matching entries and adds them up, so it simply isn't defined between a list of 768 numbers and a list of 512.</p>
 
     <h3>Roadblock B: the coordinates mean different things</h3>
     <p>Even if you forced both encoders to output 512 numbers, comparing them would still fail. Coordinate 42 in the image encoder might respond to fine vertical textures or the sharpness of an edge. Coordinate 42 in the text encoder might track whether a sentence is in the past tense. Each model learned its own meaning for each coordinate while training on its own task, so the axes share no meaning at all.</p>
@@ -98,7 +98,7 @@
     <p>Here \(f\) is whatever combining operation we choose. There are two common options.</p>
 
     <h3>Option 1: Early concatenation</h3>
-    <p>The most straightforward approach is to normalize each feature vector and glue them end to end. The symbol \(\Vert\) means "stick these vectors together":</p>
+    <p>The most straightforward approach is to normalize each feature vector and glue them end to end. The symbol \(\Vert\) is used for vector concatenation:</p>
     \[ \mathbf{z}_{\text{concat}} = \left[\, \mathbf{z}_{\text{image}} \,\Vert\, \mathbf{z}_{\text{text}} \,\Vert\, \mathbf{z}_{\text{sensor}} \,\right] \in \mathbb{R}^{d_{\text{image}} + d_{\text{text}} + d_{\text{sensor}}} \]
     <p>Each \(d\) is the length of one modality's vector. If the image vector has 128 entries, the text vector has 64, and a vector of sensor readings has 64, the concatenated vector has \(128 + 64 + 64 = 256\) entries.</p>
 
@@ -134,14 +134,13 @@
     <h3>The catch: the size explodes</h3>
     <p>Tensor fusion sounds ideal, but it quickly hits a wall. The flattened tensor's size is the product of all the vector lengths, each plus 1. The symbol \(\prod\) means "multiply all of these together":</p>
     \[ d_{\text{tensor}} = \prod_{m=1}^{M} (d_m + 1) \]
-    <p>With image, text, and sensor vectors of just 64 features each, the flattened tensor has \(65 \times 65 \times 65 = \mathbf{274{,}625}\) entries. Connecting it to a modest hidden layer of 128 neurons would take \(274{,}625 \times 128 \approx 35\) million weights for that first layer alone, which quickly leads to memory problems and overfitting.</p>
+    <p>With image, text, and sensor vectors of just 64 features each, the flattened tensor has \(65 \times 65 \times 65 = \mathbf{274{,}625}\) entries. Connecting it to a modest hidden layer of 128 neurons would take \(274{,}625 \times 128 \approx 35\) million weights for that first layer alone, which quickly leads to memory problems and overfitting. Because of this, modern systems rarely use raw tensor fusion.</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 640 320" role="img" aria-label="Log-scale bar chart of fused vector size for 1 to 4 modalities of 64 features each. Concatenation grows from 64 to 256. Tensor fusion grows from 65 to 4,225, then 274,625, then 17,850,625." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><line x1="80" y1="264.0" x2="620" y2="264.0" stroke="#e2e8f0"/><text x="72.0" y="268.0" font-size="11" text-anchor="end" fill="#475569">1</text><line x1="80" y1="236.0" x2="620" y2="236.0" stroke="#e2e8f0"/><line x1="80" y1="208.0" x2="620" y2="208.0" stroke="#e2e8f0"/><text x="72.0" y="212.0" font-size="11" text-anchor="end" fill="#475569">100</text><line x1="80" y1="180.0" x2="620" y2="180.0" stroke="#e2e8f0"/><line x1="80" y1="152.0" x2="620" y2="152.0" stroke="#e2e8f0"/><text x="72.0" y="156.0" font-size="11" text-anchor="end" fill="#475569">10K</text><line x1="80" y1="124.0" x2="620" y2="124.0" stroke="#e2e8f0"/><line x1="80" y1="96.0" x2="620" y2="96.0" stroke="#e2e8f0"/><text x="72.0" y="100.0" font-size="11" text-anchor="end" fill="#475569">1M</text><line x1="80" y1="68.0" x2="620" y2="68.0" stroke="#e2e8f0"/><line x1="80" y1="40.0" x2="620" y2="40.0" stroke="#e2e8f0"/><text x="72.0" y="44.0" font-size="11" text-anchor="end" fill="#475569">100M</text><line x1="80" y1="264" x2="620" y2="264" stroke="#94a3b8"/><path d="M111.5,264 V217.42696072845115 q0,-4 4,-4 H141.5 q4,0 4,4 V264 Z" fill="#0d9488"><title>1 modalities, concatenation: 64 numbers</title></path><text x="128.5" y="207.4" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">64</text><path d="M149.5,264 V217.23842601400005 q0,-4 4,-4 H179.5 q4,0 4,4 V264 Z" fill="#4f46e5"><title>1 modalities, tensor fusion: 65 numbers</title></path><text x="166.5" y="207.2" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">65</text><text x="147.5" y="282.0" font-size="12" text-anchor="middle" fill="#1b1f24">1 modality</text><path d="M246.5,264 V208.99812084985967 q0,-4 4,-4 H276.5 q4,0 4,4 V264 Z" fill="#0d9488"><title>2 modalities, concatenation: 128 numbers</title></path><text x="263.5" y="199.0" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">128</text><path d="M284.5,264 V166.4768520280001 q0,-4 4,-4 H314.5 q4,0 4,4 V264 Z" fill="#4f46e5"><title>2 modalities, tensor fusion: 4,225 numbers</title></path><text x="301.5" y="156.5" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">4,225</text><text x="282.5" y="282.0" font-size="12" text-anchor="middle" fill="#1b1f24">2 modalities</text><path d="M381.5,264 V204.0675655963006 q0,-4 4,-4 H411.5 q4,0 4,4 V264 Z" fill="#0d9488"><title>3 modalities, concatenation: 192 numbers</title></path><text x="398.5" y="194.1" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">192</text><path d="M419.5,264 V115.71527804200014 q0,-4 4,-4 H449.5 q4,0 4,4 V264 Z" fill="#4f46e5"><title>3 modalities, tensor fusion: 274,625 numbers</title></path><text x="436.5" y="105.7" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">274,625</text><text x="417.5" y="282.0" font-size="12" text-anchor="middle" fill="#1b1f24">3 modalities</text><path d="M516.5,264 V200.5692809712682 q0,-4 4,-4 H546.5 q4,0 4,4 V264 Z" fill="#0d9488"><title>4 modalities, concatenation: 256 numbers</title></path><text x="533.5" y="190.6" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">256</text><path d="M554.5,264 V64.95370405600019 q0,-4 4,-4 H584.5 q4,0 4,4 V264 Z" fill="#4f46e5"><title>4 modalities, tensor fusion: 17,850,625 numbers</title></path><text x="571.5" y="55.0" font-size="10" text-anchor="middle" fill="#1b1f24" font-weight="600">17,850,625</text><text x="552.5" y="282.0" font-size="12" text-anchor="middle" fill="#1b1f24">4 modalities</text><text x="350.0" y="308.0" font-size="12" text-anchor="middle" fill="#1b1f24">Number of modalities (64 features each)</text><text x="18.0" y="152.0" font-size="12" text-anchor="middle" fill="#1b1f24" transform="rotate(-90 18 152.0)">Size of fused vector (log scale)</text><rect x="80" y="12" width="12" height="12" rx="2" fill="#0d9488"/><text x="98.0" y="22.0" font-size="12" text-anchor="start" fill="#1b1f24">Concatenation</text><rect x="210" y="12" width="12" height="12" rx="2" fill="#4f46e5"/><text x="228.0" y="22.0" font-size="12" text-anchor="start" fill="#1b1f24">Tensor fusion</text></svg>
       <figcaption>Fused vector size as you add modalities of 64 features each, on a log scale. Concatenation grows by 64 per modality; tensor fusion multiplies by 65 each time. Hover over a bar for the exact size.</figcaption>
     </figure>
 
-    <p>Because of this, modern systems rarely use raw tensor fusion. They capture interactions with low-rank approximations instead (<strong>Low-Rank Multimodal Fusion</strong> approximates the big tensor with much smaller pieces), or with <strong>cross-attention</strong> layers, which you will meet in the next lesson.</p>
   </section>
 
   <section>
@@ -317,7 +316,7 @@
     </aside>
 
     <h3>Why temperature matters</h3>
-    <p>This is the same temperature you met in the Foundations module, doing the same job inside the softmax. Cosine similarities are squeezed between \(-1\) and \(+1\), so the scores in a row are often very close, like \([0.35,\ 0.30,\ 0.28]\). A softmax over scores that close gives nearly equal probabilities, so the model barely sees a winner and learns slowly. Dividing by a small temperature such as \(\tau = 0.07\) (CLIP's starting value) spreads the scores out first, so the correct caption stands out:</p>
+    <p>This is the same temperature you met in the Foundations module (<a href="../../1_foundations_of_genai/tokens_embeddings_transformers/lesson4_transformers.html#temperature">Transformers: Putting It All Together</a>), doing the same job inside the softmax. Cosine similarities are squeezed between \(-1\) and \(+1\), so the scores in a row are often very close, like \([0.35,\ 0.30,\ 0.28]\). A softmax over scores that close gives nearly equal probabilities, so the model barely sees a winner and learns slowly. Dividing by a small temperature such as \(\tau = 0.07\) (CLIP's starting value) spreads the scores out first, so the correct caption stands out:</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 680 260" role="img" aria-label="Softmax probabilities for three captions with cosine similarities 0.35, 0.30, and 0.28. With temperature 1 they are almost equal: 34.7, 33.0, and 32.3 percent. With temperature 0.07 the correct caption gets 53.8 percent and the others 26.4 and 19.8 percent." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><text x="180.0" y="24.0" font-size="13" text-anchor="middle" fill="#1b1f24" font-weight="700">&#964; = 1 (no scaling)</text><line x1="60" y1="220.0" x2="300" y2="220.0" stroke="#e2e8f0"/><text x="54.0" y="224.0" font-size="10" text-anchor="end" fill="#475569">0%</text><line x1="60" y1="163.3" x2="300" y2="163.3" stroke="#e2e8f0"/><text x="54.0" y="167.3" font-size="10" text-anchor="end" fill="#475569">20%</text><line x1="60" y1="106.7" x2="300" y2="106.7" stroke="#e2e8f0"/><text x="54.0" y="110.7" font-size="10" text-anchor="end" fill="#475569">40%</text><line x1="60" y1="50.0" x2="300" y2="50.0" stroke="#e2e8f0"/><text x="54.0" y="54.0" font-size="10" text-anchor="end" fill="#475569">60%</text><path d="M80,220 V125.7 q0,-4 4,-4 H132 q4,0 4,4 V220 Z" fill="#4f46e5"><title>correct caption: cosine 0.35, probability 34.7%</title></path><text x="108.0" y="115.7" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">34.7%</text><text x="108.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">correct</text><text x="108.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.35</text><path d="M156,220 V130.5 q0,-4 4,-4 H208 q4,0 4,4 V220 Z" fill="#94a3b8"><title>wrong 1 caption: cosine 0.30, probability 33.0%</title></path><text x="184.0" y="120.5" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">33.0%</text><text x="184.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">wrong 1</text><text x="184.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.30</text><path d="M232,220 V132.4 q0,-4 4,-4 H284 q4,0 4,4 V220 Z" fill="#94a3b8"><title>wrong 2 caption: cosine 0.28, probability 32.3%</title></path><text x="260.0" y="122.4" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">32.3%</text><text x="260.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">wrong 2</text><text x="260.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.28</text><line x1="60" y1="220" x2="300" y2="220" stroke="#94a3b8"/><text x="500.0" y="24.0" font-size="13" text-anchor="middle" fill="#1b1f24" font-weight="700">&#964; = 0.07</text><line x1="380" y1="220.0" x2="620" y2="220.0" stroke="#e2e8f0"/><text x="374.0" y="224.0" font-size="10" text-anchor="end" fill="#475569">0%</text><line x1="380" y1="163.3" x2="620" y2="163.3" stroke="#e2e8f0"/><text x="374.0" y="167.3" font-size="10" text-anchor="end" fill="#475569">20%</text><line x1="380" y1="106.7" x2="620" y2="106.7" stroke="#e2e8f0"/><text x="374.0" y="110.7" font-size="10" text-anchor="end" fill="#475569">40%</text><line x1="380" y1="50.0" x2="620" y2="50.0" stroke="#e2e8f0"/><text x="374.0" y="54.0" font-size="10" text-anchor="end" fill="#475569">60%</text><path d="M400,220 V71.5 q0,-4 4,-4 H452 q4,0 4,4 V220 Z" fill="#4f46e5"><title>correct caption: cosine 0.35, probability 53.8%</title></path><text x="428.0" y="61.5" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">53.8%</text><text x="428.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">correct</text><text x="428.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.35</text><path d="M476,220 V149.3 q0,-4 4,-4 H528 q4,0 4,4 V220 Z" fill="#94a3b8"><title>wrong 1 caption: cosine 0.30, probability 26.4%</title></path><text x="504.0" y="139.3" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">26.4%</text><text x="504.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">wrong 1</text><text x="504.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.30</text><path d="M552,220 V167.9 q0,-4 4,-4 H604 q4,0 4,4 V220 Z" fill="#94a3b8"><title>wrong 2 caption: cosine 0.28, probability 19.8%</title></path><text x="580.0" y="157.9" font-size="11" text-anchor="middle" fill="#1b1f24" font-weight="600">19.8%</text><text x="580.0" y="236.0" font-size="11" text-anchor="middle" fill="#1b1f24">wrong 2</text><text x="580.0" y="250.0" font-size="10" text-anchor="middle" fill="#475569">cos 0.28</text><line x1="380" y1="220" x2="620" y2="220" stroke="#94a3b8"/></svg>
@@ -382,10 +381,10 @@
   <section>
     <h2>Check Your Understanding</h2>
 
+    <h3>Check 1: Sizing projection heads</h3>
+    <p>You want to map one encoder's output (\(\mathbf{z}_a \in \mathbb{R}^{1024}\)) and a text encoder's output (\(\mathbf{z}_t \in \mathbb{R}^{768}\)) into a shared space of size \(d_e = 256\), using single linear layers without biases (\(\mathbf{W}\mathbf{z}\)). How many trainable weights do these projection heads add?</p>
     <details>
-        <summary>Check 1: sizing projection heads</summary>
-        <p><strong>Question:</strong> You want to map one encoder's output (\(\mathbf{z}_a \in \mathbb{R}^{1024}\)) and a text encoder's output (\(\mathbf{z}_t \in \mathbb{R}^{768}\)) into a shared space of size \(d_e = 256\), using single linear layers without biases (\(\mathbf{W}\mathbf{z}\)). How many trainable weights do these projection heads add?</p>
-        <p><strong>Solution:</strong></p>
+        <summary>Show solution</summary>
         <ul>
             <li>The first projection matrix has shape \(256 \times 1024\): \(262{,}144\) weights.</li>
             <li>The text projection matrix has shape \(256 \times 768\): \(196{,}608\) weights.</li>
@@ -394,10 +393,11 @@
         <p>That is less than half a million weights, a tiny fraction of the hundreds of millions inside the encoders themselves, which is why training only the projection heads is cheap.</p>
     </details>
 
+    <h3>Check 2: Direction vs. length</h3>
+    <p>In a two-dimensional toy space, an image vector is projected to \(\mathbf{p}_v = [3.0,\ 4.0]\). Two candidate captions come out as \(\mathbf{p}_{t1} = [6.0,\ 8.0]\) and \(\mathbf{p}_{t2} = [-4.0,\ 3.0]\). Which caption matches, and why?</p>
     <details>
-        <summary>Check 2: direction vs. length</summary>
-        <p><strong>Question:</strong> In a two-dimensional toy space, an image vector is projected to \(\mathbf{p}_v = [3.0,\ 4.0]\). Two candidate captions come out as \(\mathbf{p}_{t1} = [6.0,\ 8.0]\) and \(\mathbf{p}_{t2} = [-4.0,\ 3.0]\). Which caption matches, and why?</p>
-        <p><strong>Solution:</strong> First normalize the image vector:</p>
+        <summary>Show solution</summary>
+        <p>First normalize the image vector:</p>
         \[ \Vert \mathbf{p}_v \Vert_2 = \sqrt{3^2 + 4^2} = 5.0 \implies \mathbf{u} = [0.6,\ 0.8] \]
         <p>Caption 1:</p>
         \[ \Vert \mathbf{p}_{t1} \Vert_2 = \sqrt{6^2 + 8^2} = 10.0 \implies \mathbf{v}_1 = [0.6,\ 0.8] \]
@@ -408,16 +408,17 @@
         <p><strong>Result:</strong> Caption 1 is an exact match (1.0): it points in the same direction, even though it was twice as long before normalizing. Caption 2 sits at a 90&#176; angle (0.0), so it is orthogonal and unrelated.</p>
     </details>
 
+    <h3>Check 3: The size of three-way tensor fusion</h3>
+    <p>A self-driving car's perception system produces three feature vectors:</p>
+    <ul>
+        <li>Lidar bird's-eye view (a top-down map built from laser range measurements): \(\mathbb{R}^{32}\)</li>
+        <li>Front-facing camera: \(\mathbb{R}^{64}\)</li>
+        <li>Radar: \(\mathbb{R}^{16}\)</li>
+    </ul>
+    <p>If you build a full three-way tensor fusion representation, how many entries does the fused vector have?</p>
     <details>
-        <summary>Check 3: the size of three-way tensor fusion</summary>
-        <p><strong>Question:</strong> A self-driving car's perception system produces three feature vectors:</p>
-        <ul>
-            <li>Lidar bird's-eye view (a top-down map built from laser range measurements): \(\mathbb{R}^{32}\)</li>
-            <li>Front-facing camera: \(\mathbb{R}^{64}\)</li>
-            <li>Radar: \(\mathbb{R}^{16}\)</li>
-        </ul>
-        <p>If you build a full three-way tensor fusion representation, how many entries does the fused vector have?</p>
-        <p><strong>Solution:</strong> Append a 1 to each vector, then multiply the lengths:</p>
+        <summary>Show solution</summary>
+        <p>Append a 1 to each vector, then multiply the lengths:</p>
         \[ d_{\text{fused}} = (32 + 1) \times (64 + 1) \times (16 + 1) = 33 \times 65 \times 17 = \mathbf{36{,}465} \]
         <p>Passing this single vector to a dense layer with 256 units would need \(36{,}465 \times 256 \approx 9.33\) million weights just for that first layer.</p>
     </details>
