@@ -25,43 +25,61 @@
   <header class="page-header">
     <p class="eyebrow">Multimodal &amp; Advanced Models · Building &amp; Evaluating Multimodal Pipelines</p>
     <h1>Fine-Tuning for a Style</h1>
-    <p class="lede">Pretrained generative models can describe, compose, and draw almost anything, though they tend to do it in a fairly generic, middle-of-the-road voice. If you want a model to adopt a specific aesthetic, tone, or texture, you have to push it off that default. In this lesson, we&rsquo;ll look at how to decide if fine-tuning is actually worth the trouble, which parts of an image, music, or captioning model you should train, and why curating your dataset matters far more than tweaking training settings.</p>
+    <p class="lede">Pretrained models write, draw and compose in a fairly generic voice. To get a specific style you have to push them off that default. This lesson covers whether fine-tuning is worth it, which parts to train, and why the dataset matters more than the training settings.</p>
   </header>
 
   <div class="callout callout--note">
     <p class="callout__title">Before we dive in, it helps to be familiar with:</p>
     <ul>
-        <li>LoRA, DreamBooth, prior preservation, style tokens, and caption dropout (<a href="../intro_to_image_generation_models/lesson3.html">Generating Images by Removing Noise</a>, Section 6)</li>
-        <li>The encoder, connector, and language model recipe (<a href="../intro_to_image_generation_models/lesson2.html">Teaching a Language Model to See</a>)</li>
-        <li>How music captioners are built and sourced (<a href="../intro_to_audio_generation/lesson4.html">Music Captioning</a>)</li>
-        <li>Codec language models and text conditioning (<a href="../intro_to_audio_generation/lesson2.html">Recipes vs. Records</a> and <a href="../intro_to_audio_generation/lesson3.html">The Sound Dictionary</a>)</li>
+        <li>LoRA, DreamBooth and caption dropout (<a href="../intro_to_image_generation_models/lesson3.html">Generating Images by Removing Noise</a>, Section 5). LoRA is explained again below.</li>
+        <li>The encoder, connector and language model recipe (<a href="../intro_to_image_generation_models/lesson2.html">Teaching a Language Model to See</a>)</li>
+        <li>Music captioners and codec language models (<a href="../intro_to_audio_generation/lesson2.html">Recipes vs. Records</a> to <a href="../intro_to_audio_generation/lesson4.html">Music Captioning</a>)</li>
         <li>Shared embedding spaces and cosine similarity (<a href="../core_multimodal_foundations/lesson2_representation_and_latent_spaces.html">Representation &amp; Latent Spaces</a>)</li>
     </ul>
   </div>
 
   <section>
     <h2>1. Try Prompting First</h2>
-    <p>Fine-tuning eats up GPU hours, requires tedious data collection, and invites plenty of debugging headaches. Before paying that price, find out how far a well-crafted prompt can take you. If you ask a base image model for "a watercolor painting, faded colors, soft edges," the output might already get you 90% of the way there. If it does, your fine-tuned model has to beat that prompted result, not just a lazy, plain prompt on the raw base model.</p>
-    <p>Because of this, every fine-tuning project really needs three baselines compared on the exact same held-out test inputs:</p>
+    <p>Fine-tuning costs GPU hours, data collection and debugging. Before paying that, see how far a good prompt gets you: &ldquo;a watercolor painting, faded colors, soft edges&rdquo; might already be 90% of the way there. Your fine-tuned model has to beat that, not a lazy prompt on the raw model. So compare three variants on the same held-out inputs:</p>
     <div class="table-wrap"><table>
         <thead><tr><th>Variant</th><th>What it is</th><th>What it tells you</th></tr></thead>
         <tbody>
-            <tr><td><strong>Zero-shot</strong></td><td>The base model given a plain, unstyled instruction</td><td>Where you are starting from</td></tr>
-            <tr><td><strong>Prompted</strong></td><td>The base model given your best style prompt</td><td>What you can achieve without any training</td></tr>
-            <tr><td><strong>Fine-tuned</strong></td><td>The model after training on your custom dataset</td><td>What training actually adds on top of a good prompt</td></tr>
+            <tr><td><strong>Zero-shot</strong></td><td>The base model with a plain instruction</td><td>Where you start</td></tr>
+            <tr><td><strong>Prompted</strong></td><td>The base model with your best style prompt</td><td>What you get without training</td></tr>
+            <tr><td><strong>Fine-tuned</strong></td><td>The model trained on your dataset</td><td>What training adds on top of a good prompt</td></tr>
         </tbody>
     </table></div>
-    <p>Of course, plenty of styles stubbornly resist prompting. The base model might have barely seen the style during pretraining, the vocabulary to describe it might be too vague (like "cozy" or "gritty"), or the style might rely on constraints that prompts handle poorly, such as strict caption lengths, a fixed vocabulary, or the exact acoustic texture of a specific instrument. Those are the sweet spots where fine-tuning pays off. And if your fine-tuned model ultimately loses to a good prompt? Don't sweep it under the rug. That is a genuinely useful engineering result worth documenting.</p>
+    <p>Some styles resist prompting: the model barely saw them in pretraining, the words are too vague (&ldquo;cozy&rdquo;, &ldquo;gritty&rdquo;), or the style needs strict constraints like a fixed caption length. Fine-tuning pays off there. If it loses to a good prompt, that is still a useful result worth documenting.</p>
   </section>
 
   <section>
-    <h2>2. Which Parts to Train</h2>
-    <p>As you already know, LoRA works by freezing an existing weight matrix and learning a small, low-rank update right alongside it. While we often talk about LoRA in the context of diffusion models, the exact same trick works on any transformer. The real design question is deciding <em>where</em> to attach those adapters.</p>
-    <p>Most generative architectures break down into two jobs: <strong>translators</strong> that convert between raw signals and internal representations (vision encoders, text encoders, audio codecs, VAEs), and a <strong>generator</strong> that decides what to actually produce. Those translators are already heavily optimized and easy to break if you mess with them. Meanwhile, "style" lives almost entirely in the decision-making part of the network.</p>
-    <p>That gives us a solid rule of thumb: <strong>freeze the translators, and adapt the part that generates.</strong></p>
+    <h2>2. LoRA: Train a Small Add-On</h2>
+    <p>Fine-tuning every weight of a model with hundreds of millions of parameters is slow, and it leaves you with a full copy of the model for every style. <strong>LoRA</strong> (Low-Rank Adaptation) avoids both. It <strong>freezes</strong> the original weights and trains a small add-on next to them.</p>
 
     <figure class="diagram-wrap">
-      <svg viewBox="0 0 720 300" role="img" aria-label="Three model types with their frozen and trained parts. In an image captioner the vision encoder is frozen, the connector is small and often trained, and the language model gets LoRA. In a text-to-music codec language model the text encoder and codec decoder are frozen and the transformer decoder gets LoRA. In a latent diffusion model the text encoder and VAE decoder are frozen and the denoiser gets LoRA." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+      <svg viewBox="0 0 640 270" role="img" aria-label="LoRA: the input goes through the original frozen weights and, at the same time, through a small trained adapter with a narrow middle. The two results are added to give the output." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><defs><marker id="la" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs><rect x="10" y="100" width="70" height="50" rx="8" fill="#ffffff" stroke="#94a3b8"/><text x="45" y="130" text-anchor="middle" font-size="12.5" font-weight="400" fill="#1b1f24">input</text><rect x="170" y="20" width="230" height="70" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="285" y="51" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">Original weights</text><text x="285" y="71" text-anchor="middle" font-size="11.5" font-weight="400" fill="#5b6672">frozen: never changed</text><polygon points="170,155 270,173 270,195 170,213" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><polygon points="300,173 400,155 400,213 300,195" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><line x1="270" y1="184" x2="298" y2="184" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><text x="285" y="168" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">r</text><text x="285" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">LoRA adapter</text><text x="285" y="254" text-anchor="middle" font-size="11.5" font-weight="400" fill="#5b6672">the only part that is trained</text><line x1="82" y1="113" x2="168" y2="66" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><line x1="82" y1="137" x2="168" y2="181" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><line x1="402" y1="62" x2="448" y2="115" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><line x1="402" y1="182" x2="448" y2="135" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><circle cx="462" cy="125" r="15" fill="#ffffff" stroke="#94a3b8"/><text x="462" y="131" text-anchor="middle" font-size="18" font-weight="700" fill="#1b1f24">+</text><line x1="478" y1="125" x2="516" y2="125" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/><rect x="518" y="100" width="112" height="50" rx="8" fill="#ffffff" stroke="#94a3b8"/><text x="574" y="123" text-anchor="middle" font-size="12.5" font-weight="400" fill="#1b1f24">output</text><text x="574" y="139" text-anchor="middle" font-size="11" font-weight="400" fill="#5b6672">(adjusted)</text></svg>
+      <figcaption>The input goes through the original weights and through the adapter at the same time, and the two results are added. Only the adapter is trained.</figcaption>
+    </figure>
+
+    <p>Because the adapter&rsquo;s output is <em>added</em> to what the frozen weights produce, the original path stays exactly as it was and the adapter only has to learn the <em>change</em> you want. Remove the adapter and you have the original model back. It is usually attached to the attention layers, and the same trick works on any transformer, not just diffusion models.</p>
+
+    <h3>Why the add-on is small</h3>
+    <p>Take a weight matrix that maps 1000 inputs to 1000 outputs. A full update to it has 1,000,000 numbers. LoRA instead trains two thin matrices, one of size 1000 &times; <em>r</em> and one of size <em>r</em> &times; 1000, and multiplies them to get an update of the full size. The small number <em>r</em> is the adapter&rsquo;s <strong>rank</strong>: how wide its narrow middle is.</p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 640 290" role="img" aria-label="A full 1000 by 1000 update has 1,000,000 numbers. LoRA instead trains a tall thin 1000 by r matrix and a wide thin r by 1000 matrix, and multiplies them. With r equal to 8 that is 16,000 numbers." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"><text x="105" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">A full update to one weight matrix</text><rect x="30" y="40" width="150" height="150" rx="3" fill="#ffffff" stroke="#94a3b8"/><text x="105" y="120" text-anchor="middle" font-size="13" font-weight="400" fill="#1b1f24">1000 &times; 1000</text><text x="105" y="216" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">1,000,000 numbers</text><text x="105" y="234" text-anchor="middle" font-size="11.5" font-weight="400" fill="#5b6672">to train and store</text><text x="250" y="120" text-anchor="middle" font-size="15" font-weight="700" fill="#5b6672">vs.</text><text x="445" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">What LoRA trains instead</text><rect x="318" y="40" width="12" height="150" rx="2" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="324" y="206" text-anchor="middle" font-size="12" font-weight="600" fill="#b45309">1000 &times; r</text><text x="358" y="120" text-anchor="middle" font-size="18" font-weight="700" fill="#1b1f24">&times;</text><rect x="386" y="108" width="150" height="12" rx="2" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="461" y="98" text-anchor="middle" font-size="12" font-weight="600" fill="#b45309">r &times; 1000</text><text x="561" y="120" text-anchor="middle" font-size="18" font-weight="700" fill="#1b1f24">&rarr;</text><rect x="580" y="108" width="38" height="12" rx="2" fill="#ffffff" stroke="#94a3b8"/><text x="599" y="98" text-anchor="middle" font-size="11" font-weight="400" fill="#1b1f24"></text><text x="445" y="240" text-anchor="middle" font-size="13" font-weight="700" fill="#1b1f24">With r = 8: 8,000 + 8,000 = 16,000 numbers</text><text x="445" y="258" text-anchor="middle" font-size="11.5" font-weight="400" fill="#5b6672">multiplied together they still fill a 1000 &times; 1000 update</text></svg>
+      <figcaption>Two thin matrices multiply into a full-size update, but you only train and store the thin ones.</figcaption>
+    </figure>
+
+    <p>The rank sets how much change the adapter can express. A low rank is the smallest and safest but may be too limited to capture your style, so the output looks like the base model. A high rank has room for more detail, but the file is bigger and the adapter can start memorizing a small dataset.</p>
+  </section>
+
+  <section>
+    <h2>3. Which Parts to Train</h2>
+    <p>Most generative models have two kinds of parts: <strong>translators</strong> that convert between raw signals and internal representations (vision encoders, text encoders, audio codecs, image decoders), and a <strong>generator</strong> that decides what to produce. The translators are already well tuned and easy to break, and style lives almost entirely in the generator. So <strong>freeze the translators and put LoRA on the generator.</strong></p>
+
+    <figure class="diagram-wrap">
+      <svg viewBox="0 0 720 300" role="img" aria-label="Three model types with their frozen and trained parts. In an image captioner the vision encoder is frozen, the connector is small and often trained, and the language model gets LoRA. In a text-to-music codec language model the text encoder and codec decoder are frozen and the transformer decoder gets LoRA. In a diffusion model the text encoder and Image decoder are frozen and the denoiser gets LoRA." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
 <defs><marker id="ft-a" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#475569"/></marker></defs>
 <text x="15" y="24" font-size="13" font-weight="700" fill="#1b1f24">Image captioner (vision-language model)</text>
 <text x="45" y="63.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Image</text>
@@ -83,55 +101,48 @@
 <rect x="460" y="129" width="160" height="48" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="540.0" y="151.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Codec decoder</text><text x="540.0" y="167.0" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">frozen</text>
 <line x1="620" y1="153.0" x2="652" y2="153.0" stroke="#475569" stroke-width="1.5" marker-end="url(#ft-a)"/>
 <text x="660" y="158.0" font-size="12.5" fill="#1b1f24">Audio</text>
-<text x="15" y="214" font-size="13" font-weight="700" fill="#1b1f24">Text-to-image (latent diffusion)</text>
+<text x="15" y="214" font-size="13" font-weight="700" fill="#1b1f24">Text-to-image (diffusion)</text>
 <text x="45" y="253.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Text</text>
 <line x1="70" y1="248.0" x2="87" y2="248.0" stroke="#475569" stroke-width="1.5" marker-end="url(#ft-a)"/>
 <rect x="90" y="224" width="160" height="48" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="170.0" y="246.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Text encoder</text><text x="170.0" y="262.0" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">frozen</text>
 <line x1="250" y1="248.0" x2="272" y2="248.0" stroke="#475569" stroke-width="1.5" marker-end="url(#ft-a)"/>
 <rect x="275" y="224" width="160" height="48" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="355.0" y="246.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Denoiser</text><text x="355.0" y="262.0" text-anchor="middle" font-size="11" fill="#b45309" font-weight="600">+ LoRA (trained)</text>
 <line x1="435" y1="248.0" x2="457" y2="248.0" stroke="#475569" stroke-width="1.5" marker-end="url(#ft-a)"/>
-<rect x="460" y="224" width="160" height="48" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="540.0" y="246.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">VAE decoder</text><text x="540.0" y="262.0" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">frozen</text>
+<rect x="460" y="224" width="160" height="48" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-dasharray="5 4"/><text x="540.0" y="246.0" text-anchor="middle" font-size="12.5" fill="#1b1f24">Image decoder</text><text x="540.0" y="262.0" text-anchor="middle" font-size="11" fill="#5b6672" font-weight="600">frozen</text>
 <line x1="620" y1="248.0" x2="652" y2="248.0" stroke="#475569" stroke-width="1.5" marker-end="url(#ft-a)"/>
 <text x="660" y="253.0" font-size="12.5" fill="#1b1f24">Image</text>
       </svg>
-      <figcaption>A common starting point for three model types. Dashed boxes stay frozen; orange boxes get LoRA adapters. The connector in a vision-language model is small enough that it is often trained directly.</figcaption>
+      <figcaption>Dashed boxes stay frozen; orange boxes get LoRA adapters. The connector in a vision-language model is small enough that it is often trained directly.</figcaption>
     </figure>
 
     <ul>
-        <li><strong>Image captioners (Vision-Language Models):</strong> The vision encoder already knows how to turn pixels into useful visual features. Your style lives in the phrasing and word choice, so place the LoRA adapters on the language model&rsquo;s attention layers. Training the vision encoder on a small style dataset usually just makes it worse at seeing. (Note: the connector between them is small enough that it is often trained directly.)</li>
-        <li><strong>Music captioners:</strong> This follows the exact same logic, just swapping the vision encoder for an audio encoder. Because your style is defined by the vocabulary of the captions, the language decoder is where the learning needs to happen.</li>
-        <li><strong>Text-to-music (Codec Language Models):</strong> Here, the audio codec turns tokens back into sound waves, while the transformer decoder decides which tokens to write. Adapting the transformer changes the musical composition and style, while keeping the codec frozen ensures your audio fidelity doesn't fall apart.</li>
-        <li><strong>Text-to-image (Latent Diffusion):</strong> The denoiser determines what the image looks like, so that is where your adapters go. As we saw in the diffusion lesson, the text encoder and VAE stay completely frozen.</li>
+        <li><strong>Image captioners (Vision-Language Models):</strong> The vision encoder already knows how to turn pixels into useful visual features. Your style lives in the phrasing and word choice, so place the LoRA adapters on the language model&rsquo;s attention layers. Training the vision encoder on a small style dataset usually just makes it worse at seeing.</li>
+        <li><strong>Music captioners:</strong> The same logic, with an audio encoder in place of the vision encoder. Because your style is defined by the vocabulary of the captions, the language decoder is where the learning needs to happen.</li>
+        <li><strong>Text-to-music (Codec Language Models):</strong> The audio codec turns tokens back into sound, while the transformer decoder decides which tokens to write. Adapting the transformer changes the musical composition and style, while keeping the codec frozen keeps your audio fidelity from falling apart.</li>
+        <li><strong>Text-to-image (Diffusion):</strong> The denoiser determines what the image looks like, so that is where your adapters go. The text encoder and image decoder stay frozen.</li>
     </ul>
-    <p>Treat these as starting defaults rather than unbreakable laws. If your target style relies on a nuance that a frozen component simply cannot represent (say, a rare instrument that the audio codec mangles during reconstruction), you may have to unfreeze and adapt more of the pipeline. Just make sure you have a clear reason why.</p>
+    <p>Treat these as starting defaults rather than unbreakable laws. If your target style relies on a nuance that a frozen component cannot represent (say, a rare instrument that the audio codec mangles), you may have to unfreeze and adapt more of the pipeline. Just make sure you have a clear reason why.</p>
 
-    <h3>The settings that matter most</h3>
-    <p>When you do start training, three hyperparameters do most of the heavy lifting:</p>
-    <div class="table-wrap"><table>
-        <thead><tr><th>Setting</th><th>If it is too low...</th><th>If it is too high...</th></tr></thead>
-        <tbody>
-            <tr><td><strong>Rank</strong></td><td>The update lacks the capacity to capture the style; outputs look just like the base model.</td><td>You have more parameters to train and a much higher risk of memorizing a small dataset.</td></tr>
-            <tr><td><strong>Learning rate</strong></td><td>The loss barely budges and very little changes.</td><td>The loss bounces erratically; outputs collapse into noise or repeat a single pattern.</td></tr>
-            <tr><td><strong>Training steps</strong></td><td>The style only shows up faintly.</td><td>Overfitting: the model regurgitates training examples and forgets general concepts.</td></tr>
-        </tbody>
-    </table></div>
-    <p>Keep in mind that training loss alone will not tell you when to hit stop. Save checkpoints regularly and actually look at (or listen to) what they produce on inputs they have never seen before. Overfitting wears a different disguise in every modality: a captioner starts repeating the exact same sentence structure regardless of the image, a music model spits out recognizable chunks of your training tracks, and an image model draws the exact same composition no matter what you prompt.</p>
+    <h3>Three settings to watch</h3>
+    <ul>
+        <li><strong>Rank:</strong> too low and the output looks like the base model; too high and the adapter can memorize a small dataset.</li>
+        <li><strong>Learning rate:</strong> too low and nothing changes; too high and the loss bounces and outputs collapse into noise or one repeated pattern.</li>
+        <li><strong>Training steps:</strong> too few and the style is faint; too many and the model repeats its training examples and forgets general concepts.</li>
+    </ul>
+    <p>Training loss will not tell you when to stop. Save checkpoints and look at (or listen to) what they produce on inputs they have never seen.</p>
   </section>
 
   <section>
-    <h2>3. The Dataset Is the Style</h2>
-    <p>LoRA is essentially a pattern-finder: it learns whatever your training examples have in common. Feed it a clean, cohesive dataset, and it will nail your style. Feed it a messy mix diluted with off-style examples, and it will learn a muddy average. That reality makes dataset curation the true core of fine-tuning, and almost always the part that takes the longest.</p>
-    <p>Since you rarely have thousands of perfect examples sitting on a hard drive, the standard workflow is to start with a massive public dataset and <strong>filter</strong> it down. Three common ways to do that are:</p>
+    <h2>4. The Dataset Is the Style</h2>
+    <p>LoRA learns whatever your examples have in common. A clean, cohesive dataset gives you the style; a messy one gives you a muddy average. You rarely have thousands of perfect examples, so the usual route is to take a large public dataset and <strong>filter</strong> it:</p>
     <ul>
-        <li><strong>Metadata filtering:</strong> Searching by tags, genres, keywords, or existing captions. It is fast, though user-generated tags are notoriously incomplete or flat-out wrong.</li>
-        <li><strong>Embedding similarity:</strong> Picking a handful of "gold standard" reference examples that clearly nail the style, embedding them, and keeping items from the larger pool that land nearby in embedding space. CLIP handles this for images and text, while CLAP plays the exact same role for audio and text.</li>
-        <li><strong>Training a small classifier:</strong> Hand-labeling a few hundred examples as "in-style" or "out-of-style," training a lightweight classifier on their embeddings, and letting it filter the rest of the pool for you.</li>
+        <li><strong>Metadata:</strong> tags, genres, keywords, existing captions. Fast, but user tags are often incomplete or wrong.</li>
+        <li><strong>Embedding similarity:</strong> embed a few &ldquo;gold standard&rdquo; examples and keep items that land nearby. CLIP does this for images and text, CLAP for audio and text.</li>
+        <li><strong>A small classifier:</strong> hand-label a few hundred items as in-style or not, train a classifier on their embeddings, and let it filter the rest.</li>
     </ul>
 
     <h3>Choosing a similarity threshold</h3>
-    <p>If you use embedding similarity, you average the normalized embeddings of your reference examples into a single target direction, and then keep any item from your data pool whose cosine similarity score crosses a threshold (\(\tau\)) that you choose:</p>
-    \[ \text{keep } x \quad \text{if} \quad \cos\big(f(x),\, \bar{r}\big) \ge \tau, \qquad \bar{r} = \frac{1}{R}\sum_{j=1}^{R} \frac{f(r_j)}{\lVert f(r_j) \rVert} \]
-    <p>Here \(f\) is the embedding model, \(r_1, \dots, r_R\) are your \(R\) reference examples, and \(\bar{r}\) is their average direction.</p>
+    <p>With embedding similarity, you keep every item whose cosine similarity to the average of your reference examples is above a threshold &tau;.</p>
 
     <figure class="diagram-wrap">
       <svg viewBox="0 0 720 280" role="img" aria-label="Two overlapping distributions of similarity scores. Most of the pool scores low and the items in your style score higher. A threshold keeps everything to its right. Some off-style items slip through above the threshold and some in-style items fall below it and are lost." font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
@@ -156,66 +167,41 @@
 <text x="434.1" y="72" font-size="11" fill="#334155">off-style items</text><text x="434.1" y="86" font-size="11" fill="#334155">that slip through</text>
 <line x1="441.9" y1="92" x2="441.9" y2="222" stroke="#334155" stroke-width="1"/>
       </svg>
-      <figcaption>Illustrative similarity scores for a filtered pool. Raising \(\tau\) lets fewer off-style items through but throws away more good ones; lowering it does the opposite.</figcaption>
+      <figcaption>Illustrative similarity scores for a filtered pool. Raising the threshold &tau; lets fewer off-style items through but throws away more good ones; lowering it does the opposite.</figcaption>
     </figure>
 
-    <p><strong>The Threshold Trade-off:</strong> Because real-world data is messy, the similarity scores of good and bad examples always overlap. Raising your threshold \(\tau\) gives you a smaller, cleaner dataset, at the cost of throwing away some great examples that scored slightly low. Lowering \(\tau\) gives you a much larger dataset, but lets more off-style noise slip through.</p>
-    <p>No mathematical formula will tell you the magic number for \(\tau\). The only way to know where you stand is to <strong>look</strong> at the data yourself: pull a random sample of items you kept and a random sample of items you rejected, and inspect them by hand. If too many kept items feel off-style, raise the threshold or add another filter. If you see great examples sitting in the reject pile, lower it. Whatever you decide, write down every filtering rule you apply and log how many items it cut, so someone else could reproduce your dataset from scratch.</p>
-  </section>
+    <p>Good and bad items always overlap, so a higher &tau; gives a smaller, cleaner set but throws away some good examples, and a lower &tau; keeps more but lets noise through. No formula picks &tau; for you. <strong>Look at the data</strong>: sample some kept items and some rejected ones, and adjust. Write down every rule you apply and how many items it removed.</p>
 
-  <section>
-    <h2>4. Held-Out Data and Leakage</h2>
-    <p>To know if your fine-tuning actually worked, you have to test the model on examples it has never seen. Carve out a held-out evaluation set <em>before</em> you start training or tuning hyperparameters, and resist the temptation to peek at how the model performs on it until you are ready for final evaluation.</p>
-    <p>However, a held-out set is only trustworthy if it is genuinely isolated from your training data. <strong>Data leakage</strong> happens when near-copies of the same item accidentally end up on both sides of the split, making your model look much smarter than it really is. It sneaks in more easily than you might think:</p>
-    <ul>
-        <li>The exact same photograph appears twice at different resolutions or crops.</li>
-        <li>Two 10-second audio clips are sliced from the same song, with one landing in training and the other in your test set.</li>
-        <li>Multiple crowd-sourced captions describe the exact same image, and they get split across both sets.</li>
-    </ul>
-    <p>To prevent this, always split your data by <em>source</em> (by song, by original photo, by album) rather than by individual slice or caption, and run an embedding similarity check across your split to catch any near-duplicates hiding in plain sight.</p>
-    <p>Be just as careful with <strong>synthetic data</strong>. It is very tempting to train a model on another AI's outputs, for instance using an LLM to rewrite dry captions into a punchier style. While that can work well, it also teaches your model to inherit the other AI's quirks and blind spots. If you use synthetic data, be transparent about it, keep it completely out of your held-out test set, and run a comparison without it to verify it actually helps.</p>
-  </section>
+    <h3>Keep a clean test set</h3>
+    <p>Carve out the held-out set <em>before</em> you train, and do not peek until final evaluation. <strong>Data leakage</strong> is when near-copies end up on both sides of the split: the same photo at two crops, two clips cut from one song, several captions of one image. Split by <em>source</em> (song, original photo, album), not by slice or caption, and check across the split for near-duplicates with embedding similarity. Keep synthetic data (such as LLM-rewritten captions) out of the test set, and say when you used it.</p>
 
-  <section>
-    <h2>5. Documenting Your Data</h2>
-    <p>Whenever you build a dataset, it should travel with a <strong>datasheet</strong> (a practice popularized by Gebru et al., 2018): a concise record that answers the questions any future user or teammate will inevitably ask. Where did this data come from? What licenses cover each source? Which filtering rules were applied, and how much data did each rule remove? What is over- or under-represented here? What would you add if you had another month?</p>
-    <p>Pay special attention to licensing when working with images and audio:</p>
-    <ul>
-        <li><strong>Public domain and CC0</strong> material can be used and adapted freely.</li>
-        <li><strong>Creative Commons</strong> licenses come with strings attached: they might require attribution (BY), ban commercial use (NC), or prohibit derivative works (ND).</li>
-        <li><strong>Link-only research datasets</strong> distribute URLs rather than raw files. You can often download them for internal research, but you cannot legally redistribute the media yourself.</li>
-        <li><strong>Model weights have licenses, too.</strong> Plenty of open-weights music and image models are strictly licensed for non-commercial use.</li>
-    </ul>
-    <p>Finally, style itself carries real ethical weight. Fine-tuning a model specifically to mimic a single living artist&rsquo;s body of work creates a tool that imitates them without consent and directly competes with their livelihood. A much safer, more constructive target is a broad, shared aesthetic (a historical era, a musical genre, or a visual medium) built from public-domain or openly licensed works.</p>
+    <h3>Document it</h3>
+    <p>Every dataset should come with a <strong>datasheet</strong> (Gebru et al., 2018): where the data came from, its licenses, which filters you applied and how much each removed, and what is over- or under-represented. Check licenses carefully: CC0 and public domain are free to use, Creative Commons licenses may require attribution (BY) or forbid commercial use (NC) or derivatives (ND), link-only datasets cannot be redistributed, and model weights have licenses too. Fine-tuning to imitate one living artist copies them without consent, so aim for a broad shared style such as an era, a genre or a medium.</p>
   </section>
 
   <section>
     <h2>Check Your Understanding</h2>
+    <h3>Question 1: A disappointing result</h3>
+    <p>Your fine-tuned captioner easily beats the zero-shot model on a style classifier, but scores about the same as the prompted model. What are two possible explanations, and how could you tell them apart?</p>
     <details>
-        <summary>Question 1: a disappointing result</summary>
-        <p><strong>Question:</strong> Your fine-tuned captioner easily beats the zero-shot model on a style classifier, but it scores about the same as the prompted model. What are two possible explanations, and how could you tell them apart?</p>
-        <p><strong>Answer:</strong> Either the style is straightforward enough that a good prompt already captures it (meaning fine-tuning wasn't necessary), or your training data was too noisy or too small for the model to learn anything beyond what the prompt already provides. Inspecting a random sample of your training data will immediately tell you if it's messy. From there, retraining on a stricter, cleaner subset, or testing both models specifically on edge cases where prompting fails, will show whether better data closes the gap.</p>
+        <summary>Show answer</summary>
+        <p>Either a good prompt already captures the style, so fine-tuning was not needed, or your training data was too noisy or small to teach anything beyond the prompt. Inspect a random sample of the training data for mess, then retrain on a cleaner subset or test both models on cases where prompting fails.</p>
     </details>
+    <h3>Question 2: A suspicious score</h3>
+    <p>A teammate&rsquo;s music model scores far better on their held-out set than on brand-new prompts. What should you check first?</p>
     <details>
-        <summary>Question 2: a suspicious score</summary>
-        <p><strong>Question:</strong> A teammate's music model scores dramatically better on their held-out evaluation set than it does when given brand-new prompts. What should you check first?</p>
-        <p><strong>Answer:</strong> Data leakage. Check whether the held-out audio clips were sliced from the same songs or recording sessions as the training clips, and scan across the train/test split for pairs with suspiciously high embedding similarity.</p>
-    </details>
-    <details>
-        <summary>Question 3: where to put the adapters</summary>
-        <p><strong>Question:</strong> You want a captioner that describes images in the breathless voice of a 1940s radio announcer. Why should you put LoRA adapters on the language model rather than the vision encoder?</p>
-        <p><strong>Answer:</strong> Because the style lives entirely in the wording and cadence, which is the language model's job. The vision encoder already extracts strong visual features; training it on a small, niche text-style dataset only risks degrading its ability to accurately recognize what is in the picture.</p>
+        <summary>Show answer</summary>
+        <p>Data leakage. Check whether held-out clips were cut from the same songs as training clips, and scan the split for pairs with very high embedding similarity.</p>
     </details>
   </section>
 
   <section>
     <h2>Key Takeaways</h2>
     <ul>
-        <li><strong>Benchmark against a good prompt:</strong> Always compare your fine-tuned model to a well-prompted baseline, not just a lazy zero-shot prompt.</li>
-        <li><strong>Adapt the generator, freeze the translators:</strong> Keep encoders, codecs, and VAEs frozen by default, and put your adapters on the part that generates the output. Be ready to justify any exceptions.</li>
-        <li><strong>Trust your eyes and ears over the loss curve:</strong> Hyperparameters like rank, learning rate, and step count balance underfitting against memorization. Judge checkpoints by testing them on unseen inputs.</li>
-        <li><strong>Curate ruthlessly:</strong> Your dataset is your style. Filter large pools using metadata, embeddings (CLIP/CLAP), or lightweight classifiers, and manually inspect both what you keep and what you throw away.</li>
-        <li><strong>Protect your evaluation and document everything:</strong> Split test sets by source to prevent leakage, respect copyright and artist consent, and record every source and filtering step in a datasheet.</li>
+        <li><strong>Beat a good prompt, not a lazy one:</strong> compare zero-shot, prompted and fine-tuned on the same held-out inputs.</li>
+        <li><strong>Freeze the translators, adapt the generator:</strong> and judge checkpoints on unseen inputs rather than the loss curve.</li>
+        <li><strong>Curate ruthlessly:</strong> filter with metadata, CLIP/CLAP similarity or a small classifier, and inspect what you keep and what you reject.</li>
+        <li><strong>Protect the test set and document the data:</strong> split by source, and record sources, licenses and filters in a datasheet.</li>
     </ul>
   </section>
 
