@@ -120,17 +120,17 @@
 
   <section>
     <h2>4. Benchmarks and Failure Modes</h2>
-    <p>Model cards boast scores on a familiar set of benchmarks, each testing something different:</p>
+    <p>Model cards (the fact sheets published alongside a model) boast scores on a familiar set of benchmarks, each testing something different:</p>
     <div class="table-wrap"><table>
         <thead>
             <tr><th>Benchmark</th><th>Modalities</th><th>What it tests</th><th>Format and metric</th></tr>
         </thead>
         <tbody>
-            <tr><td><strong>MME</strong> (2023)</td><td>Image + text</td><td>14 subtasks covering perception (existence, counting, position, color, OCR) and cognition (commonsense, math, code)</td><td>Yes/no questions (two per image); accuracy</td></tr>
+            <tr><td><strong>MME</strong> (2023)</td><td>Image + text</td><td>14 subtasks covering perception (existence, counting, position, color, OCR: reading text in the image) and cognition (commonsense, math, code)</td><td>Yes/no questions (two per image); accuracy</td></tr>
             <tr><td><strong>MMMU</strong> (2023)</td><td>Image + text</td><td>College-level reasoning: 11,500 exam and textbook questions across 30 subjects with charts, diagrams, and molecules</td><td>Multiple choice and short answer; accuracy</td></tr>
             <tr><td><strong>SEED-Bench</strong> (2023)</td><td>Image, video + text</td><td>19,000 questions across 12 dimensions, including scene understanding, spatial relations, and video actions</td><td>Multiple choice; accuracy</td></tr>
-            <tr><td><strong>AudioCaps</strong> (2019)</td><td>Audio + text</td><td>Describing everyday sounds across ~46,000 ten-second clips with human captions</td><td>Captioning and retrieval; similarity scores and recall</td></tr>
-            <tr><td><strong>LibriSpeech</strong> (2015)</td><td>Speech + text</td><td>~1,000 hours of read English audiobooks split into "clean" and noisier "other" test sets</td><td>Speech recognition; word error rate (WER)</td></tr>
+            <tr><td><strong>AudioCaps</strong> (2019)</td><td>Audio + text</td><td>Describing everyday sounds across ~46,000 ten-second clips with human captions</td><td>Captioning and retrieval; similarity scores and recall (how often the right clip or caption is found)</td></tr>
+            <tr><td><strong>LibriSpeech</strong> (2015)</td><td>Speech + text</td><td>~1,000 hours of read English audiobooks split into "clean" and noisier "other" test sets</td><td>Speech recognition; word error rate (WER: the share of words transcribed wrong)</td></tr>
         </tbody>
     </table></div>
 
@@ -145,7 +145,7 @@
     <h3>What to do about it</h3>
     <ul>
         <li><strong>Treat every input as untrusted:</strong> text pulled from an image, PDF or transcript should never be run as instructions.</li>
-        <li><strong>Red-team every modality,</strong> not just text: typographic attacks, hidden low-contrast text, noisy audio, mismatched media pairs.</li>
+        <li><strong>Red-team every modality</strong> (attack your own system on purpose to find its weaknesses), not just text: typographic attacks, hidden low-contrast text, noisy audio, mismatched media pairs.</li>
         <li><strong>Track hallucination separately from accuracy,</strong> with checks like POPE on your own data.</li>
         <li><strong>Let the model say &ldquo;I can&rsquo;t tell,&rdquo;</strong> keep a human in the loop for high-stakes use, and decide before launch what styles you will refuse to imitate.</li>
     </ul>

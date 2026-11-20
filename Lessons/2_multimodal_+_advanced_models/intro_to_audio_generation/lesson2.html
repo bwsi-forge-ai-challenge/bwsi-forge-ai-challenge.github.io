@@ -34,7 +34,7 @@
 <p>This recipe format is known as <strong>MIDI</strong> (Musical Instrument Digital Interface).</p>
 <p>The divide between symbolic recipes and continuous records shapes modern generative audio:</p>
 <ul>
-<li>Models that compose musical structures, counterpoint, and melodies (like MuseNet, Music Transformer, or the Bach Google Doodle) operate on <strong>symbolic recipes</strong>.</li>
+<li>Models that compose musical structures, counterpoint (several melodies played at once that fit together), and melodies (like MuseNet, Music Transformer, or the Bach Google Doodle) operate on <strong>symbolic recipes</strong>.</li>
 <li>Models that generate realistic audio with timbre, vocals, and production polish (like MusicGen, Suno, or Stable Audio) operate on <strong>compressed records</strong>.</li>
 </ul>
 <p>To design generative pipelines, you need to understand both representations, how to convert between musical intervals and physical frequencies, and how 2D musical scores flatten into 1D token sequences for Transformers.</p>
@@ -102,7 +102,7 @@
 <li><strong><code>NOTE_ON (channel, pitch, velocity)</code>:</strong> Triggers a note. <strong>Velocity</strong> is an integer from \(0\) to \(127\) indicating strike force. Synthesizers map higher velocity to louder volume, sharper attacks, and brighter harmonic content.</li>
 <li><strong><code>NOTE_OFF (channel, pitch)</code>:</strong> Releases the note, initiating its decay envelope.</li>
 </ul>
-<p>Auxiliary messages handle global performance parameters, such as <strong>Tempo Changes (BPM)</strong>, <strong>Control Changes (sustain pedal, mod wheel)</strong>, and <strong>Program Changes (instrument patches like Acoustic Grand vs. Electric Bass)</strong>.</p>
+<p>Auxiliary messages handle global performance parameters, such as <strong>Tempo Changes (BPM, beats per minute)</strong>, <strong>Control Changes (sustain pedal, mod wheel)</strong>, and <strong>Program Changes (instrument patches like Acoustic Grand vs. Electric Bass)</strong>.</p>
 
 <h3>Comparing Data Footprints: Symbolic Events vs. Raw Audio</h3>
 <p>Consider a 4-note ascending arpeggio (C4, E4, G4, C5) lasting 2.0 seconds at a tempo of 120 BPM (where 1 beat = \(0.5\text{ seconds}\)).</p>
@@ -199,7 +199,7 @@ t = 2.00s  NOTE_OFF  channel=0  pitch=72</pre>
 <tr><th>Attribute</th><th>Symbolic Representations (MIDI, REMI)</th><th>Continuous Audio Records (PCM, Spectrograms)</th></tr>
 <tr><td><strong>Data Type</strong></td><td>Discrete instructions and event lists</td><td>Continuous floating-point physical pressure</td></tr>
 <tr><td><strong>Typical File Size</strong></td><td>\(2\text{ to }50\text{ KB}\) for an entire multi-track song</td><td>\(\approx 30\text{ MB}\) for a 3-minute stereo uncompressed WAV</td></tr>
-<tr><td><strong>Transposition / Editing</strong></td><td>Trivial: add an integer to all pitch tokens (\(\Delta n = +2\))</td><td>Complex: requires phase vocoders or digital pitch-shifting DSP</td></tr>
+<tr><td><strong>Transposition / Editing</strong></td><td>Trivial: add an integer to all pitch tokens (\(\Delta n = +2\))</td><td>Complex: requires specialized pitch-shifting software that has to rework the waveform itself</td></tr>
 <tr><td><strong>Instrument Swapping</strong></td><td>Instant: change the synthesizer program ID</td><td>Difficult: requires deep audio source separation and voice conversion</td></tr>
 <tr><td><strong>Acoustic Realism</strong></td><td>Zero inherent sound; depends entirely on downstream synthesis engine</td><td>Full fidelity: captures vocal timbre, room acoustics, distortion, and breath</td></tr>
 <tr><td><strong>Transformer Fit</strong></td><td>Native: standard token vocabulary and sequence lengths</td><td>Requires heavy compression via Neural Codecs (Lesson 3)</td></tr>

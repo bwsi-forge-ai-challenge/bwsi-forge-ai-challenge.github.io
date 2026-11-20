@@ -116,7 +116,7 @@
         <li><strong>Form one hypothesis:</strong> for example, &ldquo;the model ignores exact counts.&rdquo;</li>
         <li><strong>Run the smallest test that could prove you wrong:</strong> generate 20 images each for &ldquo;one apple,&rdquo; &ldquo;two apples&rdquo; and &ldquo;three apples&rdquo; with fixed seeds and count. If the counts barely change, the hypothesis holds. If instead you suspect your training captions rarely had numbers, search them for number words. An untested hypothesis is just a story.</li>
     </ol>
-    <p>For every run, log the configuration, seeds, exact model checkpoint (a file hash is best), hardware and runtime, and keep failed runs too. One command should regenerate every number in your results table from the logs. Finally, rerun your key evaluation on fresh inputs you have never looked at, which is the strongest proof the gain is real.</p>
+    <p>For every run, log the configuration, seeds, exact model checkpoint (a file hash, a short fingerprint that changes if the file changes, is best), hardware and runtime, and keep failed runs too. One command should regenerate every number in your results table from the logs. Finally, rerun your key evaluation on fresh inputs you have never looked at, which is the strongest proof the gain is real.</p>
   </section>
 
   <section>

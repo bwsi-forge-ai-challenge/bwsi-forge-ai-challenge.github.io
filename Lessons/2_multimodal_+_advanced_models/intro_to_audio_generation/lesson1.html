@@ -197,7 +197,7 @@ Another useful variable we often consider is:
 
   <section>
     <h2>6. The Fourier Transform: Decomposing Slices of Time</h2>
-<p>A raw waveform lives entirely in the <strong>time domain</strong> (amplitude vs. time). While this tells us when energy happens, it hides which specific musical pitches or vocal formants are active.</p>
+<p>A raw waveform lives entirely in the <strong>time domain</strong> (amplitude vs. time). While this tells us when energy happens, it hides which specific musical pitches or vocal formants (the resonances of the mouth and throat that make an "ee" sound different from an "oh") are active.</p>
 <p>The <strong>Fourier Transform</strong> is a mathematical prism: it takes a segment of time-domain samples and decomposes it into its constituent sine waves, creating a <strong>spectrum</strong> in the <strong>frequency domain</strong>.</p>
 <p>When you compute the Fast Fourier Transform (FFT) on a discrete window of \(N\) audio samples, the math outputs \(N/2 + 1\) unique positive-frequency bins.</p>
 <p>The frequency width of each discrete bin (\(\Delta f\)) is determined entirely by your sample rate and window size:</p>

@@ -56,7 +56,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Vision-Language Models</span>
+      <span>Deep Dive: Image Generation</span>
     </nav>
   </div>
 </header>
@@ -64,7 +64,7 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
     <h1>Teaching a Language Model to See: Vision-Language Models</h1>
   </header>
 
@@ -80,7 +80,7 @@
         <tbody>
             <tr><td><strong>Vision encoder</strong></td><td>Turn the image into feature vectors, one per patch</td><td>\(336 \times 336 \times 3\) image to \(N = 576\) vectors of width \(d_{\text{vision}} = 1024\)</td><td>CLIP ViT-L/14 (a ViT-Large with \(14 \times 14\) patches)</td></tr>
             <tr><td><strong>Connector</strong></td><td>Translate those features into the language model's embedding space</td><td>\(576 \times 1024\) to \(M = 576\) visual tokens of width \(d_{\text{llm}} = 4096\)</td><td>Two-layer MLP</td></tr>
-            <tr><td><strong>Language model</strong></td><td>Read visual tokens and text tokens together, then generate the answer</td><td>\((M + L)\) tokens of width \(4096\) to probabilities for the next token</td><td>Vicuna 7B</td></tr>
+            <tr><td><strong>Language model</strong></td><td>Read visual tokens and text tokens together, then generate the answer</td><td>\((M + L)\) tokens of width \(4096\) to probabilities for the next token</td><td>Vicuna 7B (a language model with 7 billion parameters)</td></tr>
         </tbody>
     </table></div>
 

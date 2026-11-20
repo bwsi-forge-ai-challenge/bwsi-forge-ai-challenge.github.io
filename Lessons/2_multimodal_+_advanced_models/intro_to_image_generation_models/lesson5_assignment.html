@@ -14,7 +14,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Vision-Language Models</span>
+      <span>Deep Dive: Image Generation</span>
     </nav>
   </div>
 </header>
@@ -22,7 +22,7 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
     <h1>Assignment: Noise to Picture</h1>
     <p class="lede">Destroy a picture with noise, train a tiny diffusion model of your own, and write the loop that turns pure noise into new pictures.</p>
   </header>
@@ -48,7 +48,7 @@
         </thead>
         <tbody>
             <tr><td><strong>1</strong></td><td>Write <code>add_noise</code>, then watch a picture disappear into noise</td><td>How the noise schedule destroys a picture</td></tr>
-            <tr><td><strong>2</strong></td><td>Write <code>noise_prediction_loss</code> and train a tiny U-Net on small pictures (about 1 minute on a T4)</td><td>What a diffusion model actually learns</td></tr>
+            <tr><td><strong>2</strong></td><td>Write <code>noise_prediction_loss</code> and train a tiny U-Net (a small image network the notebook gives you) on small pictures (about 1 minute on a T4)</td><td>What a diffusion model actually learns</td></tr>
             <tr><td><strong>3</strong></td><td>Write <code>ddim_step</code>, one noise-removal step, and generate new pictures with different numbers of steps</td><td>How noise becomes a picture, and what extra steps cost</td></tr>
         </tbody>
     </table></div>
@@ -70,11 +70,11 @@
   <nav class="pager" aria-label="Lesson navigation">
     <a class="pager__prev" href="lesson4.html">
       <span class="pager__label">Previous</span>
-      <span class="pager__title">Adding Time: Video and Action</span>
+      <span class="pager__title">Adding Time: Video Understanding</span>
     </a>
     <a class="pager__next" href="UnitQuiz.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Unit Quiz</span>
+      <span class="pager__title">Unit Quiz: Image Generation</span>
     </a>
   </nav>
 

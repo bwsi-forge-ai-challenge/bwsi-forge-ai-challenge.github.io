@@ -32,7 +32,7 @@
     <a class="brand" href="../../../index.html">F.O.R.G.E. AI Challenge</a>
     <nav class="crumbs" aria-label="Breadcrumb">
       <span>Multimodal &amp; Advanced Models</span>
-      <span>Deep Dive: Vision-Language Models</span>
+      <span>Deep Dive: Image Generation</span>
     </nav>
   </div>
 </header>
@@ -40,7 +40,7 @@
 <main class="page">
 
   <header class="page-header">
-    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Vision-Language Models</p>
+    <p class="eyebrow">Multimodal &amp; Advanced Models · Deep Dive: Image Generation</p>
     <h1>Generating Images by Removing Noise: Diffusion</h1>
   </header>
 
@@ -235,7 +235,7 @@ return x                          # a new image</div>
     <ul>
         <li><strong>A style token.</strong> A made-up word placed in every caption of your style set gives the model a handle to associate with that style.</li>
         <li><strong>Caption dropout.</strong> Randomly blanking some captions during fine-tuning keeps classifier-free guidance working and makes the model learn your style even without a prompt.</li>
-        <li><strong>Checking for overfitting.</strong> Generate sample images at several checkpoints. A model that only reproduces its training images, or that has forgotten general concepts, has been trained too long.</li>
+        <li><strong>Checking for overfitting.</strong> Generate sample images at several checkpoints (copies of the model saved partway through training). A model that only reproduces its training images, or that has forgotten general concepts, has been trained too long.</li>
     </ul>
   </section>
 
@@ -259,7 +259,7 @@ return x                          # a new image</div>
     </a>
     <a class="pager__next" href="lesson4.html">
       <span class="pager__label">Next</span>
-      <span class="pager__title">Adding Time: Video and Action</span>
+      <span class="pager__title">Adding Time: Video Understanding</span>
     </a>
   </nav>
 </main>
