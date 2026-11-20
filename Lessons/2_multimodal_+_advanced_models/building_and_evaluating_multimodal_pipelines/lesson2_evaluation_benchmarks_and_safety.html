@@ -31,7 +31,7 @@
   <section>
     <h2>1. Why Multimodal Evaluation Is Hard</h2>
     <ul>
-        <li><strong>Many answers can be right.</strong> One photo has countless valid descriptions, so penalizing a caption for not matching one reference word for word is unfair.</li>
+        <li><strong>Many answers can be right.</strong> One photo has countless valid descriptions, so penalizing a caption for not matching one reference word for word is unfair (see <a href="../intro_to_audio_generation/lesson4.html">Music Captioning</a>).</li>
         <li><strong>Questions leak their answers.</strong> &ldquo;What color is the banana?&rdquo; is almost always &ldquo;yellow&rdquo;, so a language model can score points from the text alone.</li>
         <li><strong>Test data sneaks into training.</strong> Models are trained on web scrapes that often contain benchmark questions, so a high score may be memorization.</li>
         <li><strong>More modalities mean more places to fail.</strong> A wrong answer could be a perception, alignment or reasoning error, and one accuracy number will not say which.</li>
@@ -153,7 +153,7 @@
 
   <section>
     <h2>5. Does the Model Actually Use the Input?</h2>
-    <p>High accuracy can hide a model that is guessing from text, so run the same questions under four conditions that strip away or alter the evidence:</p>
+    <p>High accuracy can hide a model that is guessing from text, so run the same questions under four conditions that strip away or alter the evidence. Music Captioning&rsquo;s &ldquo;Ignoring the audio&rdquo; check (<a href="../intro_to_audio_generation/lesson4.html">audio Lesson 4</a>) is one example of this.</p>
 
     <div class="table-wrap"><table>
         <thead>

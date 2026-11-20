@@ -109,7 +109,7 @@
     <p>ViT turns an image of size \(H \times W \times C\) (height, width, color channels) into tokens in three steps.</p>
 
     <ol>
-        <li><strong>Cut</strong> the image into non-overlapping \(P \times P\) patches, where \(P\) is the patch size. The number of patches is \(N = \frac{H}{P} \cdot \frac{W}{P}\).</li>
+        <li><strong>Cut</strong> the image into non-overlapping \(P \times P\) patches, where \(P\) is the patch size. The number of patches is \(N = \frac{H}{P} \cdot \frac{W}{P}\). Standard image sizes have several values of \(P\) that divide both \(H\) and \(W\). When none of them fits, the patches can be non-square instead.</li>
         <li><strong>Flatten</strong> each patch into a column vector \(\vec{x}_i \in \mathbb{R}^{P^2 C}\), where \(i = 1, \dots, N\) numbers the patches. The vector simply lists all \(P \cdot P \cdot C\) pixel values of patch \(i\).</li>
         <li><strong>Project</strong> every flattened patch with the same learned matrix \(E \in \mathbb{R}^{D \times P^2 C}\) to get a token \(\vec{z}_i \in \mathbb{R}^{D}\), where \(D\) is the token width that the transformer works with.</li>
     </ol>

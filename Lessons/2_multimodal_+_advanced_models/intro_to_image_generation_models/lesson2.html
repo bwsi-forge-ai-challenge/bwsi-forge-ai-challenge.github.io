@@ -71,7 +71,7 @@
   <section>
     <h2>1. The recipe: encoder, connector, language model</h2>
 
-    <p>A language model reads a sequence of token embeddings (vectors) and writes text one token at a time, where each new token is chosen using everything that came before it. This is what <em>autoregressive</em> means. A plain language model cannot take in an image, because it only knows how to read vectors that look like word embeddings. A <strong>vision-language model (VLM)</strong> solves this by turning the image into vectors that sit alongside the word embeddings, so the language model can read the picture and the question together.</p>
+    <p>A language model reads a sequence of token embeddings (vectors) and writes text one token at a time, where each new token is chosen using everything that came before it. This is what <em>autoregressive</em> means. A plain language model cannot take in an image, because it only knows how to read vectors that look like word embeddings. A <strong>vision-language model (VLM)</strong> solves this by turning the image into vectors that sit alongside the word embeddings, so the language model can read the picture and the question together. This is the same recipe you saw in <a href="../intro_to_audio_generation/lesson4.html">Music Captioning</a>, with a vision encoder in place of the audio encoder.</p>
 
     <p>Almost every VLM is built from three parts:</p>
 
